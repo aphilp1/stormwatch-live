@@ -327,40 +327,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #fwx-leg-toggle{position:absolute;top:5px;right:7px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px}
 
 /* ── NOWCAST AGENT PANEL ─────────────────────────────────────────── */
-#nowcast-btn{position:absolute;top:10px;right:50px;z-index:800;background:#1a2535;color:#f0c040;border:1px solid rgba(240,192,64,0.6);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;letter-spacing:0.5px;transition:all 0.15s}
-#nowcast-btn.active{background:#f0c040;color:#111;border-color:#f0c040}
-#nowcast-btn:hover{opacity:0.85}
-#nowcast-panel{position:absolute;top:48px;right:10px;width:300px;max-height:calc(100% - 70px);background:#0e1a27;border:1px solid var(--border);border-radius:8px;z-index:790;overflow-y:auto;display:none;box-shadow:0 4px 24px rgba(0,0,0,0.6);scrollbar-width:thin;scrollbar-color:#334 transparent}
+#nowcast-btn{position:absolute;top:10px;right:50px;z-index:800;background:#1e3048;color:#f0c040;border:1px solid rgba(240,192,64,0.7);border-radius:6px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;letter-spacing:0.5px;transition:all 0.15s;box-shadow:0 2px 8px rgba(0,0,0,0.5)}
+#nowcast-btn.active{background:#f0c040;color:#0d1a28;border-color:#f0c040}
+#nowcast-btn:hover{opacity:0.9}
+#nowcast-panel{position:absolute;top:48px;right:10px;width:315px;max-height:72vh;background:#0f1e30;border:1px solid rgba(80,130,190,0.25);border-radius:10px;z-index:790;overflow-y:auto;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.75);scrollbar-width:thin;scrollbar-color:#1e3a55 transparent}
 #nowcast-panel::-webkit-scrollbar{width:5px}
-#nowcast-panel::-webkit-scrollbar-thumb{background:#334;border-radius:3px}
-#nowcast-header{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#0e1a27;z-index:1}
-#nowcast-title{font-size:10px;font-weight:700;color:#f0c040;letter-spacing:1px;text-transform:uppercase}
-#nowcast-close{background:none;border:none;color:#667;cursor:pointer;font-size:14px;padding:0;line-height:1}
-#nowcast-close:hover{color:#aab}
-#nowcast-body{padding:10px 12px}
-.nc-hint{font-size:11px;color:#667;text-align:center;padding:20px 5px;line-height:1.7}
-.nc-loading{font-size:11px;color:#778;text-align:center;padding:24px 0;letter-spacing:0.5px}
-.nc-loc{font-size:10px;color:#556;margin-bottom:8px}
-.nc-threat{border-radius:5px;padding:7px 10px;margin-bottom:8px;font-size:11px;font-weight:700;line-height:1.4}
-.nc-threat-EXTREME{background:rgba(160,0,0,0.35);border:1px solid #cc0000;color:#ff7777}
-.nc-threat-HIGH{background:rgba(160,70,0,0.35);border:1px solid #cc5500;color:#ff9955}
-.nc-threat-MODERATE{background:rgba(140,90,0,0.35);border:1px solid #bb7700;color:#ffbb55}
-.nc-threat-ELEVATED{background:rgba(110,100,0,0.35);border:1px solid #998800;color:#ddcc55}
-.nc-threat-LOW{background:rgba(0,70,0,0.35);border:1px solid #006600;color:#66cc77}
-.nc-threat-MARGINAL{background:rgba(0,55,75,0.35);border:1px solid #005566;color:#44aacc}
-.nc-threat-NONE{background:rgba(15,30,50,0.5);border:1px solid #223;color:#778}
-.nc-why{font-size:10px;color:#99aabb;line-height:1.65;margin-bottom:10px;background:rgba(255,255,255,0.02);border-left:2px solid #334;padding:7px 9px;border-radius:0 4px 4px 0}
-.nc-section-hdr{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#445;font-weight:700;margin:10px 0 5px}
-.nc-cond-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
-.nc-cond-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:3px 7px;font-size:10px;color:#aabb}
-.nc-alert-item{border-radius:4px;padding:4px 8px;margin-bottom:3px;font-size:10px;color:#aab;border-left:3px solid #334;background:rgba(255,255,255,0.03)}
-.nc-alert-EXTREME{border-left-color:#cc0000}
-.nc-alert-HIGH,.nc-alert-MODERATE{border-left-color:#cc5500}
-.nc-alert-ELEVATED{border-left-color:#998800}
-.nc-spc{font-size:10px;color:#778;line-height:1.55;margin-bottom:4px}
+#nowcast-panel::-webkit-scrollbar-thumb{background:#1e3a55;border-radius:3px}
+#nowcast-header{padding:10px 13px;border-bottom:1px solid rgba(80,130,190,0.15);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#0f1e30;z-index:1;gap:8px}
+#nowcast-title{font-size:10px;font-weight:700;color:#f0c040;letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap}
+#nowcast-mode-btns{display:flex;gap:4px;flex-shrink:0}
+.nc-mode-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#7a9ab8;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.nc-mode-btn.active{background:rgba(240,192,64,0.18);border-color:rgba(240,192,64,0.5);color:#f0c040}
+.nc-mode-btn:hover{color:#c8d8e8}
+#nowcast-close{background:none;border:none;color:#4a6a88;cursor:pointer;font-size:15px;padding:0;line-height:1;flex-shrink:0;transition:color 0.15s}
+#nowcast-close:hover{color:#c8d8e8}
+#nowcast-body{padding:12px 13px}
+.nc-hint{font-size:11px;color:#5a7a98;text-align:center;padding:18px 8px;line-height:1.8}
+.nc-loading{font-size:11px;color:#6a8aaa;text-align:center;padding:26px 0;letter-spacing:0.5px}
+.nc-loc{font-size:10px;color:#5a88b8;margin-bottom:10px;font-weight:600;letter-spacing:0.3px}
+.nc-threat{border-radius:6px;padding:10px 12px;margin-bottom:11px;font-size:12px;font-weight:700;line-height:1.45}
+.nc-threat-EXTREME{background:rgba(180,0,0,0.45);border:1px solid #dd3333;color:#ffcccc}
+.nc-threat-HIGH{background:rgba(180,80,0,0.45);border:1px solid #ee7700;color:#ffd0a0}
+.nc-threat-MODERATE{background:rgba(160,115,0,0.45);border:1px solid #ddaa00;color:#ffe880}
+.nc-threat-ELEVATED{background:rgba(120,115,0,0.45);border:1px solid #bbaa00;color:#eedd66}
+.nc-threat-LOW{background:rgba(0,95,25,0.45);border:1px solid #00bb44;color:#99eebb}
+.nc-threat-MARGINAL{background:rgba(0,75,110,0.45);border:1px solid #0099cc;color:#88ddff}
+.nc-threat-NONE{background:rgba(15,40,65,0.7);border:1px solid #1e3a55;color:#7a9ab8}
+.nc-why{font-size:11px;color:#b0c8de;line-height:1.72;margin-bottom:12px;background:rgba(80,130,200,0.07);border-left:3px solid rgba(80,130,200,0.35);padding:9px 11px;border-radius:0 5px 5px 0}
+.nc-section-hdr{font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#4a7aaa;font-weight:700;margin:13px 0 7px}
+.nc-cond-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:5px}
+.nc-cond-item{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:4px 9px;font-size:11px;color:#c8dcea}
+.nc-alert-item{border-radius:5px;padding:6px 10px;margin-bottom:4px;font-size:11px;color:#c0d4e8;border-left:3px solid #1e3a55;background:rgba(255,255,255,0.05)}
+.nc-alert-EXTREME{border-left-color:#dd3333;color:#ffcccc}
+.nc-alert-HIGH,.nc-alert-MODERATE{border-left-color:#ee7700;color:#ffd0a0}
+.nc-alert-ELEVATED{border-left-color:#bbaa00;color:#eedd66}
+.nc-spc{font-size:10px;color:#7a9ab8;line-height:1.65;margin-bottom:5px}
 .nc-reports{display:flex;gap:6px;flex-wrap:wrap}
-.nc-report-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:3px 7px;font-size:10px;color:#aab}
-.nc-ts{font-size:9px;color:#334;margin-top:12px;text-align:right}
+.nc-report-item{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:4px 9px;font-size:11px;color:#c8dcea}
+.nc-ts{font-size:9px;color:#1e3a55;margin-top:14px;text-align:right}
 
 /* ── MODELS SIDEBAR (simplified) ────────────────────────────────── */
 #tab-models{padding:12px 10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
@@ -1016,11 +1020,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <button id="nowcast-btn" onclick="toggleNowcastMode()" title="Severe Weather Nowcast — click any map location">⚡ Nowcast</button>
     <div id="nowcast-panel">
       <div id="nowcast-header">
-        <span id="nowcast-title">Severe Weather Nowcast</span>
+        <span id="nowcast-title">⚡ Nowcast</span>
+        <div id="nowcast-mode-btns">
+          <button class="nc-mode-btn active" id="nc-point-btn" onclick="setNowcastInputMode('point')">📍 Point</button>
+          <button class="nc-mode-btn" id="nc-box-btn" onclick="setNowcastInputMode('box')">⬜ Area</button>
+        </div>
         <button id="nowcast-close" onclick="closeNowcast()">✕</button>
       </div>
       <div id="nowcast-body">
-        <div class="nc-hint">Click any location on the map to get a severe weather briefing for that spot.<br><br>Requires MCP server running.</div>
+        <div class="nc-hint" id="nc-hint-text">Click any spot on the map for a severe weather briefing.<br><br>Requires MCP server running.</div>
       </div>
     </div>
 
@@ -1725,9 +1733,12 @@ function initMap() {
   mtGroup          = L.layerGroup();
 
   map.on('click', (e) => {
-    if (nowcastMode) { runNowcast(e.latlng.lat, e.latlng.lng); return; }
-    closeDetail(); onModMapClick(e);
+    if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
+    if (!nowcastMode) { closeDetail(); onModMapClick(e); }
   });
+  map.on('mousedown', ncOnMouseDown);
+  map.on('mousemove', ncOnMouseMove);
+  map.on('mouseup',   ncOnMouseUp);
   map.on('zoomend', () => { updateNexradVisibility(); updateZoomBadge(); });
   updateZoomBadge();
 }
@@ -4913,18 +4924,15 @@ function toggleFwxLegend() {
 // ═══════════════════════════════════════════════════════════════════
 
 let nowcastMode = false;
+let nowcastInputMode = 'point'; // 'point' or 'box'
+let ncBoxStart = null, ncBoxRect = null;
 
 function toggleNowcastMode() {
   nowcastMode = !nowcastMode;
-  const btn = document.getElementById('nowcast-btn');
-  const panel = document.getElementById('nowcast-panel');
-  btn.classList.toggle('active', nowcastMode);
-  if (nowcastMode) {
-    panel.style.display = 'block';
-    map.getContainer().style.cursor = 'crosshair';
-  } else {
-    closeNowcast();
-  }
+  document.getElementById('nowcast-btn').classList.toggle('active', nowcastMode);
+  document.getElementById('nowcast-panel').style.display = nowcastMode ? 'block' : 'none';
+  map.getContainer().style.cursor = nowcastMode ? 'crosshair' : '';
+  if (!nowcastMode) { ncClearBox(); map.dragging.enable(); }
 }
 
 function closeNowcast() {
@@ -4932,25 +4940,72 @@ function closeNowcast() {
   document.getElementById('nowcast-btn').classList.remove('active');
   document.getElementById('nowcast-panel').style.display = 'none';
   map.getContainer().style.cursor = '';
+  ncClearBox();
+  map.dragging.enable();
 }
 
-async function runNowcast(lat, lon) {
+function setNowcastInputMode(mode) {
+  nowcastInputMode = mode;
+  document.getElementById('nc-point-btn').classList.toggle('active', mode === 'point');
+  document.getElementById('nc-box-btn').classList.toggle('active', mode === 'box');
+  const hint = document.getElementById('nc-hint-text');
+  if (hint) hint.textContent = mode === 'box'
+    ? 'Drag a box on the map to get a regional severe weather briefing.'
+    : 'Click any spot on the map for a severe weather briefing.';
+  ncClearBox();
+}
+
+function ncClearBox() {
+  if (ncBoxRect) { map.removeLayer(ncBoxRect); ncBoxRect = null; }
+  ncBoxStart = null;
+}
+
+// Box drawing — mousedown/mousemove/mouseup on map
+function ncOnMouseDown(e) {
+  if (!nowcastMode || nowcastInputMode !== 'box') return;
+  map.dragging.disable();
+  ncClearBox();
+  ncBoxStart = e.latlng;
+}
+function ncOnMouseMove(e) {
+  if (!ncBoxStart) return;
+  const bounds = L.latLngBounds(ncBoxStart, e.latlng);
+  if (ncBoxRect) { ncBoxRect.setBounds(bounds); }
+  else { ncBoxRect = L.rectangle(bounds, { color: '#f0c040', weight: 2, fillColor: '#f0c040', fillOpacity: 0.08, dashArray: '4' }).addTo(map); }
+}
+function ncOnMouseUp(e) {
+  if (!ncBoxStart) return;
+  map.dragging.enable();
+  const bounds = L.latLngBounds(ncBoxStart, e.latlng);
+  const center = bounds.getCenter();
+  ncBoxStart = null;
+  // Keep the box visible while loading
+  runNowcast(center.lat, center.lng, bounds);
+}
+
+async function runNowcast(lat, lon, bounds) {
   document.getElementById('nowcast-panel').style.display = 'block';
   document.getElementById('nowcast-body').innerHTML = '<div class="nc-loading">Gathering weather data…</div>';
   try {
     const res = await fetch(`http://localhost:3456/nowcast?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);
     if (!res.ok) throw new Error(`Server error ${res.status}`);
-    renderNowcast(await res.json());
+    renderNowcast(await res.json(), bounds);
   } catch (err) {
+    ncClearBox();
     document.getElementById('nowcast-body').innerHTML =
-      `<div class="nc-hint">Could not get nowcast data.<br><small style="color:#445">${err.message}</small><br><small style="color:#334">Is the MCP server running?</small></div>`;
+      `<div class="nc-hint">Could not get nowcast data.<br><small style="color:#4a6a88">${err.message}</small><br><small style="color:#1e3a55">Is the MCP server running?</small></div>`;
   }
 }
 
-function renderNowcast(d) {
+function renderNowcast(d, bounds) {
+  ncClearBox();
   const tl = d.threatLevel ?? 'NONE';
   let html = '';
-  html += `<div class="nc-loc">${d.location.lat.toFixed(3)}°N, ${Math.abs(d.location.lon).toFixed(3)}°W${d.location.state ? ' · ' + d.location.state : ''}</div>`;
+
+  const locLabel = bounds
+    ? `Area · center ${d.location.lat.toFixed(2)}°N, ${Math.abs(d.location.lon).toFixed(2)}°W${d.location.state ? ' · ' + d.location.state : ''}`
+    : `${d.location.lat.toFixed(3)}°N, ${Math.abs(d.location.lon).toFixed(3)}°W${d.location.state ? ' · ' + d.location.state : ''}`;
+  html += `<div class="nc-loc">${locLabel}</div>`;
   html += `<div class="nc-threat nc-threat-${tl}">${d.headline}</div>`;
   html += `<div class="nc-why">${d.whyItMatters}</div>`;
 
@@ -4959,20 +5014,18 @@ function renderNowcast(d) {
     html += `<div class="nc-section-hdr">Current Conditions</div><div class="nc-cond-row">`;
     if (c.temp != null)     html += `<span class="nc-cond-item">🌡️ ${c.temp}°F</span>`;
     if (c.wind != null)     html += `<span class="nc-cond-item">💨 ${c.windDir ?? ''} ${c.wind} mph</span>`;
-    if (c.humidity != null) html += `<span class="nc-cond-item">💧 ${c.humidity}%</span>`;
+    if (c.humidity != null) html += `<span class="nc-cond-item">💧 ${c.humidity}% RH</span>`;
     if (c.condition)        html += `<span class="nc-cond-item">${c.condition}</span>`;
     html += `</div>`;
   }
 
   if (d.activeThreats?.length) {
     html += `<div class="nc-section-hdr">Active Threats</div>`;
-    d.activeThreats.forEach(t => {
-      html += `<div class="nc-alert-item nc-alert-${t.severity}">${t.type}</div>`;
-    });
+    d.activeThreats.forEach(t => html += `<div class="nc-alert-item nc-alert-${t.severity}">${t.type}</div>`);
   }
 
   html += `<div class="nc-section-hdr">SPC Day 1 — ${d.spc.level}</div>`;
-  const spcSnip = d.spc.excerpt.length > 250 ? d.spc.excerpt.slice(0, 250) + '…' : d.spc.excerpt;
+  const spcSnip = d.spc.excerpt.length > 280 ? d.spc.excerpt.slice(0, 280) + '…' : d.spc.excerpt;
   html += `<div class="nc-spc">${spcSnip}</div>`;
 
   if (d.stormReports?.total > 0) {
