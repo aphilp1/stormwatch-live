@@ -1412,6 +1412,131 @@ server.tool(
 );
 
 // ────────────────────────────────────────────────────────────────────────────
+// Severe Weather Nowcast agent — called by /nowcast HTTP endpoint
+
+async function runSevereWeatherNowcast(lat, lon) {
+  let stateCode = null;
+  try {
+    const ptRes = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`, { headers: NWS_HEADERS });
+    if (ptRes.ok) {
+      const pt = await ptRes.json();
+      stateCode = pt.properties?.relativeLocation?.properties?.state ?? null;
+    }
+  } catch (_) {}
+
+  const [alertsRes, spcRes, stormRptRes, condRes] = await Promise.allSettled([
+    stateCode
+      ? fetch(`https://api.weather.gov/alerts/active?area=${stateCode}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null)
+      : Promise.resolve(null),
+    fetch("https://www.spc.noaa.gov/products/outlook/day1otlk.txt").then(r => r.ok ? r.text() : ""),
+    fetch("https://www.spc.noaa.gov/climo/reports/today.csv").then(r => r.ok ? r.text() : ""),
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,windspeed_10m,winddirection_10m,weathercode,relativehumidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`).then(r => r.ok ? r.json() : null),
+  ]);
+
+  const alerts = [];
+  if (alertsRes.status === "fulfilled" && alertsRes.value?.features) {
+    alertsRes.value.features.forEach(f => alerts.push({
+      event: f.properties?.event ?? "Unknown",
+      severity: f.properties?.severity ?? "Unknown",
+      headline: f.properties?.headline ?? "",
+    }));
+  }
+
+  let spcLevel = "NONE", spcExcerpt = "No SPC data available.";
+  if (spcRes.status === "fulfilled" && spcRes.value) {
+    const t = spcRes.value;
+    if (/HIGH RISK/i.test(t)) spcLevel = "HIGH";
+    else if (/MODERATE RISK/i.test(t)) spcLevel = "MODERATE";
+    else if (/ENHANCED RISK/i.test(t)) spcLevel = "ENHANCED";
+    else if (/SLIGHT RISK/i.test(t)) spcLevel = "SLIGHT";
+    else if (/MARGINAL RISK/i.test(t)) spcLevel = "MARGINAL";
+    const lines = t.split("\n").map(l => l.trim()).filter(Boolean);
+    const s = lines.findIndex(l => /THERE IS|SLIGHT|MARGINAL|ENHANCED|MODERATE|HIGH|NO SEVERE/.test(l));
+    if (s >= 0) spcExcerpt = lines.slice(s, s + 4).join(" ").slice(0, 400);
+  }
+
+  const stormReports = { tornadoes: 0, hail: 0, wind: 0, total: 0 };
+  if (stormRptRes.status === "fulfilled" && stormRptRes.value) {
+    stormRptRes.value.split("\n").slice(1).forEach(l => {
+      const cols = l.split(",");
+      const type = cols[0]?.trim(), st = cols[5]?.trim()?.toUpperCase();
+      if (!stateCode || st === stateCode) {
+        if (type === "T") { stormReports.tornadoes++; stormReports.total++; }
+        else if (type === "H") { stormReports.hail++; stormReports.total++; }
+        else if (type === "W") { stormReports.wind++; stormReports.total++; }
+      }
+    });
+  }
+
+  let currentConditions = null;
+  if (condRes.status === "fulfilled" && condRes.value) {
+    const c = condRes.value.current;
+    currentConditions = {
+      temp: c?.temperature_2m != null ? Math.round(c.temperature_2m) : null,
+      wind: c?.windspeed_10m != null ? Math.round(c.windspeed_10m) : null,
+      windDir: c?.winddirection_10m != null ? dirToCardinal(c.winddirection_10m) : null,
+      humidity: c?.relativehumidity_2m ?? null,
+      condition: WMO[c?.weathercode] ?? "Unknown",
+    };
+  }
+
+  const tornadoWarning = alerts.some(a => a.event.includes("Tornado Warning"));
+  const tornadoWatch   = alerts.some(a => a.event.includes("Tornado Watch"));
+  const svreWarning    = alerts.some(a => a.event.includes("Severe Thunderstorm Warning"));
+  const svreWatch      = alerts.some(a => a.event.includes("Severe Thunderstorm Watch"));
+
+  let threatLevel;
+  if (tornadoWarning || alerts.some(a => a.severity === "Extreme")) threatLevel = "EXTREME";
+  else if (spcLevel === "HIGH")                                       threatLevel = "HIGH";
+  else if (tornadoWatch || spcLevel === "MODERATE")                   threatLevel = "MODERATE";
+  else if (svreWarning  || spcLevel === "ENHANCED")                   threatLevel = "ELEVATED";
+  else if (svreWatch    || spcLevel === "SLIGHT")                     threatLevel = "LOW";
+  else if (spcLevel === "MARGINAL")                                   threatLevel = "MARGINAL";
+  else                                                                threatLevel = "NONE";
+
+  const { headline, whyItMatters } = generateSevereNarrative(threatLevel, spcLevel, stormReports, stateCode);
+
+  const activeThreats = [];
+  if (tornadoWarning) activeThreats.push({ type: "Tornado Warning",             severity: "EXTREME"  });
+  if (tornadoWatch)   activeThreats.push({ type: "Tornado Watch",               severity: "HIGH"     });
+  if (svreWarning)    activeThreats.push({ type: "Severe Thunderstorm Warning", severity: "ELEVATED" });
+  if (svreWatch)      activeThreats.push({ type: "Severe Thunderstorm Watch",   severity: "LOW"      });
+  alerts.filter(a =>
+    !["Tornado Warning","Tornado Watch","Severe Thunderstorm Warning","Severe Thunderstorm Watch"].some(t => a.event.includes(t)) &&
+    ["Extreme","Severe"].includes(a.severity)
+  ).slice(0, 3).forEach(a => activeThreats.push({ type: a.event, severity: a.severity.toUpperCase() }));
+
+  return {
+    location: { lat: parseFloat(lat.toFixed(4)), lon: parseFloat(lon.toFixed(4)), state: stateCode },
+    timestamp: new Date().toISOString(),
+    threatLevel, headline, whyItMatters,
+    currentConditions, activeThreats,
+    spc: { level: spcLevel, excerpt: spcExcerpt },
+    stormReports, totalAlerts: alerts.length,
+  };
+}
+
+function generateSevereNarrative(threatLevel, spcLevel, stormReports, state) {
+  const sl = state ?? "this area";
+  const rpt = stormReports.total > 0
+    ? ` Today's reports in ${sl}: ${[
+        stormReports.tornadoes > 0 ? stormReports.tornadoes + " tornado(es)" : "",
+        stormReports.hail > 0      ? stormReports.hail + " large hail"      : "",
+        stormReports.wind > 0      ? stormReports.wind + " damaging wind"   : "",
+      ].filter(Boolean).join(", ")}.`
+    : "";
+  switch (threatLevel) {
+    case "EXTREME":  return { headline: "TORNADO WARNING — Take shelter immediately", whyItMatters: "A tornado warning means rotation has been detected by radar or a tornado has been sighted. This is the highest-urgency alert in the NWS system. Move to an interior room on the lowest floor, away from windows. Do not wait for visual confirmation." };
+    case "HIGH":     return { headline: "HIGH RISK — Major severe weather outbreak likely", whyItMatters: `SPC High Risk is issued fewer than 5 times per year and signals a widespread, high-confidence outbreak. Multiple tornadoes (some violent EF3+), significant hail, and destructive winds are all possible. This is a life-threatening situation.${rpt}` };
+    case "MODERATE": return { headline: "MODERATE RISK — Significant severe weather likely", whyItMatters: `SPC Moderate Risk means a notable event is expected in ${sl}. This level is reserved for high-confidence days with multiple tornadoes or large hail likely. Instability and wind shear support supercell development. Know your shelter.${rpt}` };
+    case "ELEVATED": return { headline: "ELEVATED RISK — Severe thunderstorms likely", whyItMatters: `SPC Enhanced Risk or active severe warnings indicate organized severe weather is occurring or expected. Supercells capable of tornadoes, large hail (1"+), and winds above 58 mph are possible. Have a shelter plan ready.${rpt}` };
+    case "LOW":      return { headline: "LOW RISK — Isolated severe weather possible", whyItMatters: `SPC Slight Risk or an active severe thunderstorm watch means conditions support scattered severe weather. Isolated supercells could produce tornadoes, hail, or damaging winds. Stay weather-aware.${rpt}` };
+    case "MARGINAL": return { headline: "MARGINAL RISK — Low but nonzero severe threat", whyItMatters: `SPC Marginal Risk — the lowest categorical level — means some storms may briefly become severe. Typical hazards: quarter-size hail or 58 mph gusts. No significant event expected.${rpt}` };
+    default:         return { headline: "No significant severe weather threat", whyItMatters: `NWS data and SPC outlook show no active severe weather threats for this location.${rpt} Conditions remain below severe thresholds.` };
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
@@ -1501,6 +1626,25 @@ createServer(async (req, res) => {
       }));
     } catch (err) {
       process.stderr.write(`[stormwatch] /windninja error: ${err.message}\n`);
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  if (url.pathname === "/nowcast") {
+    const lat = parseFloat(url.searchParams.get("lat") ?? "NaN");
+    const lon = parseFloat(url.searchParams.get("lon") ?? "NaN");
+    if (isNaN(lat) || isNaN(lon)) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ error: "lat and lon are required" }));
+      return;
+    }
+    try {
+      const result = await runSevereWeatherNowcast(lat, lon);
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      process.stderr.write(`[stormwatch] /nowcast error: ${err.message}\n`);
       res.writeHead(500);
       res.end(JSON.stringify({ error: err.message }));
     }
