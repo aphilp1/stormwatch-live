@@ -353,18 +353,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .nc-threat-LOW{background:rgba(0,95,25,0.45);border:1px solid #00bb44;color:#99eebb}
 .nc-threat-MARGINAL{background:rgba(0,75,110,0.45);border:1px solid #0099cc;color:#88ddff}
 .nc-threat-NONE{background:rgba(15,40,65,0.7);border:1px solid #1e3a55;color:#7a9ab8}
-.nc-why{font-size:11px;color:#b0c8de;line-height:1.72;margin-bottom:12px;background:rgba(80,130,200,0.07);border-left:3px solid rgba(80,130,200,0.35);padding:9px 11px;border-radius:0 5px 5px 0}
-.nc-section-hdr{font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#4a7aaa;font-weight:700;margin:13px 0 7px}
+.nc-why{font-size:11px;color:#d8eaf8;line-height:1.72;margin-bottom:12px;background:rgba(80,130,200,0.07);border-left:3px solid rgba(80,130,200,0.35);padding:9px 11px;border-radius:0 5px 5px 0}
+.nc-section-hdr{font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#6a9abf;font-weight:700;margin:13px 0 7px}
 .nc-cond-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:5px}
-.nc-cond-item{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:4px 9px;font-size:11px;color:#c8dcea}
-.nc-alert-item{border-radius:5px;padding:6px 10px;margin-bottom:4px;font-size:11px;color:#c0d4e8;border-left:3px solid #1e3a55;background:rgba(255,255,255,0.05)}
+.nc-cond-item{background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.13);border-radius:5px;padding:4px 9px;font-size:11px;color:#e4f0fa}
+.nc-alert-item{border-radius:5px;padding:6px 10px;margin-bottom:4px;font-size:11px;color:#dceefa;border-left:3px solid #1e3a55;background:rgba(255,255,255,0.06)}
 .nc-alert-EXTREME{border-left-color:#dd3333;color:#ffcccc}
 .nc-alert-HIGH,.nc-alert-MODERATE{border-left-color:#ee7700;color:#ffd0a0}
 .nc-alert-ELEVATED{border-left-color:#bbaa00;color:#eedd66}
-.nc-spc{font-size:10px;color:#7a9ab8;line-height:1.65;margin-bottom:5px}
+.nc-spc{font-size:10px;color:#aac4dc;line-height:1.65;margin-bottom:5px}
 .nc-reports{display:flex;gap:6px;flex-wrap:wrap}
-.nc-report-item{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:4px 9px;font-size:11px;color:#c8dcea}
-.nc-ts{font-size:9px;color:#1e3a55;margin-top:14px;text-align:right}
+.nc-report-item{background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.13);border-radius:5px;padding:4px 9px;font-size:11px;color:#e4f0fa}
+.nc-ts{font-size:9px;color:#2a4a6a;margin-top:14px;text-align:right}
 
 /* ── MODELS SIDEBAR (simplified) ────────────────────────────────── */
 #tab-models{padding:12px 10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
@@ -1848,6 +1848,30 @@ function buildGeom(alert) {
 // RENDER ALERTS ON MAP
 // ═══════════════════════════════════════════════════════════════════
 
+function ptInRing(pt, ring) {
+  let inside = false;
+  const px = pt.lng, py = pt.lat;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function ptInGeom(latlng, geom) {
+  if (!geom) return false;
+  const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
+  return polys.some(poly => ptInRing(latlng, poly[0]));
+}
+function mostSevereAlertAt(latlng) {
+  let best = null, bestScore = Infinity;
+  for (const a of alerts) {
+    if (!ptInGeom(latlng, geomCache[a.id])) continue;
+    const score = SEV_ORDER[a.properties.severity] ?? 4;
+    if (score < bestScore) { bestScore = score; best = a.id; }
+  }
+  return best;
+}
+
 function renderAlerts() {
   alertGroup.clearLayers();
   // Render lowest severity first (highest on top)
@@ -1874,7 +1898,7 @@ function addAlertPolygon(alert, geom, targetGroup=alertGroup) {
 
   lyr.on('mouseover', () => lyr.setStyle({fillOpacity:Math.min(s.fo*2,0.75),weight:s.w+1}));
   lyr.on('mouseout',  () => { if(selectedId!==alert.id) lyr.setStyle({fillOpacity:s.fo,weight:s.w}); });
-  lyr.on('click', e  => { L.DomEvent.stopPropagation(e); selectAlert(alert.id); });
+  lyr.on('click', e  => { L.DomEvent.stopPropagation(e); selectAlert(mostSevereAlertAt(e.latlng) ?? alert.id); });
   lyr._alertId = alert.id;
   targetGroup.addLayer(lyr);
 }
@@ -4998,7 +5022,6 @@ async function runNowcast(lat, lon, bounds) {
 }
 
 function renderNowcast(d, bounds) {
-  ncClearBox();
   const tl = d.threatLevel ?? 'NONE';
   let html = '';
 
