@@ -1425,9 +1425,7 @@ async function runSevereWeatherNowcast(lat, lon) {
   } catch (_) {}
 
   const [alertsRes, spcRes, stormRptRes, condRes] = await Promise.allSettled([
-    stateCode
-      ? fetch(`https://api.weather.gov/alerts/active?area=${stateCode}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null)
-      : Promise.resolve(null),
+    fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null),
     fetch("https://www.spc.noaa.gov/products/outlook/day1otlk.txt").then(r => r.ok ? r.text() : ""),
     fetch("https://www.spc.noaa.gov/climo/reports/today.csv").then(r => r.ok ? r.text() : ""),
     fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,windspeed_10m,winddirection_10m,weathercode,relativehumidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`).then(r => r.ok ? r.json() : null),
