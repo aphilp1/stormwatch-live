@@ -1414,7 +1414,26 @@ server.tool(
 // ────────────────────────────────────────────────────────────────────────────
 // Severe Weather Nowcast agent — called by /nowcast HTTP endpoint
 
-async function runSevereWeatherNowcast(lat, lon) {
+function geomBBox(geometry) {
+  if (!geometry) return null;
+  let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+  const walk = coords => {
+    if (typeof coords[0] === 'number') {
+      const [lo, la] = coords;
+      if (lo < minLon) minLon = lo; if (lo > maxLon) maxLon = lo;
+      if (la < minLat) minLat = la; if (la > maxLat) maxLat = la;
+    } else coords.forEach(walk);
+  };
+  if (geometry.type === 'Polygon') geometry.coordinates.forEach(walk);
+  else if (geometry.type === 'MultiPolygon') geometry.coordinates.forEach(r => r.forEach(walk));
+  return minLat === Infinity ? null : { minLat, maxLat, minLon, maxLon };
+}
+
+function bboxIntersects(a, b) {
+  return a.minLat < b.maxLat && a.maxLat > b.minLat && a.minLon < b.maxLon && a.maxLon > b.minLon;
+}
+
+async function runSevereWeatherNowcast(lat, lon, queryBbox = null, overrides = null) {
   let stateCode = null;
   try {
     const ptRes = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`, { headers: NWS_HEADERS });
@@ -1433,11 +1452,19 @@ async function runSevereWeatherNowcast(lat, lon) {
 
   const alerts = [];
   if (alertsRes.status === "fulfilled" && alertsRes.value?.features) {
-    alertsRes.value.features.forEach(f => alerts.push({
-      event: f.properties?.event ?? "Unknown",
-      severity: f.properties?.severity ?? "Unknown",
-      headline: f.properties?.headline ?? "",
-    }));
+    alertsRes.value.features.forEach(f => {
+      // In area mode, skip alerts whose polygon doesn't intersect the drawn box.
+      // Alerts with no geometry (zone-only) are kept — the point query already scoped them.
+      if (queryBbox && f.geometry) {
+        const ab = geomBBox(f.geometry);
+        if (ab && !bboxIntersects(ab, queryBbox)) return;
+      }
+      alerts.push({
+        event: f.properties?.event ?? "Unknown",
+        severity: f.properties?.severity ?? "Unknown",
+        headline: f.properties?.headline ?? "",
+      });
+    });
   }
 
   let spcLevel = "NONE", spcExcerpt = "No SPC data available.";
@@ -1478,21 +1505,27 @@ async function runSevereWeatherNowcast(lat, lon) {
     };
   }
 
-  const tornadoWarning = alerts.some(a => a.event.includes("Tornado Warning"));
-  const tornadoWatch   = alerts.some(a => a.event.includes("Tornado Watch"));
-  const svreWarning    = alerts.some(a => a.event.includes("Severe Thunderstorm Warning"));
-  const svreWatch      = alerts.some(a => a.event.includes("Severe Thunderstorm Watch"));
+  // Use client-provided flags (exact polygon geometry) when available; fall back to zone-based API
+  const tornadoWarning = overrides ? overrides.tornadoWarning : alerts.some(a => a.event.includes("Tornado Warning"));
+  const tornadoWatch   = overrides ? overrides.tornadoWatch   : alerts.some(a => a.event.includes("Tornado Watch"));
+  const svreWarning    = overrides ? overrides.svreWarning    : alerts.some(a => a.event.includes("Severe Thunderstorm Warning"));
+  const svreWatch      = overrides ? overrides.svreWatch      : alerts.some(a => a.event.includes("Severe Thunderstorm Watch"));
 
+  // When overrides present, trust only client-side polygon data — skip unreliable zone-based extreme check
+  const zoneExtreme = !overrides && alerts.some(a => a.severity === "Extreme");
   let threatLevel;
-  if (tornadoWarning || alerts.some(a => a.severity === "Extreme")) threatLevel = "EXTREME";
-  else if (spcLevel === "HIGH")                                       threatLevel = "HIGH";
-  else if (tornadoWatch || spcLevel === "MODERATE")                   threatLevel = "MODERATE";
-  else if (svreWarning  || spcLevel === "ENHANCED")                   threatLevel = "ELEVATED";
-  else if (svreWatch    || spcLevel === "SLIGHT")                     threatLevel = "LOW";
-  else if (spcLevel === "MARGINAL")                                   threatLevel = "MARGINAL";
-  else                                                                threatLevel = "NONE";
+  if (tornadoWarning || zoneExtreme)           threatLevel = "EXTREME";
+  else if (spcLevel === "HIGH")                threatLevel = "HIGH";
+  else if (tornadoWatch || spcLevel === "MODERATE") threatLevel = "MODERATE";
+  else if (svreWarning  || spcLevel === "ENHANCED") threatLevel = "ELEVATED";
+  else if (svreWatch    || spcLevel === "SLIGHT")   threatLevel = "LOW";
+  else if (spcLevel === "MARGINAL")                 threatLevel = "MARGINAL";
+  else                                              threatLevel = "NONE";
 
-  const { headline, whyItMatters } = generateSevereNarrative(threatLevel, spcLevel, stormReports, stateCode);
+  const extremeNonTornado = overrides?.extremeEvent
+    ? { event: overrides.extremeEvent }
+    : alerts.find(a => a.severity === "Extreme" && !a.event.includes("Tornado Warning"));
+  const { headline, whyItMatters } = generateSevereNarrative(threatLevel, spcLevel, stormReports, stateCode, { tornadoWarning, extremeNonTornado });
 
   const activeThreats = [];
   if (tornadoWarning) activeThreats.push({ type: "Tornado Warning",             severity: "EXTREME"  });
@@ -1514,7 +1547,7 @@ async function runSevereWeatherNowcast(lat, lon) {
   };
 }
 
-function generateSevereNarrative(threatLevel, spcLevel, stormReports, state) {
+function generateSevereNarrative(threatLevel, spcLevel, stormReports, state, ctx = {}) {
   const sl = state ?? "this area";
   const rpt = stormReports.total > 0
     ? ` Today's reports in ${sl}: ${[
@@ -1524,7 +1557,13 @@ function generateSevereNarrative(threatLevel, spcLevel, stormReports, state) {
       ].filter(Boolean).join(", ")}.`
     : "";
   switch (threatLevel) {
-    case "EXTREME":  return { headline: "TORNADO WARNING — Take shelter immediately", whyItMatters: "A tornado warning means rotation has been detected by radar or a tornado has been sighted. This is the highest-urgency alert in the NWS system. Move to an interior room on the lowest floor, away from windows. Do not wait for visual confirmation." };
+    case "EXTREME": {
+      if (ctx.tornadoWarning) {
+        return { headline: "TORNADO WARNING — Take shelter immediately", whyItMatters: "A tornado warning means rotation has been detected by radar or a tornado has been sighted. This is the highest-urgency alert in the NWS system. Move to an interior room on the lowest floor, away from windows. Do not wait for visual confirmation." };
+      }
+      const ename = ctx.extremeNonTornado?.event ?? "Extreme weather emergency";
+      return { headline: `${ename} — Immediate danger to life`, whyItMatters: `An extreme-severity NWS alert is active for this area: ${ename}. This is the highest CAP severity rating and indicates an extraordinary threat to life or property. Follow all emergency instructions immediately.${rpt}` };
+    }
     case "HIGH":     return { headline: "HIGH RISK — Major severe weather outbreak likely", whyItMatters: `SPC High Risk is issued fewer than 5 times per year and signals a widespread, high-confidence outbreak. Multiple tornadoes (some violent EF3+), significant hail, and destructive winds are all possible. This is a life-threatening situation.${rpt}` };
     case "MODERATE": return { headline: "MODERATE RISK — Significant severe weather likely", whyItMatters: `SPC Moderate Risk means a notable event is expected in ${sl}. This level is reserved for high-confidence days with multiple tornadoes or large hail likely. Instability and wind shear support supercell development. Know your shelter.${rpt}` };
     case "ELEVATED": return { headline: "ELEVATED RISK — Severe thunderstorms likely", whyItMatters: `SPC Enhanced Risk or active severe warnings indicate organized severe weather is occurring or expected. Supercells capable of tornadoes, large hail (1"+), and winds above 58 mph are possible. Have a shelter plan ready.${rpt}` };
@@ -1638,8 +1677,22 @@ createServer(async (req, res) => {
       res.end(JSON.stringify({ error: "lat and lon are required" }));
       return;
     }
+    const minLat = parseFloat(url.searchParams.get("minLat") ?? "NaN");
+    const maxLat = parseFloat(url.searchParams.get("maxLat") ?? "NaN");
+    const minLon = parseFloat(url.searchParams.get("minLon") ?? "NaN");
+    const maxLon = parseFloat(url.searchParams.get("maxLon") ?? "NaN");
+    const queryBbox = (!isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLon) && !isNaN(maxLon))
+      ? { minLat, maxLat, minLon, maxLon } : null;
+    const twParam = url.searchParams.get("tw");
+    const overrides = twParam !== null ? {
+      tornadoWarning: twParam === "1",
+      tornadoWatch:   url.searchParams.get("twch") === "1",
+      svreWarning:    url.searchParams.get("sw") === "1",
+      svreWatch:      url.searchParams.get("swch") === "1",
+      extremeEvent:   url.searchParams.get("extreme_event") ?? null,
+    } : null;
     try {
-      const result = await runSevereWeatherNowcast(lat, lon);
+      const result = await runSevereWeatherNowcast(lat, lon, queryBbox, overrides);
       res.end(JSON.stringify(result));
     } catch (err) {
       process.stderr.write(`[stormwatch] /nowcast error: ${err.message}\n`);
