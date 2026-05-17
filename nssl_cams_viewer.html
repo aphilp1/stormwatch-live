@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NOAA NSSL CAMs Viewer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#fff;color:#1a1a1a;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
+
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* ── Controls bar ── */
+#controls{
+  display:flex;align-items:center;gap:10px;padding:5px 14px;
+  background:#f0f2f5;border-bottom:1px solid #d0d4dc;
+  flex-shrink:0;flex-wrap:wrap;min-height:40px
+}
+#app-title{font-size:12px;font-weight:800;letter-spacing:.04em;white-space:nowrap;margin-right:4px;color:#1a1a1a}
+.ctrl-group{display:flex;align-items:center;gap:4px}
+.ctrl-group label{font-size:9px;color:#666;white-space:nowrap}
+select,input[type=date]{
+  background:#fff;border:1px solid #bbb;color:#222;
+  font-size:10px;border-radius:4px;padding:3px 6px;cursor:pointer
+}
+#btn-load{
+  background:#1a6fc4;border:none;color:#fff;font-size:10px;font-weight:700;
+  border-radius:4px;padding:4px 11px;cursor:pointer;white-space:nowrap
+}
+#btn-load:hover{background:#1d7fd8}
+#hdr-status{margin-left:auto;font-size:10px;color:#1a1a1a;font-weight:600;white-space:nowrap}
+
+/* ── Panel grid ── */
+#grid{
+  display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+  gap:3px;background:#ccc;flex:1;min-height:0
+}
+.panel{position:relative;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid #bbb}
+.panel img{width:100%;height:100%;object-fit:contain;display:block}
+.panel-lbl{
+  position:absolute;top:6px;left:8px;z-index:2;
+  background:transparent;color:#111;font-size:11px;font-weight:700;
+  padding:1px 0;pointer-events:none;white-space:nowrap;
+  text-shadow:1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff
+}
+.panel-time{
+  position:absolute;top:6px;right:8px;z-index:2;
+  background:transparent;color:#333;font-size:10px;
+  padding:1px 0;pointer-events:none;white-space:nowrap;
+  text-shadow:1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff
+}
+.panel-overlay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:6px;color:rgba(0,0,0,0.4);font-size:11px
+}
+.panel-overlay.gone{display:none}
+.err-msg{color:rgba(160,0,0,0.75);font-size:10px}
+
+/* ── Timebar ── */
+#timebar{
+  flex-shrink:0;overflow-x:auto;background:#e8e8e8;
+  border-top:1px solid #ccc;
+  display:flex;align-items:center;padding:3px 10px;gap:3px;height:36px
+}
+#timebar::-webkit-scrollbar{height:4px}
+#timebar::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.2);border-radius:2px}
+.day-sep{font-size:9px;color:#1a6fc4;font-weight:700;white-space:nowrap;padding:0 5px;flex-shrink:0;user-select:none;border-left:1px solid rgba(0,0,0,0.2);margin-left:4px;padding-left:8px}
+.tbtn{
+  background:none;border:1px solid rgba(0,0,0,0.1);
+  color:rgba(0,0,0,0.55);font-size:8px;padding:3px 5px;border-radius:3px;
+  cursor:pointer;white-space:nowrap;flex-shrink:0
+}
+.tbtn.active{background:#1a6fc4;border-color:#1a6fc4;color:#fff}
+.tbtn:hover:not(.active){background:rgba(0,0,0,0.1);color:#000}
+
+/* ── Playback bar ── */
+#playbar{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:4px 14px;background:#f0f2f5;border-top:1px solid #d0d4dc;
+  flex-shrink:0;height:36px
+}
+.pbtn{
+  background:rgba(0,0,0,0.08);border:1px solid rgba(0,0,0,0.15);
+  color:#333;border-radius:4px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center
+}
+.pbtn:hover{background:rgba(0,0,0,0.18)}
+.pbtn.play{font-size:13px;font-weight:700;min-width:32px;height:26px;padding:0 6px}
+.pbtn.step{font-size:16px;width:26px;height:26px}
+.pbtn.spd{font-size:14px;width:22px;height:22px}
+#spd-val{font-size:11px;color:#222;min-width:18px;text-align:center;font-weight:700}
+.kbd-hint{font-size:9px;color:#aaa;margin-left:10px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Controls -->
+  <div id="controls">
+    <span id="app-title">NOAA NSSL CAMs</span>
+
+    <div class="ctrl-group">
+      <label>Dataset</label>
+      <select id="sel-dataset" onchange="onParamChange()">
+        <option value="det_cams_rgh_00">RRFS/MPAS-GSL/HRRR (00z)</option>
+        <option value="det_cams_mpas_00">MPAS-NSSL (00z)</option>
+      </select>
+    </div>
+
+    <div class="ctrl-group">
+      <label>Comparison</label>
+      <select id="sel-comparison" onchange="onParamChange()">
+        <option value="cref_uh">Composite Reflectivity</option>
+        <option value="ud_max">1-h Max Updraft</option>
+        <option value="sbcape">Surface Based CAPE</option>
+        <option value="sfct">2-m Temperature</option>
+        <option value="sfctd">2-m Dew Point</option>
+      </select>
+    </div>
+
+    <div class="ctrl-group">
+      <label>Date</label>
+      <input type="date" id="sel-date" onchange="onParamChange()" autocomplete="off">
+    </div>
+
+    <div class="ctrl-group">
+      <label>Sector</label>
+      <select id="sel-sector" onchange="onParamChange()">
+        <option value="spc_conus">CONUS</option>
+        <option value="spc_cp">Central Plains</option>
+        <option value="spc_ma">Mid Atlantic</option>
+        <option value="spc_mw">Midwest</option>
+        <option value="spc_ne">Northeast</option>
+        <option value="spc_np">Northern Plains</option>
+        <option value="spc_nw">Northwest</option>
+        <option value="spc_se">Southeast</option>
+        <option value="spc_sp">Southern Plains</option>
+        <option value="spc_sw">Southwest</option>
+      </select>
+    </div>
+
+    <button id="btn-load" onclick="doLoad()">↻ Load</button>
+    <span id="hdr-status">—</span>
+  </div>
+
+  <!-- 4-panel grid -->
+  <div id="grid"></div>
+
+  <!-- Scrollable hour timeline -->
+  <div id="timebar"></div>
+
+  <!-- Playback controls -->
+  <div id="playbar">
+    <button class="pbtn step" onclick="step(-1)">‹</button>
+    <button class="pbtn play" id="play-btn" onclick="togglePlay()">▶</button>
+    <button class="pbtn step" onclick="step(1)">›</button>
+    <span style="color:rgba(255,255,255,0.3);font-size:9px;margin-left:10px">Speed</span>
+    <button class="pbtn spd" onclick="changeSpeed(-1)">−</button>
+    <span id="spd-val">3</span>
+    <button class="pbtn spd" onclick="changeSpeed(1)">+</button>
+    <span class="kbd-hint">← →  P</span>
+  </div>
+
+</div>
+<script>
+// ── Ground-truth constants (verified from live NOAA network traffic, May 2026) ──
+
+const DATASETS = {
+  'det_cams_rgh_00':  { models:['rrfs_emc','mpas_gsl','hrrrv3','mrms'],                     maxFhr:48 },
+  'det_cams_mpas_00': { models:['mpasht2_nssl','mpasrn_nssl','mpasrn3_nssl','mrms'],         maxFhr:84 },
+};
+
+const MODEL_LABELS = {
+  'rrfs_emc':     'RRFS-EMC',
+  'mpas_gsl':     'MPAS-RRFSA-GSL',
+  'hrrrv3':       'HRRR',
+  'mrms':         'Observed (MRMS)',
+  'mpasht2_nssl': 'MPAS-HTPO-NSSL',
+  'mpasrn_nssl':  'MPAS-RN-NSSL',
+  'mpasrn3_nssl': 'MPAS-RN3-NSSL',
+};
+
+const COMPARISONS = {
+  'cref_uh': { product:'cref_uh075_mp', obsType:'mrms',  obs:'mrms_cref_mp'      },
+  'ud_max':  { product:'ud_max_mp',     obsType:'mrms',  obs:'mrms_mesh_001h_mp' },
+  'sbcape':  { product:'sbcape_mp',     obsType:'sfcoa', obs:'sfcoa_sbcape_mp'   },
+  'sfct':    { product:'sfct_mp',       obsType:'rtma',  obs:'rtma_sfct_mp'      },
+  'sfctd':   { product:'sfctd_mp',      obsType:'rtma',  obs:'rtma_sfctd_mp'     },
+};
+
+// ── State ────────────────────────────────────────────────────────────────────
+const S = {
+  dataset:'det_cams_rgh_00', comparison:'cref_uh', date:'', sector:'spc_conus',
+  fhrIdx:0, times:[], playing:false, speed:3, timer:null,
+};
+
+// ── URL builder ──────────────────────────────────────────────────────────────
+// Forecast hour token: fhr * 100, zero-padded to 5 digits  (1hr → f00100, 48hr → f04800)
+function imgUrl(model, fhr, validDate) {
+  const d = S.date;
+  const yyyy=d.slice(0,4), mm=d.slice(4,6), dd=d.slice(6,8);
+  const tok = 'f' + String(fhr * 100).padStart(5,'0');
+  const cmp = COMPARISONS[S.comparison] || COMPARISONS['cref_uh'];
+  if (model === 'mrms') {
+    // MRMS uses YYYYMMDD_HHMMSS timestamp on the valid date — no fhr token
+    const vd = validDate || d;
+    const vy=vd.slice(0,4), vm=vd.slice(4,6), vdd=vd.slice(6,8);
+    const initMs = Date.UTC(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));
+    const hh = String(new Date(initMs + fhr * 3600000).getUTCHours()).padStart(2,'0');
+    const ts = `${vd}_${hh}0000`;
+    const ot = cmp.obsType || 'mrms';
+    return `https://cams.nssl.noaa.gov/graphics/obs/${ot}/${vy}/${vm}/${vdd}/${ot}.${cmp.obs}.${S.sector}.${ts}.mp.png`;
+  }
+  return `https://cams.nssl.noaa.gov/graphics/models/${model}/${yyyy}/${mm}/${dd}/0000/${tok}/${cmp.product}.${S.sector}.${tok}.mp.png`;
+}
+
+// ── Time array ───────────────────────────────────────────────────────────────
+function buildTimes() {
+  const d = S.date;
+  if (!d || d.length < 8) return [];
+  const y=+d.slice(0,4), mo=+d.slice(4,6)-1, dy=+d.slice(6,8);
+  const fmt = dt => `${dt.getFullYear()}${String(dt.getMonth()+1).padStart(2,'0')}${String(dt.getDate()).padStart(2,'0')}`;
+  const base = new Date(y, mo, dy);
+  // Build enough calendar days to cover maxFhr hours
+  const days = [0,1,2,3,4].map(n => { const dt=new Date(base); dt.setDate(dt.getDate()+n); return fmt(dt); });
+  const maxFhr = DATASETS[S.dataset]?.maxFhr || 48;
+  return Array.from({length:maxFhr}, (_,i) => {
+    const f = i+1;
+    const dayIdx = Math.min(Math.floor(f/24), days.length-1);
+    const h = f % 24;
+    return { fhr:f, label:`F+${String(f).padStart(2,'0')}`, validDate:days[dayIdx], dayIdx, hhmm:`${String(h).padStart(2,'0')}:00` };
+  });
+}
+
+// ── Render panels ─────────────────────────────────────────────────────────────
+function renderPanels() {
+  const grid = document.getElementById('grid');
+  const models = DATASETS[S.dataset]?.models || [];
+  grid.innerHTML = '';
+  models.forEach((m, i) => {
+    const div = document.createElement('div');
+    div.className = 'panel';
+    div.innerHTML =
+      `<div class="panel-lbl">${MODEL_LABELS[m]||m}</div>` +
+      `<div class="panel-time" id="pt-${i}"></div>` +
+      `<div class="panel-overlay" id="po-${i}">Loading…</div>` +
+      `<img id="pi-${i}" referrerpolicy="no-referrer" src="" alt="${MODEL_LABELS[m]||m}" style="display:none">`;
+    grid.appendChild(div);
+  });
+}
+
+// ── Update images ─────────────────────────────────────────────────────────────
+function updateImages() {
+  const t = S.times[S.fhrIdx];
+  if (!t) return;
+  const models = DATASETS[S.dataset]?.models || [];
+  const vd = t.validDate;
+  const dateLabel = `${vd.slice(0,4)}-${vd.slice(4,6)}-${vd.slice(6,8)} ${t.hhmm} UTC`;
+  document.getElementById('hdr-status').textContent = `${t.label} · ${dateLabel}`;
+  models.forEach((m, i) => {
+    const img = document.getElementById(`pi-${i}`);
+    const ov  = document.getElementById(`po-${i}`);
+    const pt  = document.getElementById(`pt-${i}`);
+    if (!img || !ov) return;
+    if (pt) pt.textContent = m === 'mrms' ? dateLabel : `${t.label} · ${dateLabel}`;
+    ov.innerHTML = 'Loading…'; ov.classList.remove('gone'); img.style.display = 'none';
+    const url = imgUrl(m, t.fhr, t.validDate);
+    img.onload  = () => { img.style.display='block'; ov.classList.add('gone'); };
+    img.onerror = () => { ov.innerHTML = `<span class="err-msg">Not available</span><span style="font-size:9px;opacity:.4">${MODEL_LABELS[m]} ${t.label}</span>`; };
+    img.referrerPolicy = 'no-referrer';
+    img.src = url;
+  });
+  syncTimebar();
+}
+
+// ── Timebar ───────────────────────────────────────────────────────────────────
+function renderTimebar() {
+  const bar = document.getElementById('timebar');
+  bar.innerHTML = '';
+  let lastDay = -1;
+  S.times.forEach((t, i) => {
+    if (t.dayIdx !== lastDay) {
+      const sep = document.createElement('span');
+      sep.className = 'day-sep';
+      sep.textContent = `${t.validDate.slice(4,6)}/${t.validDate.slice(6,8)}`;
+      bar.appendChild(sep);
+      lastDay = t.dayIdx;
+    }
+    const btn = document.createElement('button');
+    btn.className = 'tbtn'; btn.dataset.idx = i;
+    btn.textContent = t.hhmm; btn.title = t.label;
+    btn.onclick = () => { S.fhrIdx = i; updateImages(); };
+    bar.appendChild(btn);
+  });
+}
+
+function syncTimebar() {
+  document.querySelectorAll('.tbtn').forEach(b => b.classList.toggle('active', +b.dataset.idx === S.fhrIdx));
+  const active = document.querySelector('.tbtn.active');
+  if (active) active.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'});
+}
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+function doLoad() {
+  S.dataset    = document.getElementById('sel-dataset').value;
+  S.comparison = document.getElementById('sel-comparison').value;
+  S.sector     = document.getElementById('sel-sector').value;
+  const dateEl = document.getElementById('sel-date');
+  if (!dateEl.value) {
+    // Default to yesterday — run is always complete; today's run may still be processing
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    dateEl.value = d.toISOString().slice(0,10);
+  }
+  S.date = dateEl.value.replace(/-/g,'');
+  if (S.playing) pause();
+  S.fhrIdx = 0;
+  S.times = buildTimes();
+  renderPanels();
+  renderTimebar();
+  updateImages();
+}
+
+function onParamChange() { doLoad(); }
+
+// ── Playback ──────────────────────────────────────────────────────────────────
+function play() {
+  S.playing = true;
+  document.getElementById('play-btn').textContent = '⏸';
+  S.timer = setInterval(() => {
+    S.fhrIdx = (S.fhrIdx + 1) % S.times.length;
+    updateImages();
+  }, Math.round(1200 / S.speed));
+}
+
+function pause() {
+  S.playing = false;
+  clearInterval(S.timer); S.timer = null;
+  document.getElementById('play-btn').textContent = '▶';
+}
+
+function togglePlay() { S.playing ? pause() : play(); }
+
+function step(dir) {
+  if (S.playing) pause();
+  S.fhrIdx = Math.max(0, Math.min(S.times.length-1, S.fhrIdx+dir));
+  updateImages();
+}
+
+function changeSpeed(delta) {
+  S.speed = Math.max(1, Math.min(10, S.speed+delta));
+  document.getElementById('spd-val').textContent = S.speed;
+  if (S.playing) { pause(); play(); }
+}
+
+// ── Keyboard ──────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
+  if (e.key==='ArrowLeft')       { e.preventDefault(); step(-1); }
+  else if (e.key==='ArrowRight') { e.preventDefault(); step(1); }
+  else if (e.key==='p'||e.key==='P') togglePlay();
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+doLoad();
+</script>
+</body>
+</html>
