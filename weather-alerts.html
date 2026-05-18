@@ -327,12 +327,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #fwx-leg-toggle{position:absolute;top:5px;right:7px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px}
 
 /* ── NOWCAST AGENT PANEL ─────────────────────────────────────────── */
+#map-wrap.nc-mode,#map-wrap.nc-mode .leaflet-container,
+#map-wrap.nc-mode .leaflet-interactive{cursor:crosshair !important}
 #nowcast-btn{position:absolute;top:10px;right:50px;z-index:800;background:#1e3048;color:#f0c040;border:1px solid rgba(240,192,64,0.7);border-radius:6px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;letter-spacing:0.5px;transition:all 0.15s;box-shadow:0 2px 8px rgba(0,0,0,0.5)}
 #nowcast-btn.active{background:#f0c040;color:#0d1a28;border-color:#f0c040}
 #nowcast-btn:hover{opacity:0.9}
-#nowcast-panel{position:absolute;top:48px;right:10px;width:315px;max-height:72vh;background:#0f1e30;border:1px solid rgba(80,130,190,0.25);border-radius:10px;z-index:790;overflow-y:auto;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.75);scrollbar-width:thin;scrollbar-color:#1e3a55 transparent}
-#nowcast-panel::-webkit-scrollbar{width:5px}
-#nowcast-panel::-webkit-scrollbar-thumb{background:#1e3a55;border-radius:3px}
+#nowcast-panel{position:absolute;top:48px;right:10px;width:315px;max-height:82vh;background:#0f1e30;border:1px solid rgba(80,130,190,0.25);border-radius:10px;z-index:790;overflow-y:auto;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.75);scrollbar-width:thin;scrollbar-color:#3a6080 transparent}
+#nowcast-panel::-webkit-scrollbar{width:7px}
+#nowcast-panel::-webkit-scrollbar-thumb{background:#3a6080;border-radius:4px}
+#nowcast-panel::-webkit-scrollbar-thumb:hover{background:#5a88b0}
 #nowcast-header{padding:10px 13px;border-bottom:1px solid rgba(80,130,190,0.15);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#0f1e30;z-index:1;gap:8px}
 #nowcast-title{font-size:10px;font-weight:700;color:#f0c040;letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap}
 #nowcast-mode-btns{display:flex;gap:4px;flex-shrink:0}
@@ -1611,6 +1614,7 @@ function getStyle(event, severity) {
 // ═══════════════════════════════════════════════════════════════════
 
 let map, alertGroup, spc1Group, spc2Group, fimGroup, inundationGroup;
+let spc1Cache = []; // {cat, geom} for location-specific SPC level lookup
 let baseLayers = {};
 let modVar = 'precip', modDays = 4, modView = 'chart';
 let modChartInst = null, modLastLat = null, modLastLon = null, modMarker = null;
@@ -1898,7 +1902,11 @@ function addAlertPolygon(alert, geom, targetGroup=alertGroup) {
 
   lyr.on('mouseover', () => lyr.setStyle({fillOpacity:Math.min(s.fo*2,0.75),weight:s.w+1}));
   lyr.on('mouseout',  () => { if(selectedId!==alert.id) lyr.setStyle({fillOpacity:s.fo,weight:s.w}); });
-  lyr.on('click', e  => { L.DomEvent.stopPropagation(e); selectAlert(mostSevereAlertAt(e.latlng) ?? alert.id); });
+  lyr.on('click', e  => {
+    L.DomEvent.stopPropagation(e);
+    if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
+    selectAlert(mostSevereAlertAt(e.latlng) ?? alert.id);
+  });
   lyr._alertId = alert.id;
   targetGroup.addLayer(lyr);
 }
@@ -2774,6 +2782,7 @@ async function loadSPCDay(day) {
   try {
     const data = await fetchJson(url, 12000);
     grp.clearLayers();
+    if (day === 1) spc1Cache = [];
     let count=0;
     for (const feat of (data.features||[])) {
       const cat = (feat.properties?.label||feat.properties?.label2||feat.properties?.LABEL||feat.properties?.LABEL2||'').toUpperCase().trim();
@@ -2782,6 +2791,7 @@ async function loadSPCDay(day) {
       L.geoJSON(feat,{style:{color:s.c,fillColor:s.f,weight:s.w,opacity:0.8,fillOpacity:s.fo}})
        .bindTooltip(`Day ${day} SPC: ${cat}`,{sticky:true})
        .addTo(grp);
+      if (day === 1 && feat.geometry) spc1Cache.push({ cat, geom: feat.geometry });
       count++;
     }
     note.textContent = count ? `${count} zones` : 'no data';
@@ -4975,12 +4985,31 @@ function ncGetMapAlerts(lat, lon, bounds) {
   };
   const ev = name => alerts.some(f => f.properties?.event?.includes(name) && check(f));
   const xtra = alerts.find(f => f.properties?.severity==='Extreme' && !f.properties?.event?.includes('Tornado Warning') && check(f));
+
+  // SPC Day 1 level for the specific location using cached polygons
+  const SPC_RANK = { TSTM:1, MRGL:2, SLGT:3, ENH:4, MDT:5, HIGH:6 };
+  const SPC_CAT_TO_LEVEL = { HIGH:'HIGH', MDT:'MODERATE', ENH:'ENHANCED', SLGT:'SLIGHT', MRGL:'MARGINAL', TSTM:'TSTM' };
+  let topCat = null;
+  for (const { cat, geom } of spc1Cache) {
+    let hit = false;
+    if (bounds) {
+      const ab = ncGeomBBox(geom);
+      hit = ab && ab.minLat < bounds.getNorth() && ab.maxLat > bounds.getSouth() &&
+                  ab.minLon < bounds.getEast() && ab.maxLon > bounds.getWest();
+    } else {
+      hit = ptInGeom({ lat, lng: lon }, geom);
+    }
+    if (hit && (SPC_RANK[cat] ?? 0) > (SPC_RANK[topCat] ?? 0)) topCat = cat;
+  }
+  const spcLevel = SPC_CAT_TO_LEVEL[topCat] ?? 'NONE';
+
   return {
     tornadoWarning: ev('Tornado Warning'),
     tornadoWatch:   ev('Tornado Watch'),
     svreWarning:    ev('Severe Thunderstorm Warning'),
     svreWatch:      ev('Severe Thunderstorm Watch'),
     extremeEvent:   xtra?.properties?.event ?? null,
+    spcLevel,
   };
 }
 
@@ -4992,7 +5021,7 @@ function toggleNowcastMode() {
   nowcastMode = !nowcastMode;
   document.getElementById('nowcast-btn').classList.toggle('active', nowcastMode);
   document.getElementById('nowcast-panel').style.display = nowcastMode ? 'block' : 'none';
-  map.getContainer().style.cursor = nowcastMode ? 'crosshair' : '';
+  document.getElementById('map-wrap').classList.toggle('nc-mode', nowcastMode);
   if (!nowcastMode) { ncClearBox(); map.dragging.enable(); }
 }
 
@@ -5000,7 +5029,7 @@ function closeNowcast() {
   nowcastMode = false;
   document.getElementById('nowcast-btn').classList.remove('active');
   document.getElementById('nowcast-panel').style.display = 'none';
-  map.getContainer().style.cursor = '';
+  document.getElementById('map-wrap').classList.remove('nc-mode');
   ncClearBox();
   map.dragging.enable();
 }
@@ -5045,8 +5074,8 @@ function ncOnMouseUp(e) {
 }
 
 function ncApplyMapAlerts(d, ma) {
-  const { tornadoWarning, tornadoWatch, svreWarning, svreWatch, extremeEvent } = ma;
-  const spc = d.spc?.level ?? 'NONE';
+  const { tornadoWarning, tornadoWatch, svreWarning, svreWatch, extremeEvent, spcLevel } = ma;
+  const spc = spcLevel ?? 'NONE'; // location-specific SPC level from polygon check
   const rpt = d.stormReports?.total > 0 ? ` Reports today: ${[
     d.stormReports.tornadoes > 0 ? d.stormReports.tornadoes + ' tornado(es)' : '',
     d.stormReports.hail > 0 ? d.stormReports.hail + ' hail' : '',
@@ -5102,6 +5131,13 @@ function ncApplyMapAlerts(d, ma) {
   d.headline = headline;
   d.whyItMatters = whyItMatters;
   d.activeThreats = activeThreats;
+  // Override SPC level with location-specific value; suppress national text if no local risk
+  d.spc = {
+    level: spcLevel,
+    excerpt: (spcLevel === 'NONE' || spcLevel === 'TSTM')
+      ? 'No SPC categorical severe weather risk for this location.'
+      : (d.spc?.excerpt ?? '')
+  };
 }
 
 async function runNowcast(lat, lon, bounds) {
@@ -5153,8 +5189,7 @@ function renderNowcast(d, bounds) {
   }
 
   html += `<div class="nc-section-hdr">SPC Day 1 — ${d.spc.level}</div>`;
-  const spcSnip = d.spc.excerpt.length > 280 ? d.spc.excerpt.slice(0, 280) + '…' : d.spc.excerpt;
-  html += `<div class="nc-spc">${spcSnip}</div>`;
+  html += `<div class="nc-spc">${d.spc.excerpt}</div>`;
 
   if (d.stormReports?.total > 0) {
     html += `<div class="nc-section-hdr">Today's Reports${d.location.state ? ' · ' + d.location.state : ''}</div><div class="nc-reports">`;

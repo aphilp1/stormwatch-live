@@ -1477,7 +1477,10 @@ async function runSevereWeatherNowcast(lat, lon, queryBbox = null, overrides = n
     else if (/MARGINAL RISK/i.test(t)) spcLevel = "MARGINAL";
     const lines = t.split("\n").map(l => l.trim()).filter(Boolean);
     const s = lines.findIndex(l => /THERE IS|SLIGHT|MARGINAL|ENHANCED|MODERATE|HIGH|NO SEVERE/.test(l));
-    if (s >= 0) spcExcerpt = lines.slice(s, s + 4).join(" ").slice(0, 400);
+    if (s >= 0) {
+      const end = lines.findIndex((l, i) => i > s && /^&&/.test(l));
+      spcExcerpt = lines.slice(s, end > s ? end : s + 20).join(" ");
+    }
   }
 
   const stormReports = { tornadoes: 0, hail: 0, wind: 0, total: 0 };
