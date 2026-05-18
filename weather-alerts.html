@@ -45,8 +45,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #sidebar{width:290px;background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width 0.2s}
 #sidebar.collapsed{width:0;overflow:hidden}
 
-.tab-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
-.tab{flex:1;padding:9px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center}
+.tab-bar{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{padding:7px 0;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center}
 .tab.active{color:var(--text);border-bottom-color:var(--accent)}
 .tab:hover:not(.active){color:var(--text2)}
 
@@ -77,10 +77,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* Layers tab */
 #layers-tab{padding:12px 14px;gap:12px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
-#layers-tab::-webkit-scrollbar,#stats-tab::-webkit-scrollbar,#tab-models::-webkit-scrollbar,#tab-maps::-webkit-scrollbar,#mp-table-area::-webkit-scrollbar{width:7px}
-#layers-tab::-webkit-scrollbar-track,#stats-tab::-webkit-scrollbar-track,#tab-models::-webkit-scrollbar-track,#tab-maps::-webkit-scrollbar-track,#mp-table-area::-webkit-scrollbar-track{background:transparent}
-#layers-tab::-webkit-scrollbar-thumb,#stats-tab::-webkit-scrollbar-thumb,#tab-models::-webkit-scrollbar-thumb,#tab-maps::-webkit-scrollbar-thumb,#mp-table-area::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
-#layers-tab::-webkit-scrollbar-thumb:hover,#stats-tab::-webkit-scrollbar-thumb:hover,#tab-models::-webkit-scrollbar-thumb:hover,#tab-maps::-webkit-scrollbar-thumb:hover,#mp-table-area::-webkit-scrollbar-thumb:hover{background:#aab}
+#layers-tab::-webkit-scrollbar,#stats-tab::-webkit-scrollbar,#tab-models::-webkit-scrollbar,#tab-maps::-webkit-scrollbar,#tab-agents::-webkit-scrollbar,#mp-table-area::-webkit-scrollbar{width:7px}
+#layers-tab::-webkit-scrollbar-track,#stats-tab::-webkit-scrollbar-track,#tab-models::-webkit-scrollbar-track,#tab-maps::-webkit-scrollbar-track,#tab-agents::-webkit-scrollbar-track,#mp-table-area::-webkit-scrollbar-track{background:transparent}
+#layers-tab::-webkit-scrollbar-thumb,#stats-tab::-webkit-scrollbar-thumb,#tab-models::-webkit-scrollbar-thumb,#tab-maps::-webkit-scrollbar-thumb,#tab-agents::-webkit-scrollbar-thumb,#mp-table-area::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
+#layers-tab::-webkit-scrollbar-thumb:hover,#stats-tab::-webkit-scrollbar-thumb:hover,#tab-models::-webkit-scrollbar-thumb:hover,#tab-maps::-webkit-scrollbar-thumb:hover,#tab-agents::-webkit-scrollbar-thumb:hover,#mp-table-area::-webkit-scrollbar-thumb:hover{background:#aab}
 .layer-group{margin-bottom:14px}
 .layer-group-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text);font-weight:700;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px}
 .type-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;flex-shrink:0;vertical-align:middle;margin-top:-1px}
@@ -192,6 +192,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #det-zoom:hover{background:#2a2a55;color:var(--text)}
 
 /* ── LEGEND ─────────────────────────────────────────────────────── */
+#legend,#spc-legend,#hrrr-legend,#sat-legend,#radar-legend,#fwx-legend,.hyd-legend{cursor:move;user-select:none}
+#legend button,#spc-legend button,#hrrr-legend button,#sat-legend button,#radar-legend button,#fwx-legend button,.hyd-legend button{cursor:pointer}
 #legend{position:absolute;bottom:34px;left:10px;background:rgba(255,255,255,0.96);border:1px solid var(--border);border-radius:8px;padding:10px 13px;z-index:700;min-width:150px;backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
 #legend-toggle{position:absolute;top:5px;right:7px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px}
 #legend h3{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-weight:700;margin-bottom:8px}
@@ -326,17 +328,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #fwx-legend{position:absolute;bottom:34px;left:345px;background:rgba(255,255,255,0.96);border:1px solid var(--border);border-radius:8px;padding:10px 13px;z-index:700;min-width:148px;display:none;backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
 #fwx-leg-toggle{position:absolute;top:5px;right:7px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px}
 
+/* ── AGENTS TAB ──────────────────────────────────────────────────── */
+#tab-agents{padding:12px 10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+.agent-card{background:#0d1b2a;border:1px solid rgba(80,130,190,0.2);border-radius:9px;padding:13px 14px;margin-bottom:10px;transition:border-color 0.15s}
+.agent-card.active{border-color:rgba(240,192,64,0.6);background:#111d2e}
+.agent-card.soon{opacity:0.45;pointer-events:none}
+.agent-card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.agent-card-title{font-size:11px;font-weight:700;color:#d0e8ff;letter-spacing:0.4px}
+.agent-card-badge{font-size:9px;font-weight:700;color:#4a6a88;letter-spacing:0.8px;text-transform:uppercase}
+.agent-card-badge.live{color:#44bb66}
+.agent-card-desc{font-size:10px;color:#7a9ab8;line-height:1.55;margin-bottom:10px}
+.agent-card-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.agent-activate-btn{background:#1e3a55;border:1px solid rgba(80,130,190,0.4);border-radius:5px;color:#a0c8e8;font-size:10px;font-weight:700;padding:4px 10px;cursor:pointer;transition:all 0.15s;letter-spacing:0.3px}
+.agent-activate-btn:hover{background:#2a4a6a;border-color:#5a8ab0;color:#d0e8ff}
+.agent-activate-btn.active{background:#f0c040;border-color:#f0c040;color:#0d1a28}
+.agent-mode-btns{display:flex;gap:4px}
+
 /* ── NOWCAST AGENT PANEL ─────────────────────────────────────────── */
 #map-wrap.nc-mode,#map-wrap.nc-mode .leaflet-container,
 #map-wrap.nc-mode .leaflet-interactive{cursor:crosshair !important}
-#nowcast-btn{position:absolute;top:10px;right:50px;z-index:800;background:#1e3048;color:#f0c040;border:1px solid rgba(240,192,64,0.7);border-radius:6px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;letter-spacing:0.5px;transition:all 0.15s;box-shadow:0 2px 8px rgba(0,0,0,0.5)}
-#nowcast-btn.active{background:#f0c040;color:#0d1a28;border-color:#f0c040}
-#nowcast-btn:hover{opacity:0.9}
-#nowcast-panel{position:absolute;top:48px;right:10px;width:315px;max-height:82vh;background:#0f1e30;border:1px solid rgba(80,130,190,0.25);border-radius:10px;z-index:790;overflow-y:auto;display:none;box-shadow:0 6px 30px rgba(0,0,0,0.75);scrollbar-width:thin;scrollbar-color:#3a6080 transparent}
-#nowcast-panel::-webkit-scrollbar{width:7px}
-#nowcast-panel::-webkit-scrollbar-thumb{background:#3a6080;border-radius:4px}
-#nowcast-panel::-webkit-scrollbar-thumb:hover{background:#5a88b0}
-#nowcast-header{padding:10px 13px;border-bottom:1px solid rgba(80,130,190,0.15);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#0f1e30;z-index:1;gap:8px}
+#nowcast-panel{position:fixed;top:55px;right:10px;width:315px;background:#0f1e30;border:1px solid rgba(80,130,190,0.25);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
+#nowcast-header{padding:10px 13px;border-bottom:1px solid rgba(80,130,190,0.15);display:flex;justify-content:space-between;align-items:center;background:#0f1e30;gap:8px;cursor:move;user-select:none}
+#nowcast-body{overflow-y:auto;max-height:calc(100vh - 115px);padding:12px 13px;scrollbar-width:thin;scrollbar-color:#3a6080 transparent}
+#nowcast-body::-webkit-scrollbar{width:7px}
+#nowcast-body::-webkit-scrollbar-thumb{background:#3a6080;border-radius:4px}
+#nowcast-body::-webkit-scrollbar-thumb:hover{background:#5a88b0}
 #nowcast-title{font-size:10px;font-weight:700;color:#f0c040;letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap}
 #nowcast-mode-btns{display:flex;gap:4px;flex-shrink:0}
 .nc-mode-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#7a9ab8;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;transition:all 0.15s;white-space:nowrap}
@@ -344,7 +360,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .nc-mode-btn:hover{color:#c8d8e8}
 #nowcast-close{background:none;border:none;color:#4a6a88;cursor:pointer;font-size:15px;padding:0;line-height:1;flex-shrink:0;transition:color 0.15s}
 #nowcast-close:hover{color:#c8d8e8}
-#nowcast-body{padding:12px 13px}
 .nc-hint{font-size:11px;color:#5a7a98;text-align:center;padding:18px 8px;line-height:1.8}
 .nc-loading{font-size:11px;color:#6a8aaa;text-align:center;padding:26px 0;letter-spacing:0.5px}
 .nc-loc{font-size:10px;color:#5a88b8;margin-bottom:10px;font-weight:600;letter-spacing:0.3px}
@@ -503,10 +518,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div id="sidebar">
     <div class="tab-bar">
       <button class="tab active" onclick="showTab('alerts')">Alerts</button>
-      <button class="tab" onclick="showTab('layers')">Layers</button>
       <button class="tab" onclick="showTab('stats')">Stats</button>
+      <button class="tab" onclick="showTab('layers')">Layers</button>
       <button class="tab" onclick="showTab('models')">Models</button>
       <button class="tab" onclick="showTab('maps')">Maps</button>
+      <button class="tab" onclick="showTab('agents')">Agents</button>
     </div>
 
     <!-- ALERTS TAB -->
@@ -1011,6 +1027,46 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     </div>
 
+    <!-- AGENTS TAB -->
+    <div id="tab-agents" class="tab-content">
+      <div style="padding:4px 2px 10px;font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:#4a6a88;font-weight:700">AI-Powered Analysis</div>
+
+      <!-- Nowcast card -->
+      <div class="agent-card" id="agent-card-nowcast">
+        <div class="agent-card-hdr">
+          <span class="agent-card-title">⚡ Severe Weather Nowcast</span>
+          <span class="agent-card-badge live">● Live</span>
+        </div>
+        <div class="agent-card-desc">Click a point or draw a box on the map to get an AI-generated severe weather briefing — threat level, active alerts, SPC outlook, storm reports, and current conditions.</div>
+        <div class="agent-card-actions">
+          <div class="agent-mode-btns">
+            <button class="nc-mode-btn active" id="nc-point-btn-sidebar" onclick="setNowcastInputMode('point')">📍 Point</button>
+            <button class="nc-mode-btn" id="nc-box-btn-sidebar" onclick="setNowcastInputMode('box')">⬜ Area</button>
+          </div>
+          <button class="agent-activate-btn" id="agent-nowcast-btn" onclick="toggleNowcastMode()">Activate</button>
+        </div>
+      </div>
+
+      <!-- Fire Weather card (coming soon) -->
+      <div class="agent-card soon">
+        <div class="agent-card-hdr">
+          <span class="agent-card-title">🔥 Fire Weather</span>
+          <span class="agent-card-badge">Coming Soon</span>
+        </div>
+        <div class="agent-card-desc">Fire weather risk assessment — RAWS observations, KBDI drought index, SPC fire weather outlook, red flag conditions, and terrain wind analysis.</div>
+      </div>
+
+      <!-- Flood card (coming soon) -->
+      <div class="agent-card soon">
+        <div class="agent-card-hdr">
+          <span class="agent-card-title">🌊 Flood</span>
+          <span class="agent-card-badge">Coming Soon</span>
+        </div>
+        <div class="agent-card-desc">Flooding risk and river intelligence — USGS stream gauges, NWS flood alerts, MRMS precipitation, and river forecast guidance.</div>
+      </div>
+
+    </div>
+
   </div>
 
   <div id="right-col">
@@ -1018,22 +1074,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <button id="collapse-btn" onclick="toggleSidebar()">◀</button>
     <div id="map"></div>
     <div id="zoom-badge"><span class="zb-label">Zoom</span><span class="zb-val" id="zoom-val">—</span></div>
-
-    <!-- Nowcast Agent -->
-    <button id="nowcast-btn" onclick="toggleNowcastMode()" title="Severe Weather Nowcast — click any map location">⚡ Nowcast</button>
-    <div id="nowcast-panel">
-      <div id="nowcast-header">
-        <span id="nowcast-title">⚡ Nowcast</span>
-        <div id="nowcast-mode-btns">
-          <button class="nc-mode-btn active" id="nc-point-btn" onclick="setNowcastInputMode('point')">📍 Point</button>
-          <button class="nc-mode-btn" id="nc-box-btn" onclick="setNowcastInputMode('box')">⬜ Area</button>
-        </div>
-        <button id="nowcast-close" onclick="closeNowcast()">✕</button>
-      </div>
-      <div id="nowcast-body">
-        <div class="nc-hint" id="nc-hint-text">Click any spot on the map for a severe weather briefing.<br><br>Requires MCP server running.</div>
-      </div>
-    </div>
 
     <!-- NEXRAD station detail card -->
     <div id="nexrad-station-card">
@@ -1352,6 +1392,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     <div id="toasts"></div>
   </div><!-- end #map-wrap -->
+
+  <!-- NOWCAST PANEL — outside map-wrap so overflow:hidden doesn't clip it -->
+  <div id="nowcast-panel">
+    <div id="nowcast-header" onmousedown="ncPanelDragStart(event)">
+      <span id="nowcast-title">⚡ Nowcast</span>
+      <div id="nowcast-mode-btns">
+        <button class="nc-mode-btn active" id="nc-point-btn" onclick="setNowcastInputMode('point')">📍 Point</button>
+        <button class="nc-mode-btn" id="nc-box-btn" onclick="setNowcastInputMode('box')">⬜ Area</button>
+      </div>
+      <button id="nowcast-close" onclick="closeNowcast()">✕</button>
+    </div>
+    <div id="nowcast-body">
+      <div class="nc-hint" id="nc-hint-text">Click any spot on the map for a severe weather briefing.<br><br>Requires MCP server running.</div>
+    </div>
+  </div>
 
   <!-- DRAG RESIZE HANDLE -->
   <div id="panel-drag" title="Drag to resize panel"></div>
@@ -2819,7 +2874,7 @@ function setBase(name) {
 function showTab(name) {
   currentTab = name;
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    const names=['alerts','layers','stats','models','maps'];
+    const names=['alerts','stats','layers','models','maps','agents'];
     t.classList.toggle('active',names[i]===name);
   });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
@@ -5019,17 +5074,19 @@ let ncBoxStart = null, ncBoxRect = null;
 
 function toggleNowcastMode() {
   nowcastMode = !nowcastMode;
-  document.getElementById('nowcast-btn').classList.toggle('active', nowcastMode);
   document.getElementById('nowcast-panel').style.display = nowcastMode ? 'block' : 'none';
   document.getElementById('map-wrap').classList.toggle('nc-mode', nowcastMode);
+  document.getElementById('agent-nowcast-btn')?.classList.toggle('active', nowcastMode);
+  document.getElementById('agent-card-nowcast')?.classList.toggle('active', nowcastMode);
   if (!nowcastMode) { ncClearBox(); map.dragging.enable(); }
 }
 
 function closeNowcast() {
   nowcastMode = false;
-  document.getElementById('nowcast-btn').classList.remove('active');
   document.getElementById('nowcast-panel').style.display = 'none';
   document.getElementById('map-wrap').classList.remove('nc-mode');
+  document.getElementById('agent-nowcast-btn')?.classList.remove('active');
+  document.getElementById('agent-card-nowcast')?.classList.remove('active');
   ncClearBox();
   map.dragging.enable();
 }
@@ -5038,6 +5095,8 @@ function setNowcastInputMode(mode) {
   nowcastInputMode = mode;
   document.getElementById('nc-point-btn').classList.toggle('active', mode === 'point');
   document.getElementById('nc-box-btn').classList.toggle('active', mode === 'box');
+  document.getElementById('nc-point-btn-sidebar')?.classList.toggle('active', mode === 'point');
+  document.getElementById('nc-box-btn-sidebar')?.classList.toggle('active', mode === 'box');
   const hint = document.getElementById('nc-hint-text');
   if (hint) hint.textContent = mode === 'box'
     ? 'Drag a box on the map to get a regional severe weather briefing.'
@@ -5049,6 +5108,69 @@ function ncClearBox() {
   if (ncBoxRect) { map.removeLayer(ncBoxRect); ncBoxRect = null; }
   ncBoxStart = null;
 }
+
+// Nowcast panel drag
+let _ncDrag = null;
+function ncPanelDragStart(e) {
+  if (e.target.closest('button')) return;
+  const panel = document.getElementById('nowcast-panel');
+  const rect = panel.getBoundingClientRect();
+  if (!panel.style.left) {
+    panel.style.left = rect.left + 'px';
+    panel.style.right = 'auto';
+    panel.style.top = rect.top + 'px';
+  }
+  _ncDrag = { startX: e.clientX, startY: e.clientY,
+              startLeft: parseInt(panel.style.left), startTop: parseInt(panel.style.top) };
+  document.addEventListener('mousemove', ncPanelDragMove);
+  document.addEventListener('mouseup', ncPanelDragEnd);
+}
+function ncPanelDragMove(e) {
+  if (!_ncDrag) return;
+  const panel = document.getElementById('nowcast-panel');
+  const newLeft = Math.max(0, Math.min(_ncDrag.startLeft + e.clientX - _ncDrag.startX, window.innerWidth  - panel.offsetWidth));
+  const newTop  = Math.max(0, Math.min(_ncDrag.startTop  + e.clientY - _ncDrag.startY, window.innerHeight - 60));
+  panel.style.left = newLeft + 'px';
+  panel.style.top  = newTop  + 'px';
+}
+function ncPanelDragEnd() {
+  _ncDrag = null;
+  document.removeEventListener('mousemove', ncPanelDragMove);
+  document.removeEventListener('mouseup', ncPanelDragEnd);
+}
+
+// Generic draggable for map legends
+function makeDraggable(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  let drag = null;
+  el.addEventListener('mousedown', e => {
+    if (e.target.closest('button')) return;
+    const wrap = document.getElementById('map-wrap').getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    el.style.top    = (rect.top  - wrap.top)  + 'px';
+    el.style.left   = (rect.left - wrap.left) + 'px';
+    el.style.bottom = 'auto';
+    el.style.right  = 'auto';
+    drag = { sx: e.clientX, sy: e.clientY,
+             sl: rect.left - wrap.left, st: rect.top - wrap.top };
+    const onMove = ev => {
+      const w = document.getElementById('map-wrap').getBoundingClientRect();
+      el.style.left = Math.max(0, Math.min(drag.sl + ev.clientX - drag.sx, w.width  - el.offsetWidth))  + 'px';
+      el.style.top  = Math.max(0, Math.min(drag.st + ev.clientY - drag.sy, w.height - el.offsetHeight)) + 'px';
+    };
+    const onUp = () => { drag = null; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
+// Initialise draggable legends after page loads
+window.addEventListener('load', () => {
+  ['legend','spc-legend','hrrr-legend','sat-legend','radar-legend',
+   'fwx-legend','usgs-legend','usgsflow-legend','mrms-legend','fema-legend']
+  .forEach(makeDraggable);
+});
 
 // Box drawing — mousedown/mousemove/mouseup on map
 function ncOnMouseDown(e) {
@@ -5141,8 +5263,11 @@ function ncApplyMapAlerts(d, ma) {
 }
 
 async function runNowcast(lat, lon, bounds) {
-  document.getElementById('nowcast-panel').style.display = 'block';
-  document.getElementById('nowcast-body').innerHTML = '<div class="nc-loading">Gathering weather data…</div>';
+  const panel = document.getElementById('nowcast-panel');
+  panel.style.display = 'block';
+  const ncBody = document.getElementById('nowcast-body');
+  ncBody.scrollTop = 0;
+  ncBody.innerHTML = '<div class="nc-loading">Gathering weather data…</div>';
   try {
     let url = `http://localhost:3456/nowcast?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
     if (bounds) {
