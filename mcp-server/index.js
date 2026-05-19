@@ -870,9 +870,10 @@ function parseWindNinjaOutput(text) {
   const cell   = parseFloat(text.match(/"cellsize"\s*:\s*([-\d.]+)/)?.[1] ?? "0");
   const nodata = parseFloat(text.match(/"NODATA_value"\s*:\s*([-\d.]+)/)?.[1] ?? "-9999");
   const section = text.match(/"data"\s*:\s*\[([\s\S]*?)\]/)?.[1] ?? "";
-  const data = section.split(/[\s,]+/).filter(s => s.length > 0).map(Number)
-    .filter(v => !isNaN(v) && v !== nodata && v >= 0);
-  return { ncols, nrows, xll, yll, cell, data };
+  const rawNums = section.split(/[\s,]+/).filter(s => s.length > 0).map(Number);
+  const grid = rawNums.map(v => (!isNaN(v) && v !== nodata && v >= 0) ? v : null);
+  const data = grid.filter(v => v !== null);
+  return { ncols, nrows, xll, yll, cell, grid, data };
 }
 
 // Runs WindNinja and returns parsed vel + ang grids. Cleans up output files; keeps DEM cached.
@@ -926,7 +927,7 @@ async function runWindNinjaCore(lat, lon, windSpeed, windDir, radiusMiles, veget
   const vel = parseWindNinjaOutput(readFileSync(velPath, "utf8"));
   let angData = null;
   if (angPath) {
-    try { angData = parseWindNinjaOutput(readFileSync(angPath, "utf8")).data; } catch (_) {}
+    try { angData = parseWindNinjaOutput(readFileSync(angPath, "utf8")).grid; } catch (_) {}
   }
 
   [velPath, angPath,
@@ -1635,7 +1636,7 @@ createServer(async (req, res) => {
       for (let r = 0; r < vel.nrows; r += step) {
         for (let c = 0; c < vel.ncols; c += step) {
           const idx = r * vel.ncols + c;
-          const spd = vel.data[idx];
+          const spd = vel.grid[idx];
           if (spd == null || isNaN(spd) || spd < 0.5) continue;
           const cellLat = vel.yll + (vel.nrows - 1 - r) * vel.cell;
           const cellLon = vel.xll + c * vel.cell;

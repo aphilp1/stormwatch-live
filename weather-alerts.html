@@ -576,7 +576,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
           <div class="layer-row">
             <label class="toggle"><input type="checkbox" id="lyr-win-stm" onchange="toggleLayer('win-stm',this.checked)"><span class="toggle-slider"></span></label>
-            <span class="layer-label"><span class="type-dot" style="background:#aa0055"></span>Winter Storm Warning</span>
+            <span class="layer-label"><span class="type-dot" style="background:#008899"></span>Winter Storm Warning</span>
             <span class="layer-note" id="win-stm-note">off</span>
           </div>
 
@@ -1179,7 +1179,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="leg"><div class="lsw" style="background:#ffff00"></div>Tornado Watch</div>
         <div class="leg"><div class="lsw" style="background:#ff8c00"></div>Svr Tstorm Warning</div>
         <div class="leg"><div class="lsw" style="background:#00bb44"></div>Flash Flood Warning</div>
-        <div class="leg"><div class="lsw" style="background:#ff69b4"></div>Winter Storm Warning</div>
+        <div class="leg"><div class="lsw" style="background:#00bbcc"></div>Winter Storm Warning</div>
         <div class="leg"><div class="lsw" style="background:#ff4500"></div>Blizzard Warning</div>
         <div class="leg"><div class="lsw" style="background:#ff1493"></div>Red Flag Warning</div>
         <div class="leg"><div class="lsw" style="background:#778899"></div>Other / Advisory</div>
@@ -1547,7 +1547,7 @@ const ESTYLES = {
   'Coastal Flood Advisory':      {c:'#228822',f:'#33aa33',fo:0.12,w:1.0},
   'Blizzard Warning':            {c:'#cc3300',f:'#ff4500',fo:0.40,w:2.0},
   'Ice Storm Warning':           {c:'#880088',f:'#aa00aa',fo:0.38,w:2.0},
-  'Winter Storm Warning':        {c:'#cc0066',f:'#ff69b4',fo:0.35,w:2.0},
+  'Winter Storm Warning':        {c:'#008899',f:'#00bbcc',fo:0.35,w:2.0},
   'Winter Storm Watch':          {c:'#2244bb',f:'#4169e1',fo:0.18,w:1.0},
   'Winter Weather Advisory':     {c:'#5544aa',f:'#7b68ee',fo:0.20,w:1.0},
   'Heavy Snow Warning':          {c:'#4466bb',f:'#6495ed',fo:0.35,w:2.0},
@@ -2354,7 +2354,7 @@ function updateHrrrLegend() {
   document.getElementById('hrrr-leg-refp').style.display = isRefd ? 'none' : 'flex';
   document.getElementById('hrrr-leg-note').innerHTML = isRefd
     ? 'NOAA HRRR · 3km · hourly'
-    : 'NOAA HRRR · 3km · hourly<br>Each type shaded by intensity<br>Rain: green→yellow→red by dBZ<br><span style="color:#cc8800">⚠ Freezing rain pink overlaps Winter Storm Warning color when both layers are active</span>';
+    : 'NOAA HRRR · 3km · hourly<br>Each type shaded by intensity<br>Rain: green→yellow→red by dBZ';
 }
 
 function ensureHrrrLayer(idx) {
