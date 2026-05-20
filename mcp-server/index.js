@@ -12,7 +12,7 @@ const WINDNINJA_CACHE = process.env.WINDNINJA_CACHE ?? "C:\\temp\\windninja_cach
 
 const server = new McpServer({
   name: "stormwatch",
-  version: "4.0.0",
+  version: "5.0.0",
 });
 
 const NWS_HEADERS = { "User-Agent": `StormWatchMCP/2.0 (${process.env.NWS_EMAIL ?? "+https://github.com/aphilp1/stormwatch-live"})` };
@@ -649,7 +649,8 @@ server.tool(
       const spcLines = spcRes.value.split("\n").map(l => l.trim()).filter(Boolean);
       const start = spcLines.findIndex(l => /THERE IS|SLIGHT|MARGINAL|ENHANCED|MODERATE|HIGH|NO SEVERE/.test(l));
       if (start >= 0) {
-        const excerpt = spcLines.slice(start, start + 4).join(" ");
+        const end = spcLines.findIndex((l, i) => i > start && /^&&/.test(l));
+        const excerpt = spcLines.slice(start, end > start ? end : start + 8).join(" ");
         sections.push(`\nSPC DAY 1 OUTLOOK:\n${excerpt}`);
       }
     }
@@ -659,15 +660,31 @@ server.tool(
       const now = new Date();
       const startIdx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
       const flines = [];
-      for (let i = startIdx; i < Math.min(startIdx + 6, h.time.length); i++) {
-        const time = new Date(h.time[i]).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-        const temp = h.temperature_2m[i] != null ? `${Math.round(h.temperature_2m[i])}°F` : "?";
-        const cond = WMO[h.weathercode[i]] ?? "Unknown";
-        const wind = h.windspeed_10m[i] != null ? `${Math.round(h.windspeed_10m[i])} mph` : "?";
-        const precip = h.precipitation[i] > 0 ? ` | ${h.precipitation[i].toFixed(2)}" precip` : "";
+      for (let i = startIdx; i < Math.min(startIdx + 12, h.time.length); i++) {
+        const time   = new Date(h.time[i]).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        const temp   = h.temperature_2m[i] != null ? `${Math.round(h.temperature_2m[i])}°F` : "?";
+        const cond   = WMO[h.weathercode[i]] ?? "Unknown";
+        const wind   = h.windspeed_10m[i] != null ? `${Math.round(h.windspeed_10m[i])} mph` : "?";
+        const precip = h.precipitation[i] > 0 ? ` | ${h.precipitation[i].toFixed(2)}"` : "";
         flines.push(`  ${time}: ${temp}, ${cond}, Wind ${wind}${precip}`);
       }
-      sections.push(`\nNEXT 6 HOURS:\n${flines.join("\n")}`);
+      sections.push(`\nNEXT 12 HOURS:\n${flines.join("\n")}`);
+
+      // Trend analysis: compare first 6h vs next 6h
+      const h1temps  = h.temperature_2m.slice(startIdx, startIdx + 6).filter(v => v != null);
+      const h2temps  = h.temperature_2m.slice(startIdx + 6, startIdx + 12).filter(v => v != null);
+      const h1precip = h.precipitation.slice(startIdx, startIdx + 6).reduce((a, b) => a + (b ?? 0), 0);
+      const h2precip = h.precipitation.slice(startIdx + 6, startIdx + 12).reduce((a, b) => a + (b ?? 0), 0);
+      if (h1temps.length && h2temps.length) {
+        const t1avg = h1temps.reduce((a, b) => a + b, 0) / h1temps.length;
+        const t2avg = h2temps.reduce((a, b) => a + b, 0) / h2temps.length;
+        const tDiff = Math.round(t2avg - t1avg);
+        const tTrend = tDiff > 3 ? `Warming (+${tDiff}°F)` : tDiff < -3 ? `Cooling (${tDiff}°F)` : "Steady";
+        const pTrend = h2precip > h1precip + 0.1 ? "Precipitation increasing" :
+          h1precip > h2precip + 0.1 ? "Precipitation decreasing" : "";
+        const trends = [tTrend, pTrend].filter(Boolean);
+        if (trends.length) sections.push(`\nTREND (6–12h vs 0–6h): ${trends.join(" | ")}`);
+      }
     }
 
     return { content: [{ type: "text", text: sections.join("\n") }] };
@@ -767,6 +784,11 @@ server.tool(
       "═".repeat(44),
     ];
 
+    // ── PRIORITY THREAT LEAD (added v5.0) ──
+    // Determine the single most important thing before showing everything else.
+    // This runs synchronously over already-fetched data so it adds no extra latency.
+    let prioritySet = false; // filled in after data resolves below
+
     // CURRENT CONDITIONS (forecast first hour)
     if (fcastRes.status === "fulfilled") {
       const h = fcastRes.value.hourly;
@@ -852,6 +874,34 @@ server.tool(
       } else {
         sections.push(`\nFLOODING: No significant flooding on nearby rivers.`);
       }
+    }
+
+    // ── Build priority lead now that we have all data ──
+    {
+      const alerts = alertsRes.status === "fulfilled" ? (alertsRes.value?.features ?? []) : [];
+      const extreme = alerts.filter(f => f.properties?.severity === "Extreme");
+      const severe  = alerts.filter(f => f.properties?.severity === "Severe");
+      const storms  = tropicalRes.status === "fulfilled" ? (tropicalRes.value?.activeStorms ?? []) : [];
+      const gaugeFeats = floodRes.status === "fulfilled" ? (floodRes.value?.features ?? []) : [];
+      const majorFlood = gaugeFeats.filter(f => (f.attributes?.status ?? "").toLowerCase().includes("major"));
+
+      let lead = null;
+      if (extreme.length) {
+        const t = extreme[0];
+        lead = `🚨 PRIORITY: [EXTREME] ${t.properties.event} — ${t.properties.headline ?? t.properties.areaDesc?.split(";")[0] ?? ""}`;
+      } else if (severe.length) {
+        const t = severe[0];
+        lead = `⚠️  PRIORITY: [SEVERE] ${t.properties.event} — ${t.properties.headline ?? t.properties.areaDesc?.split(";")[0] ?? ""}`;
+      } else if (majorFlood.length) {
+        lead = `🌊 PRIORITY: Major flooding — ${majorFlood.length} gauge(s) at MAJOR flood stage within 50 miles`;
+      } else if (storms.filter(s => s.classification === "HU").length) {
+        const h = storms.find(s => s.classification === "HU");
+        lead = `🌀 PRIORITY: Hurricane ${h.name} active — ${h.intensity ?? "?"} mph, ${h.latitude}, ${h.longitude}`;
+      } else if (!alerts.length) {
+        lead = `✅ No active NWS alerts. Conditions quiet for ${stateCode ?? "this area"}.`;
+      }
+
+      if (lead) sections.splice(3, 0, `\n${lead}`);
     }
 
     sections.push(`\n${"─".repeat(44)}\nSource: NWS, SPC, NHC, USGS, Open-Meteo`);
@@ -1412,6 +1462,882 @@ server.tool(
   }
 );
 
+// ── Tool 20: Space weather ───────────────────────────────────────────────────
+
+server.tool(
+  "get_space_weather",
+  "Get current space weather — geomagnetic activity (Kp index), solar wind speed, active NOAA space weather alerts, and aurora visibility potential. Useful for aurora chasers, HF radio operators, satellite managers, and anyone curious about solar storm impacts on Earth.",
+  {},
+  async () => {
+    const [kpRes, alertsRes, windRes] = await Promise.allSettled([
+      fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json").then(r => r.json()),
+      fetch("https://services.swpc.noaa.gov/products/alerts.json").then(r => r.json()),
+      fetch("https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json").then(r => r.json()),
+    ]);
+
+    const lines = ["Space Weather — NOAA SWPC\n" + "─".repeat(40)];
+    const now = new Date();
+
+    if (kpRes.status === "fulfilled" && Array.isArray(kpRes.value)) {
+      const rows = kpRes.value.slice(1);
+      const cur = rows.find(r => {
+        const t = new Date(r[0]);
+        return t <= now && new Date(t.getTime() + 3 * 3600000) > now;
+      }) ?? rows[0];
+      const kp = cur ? parseFloat(cur[1]) : null;
+      const KP_DESC = kp == null ? "?" :
+        kp >= 8 ? "G4-G5 SEVERE/EXTREME — widespread power grid impacts, aurora to low latitudes" :
+        kp >= 6 ? "G2-G3 MODERATE/STRONG — aurora in northern US, satellite drag increases" :
+        kp >= 5 ? "G1 MINOR — aurora possible in northern states (WA, MT, MI, ME)" :
+        kp >= 4 ? "ACTIVE — aurora may be visible from northern Canada/Alaska" :
+        kp >= 3 ? "UNSETTLED — normal background, aurora confined to polar regions" :
+        "QUIET — calm geomagnetic conditions";
+      lines.push(`\nGEOMAGNETIC ACTIVITY:`);
+      if (kp != null) lines.push(`  Current Kp: ${kp.toFixed(1)} — ${KP_DESC}`);
+
+      const upcoming = rows.filter(r => {
+        const t = new Date(r[0]);
+        return t > now && t < new Date(now.getTime() + 24 * 3600000);
+      });
+      if (upcoming.length) {
+        const maxKp = Math.max(...upcoming.map(r => parseFloat(r[1])));
+        lines.push(`  Next 24h max Kp: ${maxKp.toFixed(1)}`);
+        lines.push(`  Forecast: ${upcoming.slice(0, 6).map(r => {
+          const t = new Date(r[0]).toLocaleTimeString([], { hour: "numeric" });
+          return `${t}→Kp${parseFloat(r[1]).toFixed(1)}`;
+        }).join("  ")}`);
+      }
+
+      const auroraLine = kp == null ? "" :
+        kp >= 8 ? "Aurora may reach Texas/Alabama on clear nights" :
+        kp >= 6 ? "Aurora likely in northern US (Montana, Minnesota, Maine)" :
+        kp >= 5 ? "Aurora visible in northern border states on dark clear nights" :
+        kp >= 4 ? "Aurora possible in Alaska and far northern Canada" :
+        "No significant aurora expected outside polar regions";
+      if (auroraLine) lines.push(`\nAURORA VISIBILITY: ${auroraLine}`);
+    }
+
+    if (alertsRes.status === "fulfilled" && Array.isArray(alertsRes.value)) {
+      const active = alertsRes.value.filter(a => a.productCode && !/cancel/i.test(a.productCode));
+      if (active.length) {
+        lines.push(`\nACTIVE SPACE WEATHER ALERTS (${active.length}):`);
+        active.slice(0, 5).forEach(a => {
+          const firstLine = a.message?.split("\n").find(l => l.trim()) ?? "Space weather event";
+          lines.push(`  [${a.productCode}] ${firstLine.slice(0, 120)}`);
+        });
+      } else {
+        lines.push(`\nALERTS: No active space weather alerts.`);
+      }
+    }
+
+    if (windRes.status === "fulfilled" && Array.isArray(windRes.value) && windRes.value.length > 1) {
+      const latest = windRes.value[windRes.value.length - 1];
+      const density = parseFloat(latest[1]);
+      const speed   = parseFloat(latest[2]);
+      if (!isNaN(speed)) {
+        const swDesc = speed > 600 ? "FAST stream — elevated geomagnetic storm potential" :
+          speed > 450 ? "MODERATE — watch for G1-G2 conditions" : "SLOW — quiet conditions likely";
+        lines.push(`\nSOLAR WIND:`);
+        if (!isNaN(density)) lines.push(`  Proton density: ${density.toFixed(1)} p/cm³`);
+        lines.push(`  Speed: ${speed.toFixed(0)} km/s — ${swDesc}`);
+      }
+    }
+
+    lines.push(`\nSource: NOAA Space Weather Prediction Center (swpc.noaa.gov)`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Tool 21: Marine weather ───────────────────────────────────────────────────
+
+server.tool(
+  "get_marine_weather",
+  "Get current marine weather for any coastal or offshore location — wave heights, swell period and direction, sea conditions, and wind. Best for US coastal waters, Gulf of Mexico, Great Lakes, and offshore planning. Uses Open-Meteo Marine API.",
+  {
+    location: z.string().describe("Coastal location or offshore coordinates, e.g. 'Miami FL', 'Gulf of Mexico', 'Outer Banks NC', '28.5,-88.5'"),
+    hours: z.number().int().min(6).max(48).default(24).describe("Forecast hours to show (6–48, default 24)"),
+  },
+  async ({ location, hours }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    const [marineRes, windRes] = await Promise.allSettled([
+      fetch(
+        `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}` +
+        `&hourly=wave_height,wave_period,wave_direction,wind_wave_height,swell_wave_height,swell_wave_period,swell_wave_direction` +
+        `&length_unit=imperial&timezone=auto&forecast_days=3`
+      ).then(r => r.json()),
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&hourly=windspeed_10m,winddirection_10m,windgusts_10m` +
+        `&wind_speed_unit=mph&timezone=auto&forecast_days=3`
+      ).then(r => r.json()),
+    ]);
+
+    if (marineRes.status === "rejected" || !marineRes.value?.hourly?.wave_height) {
+      return { content: [{ type: "text", text: `Marine data unavailable for ${placeName}. This location may be inland — try a coastal city or offshore coordinates like "28.5,-88.5".` }] };
+    }
+
+    const h = marineRes.value.hourly;
+    const w = windRes.status === "fulfilled" ? windRes.value.hourly : null;
+    const now = new Date();
+    const startIdx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
+
+    const BEAUFORT = spd =>
+      spd < 1 ? "Calm" : spd < 7 ? "Light air" : spd < 12 ? "Light breeze" :
+      spd < 18 ? "Gentle breeze" : spd < 24 ? "Moderate breeze" : spd < 31 ? "Fresh breeze" :
+      spd < 38 ? "Strong breeze" : spd < 46 ? "Near gale" : spd < 54 ? "Gale" : "Storm";
+
+    const lines = [`Marine Forecast — ${placeName}\n${"─".repeat(40)}`];
+
+    const wh  = h.wave_height?.[startIdx];
+    const wp  = h.wave_period?.[startIdx];
+    const wd  = h.wave_direction?.[startIdx];
+    const swH = h.swell_wave_height?.[startIdx];
+    const swP = h.swell_wave_period?.[startIdx];
+    const wnd = w?.windspeed_10m?.[startIdx];
+    const wndDir = w?.winddirection_10m?.[startIdx];
+    const gust = w?.windgusts_10m?.[startIdx];
+
+    lines.push(`\nCURRENT CONDITIONS:`);
+    if (wh  != null) lines.push(`  Total wave height: ${wh.toFixed(1)} ft`);
+    if (wp  != null) lines.push(`  Wave period:       ${wp.toFixed(0)} sec`);
+    if (wd  != null) lines.push(`  Wave direction:    from ${dirToCardinal(wd)} (${wd}°)`);
+    if (swH != null) lines.push(`  Swell:             ${swH.toFixed(1)} ft @ ${swP?.toFixed(0) ?? "?"}s from ${h.swell_wave_direction?.[startIdx] != null ? dirToCardinal(h.swell_wave_direction[startIdx]) : "?"}`);
+    if (wnd != null) lines.push(`  Wind:              ${dirToCardinal(wndDir ?? 0)} ${Math.round(wnd)} mph${gust ? " gusting " + Math.round(gust) + " mph" : ""} — ${BEAUFORT(wnd)}`);
+
+    if (wh != null) {
+      const seaState = wh >= 13 ? "VERY ROUGH — dangerous for most vessels" :
+        wh >= 8 ? "ROUGH — small craft should remain in port" :
+        wh >= 4 ? "MODERATE — small craft advisory conditions likely" :
+        wh >= 2 ? "SLIGHT — manageable for most vessels" : "CALM — good conditions";
+      lines.push(`\nSEA STATE: ${seaState}`);
+    }
+
+    lines.push(`\nFORECAST (next ${Math.min(hours, 24)}h — every 3h):`);
+    for (let i = startIdx; i < Math.min(startIdx + hours, h.time.length, startIdx + 24); i += 3) {
+      const time  = new Date(h.time[i]).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
+      const waveH = h.wave_height?.[i] != null ? `${h.wave_height[i].toFixed(1)} ft` : "?";
+      const wndS  = w?.windspeed_10m?.[i] != null ? `${Math.round(w.windspeed_10m[i])} mph` : "?";
+      lines.push(`  ${time}: Waves ${waveH} | Wind ${wndS}`);
+    }
+
+    lines.push(`\nSource: Open-Meteo Marine API`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Tool 23: Avalanche forecast ──────────────────────────────────────────────
+
+// Point-in-polygon (ray casting) for avalanche zone lookup
+function ptInAvalPoly(lat, lon, geometry) {
+  if (!geometry) return false;
+  const testRing = ring => {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+      if (((yi > lat) !== (yj > lat)) && lon < ((xj - xi) * (lat - yi) / (yj - yi) + xi))
+        inside = !inside;
+    }
+    return inside;
+  };
+  if (geometry.type === "Polygon")      return testRing(geometry.coordinates[0]);
+  if (geometry.type === "MultiPolygon") return geometry.coordinates.some(p => testRing(p[0]));
+  return false;
+}
+
+server.tool(
+  "get_avalanche_forecast",
+  "Get the current avalanche forecast for mountain terrain near any US location — danger rating (Low through Extreme), avalanche problem types (wind slab, wet avalanche, persistent slab, etc.), and travel advice from the National Avalanche Center network.",
+  {
+    location: z.string().describe("Mountain area or nearby town, e.g. 'Missoula MT', 'Mammoth Lakes CA', 'Breckenridge CO', 'Snoqualmie Pass WA'"),
+  },
+  async ({ location }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    // Find which NAC forecast zone contains the point
+    let foreignId = null, areaName = null;
+    try {
+      const mapRes = await fetch("https://api.avalanche.org/v2/public/products/map-layer?productType=forecast");
+      if (mapRes.ok) {
+        const geojson = await mapRes.json();
+        for (const feat of (geojson.features ?? [])) {
+          if (ptInAvalPoly(lat, lon, feat.geometry)) {
+            foreignId = feat.properties?.foreignId ?? feat.id;
+            areaName  = feat.properties?.name ?? "Unknown area";
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+
+    if (!foreignId) {
+      return { content: [{ type: "text", text: `No avalanche forecast zone found for ${placeName}. The National Avalanche Center covers US mountain regions — try a location in or near the Rockies, Sierra Nevada, Cascades, or other major ranges. See https://avalanche.org for coverage map.` }] };
+    }
+
+    const fRes = await fetch(`https://api.avalanche.org/v2/public/products/forecast?foreignId=${foreignId}`);
+    if (!fRes.ok) {
+      return { content: [{ type: "text", text: `Avalanche forecast unavailable for ${areaName}. The forecast may not yet be issued for today. Check https://avalanche.org.` }] };
+    }
+    const f = await fRes.json();
+
+    const DANGER_LABELS = ["No Rating", "Low", "Moderate", "Considerable", "High", "Extreme"];
+    const DANGER_EMOJI  = ["⚪", "🟢", "🟡", "🟠", "🔴", "⚫"];
+    const DANGER_ADVICE = [
+      "", "Generally safe. Normal caution advised.",
+      "Heightened caution in steep terrain. Evaluate carefully.",
+      "Travel in avalanche terrain is serious. Group management and route selection critical.",
+      "Very dangerous. Travel in avalanche terrain not recommended.",
+      "Avoid all avalanche terrain. Extraordinary danger.",
+    ];
+
+    const lines = [`Avalanche Forecast — ${areaName}\n${"─".repeat(42)}`];
+    const issued  = f.publishedTime ? new Date(f.publishedTime).toLocaleString()  : "Unknown";
+    const expires = f.expiryTime    ? new Date(f.expiryTime).toLocaleString()     : "Unknown";
+    lines.push(`Issued: ${issued} | Expires: ${expires}\n`);
+
+    const danger = f.danger ?? [];
+    if (danger.length) {
+      lines.push(`DANGER RATING:`);
+      for (const d of danger) {
+        const lvl   = d.lower ?? d.level ?? 0;
+        const label = DANGER_LABELS[lvl] ?? `Level ${lvl}`;
+        const emoji = DANGER_EMOJI[lvl]  ?? "⚪";
+        const band  = (d.name ?? d.position ?? "All elevations").replace(/_/g, " ");
+        lines.push(`  ${emoji} ${band}: ${label}`);
+        if (DANGER_ADVICE[lvl]) lines.push(`    ${DANGER_ADVICE[lvl]}`);
+      }
+    }
+
+    const problems = f.avalancheProblems ?? [];
+    if (problems.length) {
+      lines.push(`\nAVALANCHE PROBLEMS:`);
+      for (const p of problems) {
+        const type = (p.avalancheProblemId ?? p.type ?? "Unknown").replace(/_/g, " ");
+        const parts = [p.likelihood, p.size ? `Size: ${p.size}` : null].filter(Boolean);
+        lines.push(`  • ${type}${parts.length ? " — " + parts.join(" | ") : ""}`);
+        if (p.comment) lines.push(`    ${p.comment.slice(0, 200)}`);
+      }
+    }
+
+    const btl = f.bottomLine ?? f.summary ?? "";
+    if (btl) lines.push(`\nBOTTOM LINE:\n${btl.slice(0, 600)}`);
+
+    lines.push(`\nSource: ${f.forecaster ?? "National Avalanche Center"} | avalanche.org`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Tool 24: Lightning potential ─────────────────────────────────────────────
+
+server.tool(
+  "get_lightning_potential",
+  "Get lightning potential and atmospheric instability for any location — CAPE (convective available potential energy), lifted index, convective inhibition, and hourly lightning potential index for the next 24+ hours. Useful for outdoor safety, fire weather ignition risk, and severe storm context.",
+  {
+    location: z.string().describe("City or location, e.g. 'Cheyenne WY', 'Tampa FL', 'Denver Colorado'"),
+    hours: z.number().int().min(6).max(48).default(24).describe("Forecast hours to show (6–48, default 24)"),
+  },
+  async ({ location, hours }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    const instabRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&hourly=cape,lifted_index,convective_inhibition,lightning_potential,weathercode` +
+      `&timezone=auto&forecast_days=3`
+    ).then(r => r.json()).catch(() => null);
+
+    if (!instabRes?.hourly) {
+      return { content: [{ type: "text", text: `Lightning potential data unavailable for ${placeName}.` }] };
+    }
+
+    const h = instabRes.hourly;
+    const now = new Date();
+    const startIdx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
+
+    const lines = [`Lightning Potential — ${placeName}\n${"─".repeat(40)}`];
+
+    const cape = h.cape?.[startIdx];
+    const li   = h.lifted_index?.[startIdx];
+    const cin  = h.convective_inhibition?.[startIdx];
+    const lp   = h.lightning_potential?.[startIdx];
+
+    lines.push(`\nCURRENT INSTABILITY:`);
+    if (cape != null) {
+      const capeLabel = cape >= 3000 ? "EXTREME — explosive storm potential" :
+        cape >= 1500 ? "HIGH — significant storm development likely" :
+        cape >= 500  ? "MODERATE — storm development possible" :
+        cape >= 100  ? "LOW — isolated storms possible" : "MINIMAL — stable air";
+      lines.push(`  CAPE: ${cape.toFixed(0)} J/kg — ${capeLabel}`);
+    }
+    if (li != null) {
+      const liLabel = li <= -6 ? "EXTREMELY UNSTABLE" : li <= -4 ? "VERY UNSTABLE" :
+        li <= -2 ? "MODERATELY UNSTABLE" : li <= 0 ? "SLIGHTLY UNSTABLE" :
+        li <= 2  ? "NEAR NEUTRAL" : "STABLE";
+      lines.push(`  Lifted Index: ${li.toFixed(1)} — ${liLabel}`);
+    }
+    if (cin != null) lines.push(`  CIN (cap): ${cin.toFixed(0)} J/kg${cin < -50 ? " — strong cap suppressing convection" : cin < -25 ? " — moderate cap" : " — weak cap"}`);
+    if (lp  != null) lines.push(`  Lightning Index: ${lp.toFixed(1)}`);
+
+    lines.push(`\nHOURLY LIGHTNING POTENTIAL (next ${Math.min(hours, 24)}h):`);
+    let peakLp = 0, peakTime = null;
+    for (let i = startIdx; i < Math.min(startIdx + hours, h.time.length, startIdx + 24); i += 3) {
+      const t     = new Date(h.time[i]).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      const capeV = h.cape?.[i] ?? 0;
+      const lpV   = h.lightning_potential?.[i] ?? 0;
+      const risk  = lpV > 20 ? "HIGH ⚡⚡" : lpV > 5 ? "MODERATE ⚡" : capeV > 500 ? "LOW-MOD" : "LOW";
+      lines.push(`  ${t}: CAPE ${capeV.toFixed(0)} J/kg | LP ${lpV.toFixed(1)} — ${risk}`);
+      if (lpV > peakLp) { peakLp = lpV; peakTime = h.time[i]; }
+    }
+
+    if (peakLp > 5 && peakTime) {
+      const pt = new Date(peakTime).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
+      lines.push(`\nPEAK RISK: ${pt} — LP index ${peakLp.toFixed(1)}`);
+    }
+
+    lines.push(`\nNote: CAPE >1500 J/kg + weak CIN = prime thunderstorm environment. LP index >10 = active cells likely. For fire context, high CAPE + dry fuels = high ignition risk from dry lightning.`);
+    lines.push(`\nSource: Open-Meteo Forecast API`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Tool 25: Climate context (vs. normals) ───────────────────────────────────
+
+server.tool(
+  "get_climate_context",
+  "Compare today's forecast conditions to the 10-year historical average for the same calendar date — how far above or below normal is today's temperature and precipitation? Uses Open-Meteo ERA5 reanalysis archive for the historical baseline.",
+  {
+    location: z.string().describe("City or location, e.g. 'Oklahoma City', 'Seattle WA', 'Miami Florida'"),
+  },
+  async ({ location }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    const today = new Date();
+    const mm    = String(today.getMonth() + 1).padStart(2, "0");
+    const dd    = String(today.getDate()).padStart(2, "0");
+    const todayStr = today.toISOString().split("T")[0];
+
+    const [currentRes, archiveRes] = await Promise.allSettled([
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum` +
+        `&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=1`
+      ).then(r => r.json()),
+      // 10-year archive window that contains all matching calendar dates
+      fetch(
+        `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
+        `&start_date=2015-01-01&end_date=2024-12-31` +
+        `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum` +
+        `&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto`
+      ).then(r => r.json()),
+    ]);
+
+    const lines = [`Climate Context — ${placeName}\n${"─".repeat(42)}`];
+    lines.push(`Date: ${todayStr} (${mm}/${dd})\n`);
+
+    let todayHigh = null, todayLow = null, todayPrecip = null;
+    if (currentRes.status === "fulfilled") {
+      const d = currentRes.value.daily;
+      todayHigh   = d?.temperature_2m_max?.[0] != null ? Math.round(d.temperature_2m_max[0]) : null;
+      todayLow    = d?.temperature_2m_min?.[0]  != null ? Math.round(d.temperature_2m_min[0])  : null;
+      todayPrecip = d?.precipitation_sum?.[0] ?? null;
+      lines.push(`TODAY'S FORECAST:`);
+      if (todayHigh != null) lines.push(`  High: ${todayHigh}°F  |  Low: ${todayLow ?? "?"}°F`);
+      if (todayPrecip != null) lines.push(`  Precip: ${todayPrecip.toFixed(2)}"`);
+    }
+
+    if (archiveRes.status === "fulfilled") {
+      const d = archiveRes.value.daily;
+      const dates = d?.time ?? [];
+      // Filter to only rows matching this calendar day (same MM-DD)
+      const target = `${mm}-${dd}`;
+      const idxs = dates.reduce((acc, dt, i) => { if (dt.endsWith(target)) acc.push(i); return acc; }, []);
+
+      const normHighs  = idxs.map(i => d.temperature_2m_max?.[i]).filter(v => v != null);
+      const normLows   = idxs.map(i => d.temperature_2m_min?.[i]).filter(v => v != null);
+      const normPrecip = idxs.map(i => d.precipitation_sum?.[i]).filter(v => v != null);
+
+      if (normHighs.length > 0) {
+        const avgHigh   = Math.round(normHighs.reduce((a, b) => a + b, 0) / normHighs.length);
+        const avgLow    = normLows.length ? Math.round(normLows.reduce((a, b) => a + b, 0) / normLows.length) : null;
+        const avgPrecip = normPrecip.length ? normPrecip.reduce((a, b) => a + b, 0) / normPrecip.length : null;
+        const maxHigh   = Math.round(Math.max(...normHighs));
+        const minHigh   = Math.round(Math.min(...normHighs));
+
+        lines.push(`\n10-YEAR AVERAGE FOR ${mm}/${dd} (2015–2024):`);
+        lines.push(`  Avg high: ${avgHigh}°F  |  Avg low: ${avgLow ?? "?"}°F`);
+        lines.push(`  Record range: ${minHigh}°F – ${maxHigh}°F (for this date)`);
+        if (avgPrecip != null) lines.push(`  Avg precip: ${avgPrecip.toFixed(2)}" (daily average)`);
+
+        if (todayHigh != null) {
+          const hDiff = todayHigh - avgHigh;
+          const lDiff = todayLow != null && avgLow != null ? todayLow - avgLow : null;
+          lines.push(`\nVS. NORMAL:`);
+          lines.push(`  High: ${hDiff >= 0 ? "+" : ""}${hDiff}°F (${hDiff > 5 ? "well above" : hDiff > 0 ? "above" : hDiff < -5 ? "well below" : hDiff < 0 ? "below" : "near"} normal)`);
+          if (lDiff != null) lines.push(`  Low:  ${lDiff >= 0 ? "+" : ""}${lDiff}°F (${lDiff > 5 ? "well above" : lDiff > 0 ? "above" : lDiff < -5 ? "well below" : lDiff < 0 ? "below" : "near"} normal)`);
+          if (avgPrecip != null && todayPrecip != null) {
+            const pDiff = todayPrecip - avgPrecip;
+            lines.push(`  Precip: ${pDiff >= 0 ? "+" : ""}${pDiff.toFixed(2)}" vs daily average`);
+          }
+        }
+      }
+    }
+
+    lines.push(`\nSource: Open-Meteo Forecast + ERA5 Archive (2015–2024 baseline)`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Tool 26: Multi-location weather comparison ───────────────────────────────
+
+server.tool(
+  "get_multi_location_comparison",
+  "Compare current weather conditions side-by-side for 2–5 locations — temperature, wind, humidity, and sky conditions at a glance. Great for travel planning, chasing decisions, regional storm situational awareness, and 'where should I go?' questions.",
+  {
+    locations: z.array(z.string()).min(2).max(5).describe("2–5 city names or coordinates, e.g. ['Oklahoma City', 'Dallas TX', 'Kansas City MO']"),
+  },
+  async ({ locations }) => {
+    const geocoded = await Promise.allSettled(locations.map(geocode));
+    const valid = geocoded
+      .map((r, i) => r.status === "fulfilled" ? { ...r.value, orig: locations[i] } : null)
+      .filter(Boolean);
+
+    if (valid.length < 2) {
+      return { content: [{ type: "text", text: "Could not geocode enough locations. Provide 2–5 valid city names or decimal coordinates." }] };
+    }
+
+    const forecasts = await Promise.allSettled(
+      valid.map(loc =>
+        fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}` +
+          `&current=temperature_2m,windspeed_10m,winddirection_10m,weathercode,precipitation,relative_humidity_2m,windgusts_10m` +
+          `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto`
+        ).then(r => r.json())
+      )
+    );
+
+    const rows = valid.map((loc, i) => {
+      const res = forecasts[i];
+      if (res.status !== "fulfilled") return { name: loc.name, error: true };
+      const c = res.value.current ?? {};
+      return {
+        name:    loc.name,
+        temp:    c.temperature_2m   != null ? Math.round(c.temperature_2m)   : null,
+        wind:    c.windspeed_10m    != null ? Math.round(c.windspeed_10m)    : null,
+        gust:    c.windgusts_10m    != null ? Math.round(c.windgusts_10m)    : null,
+        windDir: c.winddirection_10m != null ? dirToCardinal(c.winddirection_10m) : null,
+        precip:  c.precipitation    ?? 0,
+        rh:      c.relative_humidity_2m ?? null,
+        cond:    WMO[c.weathercode] ?? "Unknown",
+      };
+    });
+
+    const lines = [`Weather Comparison — ${new Date().toLocaleString()}\n${"─".repeat(50)}`];
+
+    for (const r of rows) {
+      if (r.error) { lines.push(`\n${r.name}: data unavailable`); continue; }
+      lines.push(`\n${r.name}:`);
+      const parts = [];
+      if (r.temp != null) parts.push(`🌡️ ${r.temp}°F`);
+      if (r.wind != null) parts.push(`💨 ${r.windDir ?? ""} ${r.wind} mph${r.gust && r.gust > r.wind + 5 ? " G" + r.gust : ""}`);
+      if (r.rh   != null) parts.push(`💧 ${r.rh}% RH`);
+      parts.push(`☁️ ${r.cond}`);
+      if (r.precip > 0) parts.push(`🌧️ ${r.precip.toFixed(2)}"`);
+      lines.push(`  ${parts.join("  |  ")}`);
+    }
+
+    const valid_rows = rows.filter(r => !r.error && r.temp != null);
+    if (valid_rows.length >= 2) {
+      const sorted = [...valid_rows].sort((a, b) => b.temp - a.temp);
+      lines.push(`\nWARMEST: ${sorted[0].name} (${sorted[0].temp}°F)`);
+      lines.push(`COOLEST: ${sorted[sorted.length - 1].name} (${sorted[sorted.length - 1].temp}°F)`);
+      lines.push(`SPREAD:  ${sorted[0].temp - sorted[sorted.length - 1].temp}°F difference`);
+    }
+
+    lines.push(`\nSource: Open-Meteo Current Weather API`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Tool 27: Watch and warning summary ───────────────────────────────────────
+
+server.tool(
+  "get_watch_warning_summary",
+  "Get a prioritized, organized summary of all active NWS watches, warnings, and advisories for a US state — grouped by severity (Extreme → Severe → Moderate → Minor) with counts and affected areas. Cleaner situational awareness than get_active_alerts for high-alert days.",
+  {
+    state: z.string().length(2).describe("Two-letter US state code, e.g. TX, OK, FL, CA"),
+  },
+  async ({ state }) => {
+    const st = state.toUpperCase();
+    const res = await fetch(`https://api.weather.gov/alerts/active?area=${st}&status=actual`, { headers: NWS_HEADERS });
+    if (!res.ok) throw new Error(`NWS API error: ${res.status}`);
+    const data = await res.json();
+    const alerts = data.features ?? [];
+
+    if (!alerts.length) {
+      return { content: [{ type: "text", text: `No active NWS alerts for ${st} at this time. Conditions are quiet.` }] };
+    }
+
+    const SEV_ORDER = ["Extreme", "Severe", "Moderate", "Minor", "Unknown"];
+    const SEV_EMOJI = { Extreme: "🔴", Severe: "🟠", Moderate: "🟡", Minor: "🔵", Unknown: "⚪" };
+
+    const grouped = {};
+    for (const f of alerts) {
+      const sev = f.properties?.severity ?? "Unknown";
+      const key = SEV_ORDER.includes(sev) ? sev : "Unknown";
+      if (!grouped[key]) grouped[key] = {};
+      const evt = f.properties?.event ?? "Unknown";
+      if (!grouped[key][evt]) grouped[key][evt] = [];
+      grouped[key][evt].push(f.properties?.areaDesc ?? "");
+    }
+
+    const lines = [
+      `NWS Alert Summary — ${st}`,
+      `${alerts.length} active alert${alerts.length !== 1 ? "s" : ""} | ${new Date().toLocaleString()}`,
+      "═".repeat(44),
+    ];
+
+    for (const sev of SEV_ORDER) {
+      if (!grouped[sev]) continue;
+      lines.push(`\n${SEV_EMOJI[sev]} ${sev.toUpperCase()} SEVERITY:`);
+      for (const [evt, areas] of Object.entries(grouped[sev])) {
+        const uniqueAreas = [...new Set(areas.flatMap(a => a.split(";").map(s => s.trim())))].filter(Boolean);
+        const areaStr = uniqueAreas.slice(0, 3).join(", ") + (uniqueAreas.length > 3 ? ` (+${uniqueAreas.length - 3} more areas)` : "");
+        lines.push(`  • ${evt}${areaStr ? " — " + areaStr : ""}`);
+      }
+    }
+
+    const now = new Date();
+    const expiringSoon = alerts.filter(f => {
+      const exp = f.properties?.expires;
+      return exp && (new Date(exp) - now) < 2 * 3600000 && new Date(exp) > now;
+    });
+    if (expiringSoon.length) {
+      lines.push(`\n⏰ EXPIRING WITHIN 2 HOURS (${expiringSoon.length}):`);
+      expiringSoon.forEach(f => {
+        const exp = new Date(f.properties.expires).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        lines.push(`  ${f.properties.event} — expires ${exp}`);
+      });
+    }
+
+    lines.push(`\nSource: NOAA National Weather Service`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Agent Tool 28: Fire risk score (compound) ─────────────────────────────────
+
+server.tool(
+  "get_fire_risk_score",
+  "AGENT: Synthesize a fire risk score (0–10) for any US location by combining 90-day fuel drought, current RH and wind, SPC fire weather outlook, and active red flag alerts. Returns a single actionable risk number with the key factors. 0=no risk, 10=extreme/life-threatening fire weather.",
+  {
+    location: z.string().describe("City or location, e.g. 'Paradise CA', 'Prescott AZ', 'Boulder CO', 'Flagstaff Arizona'"),
+  },
+  async ({ location }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    const d90ago    = new Date(Date.now() - 90 * 86400000).toISOString().split("T")[0];
+
+    const [archiveRes, currentRes, spcFireRes, alertsRes] = await Promise.allSettled([
+      fetch(
+        `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
+        `&start_date=${d90ago}&end_date=${yesterday}` +
+        `&daily=precipitation_sum,et0_fao_evapotranspiration&precipitation_unit=inch&timezone=auto`
+      ).then(r => r.json()),
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&hourly=relative_humidity_2m,windspeed_10m,windgusts_10m,temperature_2m` +
+        `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=1`
+      ).then(r => r.json()),
+      fetch("https://www.spc.noaa.gov/products/fire_weather/fwdy1.txt").then(r => r.ok ? r.text() : ""),
+      fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null),
+    ]);
+
+    let score = 0;
+    const factors = [];
+    let total90 = null, sinceRain = null, minRh = null, maxGust = null, maxWind = null;
+
+    // Factor 1: Fuel moisture / precipitation deficit
+    if (archiveRes.status === "fulfilled") {
+      const d = archiveRes.value.daily;
+      const precip = (d?.precipitation_sum ?? []).filter(v => v != null);
+      const et0    = (d?.et0_fao_evapotranspiration ?? []).filter(v => v != null);
+      if (precip.length > 0) {
+        total90 = precip.reduce((a, b) => a + b, 0);
+        const rev = [...precip].reverse();
+        sinceRain = rev.findIndex(v => v >= 0.10);
+        if (sinceRain === -1) sinceRain = 90;
+        if      (total90 < 0.5) { score += 3; factors.push(`Extreme fuel drought (${total90.toFixed(2)}" in 90 days)`); }
+        else if (total90 < 2.0) { score += 2; factors.push(`Severe fuel drying (${total90.toFixed(2)}" in 90 days)`); }
+        else if (total90 < 5.0) { score += 1; factors.push(`Below-normal precip (${total90.toFixed(2)}" in 90 days)`); }
+        if (sinceRain >= 30) { score += Math.min(1, Math.floor(sinceRain / 30)); factors.push(`${sinceRain} days since last rain`); }
+      }
+    }
+
+    // Factor 2: Current weather (RH, wind, gusts)
+    if (currentRes.status === "fulfilled") {
+      const h = currentRes.value.hourly;
+      const now = new Date();
+      const idx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
+      const rhs   = h.relative_humidity_2m?.slice(idx, idx + 12).filter(v => v != null) ?? [];
+      const winds = h.windspeed_10m?.slice(idx, idx + 12).filter(v => v != null) ?? [];
+      const gusts = h.windgusts_10m?.slice(idx, idx + 12).filter(v => v != null) ?? [];
+      minRh   = rhs.length   ? Math.min(...rhs)   : null;
+      maxWind = winds.length ? Math.max(...winds) : null;
+      maxGust = gusts.length ? Math.max(...gusts) : null;
+      if (minRh != null) {
+        if      (minRh < 10) { score += 3; factors.push(`Critical RH ${minRh.toFixed(0)}% (below 10% threshold)`); }
+        else if (minRh < 15) { score += 2; factors.push(`Very low RH ${minRh.toFixed(0)}%`); }
+        else if (minRh < 25) { score += 1; factors.push(`Low RH ${minRh.toFixed(0)}%`); }
+      }
+      if (maxGust != null) {
+        if      (maxGust >= 50) { score += 2; factors.push(`Dangerous gusts ${maxGust.toFixed(0)} mph`); }
+        else if (maxGust >= 35) { score += 1; factors.push(`Strong gusts ${maxGust.toFixed(0)} mph`); }
+      } else if (maxWind != null && maxWind >= 25) {
+        score += 1; factors.push(`Elevated wind ${maxWind.toFixed(0)} mph`);
+      }
+    }
+
+    // Factor 3: SPC fire weather outlook
+    if (spcFireRes.status === "fulfilled" && spcFireRes.value) {
+      const txt = spcFireRes.value;
+      if      (/EXTREME FIRE WEATHER/i.test(txt))  { score += 2;   factors.push("SPC Extreme Fire Weather Day"); }
+      else if (/CRITICAL FIRE WEATHER/i.test(txt)) { score += 1.5; factors.push("SPC Critical Fire Weather Day"); }
+      else if (/ELEVATED FIRE WEATHER/i.test(txt)) { score += 0.5; factors.push("SPC Elevated Fire Weather Day"); }
+    }
+
+    // Factor 4: Active red flag / fire weather NWS alerts
+    if (alertsRes.status === "fulfilled" && alertsRes.value?.features) {
+      const fireAlerts = alertsRes.value.features.filter(f => /red flag|fire weather/i.test(f.properties?.event ?? ""));
+      if (fireAlerts.length) { score += 1; factors.push("Active Red Flag Warning / Fire Weather Watch"); }
+    }
+
+    score = Math.min(10, Math.round(score * 10) / 10);
+    const RATING =
+      score >= 9 ? "EXTREME — life-threatening fire weather conditions" :
+      score >= 7 ? "VERY HIGH — significant fire spread likely if ignition occurs" :
+      score >= 5 ? "HIGH — active fire weather concerns, monitor closely" :
+      score >= 3 ? "MODERATE — elevated fire danger, above normal" :
+      score >= 1 ? "LOW-MODERATE — some fire weather concern" :
+      "LOW — no significant fire weather concern";
+
+    const lines = [
+      `Fire Risk Score — ${placeName}\n${"─".repeat(42)}`,
+      ``,
+      `FIRE RISK: ${score.toFixed(1)} / 10`,
+      `RATING:    ${RATING}`,
+    ];
+
+    if (factors.length) {
+      lines.push(`\nCONTRIBUTING FACTORS:`);
+      factors.forEach(f => lines.push(`  • ${f}`));
+    }
+
+    lines.push(`\nKEY METRICS:`);
+    if (total90   != null) lines.push(`  90-day precip:  ${total90.toFixed(2)}"`);
+    if (sinceRain != null) lines.push(`  Days since rain: ${sinceRain}`);
+    if (minRh     != null) lines.push(`  Min RH (12h):    ${minRh.toFixed(0)}%`);
+    if (maxGust   != null) lines.push(`  Peak gusts (12h):${maxGust.toFixed(0)} mph`);
+    else if (maxWind != null) lines.push(`  Peak wind (12h): ${maxWind.toFixed(0)} mph`);
+
+    lines.push(`\nPair with: get_fire_weather_environment (full drought detail), get_terrain_wind (local acceleration), get_fire_weather_outlook (SPC narrative).`);
+    lines.push(`\nSource: Open-Meteo Archive/Forecast, NOAA SPC, NWS Alerts`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Agent Tool 29: Impact forecast (compound) ─────────────────────────────────
+
+server.tool(
+  "get_impact_forecast",
+  "AGENT: 24-hour impact-focused weather briefing for any location — synthesizes active NWS alerts, current conditions, significant hourly forecast events, nearby river flooding, and air quality into plain-language 'what will happen to you today' situational awareness. The most actionable briefing in the StormWatch toolkit.",
+  {
+    location: z.string().describe("City or location, e.g. 'Nashville TN', 'Houston TX', 'Phoenix AZ', 'Missoula Montana'"),
+  },
+  async ({ location }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    let stateCode = null;
+    try {
+      const ptRes = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`, { headers: NWS_HEADERS });
+      if (ptRes.ok) stateCode = (await ptRes.json()).properties?.relativeLocation?.properties?.state ?? null;
+    } catch (_) {}
+
+    const [alertsRes, fcast24Res, aqiRes, gaugeRes] = await Promise.allSettled([
+      fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null),
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&hourly=temperature_2m,precipitation,windspeed_10m,windgusts_10m,weathercode,cape` +
+        `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=2`
+      ).then(r => r.json()),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi,pm2_5&timezone=auto&forecast_days=1`).then(r => r.json()),
+      fetch(`https://mapservices.weather.noaa.gov/eventdriven/rest/services/water/riv_gauges/MapServer/0/query?geometry=${lon},${lat}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=30&units=esriSRUnit_StatuteMile&outFields=gaugelid,location,observed,status,units,waterbody&returnGeometry=false&f=json`, { headers: NWS_HEADERS }).then(r => r.json()),
+    ]);
+
+    const now = new Date();
+    const lines = [
+      `Impact Forecast — ${placeName}`,
+      `24-Hour Outlook | ${now.toLocaleString()}`,
+      "═".repeat(44),
+    ];
+
+    // Priority threat
+    const activeAlerts = alertsRes.status === "fulfilled" ? (alertsRes.value?.features ?? []) : [];
+    const extreme = activeAlerts.filter(f => f.properties?.severity === "Extreme");
+    const severe  = activeAlerts.filter(f => f.properties?.severity === "Severe");
+    if (extreme.length || severe.length) {
+      const top = extreme[0] ?? severe[0];
+      lines.push(`\n🚨 PRIORITY THREAT: [${top.properties.severity.toUpperCase()}] ${top.properties.event}`);
+      lines.push(`   ${top.properties.headline ?? top.properties.areaDesc ?? ""}`);
+      if (top.properties.expires) lines.push(`   In effect until: ${new Date(top.properties.expires).toLocaleString()}`);
+    } else if (activeAlerts.length) {
+      lines.push(`\n⚠️  ACTIVE ALERTS (${activeAlerts.length}):`);
+      activeAlerts.slice(0, 3).forEach(f => lines.push(`   • ${f.properties.event}`));
+    } else {
+      lines.push(`\n✅ NO ACTIVE NWS ALERTS for this location.`);
+    }
+
+    // 24-hour weather story
+    if (fcast24Res.status === "fulfilled") {
+      const h = fcast24Res.value.hourly;
+      const s = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
+      const temps   = h.temperature_2m?.slice(s, s + 24).filter(v => v != null) ?? [];
+      const precips = h.precipitation?.slice(s, s + 24).filter(v => v != null) ?? [];
+      const gusts   = h.windgusts_10m?.slice(s, s + 24).filter(v => v != null) ?? [];
+      const capes   = h.cape?.slice(s, s + 24).filter(v => v != null) ?? [];
+      const maxTemp = temps.length ? Math.round(Math.max(...temps)) : null;
+      const minTemp = temps.length ? Math.round(Math.min(...temps)) : null;
+      const totalPrecip = precips.reduce((a, b) => a + b, 0);
+      const maxGust = gusts.length ? Math.max(...gusts) : null;
+      const maxCape = capes.length ? Math.max(...capes) : null;
+
+      lines.push(`\n24-HOUR WEATHER STORY:`);
+      if (maxTemp != null) lines.push(`  Temps: ${minTemp}°F – ${maxTemp}°F`);
+      if (totalPrecip > 0.01) lines.push(`  Precipitation: ${totalPrecip.toFixed(2)}" total`);
+      if (maxGust != null && maxGust >= 30) lines.push(`  Winds: gusts to ${Math.round(maxGust)} mph`);
+      if (maxCape != null && maxCape > 500) lines.push(`  ⚡ Instability: CAPE ${maxCape.toFixed(0)} J/kg — thunderstorm potential`);
+
+      // Flag only significant hours
+      const sigHours = [];
+      for (let i = s; i < Math.min(s + 24, h.time.length); i++) {
+        const wc   = h.weathercode?.[i] ?? 0;
+        const g    = h.windgusts_10m?.[i] ?? 0;
+        const p    = h.precipitation?.[i] ?? 0;
+        const cape = h.cape?.[i] ?? 0;
+        if (wc >= 61 || g > 35 || p > 0.1 || cape > 1000) sigHours.push(i);
+      }
+      if (sigHours.length) {
+        lines.push(`\nSIGNIFICANT HOURS:`);
+        sigHours.slice(0, 8).forEach(i => {
+          const time = new Date(h.time[i]).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+          const temp = h.temperature_2m?.[i] != null ? `${Math.round(h.temperature_2m[i])}°F` : "";
+          const cond = WMO[h.weathercode?.[i]] ?? "";
+          const pr   = (h.precipitation?.[i] ?? 0) > 0.05 ? ` ${h.precipitation[i].toFixed(2)}"` : "";
+          const gust = (h.windgusts_10m?.[i] ?? 0) > 30 ? ` G${Math.round(h.windgusts_10m[i])}mph` : "";
+          lines.push(`  ${time}: ${temp} ${cond}${pr}${gust}`);
+        });
+      }
+    }
+
+    // Flooding
+    if (gaugeRes.status === "fulfilled") {
+      const elevated = (gaugeRes.value?.features ?? []).filter(f => {
+        const s = (f.attributes?.status ?? "").toLowerCase();
+        return s.includes("minor") || s.includes("moderate") || s.includes("major");
+      });
+      if (elevated.length) {
+        lines.push(`\n🌊 RIVER FLOODING (within 30 mi):`);
+        elevated.slice(0, 3).forEach(f => {
+          lines.push(`  ${f.attributes.location} — ${f.attributes.status} (${f.attributes.observed} ${f.attributes.units ?? "ft"})`);
+        });
+      }
+    }
+
+    // Air quality
+    if (aqiRes.status === "fulfilled") {
+      const h = aqiRes.value.hourly;
+      const idx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
+      const aqi = h.us_aqi?.[idx];
+      if (aqi != null && aqi > 100) {
+        const cat = AQI_CATS.find(c => aqi <= c.max) ?? AQI_CATS.at(-1);
+        lines.push(`\n${cat.emoji} AIR QUALITY: AQI ${aqi} — ${cat.label}${aqi > 150 ? " — limit outdoor activity" : ""}`);
+      }
+    }
+
+    lines.push(`\n${"─".repeat(44)}\nSource: NWS, Open-Meteo, NWS River Gauges, Open-Meteo AQI`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Tool 22: Snowpack conditions ─────────────────────────────────────────────
+
+server.tool(
+  "get_snowpack_conditions",
+  "Get current snowpack from nearby NRCS SNOTEL stations — snow water equivalent (SWE), snow depth, and season accumulation totals. Critical for spring runoff forecasting, water supply outlooks, reservoir management, and avalanche context. Covers US mountain regions.",
+  {
+    location: z.string().describe("Mountain area or nearby city, e.g. 'Missoula MT', 'Lake Tahoe CA', 'Steamboat Springs CO', 'Bend Oregon'"),
+    radius_miles: z.number().int().min(20).max(250).default(100).describe("Search radius for SNOTEL stations in miles (default 100)"),
+  },
+  async ({ location, radius_miles }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    let stations = [];
+    try {
+      const sRes = await fetch(
+        `https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/stations?` +
+        `networkCds=SNTL&latitude=${lat}&longitude=${lon}&maxDistance=${radius_miles}&maxResults=8&activeOnly=true`
+      );
+      if (sRes.ok) stations = await sRes.json();
+    } catch (_) {}
+
+    if (!Array.isArray(stations) || !stations.length) {
+      return { content: [{ type: "text", text: `No active SNOTEL stations found within ${radius_miles} miles of ${placeName}. Try increasing the radius or choosing a location near major US mountain ranges (Rockies, Sierra, Cascades, Wasatch).` }] };
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    const lines = [`Snowpack Conditions — ${placeName}\n${"─".repeat(42)}`];
+    lines.push(`SNOTEL stations within ${radius_miles} mi (${stations.length} found):\n`);
+
+    const stationResults = await Promise.allSettled(
+      stations.slice(0, 6).map(async st => {
+        const triplet = encodeURIComponent(`${st.stationId}:${st.stateCode}:SNTL`);
+        const res = await fetch(
+          `https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data?` +
+          `stationTriplets=${triplet}&elementCd=WTEQ,SNWD,PREC&duration=DAILY&beginDate=${today}&endDate=${today}`
+        );
+        return { st, data: res.ok ? await res.json() : null };
+      })
+    );
+
+    let displayed = 0;
+    for (const result of stationResults) {
+      if (result.status !== "fulfilled" || !result.value?.data) continue;
+      const { st, data } = result.value;
+      const swe   = data.find?.(d => d.elementCd === "WTEQ")?.values?.[0]?.value;
+      const depth = data.find?.(d => d.elementCd === "SNWD")?.values?.[0]?.value;
+      const prec  = data.find?.(d => d.elementCd === "PREC")?.values?.[0]?.value;
+      const dist  = distKm(lat, lon, st.latitude, st.longitude);
+      const elev  = st.elevation != null ? `${Math.round(st.elevation * 3.28084)} ft` : "";
+
+      const parts = [
+        swe   != null ? `SWE: ${parseFloat(swe).toFixed(1)}"` : null,
+        depth != null ? `Depth: ${parseFloat(depth).toFixed(0)}"` : null,
+        prec  != null ? `Season: ${parseFloat(prec).toFixed(1)}" accum` : null,
+      ].filter(Boolean);
+
+      lines.push(`${st.name}${elev ? " (" + elev + ")" : ""} — ${dist.toFixed(0)} km away`);
+      lines.push(`  ${parts.length ? parts.join(" | ") : "No snow / data pending"}`);
+      displayed++;
+    }
+
+    if (!displayed) {
+      lines.push("Data temporarily unavailable. Check https://www.nrcs.usda.gov/wps/portal/wcc/home/ for current SNOTEL readings.");
+    }
+
+    lines.push(`\nSource: NRCS SNOTEL Network | AWDB REST API (wcc.sc.egov.usda.gov)`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
 // ────────────────────────────────────────────────────────────────────────────
 // Severe Weather Nowcast agent — called by /nowcast HTTP endpoint
 
@@ -1607,7 +2533,7 @@ createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
 
   if (url.pathname === "/health") {
-    res.end(JSON.stringify({ status: "ok", server: "stormwatch", version: "4.0.0" }));
+    res.end(JSON.stringify({ status: "ok", server: "stormwatch", version: "5.0.0" }));
     return;
   }
 
