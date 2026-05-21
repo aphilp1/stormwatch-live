@@ -30,6 +30,22 @@ function dirToCardinal(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
+// US state name/abbreviation lookup for geocode disambiguation
+const US_STATES = {
+  AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California',
+  CO:'Colorado', CT:'Connecticut', DE:'Delaware', FL:'Florida', GA:'Georgia',
+  HI:'Hawaii', ID:'Idaho', IL:'Illinois', IN:'Indiana', IA:'Iowa',
+  KS:'Kansas', KY:'Kentucky', LA:'Louisiana', ME:'Maine', MD:'Maryland',
+  MA:'Massachusetts', MI:'Michigan', MN:'Minnesota', MS:'Mississippi', MO:'Missouri',
+  MT:'Montana', NE:'Nebraska', NV:'Nevada', NH:'New Hampshire', NJ:'New Jersey',
+  NM:'New Mexico', NY:'New York', NC:'North Carolina', ND:'North Dakota', OH:'Ohio',
+  OK:'Oklahoma', OR:'Oregon', PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina',
+  SD:'South Dakota', TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont',
+  VA:'Virginia', WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming',
+  DC:'District of Columbia',
+};
+const STATE_NAME_TO_ABBREV = Object.fromEntries(Object.entries(US_STATES).map(([k, v]) => [v.toLowerCase(), k]));
+
 // Geocoding helper — handles city names, "City, ST", "City ST", "City StateName" formats, and raw coordinates
 async function geocode(location) {
   // Accept raw coordinates: "34.74,-98.69" or "34.74N 98.69W" or "34.74 -98.69"
@@ -45,12 +61,63 @@ async function geocode(location) {
     return { lat, lon, name: `${coordNS[1]}°${coordNS[2].toUpperCase()}, ${coordNS[3]}°${coordNS[4].toUpperCase()}` };
   }
 
-  // Build a progressive list of queries: full string → strip comma suffix → strip last word → strip last 2 words
-  // Handles: "Tulsa, OK", "Dallas TX", "Memphis Tennessee", "Albuquerque New Mexico"
-  const words = location.trim().split(/\s+/);
-  const candidates = [location.trim()];
-  const noCommaSuffix = location.replace(/,\s*.+$/, '').trim();
-  if (noCommaSuffix && noCommaSuffix !== location.trim()) candidates.push(noCommaSuffix);
+  const trimmed = location.trim();
+  const words   = trimmed.split(/\s+/);
+
+  // Detect a US state suffix (abbreviation or full name, 1 or 2 words)
+  // e.g. "Breckenridge Colorado" → city="Breckenridge", state="Colorado"
+  //      "Oklahoma City OK"      → city="Oklahoma City", state="OK"
+  //      "New Mexico"            → handled as 2-word state suffix
+  let stateFilter = null;
+  let cityQuery   = null;
+
+  // Strip comma: "Breckenridge, CO" → ["Breckenridge", "CO"]
+  const noComma = trimmed.replace(/,\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  const wcWords = noComma.split(/\s+/);
+
+  // Try last word as 2-letter abbreviation
+  const lastWord = wcWords[wcWords.length - 1].toUpperCase();
+  if (US_STATES[lastWord] && wcWords.length >= 2) {
+    stateFilter = US_STATES[lastWord];
+    cityQuery   = wcWords.slice(0, -1).join(' ');
+  }
+
+  // Try last two words as full state name (e.g. "New Mexico", "New York")
+  if (!stateFilter && wcWords.length >= 3) {
+    const twoWord = wcWords.slice(-2).join(' ').toLowerCase();
+    if (STATE_NAME_TO_ABBREV[twoWord]) {
+      stateFilter = wcWords.slice(-2).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      cityQuery   = wcWords.slice(0, -2).join(' ');
+    }
+  }
+
+  // Try last word as full state name (e.g. "Colorado", "Montana")
+  if (!stateFilter && wcWords.length >= 2) {
+    const oneWord = wcWords[wcWords.length - 1].toLowerCase();
+    if (STATE_NAME_TO_ABBREV[oneWord]) {
+      stateFilter = wcWords[wcWords.length - 1].charAt(0).toUpperCase() + oneWord.slice(1);
+      cityQuery   = wcWords.slice(0, -1).join(' ');
+    }
+  }
+
+  // If we identified a state, fetch multiple results and filter by admin1
+  if (stateFilter && cityQuery) {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityQuery)}&count=10&language=en&format=json`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      const match = (data.results ?? []).find(r =>
+        r.country_code === 'US' && r.admin1?.toLowerCase() === stateFilter.toLowerCase()
+      );
+      if (match) return { lat: match.latitude, lon: match.longitude, name: `${match.name}, ${match.admin1}` };
+    }
+    // State filter found nothing — fall through to unfiltered search below
+  }
+
+  // Fallback: progressive candidate search (full string → strip suffix words)
+  const candidates = [trimmed];
+  const noCommaSuffix = trimmed.replace(/,\s*.+$/, '').trim();
+  if (noCommaSuffix && noCommaSuffix !== trimmed) candidates.push(noCommaSuffix);
   if (words.length >= 2) candidates.push(words.slice(0, -1).join(' '));
   if (words.length >= 3) candidates.push(words.slice(0, -2).join(' '));
 
@@ -66,7 +133,7 @@ async function geocode(location) {
     if (r) return { lat: r.latitude, lon: r.longitude, name: `${r.name}, ${r.admin1 ?? r.country_code}` };
   }
 
-  throw new Error(`Location not found: "${location}". For mountain ranges or parks, use the nearest town name or decimal coordinates like "34.74,-98.69".`);
+  throw new Error(`Location not found: "${location}". Try adding the state name, e.g. "Breckenridge Colorado", or use decimal coordinates like "39.49,-106.04".`);
 }
 
 const WMO = {
