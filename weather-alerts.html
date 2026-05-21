@@ -188,6 +188,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .dv{font-size:13px;color:#778;line-height:1.5}
 #det-desc{white-space:pre-wrap;font-size:11.5px;color:#99a;line-height:1.65}
 .instr-box{background:rgba(255,100,0,0.07);border-left:2px solid #ff6600;padding:7px 9px;border-radius:0 5px 5px 0;font-size:11.5px;color:#aab;white-space:pre-wrap;line-height:1.65}
+/* Waterway feature card */
+.wc-body{margin:0}
+.wc-section{font-size:9px;font-weight:800;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin:14px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.wc-section:first-child{margin-top:2px}
+.wc-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
+.wc-row:last-of-type{border-bottom:none}
+.wc-k{font-size:11px;color:var(--text3)}
+.wc-v{font-size:12px;color:var(--text);font-weight:600;text-align:right;max-width:65%}
+.wc-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin-right:4px}
+.wc-src{font-size:10px;color:var(--text3);margin-top:14px;padding-top:8px;border-top:1px solid var(--border);line-height:1.5}
 #det-zoom{display:block;margin:10px 0 4px;width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:5px;border-radius:5px;cursor:pointer;font-size:11px;text-align:center;transition:all 0.15s}
 #det-zoom:hover{background:#2a2a55;color:var(--text)}
 
@@ -1476,8 +1486,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div id="det-sev-desc"></div>
       </div>
       <div id="det-body">
-        <div class="df"><div class="dl">Affected Area</div><div class="dv" id="det-area"></div></div>
-        <div style="display:flex;gap:14px;margin-bottom:10px">
+        <div id="det-area-row" class="df"><div class="dl">Affected Area</div><div class="dv" id="det-area"></div></div>
+        <div id="det-dates-row" style="display:flex;gap:14px;margin-bottom:10px">
           <div><div class="dl" id="det-eff-lbl">Effective</div><div class="dv" id="det-eff"></div></div>
           <div><div class="dl" id="det-exp-lbl">Expires</div><div class="dv" id="det-exp"></div></div>
         </div>
@@ -2179,6 +2189,7 @@ function selectAlert(id, panTo=false) {
 }
 
 function showDetail(alert) {
+  ensureDetStandard();
   const p = alert.properties;
   const s = getStyle(p.event, p.severity);
   const sev = p.severity || 'Unknown';
@@ -3044,31 +3055,63 @@ async function loadNHDStreams() {
   }, 700);
 }
 
-function showNHDCard(p) {
-  const WT = { river:'River', canal:'Canal / Ditch', stream:'Stream', drain:'Drain',
-               ditch:'Ditch', brook:'Brook', tidal_channel:'Tidal Channel' };
-  const wtype  = p.waterway || 'waterway';
-  const label  = WT[wtype] || wtype.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
-  const name   = p.name || p['name:en'] || 'Unnamed waterway';
-  const altName = [p['alt_name'], p['old_name']].filter(Boolean).join(' / ');
+function ensureDetStandard() {
+  document.getElementById('det-area-row').style.display = '';
+  document.getElementById('det-dates-row').style.display = '';
+  document.getElementById('det-desc').style.cssText = '';
+}
 
+function showNHDCard(p) {
+  const WT_LABEL = { river:'River', canal:'Canal', stream:'Stream', drain:'Drain',
+                     ditch:'Ditch', brook:'Brook', tidal_channel:'Tidal Channel', creek:'Creek' };
+  const WT_COLOR = { river:'#1040a0', canal:'#2a6a3a', stream:'#1a5a8a', drain:'#556', ditch:'#556' };
+  const WT_BG    = { river:'#ddeeff', canal:'#ddeedd', stream:'#d8eef8', drain:'#eeeef4', ditch:'#eeeef4' };
+
+  const wtype = p.waterway || 'waterway';
+  const label = WT_LABEL[wtype] || wtype.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  const name  = p.name || p['name:en'] || 'Unnamed Waterway';
+
+  // Header
   document.getElementById('det-event').textContent = name;
-  document.getElementById('det-event').style.color = '#2468cc';
-  document.getElementById('det-chips').innerHTML =
-    `<span style="background:#ddeeff;color:#1040a0;border:1px solid #6090dd;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">OSM Waterway</span>` +
-    `<span style="background:#e8f4e8;color:#1a5a1a;border:1px solid #60a060;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">${label}</span>`;
-  document.getElementById('det-sev-desc').textContent = label;
-  document.getElementById('det-area').textContent = 'OpenStreetMap';
-  document.getElementById('det-eff-lbl').textContent = 'Waterway Type';
-  document.getElementById('det-exp-lbl').textContent  = 'OSM ID';
-  document.getElementById('det-eff').textContent = label;
-  document.getElementById('det-exp').textContent = p.osmId ?? '–';
-  let desc = `${name} is a ${label.toLowerCase()} mapped in OpenStreetMap.`;
-  if (altName) desc += `\nAlso known as: ${altName}`;
-  if (p.wikipedia) desc += `\nWikipedia: ${p.wikipedia}`;
-  desc += '\n\nSource: OpenStreetMap contributors (overpass-api.de)';
-  document.getElementById('det-desc').textContent = desc;
-  document.getElementById('detail').style.display = 'block';
+  document.getElementById('det-event').style.color = '#1a4eaa';
+
+  // Chips — type + condition badges
+  let chips = `<span style="background:${WT_BG[wtype]??'#ddeeff'};color:${WT_COLOR[wtype]??'#1040a0'};border:1px solid ${WT_COLOR[wtype]??'#1040a0'}55;border-radius:5px;padding:3px 10px;font-size:10px;font-weight:700">${label}</span>`;
+  if (p.intermittent === 'yes') chips += `<span style="background:#fffbe8;color:#8a6200;border:1px solid #c8a000;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">Intermittent</span>`;
+  if (p.tidal === 'yes')        chips += `<span style="background:#e8f6ff;color:#0060a0;border:1px solid #0090d0;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">Tidal</span>`;
+  if (p.tunnel === 'yes' || p.tunnel === 'culvert') chips += `<span style="background:#f0f0f0;color:#555;border:1px solid #aaa;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">Tunneled</span>`;
+  document.getElementById('det-chips').innerHTML = chips;
+  document.getElementById('det-sev-desc').textContent = '';
+
+  // Hide the alert-specific rows we don't need
+  document.getElementById('det-area-row').style.display  = 'none';
+  document.getElementById('det-dates-row').style.display = 'none';
+  document.getElementById('det-hl-wrap').style.display   = 'none';
+  document.getElementById('det-instr-wrap').style.display = 'none';
+  document.getElementById('det-zoom').style.display      = 'none';
+
+  // Build rich detail rows
+  const rows = [];
+  if (p.alt_name)     rows.push(['Also Known As', p.alt_name]);
+  if (p.old_name)     rows.push(['Former Name',   p.old_name]);
+  if (p['name:en'] && p['name:en'] !== p.name) rows.push(['English Name', p['name:en']]);
+  if (p.width)        rows.push(['Width',       p.width + (p.width.toString().match(/[a-z]/i) ? '' : ' m')]);
+  if (p.depth)        rows.push(['Depth',       p.depth + (p.depth.toString().match(/[a-z]/i) ? '' : ' m')]);
+  if (p.boat && p.boat !== 'no') rows.push(['Navigation', p.boat === 'yes' ? 'Navigable' : p.boat]);
+  if (p.wikipedia)    rows.push(['Wikipedia',   p.wikipedia]);
+
+  let html = '<div class="wc-body">';
+  if (rows.length > 0) {
+    html += '<div class="wc-section">Details</div>';
+    rows.forEach(([k,v]) => { html += `<div class="wc-row"><span class="wc-k">${k}</span><span class="wc-v">${v}</span></div>`; });
+  }
+  html += `<div class="wc-src">OpenStreetMap contributors&ensp;·&ensp;OSM ID ${p.osmId ?? '–'}</div>`;
+  html += '</div>';
+
+  const dd = document.getElementById('det-desc');
+  dd.style.cssText = 'white-space:normal;color:inherit';
+  dd.innerHTML = html;
+  document.getElementById('detail').style.display = 'flex';
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -4744,6 +4787,7 @@ async function loadInundationLayer(lid, layerId, stageName) {
 }
 
 function showGaugeDetail(g) {
+  ensureDetStandard();
   const stage = getGaugeStage(g);
   const cfg = STAGE_CFG[stage];
   const obsVal = g.status?.observed?.primary;
@@ -4886,6 +4930,7 @@ async function loadFirePerimeters() {
 }
 
 function showFireCard(p, lat, lon) {
+  ensureDetStandard();
   const name     = p.IncidentName || p.incident_name || p.Name || 'Wildfire Incident';
   const type     = p.IncidentTypeCategory || p.IncidentType || 'Wildfire';
   const state    = p.POOState || p.State || p.state || null;
@@ -4921,6 +4966,7 @@ function showFireCard(p, lat, lon) {
 }
 
 function showFirePerimCard(p, lyr) {
+  ensureDetStandard();
   document.getElementById('det-event').textContent = p.poly_IncidentName || 'Fire Perimeter';
   document.getElementById('det-event').style.color = '#ff6600';
   const chips = document.getElementById('det-chips');
@@ -5142,6 +5188,7 @@ async function loadRAWS() {
 }
 
 function showRawsCard(p, lat, lon) {
+  ensureDetStandard();
   document.getElementById('det-event').textContent = p.StationName || 'RAWS Station';
   document.getElementById('det-event').style.color = '#cc5500';
 
@@ -6023,6 +6070,7 @@ async function loadMetarStations() {
 }
 
 function showMetarCard(p) {
+  ensureDetStandard();
   const wspdMph = (p.sknt != null && !isNaN(p.sknt)) ? Math.round(p.sknt * 1.15078) : null;
 
   document.getElementById('det-event').textContent = p.station || '–';
@@ -6112,6 +6160,7 @@ async function loadMontanaStations() {
 }
 
 function showMontanaCard(ob, meta) {
+  ensureDetStandard();
   document.getElementById('det-event').textContent = meta.name || ob.station;
   document.getElementById('det-event').style.color = '';
   const county = meta.county ? meta.county + ' County, MT' : 'Montana';
