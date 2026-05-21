@@ -2589,6 +2589,286 @@ if (!existsSync(WINDNINJA_CLI)) {
 const WINDNINJA_HTTP_PORT = 3456;
 const VALID_VEG = new Set(["grass", "brush", "trees"]);
 
+// ────────────────────────────────────────────────────────────────────────────
+// Fire Weather Agent — called by /fire-agent HTTP endpoint
+
+async function runFireWeatherAgent(lat, lon) {
+  let placeName = `${lat.toFixed(2)}°N, ${Math.abs(lon).toFixed(2)}°W`;
+  let stateCode = null;
+  try {
+    const ptRes = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`, { headers: NWS_HEADERS });
+    if (ptRes.ok) {
+      const pt = await ptRes.json();
+      const rl = pt.properties?.relativeLocation?.properties;
+      if (rl) { placeName = `${rl.city}, ${rl.state}`; stateCode = rl.state; }
+    }
+  } catch (_) {}
+
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  const d90ago   = new Date(Date.now() - 90 * 86400000).toISOString().split("T")[0];
+
+  const [archiveRes, currentRes, spcFireRes, alertsRes] = await Promise.allSettled([
+    fetch(
+      `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
+      `&start_date=${d90ago}&end_date=${yesterday}` +
+      `&daily=precipitation_sum,et0_fao_evapotranspiration&precipitation_unit=inch&timezone=auto`
+    ).then(r => r.json()),
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&hourly=relative_humidity_2m,windspeed_10m,windgusts_10m,temperature_2m,soil_moisture_0_to_1cm` +
+      `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=1`
+    ).then(r => r.json()),
+    fetch("https://www.spc.noaa.gov/products/fire_weather/fwdy1.txt").then(r => r.ok ? r.text() : ""),
+    fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null),
+  ]);
+
+  let score = 0;
+  const factors = [];
+  let total90 = null, sinceRain = null, dryDays = null;
+  let temp = null, rh = null, wind = null, gusts = null, soilMoisture = null;
+  let deficit = null;
+
+  // Factor 1: Fuel drought (90-day precipitation deficit)
+  if (archiveRes.status === "fulfilled") {
+    const d = archiveRes.value.daily;
+    const precip = (d?.precipitation_sum ?? []).filter(v => v != null);
+    const et0    = (d?.et0_fao_evapotranspiration ?? []).filter(v => v != null);
+    if (precip.length > 0) {
+      total90  = precip.reduce((a, b) => a + b, 0);
+      dryDays  = precip.filter(v => v < 0.01).length;
+      const rev = [...precip].reverse();
+      sinceRain = rev.findIndex(v => v >= 0.10);
+      if (sinceRain === -1) sinceRain = 90;
+      const totalET0 = et0.reduce((a, b) => a + b, 0);
+      deficit = et0.length ? parseFloat((totalET0 - total90).toFixed(1)) : null;
+      if      (total90 < 0.5) { score += 3; factors.push(`Extreme fuel drought — only ${total90.toFixed(2)}" in 90 days`); }
+      else if (total90 < 2.0) { score += 2; factors.push(`Severe fuel drying — ${total90.toFixed(2)}" in 90 days`); }
+      else if (total90 < 5.0) { score += 1; factors.push(`Below-normal precip — ${total90.toFixed(2)}" in 90 days`); }
+      if (sinceRain >= 30) { score += Math.min(1, Math.floor(sinceRain / 30)); factors.push(`${sinceRain} days since last meaningful rain`); }
+    }
+  }
+
+  // Factor 2: Current weather conditions
+  if (currentRes.status === "fulfilled") {
+    const h   = currentRes.value.hourly;
+    const now = new Date();
+    const idx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
+    rh   = h.relative_humidity_2m?.[idx] ?? null;
+    wind = h.windspeed_10m?.[idx] ?? null;
+    gusts = h.windgusts_10m?.[idx] ?? null;
+    temp = h.temperature_2m?.[idx] ?? null;
+    soilMoisture = h["soil_moisture_0_to_1cm"]?.[idx] ?? null;
+    if (rh != null) {
+      if      (rh < 10) { score += 3; factors.push(`Critical RH ${rh.toFixed(0)}% — below extreme threshold`); }
+      else if (rh < 15) { score += 2; factors.push(`Very low RH ${rh.toFixed(0)}%`); }
+      else if (rh < 25) { score += 1; factors.push(`Low RH ${rh.toFixed(0)}%`); }
+    }
+    if (gusts != null) {
+      if      (gusts >= 50) { score += 2; factors.push(`Dangerous gusts ${gusts.toFixed(0)} mph`); }
+      else if (gusts >= 35) { score += 1; factors.push(`Strong gusts ${gusts.toFixed(0)} mph`); }
+    } else if (wind != null && wind >= 25) {
+      score += 1; factors.push(`Elevated wind ${wind.toFixed(0)} mph`);
+    }
+  }
+
+  // Factor 3: SPC fire weather outlook
+  let spcLevel = "NONE";
+  let spcExcerpt = "";
+  if (spcFireRes.status === "fulfilled" && spcFireRes.value) {
+    const txt = spcFireRes.value;
+    if      (/EXTREME FIRE WEATHER/i.test(txt))  { spcLevel = "EXTREME";  score += 2;   factors.push("SPC Extreme Fire Weather Day"); }
+    else if (/CRITICAL FIRE WEATHER/i.test(txt)) { spcLevel = "CRITICAL"; score += 1.5; factors.push("SPC Critical Fire Weather Day"); }
+    else if (/ELEVATED FIRE WEATHER/i.test(txt)) { spcLevel = "ELEVATED"; score += 0.5; factors.push("SPC Elevated Fire Weather Day"); }
+    const lines = txt.split("\n").map(l => l.trim()).filter(Boolean);
+    const s = lines.findIndex(l => /FIRE WEATHER|ELEVATED|CRITICAL|NO CRITICAL|THERE IS/.test(l));
+    if (s >= 0) {
+      const end = lines.findIndex((l, i) => i > s && l === "&&");
+      spcExcerpt = lines.slice(s, end > 0 ? Math.min(end, s + 15) : s + 10).join(" ");
+    }
+  }
+
+  // Factor 4: Active fire weather NWS alerts
+  const fireAlerts = [];
+  if (alertsRes.status === "fulfilled" && alertsRes.value?.features) {
+    const all = alertsRes.value.features.filter(f => /red flag|fire weather/i.test(f.properties?.event ?? ""));
+    if (all.length) { score += 1; factors.push("Active Red Flag Warning / Fire Weather Watch"); }
+    all.forEach(f => fireAlerts.push({ event: f.properties.event, expires: f.properties.expires }));
+  }
+
+  score = Math.min(10, Math.round(score * 10) / 10);
+  const RATING =
+    score >= 9 ? "EXTREME" :
+    score >= 7 ? "VERY HIGH" :
+    score >= 5 ? "HIGH" :
+    score >= 3 ? "MODERATE" :
+    score >= 1 ? "LOW-MODERATE" : "LOW";
+
+  const campFireAnalog = (dryDays ?? 0) >= 60 && score >= 7;
+
+  const headline =
+    score >= 9 ? "Extreme fire weather — life-threatening conditions" :
+    score >= 7 ? "Very high fire risk — significant fire spread likely" :
+    score >= 5 ? "High fire risk — active fire weather concerns" :
+    score >= 3 ? "Moderate fire risk — elevated fuel danger" :
+    score >= 1 ? "Low-moderate fire risk" : "No significant fire weather concern";
+
+  return {
+    location: { lat, lon, name: placeName, state: stateCode },
+    riskScore: score,
+    riskRating: RATING,
+    headline,
+    factors,
+    environment: {
+      temp:         temp        != null ? Math.round(temp)                  : null,
+      rh:           rh          != null ? Math.round(rh)                    : null,
+      wind:         wind        != null ? Math.round(wind)                  : null,
+      gusts:        gusts       != null ? Math.round(gusts)                 : null,
+      soilMoisture: soilMoisture != null ? parseFloat((soilMoisture * 100).toFixed(1)) : null,
+      total90:      total90     != null ? total90.toFixed(2)                : null,
+      sinceRain,
+      dryDays,
+      deficit,
+    },
+    spc: { level: spcLevel, excerpt: spcExcerpt },
+    alerts: fireAlerts,
+    campFireAnalog,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Flood Agent — called by /flood-agent HTTP endpoint
+
+async function runFloodAgent(lat, lon) {
+  let placeName = `${lat.toFixed(2)}°N, ${Math.abs(lon).toFixed(2)}°W`;
+  let stateCode = null;
+  try {
+    const ptRes = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`, { headers: NWS_HEADERS });
+    if (ptRes.ok) {
+      const pt = await ptRes.json();
+      const rl = pt.properties?.relativeLocation?.properties;
+      if (rl) { placeName = `${rl.city}, ${rl.state}`; stateCode = rl.state; }
+    }
+  } catch (_) {}
+
+  const [gaugeRes, alertsRes, precipRes] = await Promise.allSettled([
+    fetch(
+      `https://mapservices.weather.noaa.gov/eventdriven/rest/services/water/riv_gauges/MapServer/0/query` +
+      `?geometry=${lon},${lat}&geometryType=esriGeometryPoint&inSR=4326` +
+      `&spatialRel=esriSpatialRelIntersects&distance=75&units=esriSRUnit_StatuteMile` +
+      `&outFields=gaugelid,location,observed,status,units,waterbody,state,obstime` +
+      `&returnGeometry=true&f=json`,
+      { headers: NWS_HEADERS }
+    ).then(r => r.json()),
+    fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null),
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&hourly=precipitation,soil_moisture_0_to_1cm,precipitation_probability` +
+      `&daily=precipitation_sum,precipitation_probability_max` +
+      `&precipitation_unit=inch&timezone=auto&forecast_days=3`
+    ).then(r => r.json()),
+  ]);
+
+  // Process gauges
+  const gauges = [];
+  let majorCount = 0, moderateCount = 0, minorCount = 0, actionCount = 0;
+  if (gaugeRes.status === "fulfilled") {
+    const features = (gaugeRes.value.features ?? [])
+      .filter(f => f.geometry?.x != null)
+      .map(f => ({ ...f, dist: distKm(lat, lon, f.geometry.y, f.geometry.x) }))
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 15);
+    for (const f of features) {
+      const a = f.attributes;
+      const status = (a.status ?? "unknown").toLowerCase();
+      gauges.push({
+        name:      a.location ?? a.gaugelid,
+        waterbody: a.waterbody ?? "Unknown river",
+        status:    a.status ?? "Unknown",
+        observed:  a.observed,
+        units:     a.units ?? "ft",
+        dist:      Math.round(f.dist),
+        lid:       a.gaugelid,
+      });
+      if (status.includes("major"))    majorCount++;
+      else if (status.includes("moderate")) moderateCount++;
+      else if (status.includes("minor"))    minorCount++;
+      else if (status.includes("action"))   actionCount++;
+    }
+  }
+
+  // Process NWS flood alerts
+  const floodAlerts = [];
+  if (alertsRes.status === "fulfilled" && alertsRes.value?.features) {
+    alertsRes.value.features
+      .filter(f => /flood|flash flood/i.test(f.properties?.event ?? ""))
+      .forEach(f => floodAlerts.push({
+        event:    f.properties.event,
+        severity: f.properties.severity,
+        expires:  f.properties.expires,
+        area:     f.properties.areaDesc?.split(";")[0] ?? "",
+      }));
+  }
+
+  // Process precipitation + soil moisture
+  let precip24h = null, forecast48h = null, soilMoisture = null, rainProb = null;
+  if (precipRes.status === "fulfilled") {
+    const d = precipRes.value.daily;
+    precip24h   = d?.precipitation_sum?.[0] != null ? parseFloat(d.precipitation_sum[0].toFixed(2)) : null;
+    forecast48h = [d?.precipitation_sum?.[1], d?.precipitation_sum?.[2]]
+      .filter(v => v != null).reduce((a, b) => a + b, 0);
+    forecast48h = parseFloat(forecast48h.toFixed(2));
+    rainProb    = d?.precipitation_probability_max?.[1] ?? null;
+    const h   = precipRes.value.hourly;
+    const now = new Date();
+    const idx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
+    soilMoisture = h["soil_moisture_0_to_1cm"]?.[idx] != null
+      ? parseFloat((h["soil_moisture_0_to_1cm"][idx] * 100).toFixed(1)) : null;
+  }
+
+  // Determine overall flood risk
+  const floodedGaugeCount = majorCount + moderateCount + minorCount;
+  const hasFloodWarning   = floodAlerts.some(a => /warning/i.test(a.event));
+  const hasFloodWatch     = floodAlerts.some(a => /watch|advisory/i.test(a.event));
+
+  let floodRisk, headline;
+  if (majorCount > 0 || (hasFloodWarning && floodedGaugeCount > 0)) {
+    floodRisk = "MAJOR";
+    headline  = majorCount > 0
+      ? `Major flooding — ${majorCount} gauge${majorCount > 1 ? 's' : ''} at major flood stage`
+      : `Significant flooding — active flood warning with elevated gauges`;
+  } else if (floodedGaugeCount > 0 || hasFloodWarning) {
+    floodRisk = "MODERATE";
+    headline  = hasFloodWarning
+      ? `Flooding ongoing — active flood warning in effect`
+      : `Minor flooding — ${floodedGaugeCount} gauge${floodedGaugeCount > 1 ? 's' : ''} above flood stage`;
+  } else if (actionCount > 0 || hasFloodWatch) {
+    floodRisk = "ELEVATED";
+    headline  = actionCount > 0
+      ? `Action stage — ${actionCount} gauge${actionCount > 1 ? 's' : ''} approaching flood stage`
+      : `Flood watch in effect — conditions favorable for flooding`;
+  } else {
+    floodRisk = "NONE";
+    headline  = gauges.length > 0
+      ? `No active flooding — ${gauges.length} gauge${gauges.length > 1 ? 's' : ''} within 75 miles`
+      : "No flood gauges or active alerts found in this area";
+  }
+
+  return {
+    location: { lat, lon, name: placeName, state: stateCode },
+    floodRisk,
+    headline,
+    gauges,
+    floodAlerts,
+    gaugeCounts: { major: majorCount, moderate: moderateCount, minor: minorCount, action: actionCount },
+    precip24h,
+    forecast48h,
+    rainProb,
+    soilMoisture,
+    timestamp: new Date().toISOString(),
+  };
+}
+
 createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -2695,6 +2975,34 @@ createServer(async (req, res) => {
       process.stderr.write(`[stormwatch] /nowcast error: ${err.message}\n`);
       res.writeHead(500);
       res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  if (url.pathname === "/fire-agent") {
+    const lat = parseFloat(url.searchParams.get("lat") ?? "NaN");
+    const lon = parseFloat(url.searchParams.get("lon") ?? "NaN");
+    if (isNaN(lat) || isNaN(lon)) { res.writeHead(400); res.end(JSON.stringify({ error: "lat/lon required" })); return; }
+    try {
+      const result = await runFireWeatherAgent(lat, lon);
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      process.stderr.write(`[stormwatch] /fire-agent error: ${err.message}\n`);
+      res.writeHead(500); res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  if (url.pathname === "/flood-agent") {
+    const lat = parseFloat(url.searchParams.get("lat") ?? "NaN");
+    const lon = parseFloat(url.searchParams.get("lon") ?? "NaN");
+    if (isNaN(lat) || isNaN(lon)) { res.writeHead(400); res.end(JSON.stringify({ error: "lat/lon required" })); return; }
+    try {
+      const result = await runFloodAgent(lat, lon);
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      process.stderr.write(`[stormwatch] /flood-agent error: ${err.message}\n`);
+      res.writeHead(500); res.end(JSON.stringify({ error: err.message }));
     }
     return;
   }

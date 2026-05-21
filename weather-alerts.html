@@ -384,6 +384,79 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .nc-report-item{background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.13);border-radius:5px;padding:4px 9px;font-size:11px;color:#e4f0fa}
 .nc-ts{font-size:9px;color:#2a4a6a;margin-top:14px;text-align:right}
 
+/* ── FIRE WEATHER AGENT PANEL ───────────────────────────────────── */
+#map-wrap.fw-mode,#map-wrap.fw-mode .leaflet-container,
+#map-wrap.fw-mode .leaflet-interactive{cursor:crosshair !important}
+#fire-panel{position:fixed;top:55px;right:10px;width:315px;background:#1a0e06;border:1px solid rgba(210,90,30,0.3);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
+#fire-header{padding:10px 13px;border-bottom:1px solid rgba(210,90,30,0.2);display:flex;justify-content:space-between;align-items:center;background:#1a0e06;gap:8px;cursor:move;user-select:none}
+#fire-body{overflow-y:auto;max-height:calc(100vh - 115px);padding:12px 13px;scrollbar-width:thin;scrollbar-color:#6b3018 transparent}
+#fire-body::-webkit-scrollbar{width:7px}
+#fire-body::-webkit-scrollbar-thumb{background:#6b3018;border-radius:4px}
+#fire-body::-webkit-scrollbar-thumb:hover{background:#8b4828}
+#fire-title{font-size:10px;font-weight:700;color:#f08030;letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap}
+#fire-close{background:none;border:none;color:#7a4a28;cursor:pointer;font-size:15px;padding:0;line-height:1;flex-shrink:0;transition:color 0.15s}
+#fire-close:hover{color:#e0a070}
+.fw-hint{font-size:11px;color:#7a4a28;text-align:center;padding:18px 8px;line-height:1.8}
+.fw-loading{font-size:11px;color:#8a5a38;text-align:center;padding:26px 0;letter-spacing:0.5px}
+.fw-loc{font-size:10px;color:#c07040;margin-bottom:10px;font-weight:600;letter-spacing:0.3px}
+.fw-risk-block{border-radius:7px;padding:10px 13px;margin-bottom:11px;line-height:1.45}
+.fw-risk-EXTREME  {background:rgba(160,0,0,0.5);border:1px solid #dd3030;color:#ffbbbb}
+.fw-risk-VERY_HIGH{background:rgba(160,60,0,0.5);border:1px solid #ee6600;color:#ffc890}
+.fw-risk-HIGH     {background:rgba(130,75,0,0.5);border:1px solid #dd9900;color:#ffe070}
+.fw-risk-MODERATE {background:rgba(100,80,0,0.5);border:1px solid #ccaa00;color:#ffee99}
+.fw-risk-LOW      {background:rgba(20,40,10,0.5);border:1px solid #446622;color:#aaddaa}
+.fw-risk-score{font-size:22px;font-weight:700;float:right;line-height:1;margin-left:8px}
+.fw-risk-label{font-size:12px;font-weight:700}
+.fw-risk-headline{font-size:11px;margin-top:4px;opacity:0.9}
+.fw-section-hdr{font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#b06030;font-weight:700;margin:13px 0 7px}
+.fw-cond-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:5px}
+.fw-cond-item{background:rgba(255,160,80,0.1);border:1px solid rgba(255,160,80,0.2);border-radius:5px;padding:4px 9px;font-size:11px;color:#e8c090}
+.fw-factor-list{list-style:none;margin:0;padding:0}
+.fw-factor-list li{font-size:10px;color:#c08060;padding:2px 0;padding-left:10px;position:relative}
+.fw-factor-list li::before{content:'›';position:absolute;left:0;color:#e07030}
+.fw-alert-item{border-radius:5px;padding:5px 9px;margin-bottom:4px;font-size:10px;color:#ffd4a0;border-left:3px solid #e06000;background:rgba(255,160,60,0.1)}
+.fw-spc{font-size:10px;color:#c09060;line-height:1.65;margin-bottom:5px}
+.fw-analog{font-size:10px;color:#ffaaaa;background:rgba(160,0,0,0.25);border:1px solid rgba(200,50,50,0.4);border-radius:5px;padding:7px 10px;margin-top:8px;line-height:1.6}
+.fw-ts{font-size:9px;color:#4a2a10;margin-top:14px;text-align:right}
+
+/* ── FLOOD AGENT PANEL ──────────────────────────────────────────── */
+#map-wrap.fl-mode,#map-wrap.fl-mode .leaflet-container,
+#map-wrap.fl-mode .leaflet-interactive{cursor:crosshair !important}
+#flood-panel{position:fixed;top:55px;right:10px;width:315px;background:#050f1a;border:1px solid rgba(30,90,200,0.3);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
+#flood-header{padding:10px 13px;border-bottom:1px solid rgba(30,90,200,0.2);display:flex;justify-content:space-between;align-items:center;background:#050f1a;gap:8px;cursor:move;user-select:none}
+#flood-body{overflow-y:auto;max-height:calc(100vh - 115px);padding:12px 13px;scrollbar-width:thin;scrollbar-color:#1a3060 transparent}
+#flood-body::-webkit-scrollbar{width:7px}
+#flood-body::-webkit-scrollbar-thumb{background:#1a3060;border-radius:4px}
+#flood-body::-webkit-scrollbar-thumb:hover{background:#2a4888}
+#flood-title{font-size:10px;font-weight:700;color:#4090e0;letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap}
+#flood-close{background:none;border:none;color:#1a3a68;cursor:pointer;font-size:15px;padding:0;line-height:1;flex-shrink:0;transition:color 0.15s}
+#flood-close:hover{color:#80b8f0}
+.fl-hint{font-size:11px;color:#2a4a80;text-align:center;padding:18px 8px;line-height:1.8}
+.fl-loading{font-size:11px;color:#2a4a80;text-align:center;padding:26px 0;letter-spacing:0.5px}
+.fl-loc{font-size:10px;color:#4080c0;margin-bottom:10px;font-weight:600;letter-spacing:0.3px}
+.fl-risk-block{border-radius:7px;padding:10px 13px;margin-bottom:11px;line-height:1.45}
+.fl-risk-MAJOR   {background:rgba(120,0,60,0.5);border:1px solid #cc2060;color:#ffaabb}
+.fl-risk-MODERATE{background:rgba(80,40,0,0.5);border:1px solid #cc6600;color:#ffc880}
+.fl-risk-ELEVATED{background:rgba(30,70,0,0.5);border:1px solid #88cc00;color:#ccff99}
+.fl-risk-NONE    {background:rgba(0,30,60,0.5);border:1px solid #1a4a80;color:#88bbee}
+.fl-risk-label{font-size:12px;font-weight:700}
+.fl-risk-headline{font-size:11px;margin-top:4px;opacity:0.9}
+.fl-section-hdr{font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#2a5a90;font-weight:700;margin:13px 0 7px}
+.fl-cond-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:5px}
+.fl-cond-item{background:rgba(30,80,200,0.12);border:1px solid rgba(30,80,200,0.25);border-radius:5px;padding:4px 9px;font-size:11px;color:#a0c8f0}
+.fl-gauge-item{border-radius:5px;padding:6px 10px;margin-bottom:4px;font-size:10px;display:flex;justify-content:space-between;align-items:center}
+.fl-gauge-MAJOR   {background:rgba(120,0,40,0.3);border-left:3px solid #ff2060}
+.fl-gauge-MODERATE{background:rgba(100,50,0,0.3);border-left:3px solid #ff7000}
+.fl-gauge-MINOR   {background:rgba(100,80,0,0.3);border-left:3px solid #ffcc00}
+.fl-gauge-ACTION  {background:rgba(0,50,100,0.3);border-left:3px solid #2288ff}
+.fl-gauge-NORMAL  {background:rgba(0,20,45,0.4);border-left:3px solid #1a3a60}
+.fl-gauge-name{color:#c0d8f8;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fl-gauge-val{color:#88aad8;flex-shrink:0;margin-left:8px;text-align:right}
+.fl-gauge-dist{color:#3a5a88;font-size:9px;flex-shrink:0;margin-left:6px}
+.fl-alert-item{border-radius:5px;padding:5px 9px;margin-bottom:4px;font-size:10px;color:#a0c8f0;border-left:3px solid #2266cc;background:rgba(30,80,200,0.12)}
+.fl-alert-EXTREME,.fl-alert-Severe{border-left-color:#dd2060;color:#ffaabb}
+.fl-ts{font-size:9px;color:#0a1a30;margin-top:14px;text-align:right}
+
 /* ── MODELS SIDEBAR (simplified) ────────────────────────────────── */
 #tab-models{padding:12px 10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
 .mod-section{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.05em;text-transform:uppercase;margin:12px 0 6px}
@@ -733,6 +806,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <input type="range" min="10" max="100" value="85" oninput="setFemaOpacity(this.value)">
             <span id="fema-opacity-val">85%</span>
           </div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-nhd" onchange="toggleLayer('nhd',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">NHD+ Stream Network</span>
+            <span class="layer-note" id="nhd-note">off</span>
+          </div>
+          <div class="opacity-row" id="nhd-opacity-row" style="display:none">
+            <input type="range" min="10" max="100" value="75" oninput="setNhdOpacity(this.value)">
+            <span id="nhd-opacity-val">75%</span>
+          </div>
         </div>
 
         <div class="layer-group">
@@ -1047,22 +1130,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
       </div>
 
-      <!-- Fire Weather card (coming soon) -->
-      <div class="agent-card soon">
+      <!-- Fire Weather card -->
+      <div class="agent-card" id="agent-card-fire">
         <div class="agent-card-hdr">
-          <span class="agent-card-title">🔥 Fire Weather</span>
-          <span class="agent-card-badge">Coming Soon</span>
+          <span class="agent-card-title">🔥 Fire Weather Agent</span>
+          <span class="agent-card-badge live">● Live</span>
         </div>
-        <div class="agent-card-desc">Fire weather risk assessment — RAWS observations, KBDI drought index, SPC fire weather outlook, red flag conditions, and terrain wind analysis.</div>
+        <div class="agent-card-desc">Click a point on the map for a fire weather risk briefing — fuel drought, RH/wind conditions, SPC fire outlook, red flag alerts, and a composite 0–10 risk score.</div>
+        <div class="agent-card-actions">
+          <button class="agent-activate-btn" id="agent-fire-btn" onclick="toggleFireMode()">Activate</button>
+        </div>
       </div>
 
-      <!-- Flood card (coming soon) -->
-      <div class="agent-card soon">
+      <!-- Flood card -->
+      <div class="agent-card" id="agent-card-flood">
         <div class="agent-card-hdr">
-          <span class="agent-card-title">🌊 Flood</span>
-          <span class="agent-card-badge">Coming Soon</span>
+          <span class="agent-card-title">🌊 Flood Agent</span>
+          <span class="agent-card-badge live">● Live</span>
         </div>
-        <div class="agent-card-desc">Flooding risk and river intelligence — USGS stream gauges, NWS flood alerts, MRMS precipitation, and river forecast guidance.</div>
+        <div class="agent-card-desc">Click a point on the map for a river flood briefing — NWS gauge network (75-mile radius), active flood warnings, 24h precipitation, and soil saturation.</div>
+        <div class="agent-card-actions">
+          <button class="agent-activate-btn" id="agent-flood-btn" onclick="toggleFloodMode()">Activate</button>
+        </div>
       </div>
 
     </div>
@@ -1408,6 +1497,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
   </div>
 
+  <!-- FIRE WEATHER AGENT PANEL — outside map-wrap so overflow:hidden doesn't clip it -->
+  <div id="fire-panel">
+    <div id="fire-header" onmousedown="fwPanelDragStart(event)">
+      <span id="fire-title">🔥 Fire Weather</span>
+      <button id="fire-close" onclick="closeFirePanel()">✕</button>
+    </div>
+    <div id="fire-body">
+      <div class="fw-hint" id="fw-hint-text">Click any spot on the map for a fire weather risk briefing.<br><br>Requires MCP server running.</div>
+    </div>
+  </div>
+
+  <!-- FLOOD AGENT PANEL — outside map-wrap so overflow:hidden doesn't clip it -->
+  <div id="flood-panel">
+    <div id="flood-header" onmousedown="flPanelDragStart(event)">
+      <span id="flood-title">🌊 Flood Intelligence</span>
+      <button id="flood-close" onclick="closeFloodPanel()">✕</button>
+    </div>
+    <div id="flood-body">
+      <div class="fl-hint" id="fl-hint-text">Click any spot on the map for a river flood briefing.<br><br>Requires MCP server running.</div>
+    </div>
+  </div>
+
   <!-- DRAG RESIZE HANDLE -->
   <div id="panel-drag" title="Drag to resize panel"></div>
 
@@ -1688,6 +1799,7 @@ let usgsEnabled = false, usgsGroup = null, usgsLoaded = false;
 let usgsFlowEnabled = false, usgsFlowGroup = null, usgsFlowLoaded = false;
 let mrmsQpeLayer = null, mrmsQpeEnabled = false, mrmsQpeOpacity = 0.70;
 let femaLayer = null, femaEnabled = false, femaOpacity = 0.85;
+let nhdLayer = null, nhdEnabled = false, nhdOpacity = 0.75;
 let fireIncidentsEnabled = false, fireIncidentsGroup = null, fireIncidentsLoaded = false;
 let firePerimEnabled = false, firePerimGroup = null, firePerimLoaded = false;
 let smokeLayer = null, smokeEnabled = false, smokeOpacity = 0.80;
@@ -1793,7 +1905,9 @@ function initMap() {
 
   map.on('click', (e) => {
     if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
-    if (!nowcastMode) { closeDetail(); onModMapClick(e); }
+    if (fireMode) { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (floodMode) { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (!nowcastMode && !fireMode && !floodMode) { closeDetail(); onModMapClick(e); }
   });
   map.on('mousedown', ncOnMouseDown);
   map.on('mousemove', ncOnMouseMove);
@@ -1960,6 +2074,8 @@ function addAlertPolygon(alert, geom, targetGroup=alertGroup) {
   lyr.on('click', e  => {
     L.DomEvent.stopPropagation(e);
     if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
+    if (fireMode)  { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (floodMode) { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
     selectAlert(mostSevereAlertAt(e.latlng) ?? alert.id);
   });
   lyr._alertId = alert.id;
@@ -2815,7 +2931,30 @@ async function toggleLayer(name, on) {
       document.getElementById('windninja-key').style.display = 'none';
       document.getElementById('windninja-note').textContent = 'off';
     }
+  } else if (name === 'nhd') {
+    nhdEnabled = on;
+    document.getElementById('nhd-opacity-row').style.display = on ? 'flex' : 'none';
+    if (on) {
+      if (!nhdLayer) {
+        nhdLayer = L.tileLayer.wms('https://hydro.nationalmap.gov/arcgis/services/NHDPlus_HR/MapServer/WMSServer', {
+          layers: '0', format: 'image/png', transparent: true,
+          version: '1.3.0', opacity: nhdOpacity, minZoom: 7,
+          attribution: 'USGS NHD+', zIndex: 145,
+        });
+      }
+      nhdLayer.addTo(map).setOpacity(nhdOpacity);
+      document.getElementById('nhd-note').textContent = 'stream network';
+    } else {
+      if (nhdLayer) nhdLayer.remove();
+      document.getElementById('nhd-note').textContent = 'off';
+    }
   }
+}
+
+function setNhdOpacity(v) {
+  nhdOpacity = v / 100;
+  document.getElementById('nhd-opacity-val').textContent = v + '%';
+  if (nhdLayer) nhdLayer.setOpacity(nhdOpacity);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -5327,6 +5466,262 @@ function renderNowcast(d, bounds) {
   const ts = new Date(d.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   html += `<div class="nc-ts">Generated ${ts} · StormWatch MCP</div>`;
   document.getElementById('nowcast-body').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FIRE WEATHER AGENT
+// ═══════════════════════════════════════════════════════════════════
+
+let fireMode = false;
+let _fwDrag = null;
+
+function toggleFireMode() {
+  fireMode = !fireMode;
+  document.getElementById('fire-panel').style.display = fireMode ? 'block' : 'none';
+  document.getElementById('map-wrap').classList.toggle('fw-mode', fireMode);
+  document.getElementById('agent-fire-btn')?.classList.toggle('active', fireMode);
+  document.getElementById('agent-card-fire')?.classList.toggle('active', fireMode);
+  if (!fireMode) { document.getElementById('map-wrap').classList.remove('fw-mode'); map.dragging.enable(); }
+}
+
+function closeFirePanel() {
+  fireMode = false;
+  document.getElementById('fire-panel').style.display = 'none';
+  document.getElementById('map-wrap').classList.remove('fw-mode');
+  document.getElementById('agent-fire-btn')?.classList.remove('active');
+  document.getElementById('agent-card-fire')?.classList.remove('active');
+  map.dragging.enable();
+}
+
+function fwPanelDragStart(e) {
+  if (e.target.closest('button')) return;
+  const panel = document.getElementById('fire-panel');
+  const rect = panel.getBoundingClientRect();
+  if (!panel.style.left) { panel.style.left = rect.left + 'px'; panel.style.right = 'auto'; }
+  _fwDrag = { startX: e.clientX, startY: e.clientY, startLeft: parseInt(panel.style.left) || rect.left, startTop: parseInt(panel.style.top) || rect.top };
+  document.addEventListener('mousemove', fwPanelDragMove);
+  document.addEventListener('mouseup',   fwPanelDragEnd);
+  e.preventDefault();
+}
+function fwPanelDragMove(e) {
+  if (!_fwDrag) return;
+  const panel = document.getElementById('fire-panel');
+  panel.style.left = Math.max(0, Math.min(_fwDrag.startLeft + e.clientX - _fwDrag.startX, window.innerWidth  - panel.offsetWidth))  + 'px';
+  panel.style.top  = Math.max(0, Math.min(_fwDrag.startTop  + e.clientY - _fwDrag.startY, window.innerHeight - 60)) + 'px';
+}
+function fwPanelDragEnd() { _fwDrag = null; document.removeEventListener('mousemove', fwPanelDragMove); document.removeEventListener('mouseup', fwPanelDragEnd); }
+
+async function runFireAgent(lat, lon) {
+  const panel = document.getElementById('fire-panel');
+  panel.style.display = 'block';
+  const body = document.getElementById('fire-body');
+  body.scrollTop = 0;
+  body.innerHTML = '<div class="fw-loading">Analyzing fire weather environment…</div>';
+  try {
+    const res = await fetch(`http://localhost:3456/fire-agent?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const data = await res.json();
+    renderFireAgent(data);
+  } catch (err) {
+    body.innerHTML = `<div class="fw-hint">Could not get fire weather data.<br><small style="color:#7a3a18">${err.message}</small><br><small style="color:#4a2010">Is the MCP server running?</small></div>`;
+  }
+}
+
+function renderFireAgent(d) {
+  const rating = d.riskRating.replace(/[- ]/g, '_');
+  const score  = d.riskScore.toFixed(1);
+  const env    = d.environment ?? {};
+  const loc    = d.location ?? {};
+
+  let html = '';
+  html += `<div class="fw-loc">${loc.name ?? ''}${loc.state ? ' · ' + loc.state : ''}</div>`;
+
+  html += `<div class="fw-risk-block fw-risk-${rating}">`;
+  html += `<span class="fw-risk-score">${score}<br><span style="font-size:10px;font-weight:400;opacity:0.7">/10</span></span>`;
+  html += `<div class="fw-risk-label">${d.riskRating}</div>`;
+  html += `<div class="fw-risk-headline">${d.headline}</div>`;
+  html += `</div>`;
+
+  // Current conditions
+  const hasCond = env.temp != null || env.rh != null || env.wind != null;
+  if (hasCond) {
+    html += `<div class="fw-section-hdr">Current Conditions</div><div class="fw-cond-row">`;
+    if (env.temp != null)         html += `<span class="fw-cond-item">🌡️ ${env.temp}°F</span>`;
+    if (env.rh != null)           html += `<span class="fw-cond-item">💧 ${env.rh}% RH</span>`;
+    if (env.wind != null)         html += `<span class="fw-cond-item">💨 ${env.wind} mph</span>`;
+    if (env.gusts != null)        html += `<span class="fw-cond-item">💨 gusts ${env.gusts} mph</span>`;
+    if (env.soilMoisture != null) html += `<span class="fw-cond-item">🌱 soil ${env.soilMoisture}% VWC</span>`;
+    html += `</div>`;
+  }
+
+  // Fuel drought summary
+  const hasFuel = env.total90 != null || env.sinceRain != null;
+  if (hasFuel) {
+    html += `<div class="fw-section-hdr">Fuel Drought</div><div class="fw-cond-row">`;
+    if (env.total90 != null)    html += `<span class="fw-cond-item">☔ ${env.total90}" / 90 days</span>`;
+    if (env.sinceRain != null)  html += `<span class="fw-cond-item">🌵 ${env.sinceRain}d since rain</span>`;
+    if (env.dryDays != null)    html += `<span class="fw-cond-item">☀️ ${env.dryDays} dry days</span>`;
+    if (env.deficit != null)    html += `<span class="fw-cond-item">📉 ${env.deficit}" moisture deficit</span>`;
+    html += `</div>`;
+  }
+
+  // Contributing factors
+  if (d.factors?.length) {
+    html += `<div class="fw-section-hdr">Risk Factors</div><ul class="fw-factor-list">`;
+    d.factors.forEach(f => html += `<li>${f}</li>`);
+    html += `</ul>`;
+  }
+
+  // SPC outlook
+  if (d.spc?.level && d.spc.level !== 'NONE') {
+    html += `<div class="fw-section-hdr">SPC Fire Weather — ${d.spc.level}</div>`;
+    if (d.spc.excerpt) html += `<div class="fw-spc">${d.spc.excerpt}</div>`;
+  }
+
+  // Active fire alerts
+  if (d.alerts?.length) {
+    html += `<div class="fw-section-hdr">Active Fire Alerts</div>`;
+    d.alerts.forEach(a => {
+      const exp = a.expires ? ` · expires ${new Date(a.expires).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}` : '';
+      html += `<div class="fw-alert-item">🚨 ${a.event}${exp}</div>`;
+    });
+  }
+
+  // Camp Fire analog warning
+  if (d.campFireAnalog) {
+    html += `<div class="fw-analog">⚠️ <strong>Camp Fire analog conditions detected</strong> — extreme dry days and severe precip deficit similar to the November 2018 Camp Fire environment.</div>`;
+  }
+
+  const ts = new Date(d.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  html += `<div class="fw-ts">Generated ${ts} · StormWatch MCP</div>`;
+  document.getElementById('fire-body').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FLOOD AGENT
+// ═══════════════════════════════════════════════════════════════════
+
+let floodMode = false;
+let _flDrag = null;
+
+function toggleFloodMode() {
+  floodMode = !floodMode;
+  document.getElementById('flood-panel').style.display = floodMode ? 'block' : 'none';
+  document.getElementById('map-wrap').classList.toggle('fl-mode', floodMode);
+  document.getElementById('agent-flood-btn')?.classList.toggle('active', floodMode);
+  document.getElementById('agent-card-flood')?.classList.toggle('active', floodMode);
+  if (!floodMode) { document.getElementById('map-wrap').classList.remove('fl-mode'); map.dragging.enable(); }
+}
+
+function closeFloodPanel() {
+  floodMode = false;
+  document.getElementById('flood-panel').style.display = 'none';
+  document.getElementById('map-wrap').classList.remove('fl-mode');
+  document.getElementById('agent-flood-btn')?.classList.remove('active');
+  document.getElementById('agent-card-flood')?.classList.remove('active');
+  map.dragging.enable();
+}
+
+function flPanelDragStart(e) {
+  if (e.target.closest('button')) return;
+  const panel = document.getElementById('flood-panel');
+  const rect = panel.getBoundingClientRect();
+  if (!panel.style.left) { panel.style.left = rect.left + 'px'; panel.style.right = 'auto'; }
+  _flDrag = { startX: e.clientX, startY: e.clientY, startLeft: parseInt(panel.style.left) || rect.left, startTop: parseInt(panel.style.top) || rect.top };
+  document.addEventListener('mousemove', flPanelDragMove);
+  document.addEventListener('mouseup',   flPanelDragEnd);
+  e.preventDefault();
+}
+function flPanelDragMove(e) {
+  if (!_flDrag) return;
+  const panel = document.getElementById('flood-panel');
+  panel.style.left = Math.max(0, Math.min(_flDrag.startLeft + e.clientX - _flDrag.startX, window.innerWidth  - panel.offsetWidth))  + 'px';
+  panel.style.top  = Math.max(0, Math.min(_flDrag.startTop  + e.clientY - _flDrag.startY, window.innerHeight - 60)) + 'px';
+}
+function flPanelDragEnd() { _flDrag = null; document.removeEventListener('mousemove', flPanelDragMove); document.removeEventListener('mouseup', flPanelDragEnd); }
+
+async function runFloodAgent(lat, lon) {
+  const panel = document.getElementById('flood-panel');
+  panel.style.display = 'block';
+  const body = document.getElementById('flood-body');
+  body.scrollTop = 0;
+  body.innerHTML = '<div class="fl-loading">Gathering river and flood data…</div>';
+  try {
+    const res = await fetch(`http://localhost:3456/flood-agent?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const data = await res.json();
+    renderFloodAgent(data);
+  } catch (err) {
+    body.innerHTML = `<div class="fl-hint">Could not get flood data.<br><small style="color:#2a4a80">${err.message}</small><br><small style="color:#1a2a50">Is the MCP server running?</small></div>`;
+  }
+}
+
+function renderFloodAgent(d) {
+  const loc = d.location ?? {};
+  let html = '';
+  html += `<div class="fl-loc">${loc.name ?? ''}${loc.state ? ' · ' + loc.state : ''}</div>`;
+
+  const riskClass = `fl-risk-${d.floodRisk}`;
+  html += `<div class="fl-risk-block ${riskClass}">`;
+  html += `<div class="fl-risk-label">${d.floodRisk === 'NONE' ? '✅ No Active Flooding' : d.floodRisk === 'ELEVATED' ? '⚠️ Elevated' : d.floodRisk === 'MODERATE' ? '🌊 Moderate Flooding' : '🚨 Major Flooding'}</div>`;
+  html += `<div class="fl-risk-headline">${d.headline}</div>`;
+  html += `</div>`;
+
+  // Precipitation context
+  const hasPrecip = d.precip24h != null || d.forecast48h != null || d.soilMoisture != null;
+  if (hasPrecip) {
+    html += `<div class="fl-section-hdr">Precipitation & Soil</div><div class="fl-cond-row">`;
+    if (d.precip24h != null)    html += `<span class="fl-cond-item">☔ ${d.precip24h}" today</span>`;
+    if (d.forecast48h != null)  html += `<span class="fl-cond-item">📅 ${d.forecast48h}" next 48h</span>`;
+    if (d.rainProb != null)     html += `<span class="fl-cond-item">🌧️ ${d.rainProb}% rain chance</span>`;
+    if (d.soilMoisture != null) html += `<span class="fl-cond-item">🌱 soil ${d.soilMoisture}% VWC</span>`;
+    html += `</div>`;
+  }
+
+  // Active flood alerts
+  if (d.floodAlerts?.length) {
+    html += `<div class="fl-section-hdr">Active Flood Alerts</div>`;
+    d.floodAlerts.forEach(a => {
+      const sevClass = `fl-alert-${a.severity}`;
+      const exp = a.expires ? ` · ${new Date(a.expires).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}` : '';
+      html += `<div class="fl-alert-item ${sevClass}">🚨 ${a.event}${exp}`;
+      if (a.area) html += `<br><span style="opacity:0.7">${a.area}</span>`;
+      html += `</div>`;
+    });
+  }
+
+  // Gauge list
+  if (d.gauges?.length) {
+    const elevated = d.gauges.filter(g => !/no_flooding|normal|unknown/i.test(g.status));
+    const normal   = d.gauges.filter(g =>  /no_flooding|normal/i.test(g.status));
+    const displayList = elevated.length ? elevated.slice(0, 8) : normal.slice(0, 6);
+    const hdr = elevated.length
+      ? `River Gauges — ${elevated.length} Elevated`
+      : `River Gauges (${d.gauges.length} within 75 mi)`;
+    html += `<div class="fl-section-hdr">${hdr}</div>`;
+    displayList.forEach(g => {
+      const st = g.status.toLowerCase().replace(/\s+/g, '_');
+      const statusClass =
+        /major/.test(st)    ? 'fl-gauge-MAJOR' :
+        /moderate/.test(st) ? 'fl-gauge-MODERATE' :
+        /minor/.test(st)    ? 'fl-gauge-MINOR' :
+        /action/.test(st)   ? 'fl-gauge-ACTION' : 'fl-gauge-NORMAL';
+      html += `<div class="fl-gauge-item ${statusClass}">`;
+      html += `<span class="fl-gauge-name">${g.name}</span>`;
+      html += `<span class="fl-gauge-val">${g.observed != null ? g.observed + ' ' + (g.units ?? 'ft') : g.status}</span>`;
+      html += `<span class="fl-gauge-dist">${g.dist}km</span>`;
+      html += `</div>`;
+      if (g.waterbody && g.waterbody !== 'Unknown river') {
+        html += `<div style="font-size:9px;color:#1a3060;padding:0 10px 4px;margin-top:-2px">${g.waterbody}</div>`;
+      }
+    });
+    if (elevated.length > 8) html += `<div style="font-size:9px;color:#2a4a70;padding:4px 2px">…and ${elevated.length - 8} more elevated gauges</div>`;
+    if (!elevated.length && normal.length > 6) html += `<div style="font-size:9px;color:#1a2a45;padding:4px 2px">…and ${normal.length - 6} more normal gauges</div>`;
+  }
+
+  const ts = new Date(d.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  html += `<div class="fl-ts">Generated ${ts} · StormWatch MCP · 75mi radius</div>`;
+  document.getElementById('flood-body').innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════════════════════════
