@@ -1934,8 +1934,12 @@ function initMap() {
   mtGroup          = L.layerGroup();
   nhdGroup         = L.layerGroup();
 
-  // Pane for point markers — sits above overlayPane (z:400) so gauge dots are always
-  // clickable even when covered by an alert polygon brought to front.
+  // NHD stream lines — above alert polygons (overlayPane z:400) so they stay clickable
+  // even when an alert polygon covers the same area and calls bringToFront().
+  map.createPane('nhdPane');
+  map.getPane('nhdPane').style.zIndex = 420;
+
+  // Gauge/station markers — above nhdPane and alert polygons.
   map.createPane('markerLayerPane');
   map.getPane('markerLayerPane').style.zIndex = 450;
 
@@ -3037,6 +3041,7 @@ async function loadNHDStreams() {
           geometry: { type: 'LineString', coordinates: el.geometry.map(p => [p.lon, p.lat]) }
         }))
       }, {
+        pane: 'nhdPane',
         style: f => ({
           color: '#1a65c0',
           weight: Math.min(6, (WT_W[f.properties?.waterway] ?? 1.5)),
@@ -3093,14 +3098,11 @@ async function showNHDCard(p) {
   document.getElementById('det-chips').innerHTML = chips;
   document.getElementById('det-sev-desc').textContent = '';
 
-  document.getElementById('det-area-row').style.display   = 'none';
-  document.getElementById('det-dates-row').style.display  = 'none';
-  document.getElementById('det-hl-wrap').style.display    = 'none';
-  document.getElementById('det-instr-wrap').style.display = 'none';
-  document.getElementById('det-zoom').style.display       = 'none';
-  document.getElementById('det-desc-row').style.display   = 'none';
+  ['det-area-row','det-dates-row','det-hl-wrap','det-instr-wrap','det-zoom','det-desc-row']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 
   const custom = document.getElementById('det-custom');
+  if (!custom) { console.error('det-custom missing — hard-refresh the page'); return; }
   custom.style.display = 'block';
   custom.innerHTML = '<div class="wc-loading">Loading…</div>';
   document.getElementById('detail').style.display = 'flex';
