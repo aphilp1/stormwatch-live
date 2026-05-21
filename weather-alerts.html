@@ -1137,8 +1137,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <span class="agent-card-title">🔥 Fire Forecast</span>
           <span class="agent-card-badge live">● Live</span>
         </div>
-        <div class="agent-card-desc">Click a point on the map for a fire weather risk briefing — fuel drought, RH/wind conditions, SPC fire outlook, red flag alerts, and a composite 0–10 risk score.</div>
+        <div class="agent-card-desc">Click a point or draw a box on the map for a fire weather risk briefing — fuel drought, RH/wind conditions, SPC fire outlook, red flag alerts, and a composite 0–10 risk score.</div>
         <div class="agent-card-actions">
+          <div class="agent-mode-btns">
+            <button class="nc-mode-btn active" id="fw-point-btn-sidebar" onclick="setFireInputMode('point')">📍 Point</button>
+            <button class="nc-mode-btn" id="fw-box-btn-sidebar" onclick="setFireInputMode('box')">⬜ Area</button>
+          </div>
           <button class="agent-activate-btn" id="agent-fire-btn" onclick="toggleFireMode()">Activate</button>
         </div>
       </div>
@@ -1149,8 +1153,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <span class="agent-card-title">🌊 Flood Forecast</span>
           <span class="agent-card-badge live">● Live</span>
         </div>
-        <div class="agent-card-desc">Click a point on the map for a river flood briefing — NWS gauge network (75-mile radius), active flood warnings, 24h precipitation, and soil saturation.</div>
+        <div class="agent-card-desc">Click a point or draw a box on the map for a river flood briefing — NWS gauge network (75-mile radius), active flood warnings, 24h precipitation, and soil saturation.</div>
         <div class="agent-card-actions">
+          <div class="agent-mode-btns">
+            <button class="nc-mode-btn active" id="fl-point-btn-sidebar" onclick="setFloodInputMode('point')">📍 Point</button>
+            <button class="nc-mode-btn" id="fl-box-btn-sidebar" onclick="setFloodInputMode('box')">⬜ Area</button>
+          </div>
           <button class="agent-activate-btn" id="agent-flood-btn" onclick="toggleFloodMode()">Activate</button>
         </div>
       </div>
@@ -1502,6 +1510,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div id="fire-panel">
     <div id="fire-header" onmousedown="fwPanelDragStart(event)">
       <span id="fire-title">🔥 Fire Forecast</span>
+      <div id="fw-mode-btns">
+        <button class="nc-mode-btn active" id="fw-point-btn" onclick="setFireInputMode('point')">📍 Point</button>
+        <button class="nc-mode-btn" id="fw-box-btn" onclick="setFireInputMode('box')">⬜ Area</button>
+      </div>
       <button id="fire-close" onclick="closeFirePanel()">✕</button>
     </div>
     <div id="fire-body">
@@ -1513,6 +1525,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div id="flood-panel">
     <div id="flood-header" onmousedown="flPanelDragStart(event)">
       <span id="flood-title">🌊 Flood Forecast</span>
+      <div id="fl-mode-btns">
+        <button class="nc-mode-btn active" id="fl-point-btn" onclick="setFloodInputMode('point')">📍 Point</button>
+        <button class="nc-mode-btn" id="fl-box-btn" onclick="setFloodInputMode('box')">⬜ Area</button>
+      </div>
       <button id="flood-close" onclick="closeFloodPanel()">✕</button>
     </div>
     <div id="flood-body">
@@ -1907,13 +1923,19 @@ function initMap() {
 
   map.on('click', (e) => {
     if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
-    if (fireMode) { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
-    if (floodMode) { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (fireMode  && fireInputMode  === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (floodMode && floodInputMode === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
     if (!nowcastMode && !fireMode && !floodMode) { closeDetail(); onModMapClick(e); }
   });
   map.on('mousedown', ncOnMouseDown);
   map.on('mousemove', ncOnMouseMove);
   map.on('mouseup',   ncOnMouseUp);
+  map.on('mousedown', fwOnMouseDown);
+  map.on('mousemove', fwOnMouseMove);
+  map.on('mouseup',   fwOnMouseUp);
+  map.on('mousedown', flOnMouseDown);
+  map.on('mousemove', flOnMouseMove);
+  map.on('mouseup',   flOnMouseUp);
   map.on('zoomend', () => { updateNexradVisibility(); updateZoomBadge(); if (nhdEnabled) loadNHDStreams(); });
   map.on('moveend', () => { if (nhdEnabled) loadNHDStreams(); });
   updateZoomBadge();
@@ -2077,8 +2099,8 @@ function addAlertPolygon(alert, geom, targetGroup=alertGroup) {
   lyr.on('click', e  => {
     L.DomEvent.stopPropagation(e);
     if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
-    if (fireMode)  { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
-    if (floodMode) { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (fireMode  && fireInputMode  === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (floodMode && floodInputMode === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
     selectAlert(mostSevereAlertAt(e.latlng) ?? alert.id);
   });
   lyr._alertId = alert.id;
@@ -2992,8 +3014,8 @@ async function loadNHDStreams() {
           lyr.on('click', e => {
             L.DomEvent.stopPropagation(e);
             if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
-            if (fireMode)  { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
-            if (floodMode) { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
+            if (fireMode  && fireInputMode  === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
+            if (floodMode && floodInputMode === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
             showNHDCard(f.properties ?? {});
           });
         }
@@ -5410,6 +5432,76 @@ function ncOnMouseUp(e) {
   runNowcast(center.lat, center.lng, bounds);
 }
 
+// ── Fire box-draw ────────────────────────────────────────────────────
+function setFireInputMode(mode) {
+  fireInputMode = mode;
+  ['fw-point-btn','fw-point-btn-sidebar'].forEach(id => document.getElementById(id)?.classList.toggle('active', mode === 'point'));
+  ['fw-box-btn',  'fw-box-btn-sidebar'  ].forEach(id => document.getElementById(id)?.classList.toggle('active', mode === 'box'));
+  const hint = document.getElementById('fw-hint-text');
+  if (hint) hint.textContent = mode === 'box'
+    ? 'Draw a box on the map for a fire weather risk briefing of that area.'
+    : 'Click any spot on the map for a fire weather risk briefing.\n\nRequires MCP server running.';
+}
+function fwClearBox() {
+  if (_fwBoxRect) { _fwBoxRect.remove(); _fwBoxRect = null; }
+  _fwBoxStart = null;
+}
+function fwOnMouseDown(e) {
+  if (!fireMode || fireInputMode !== 'box') return;
+  map.dragging.disable();
+  fwClearBox();
+  _fwBoxStart = e.latlng;
+}
+function fwOnMouseMove(e) {
+  if (!_fwBoxStart) return;
+  const bounds = L.latLngBounds(_fwBoxStart, e.latlng);
+  if (_fwBoxRect) { _fwBoxRect.setBounds(bounds); }
+  else { _fwBoxRect = L.rectangle(bounds, { color: '#ff7733', weight: 2, fillColor: '#ff7733', fillOpacity: 0.08, dashArray: '4' }).addTo(map); }
+}
+function fwOnMouseUp(e) {
+  if (!_fwBoxStart) return;
+  map.dragging.enable();
+  const bounds = L.latLngBounds(_fwBoxStart, e.latlng);
+  const center = bounds.getCenter();
+  _fwBoxStart = null;
+  runFireAgent(center.lat, center.lng);
+}
+
+// ── Flood box-draw ───────────────────────────────────────────────────
+function setFloodInputMode(mode) {
+  floodInputMode = mode;
+  ['fl-point-btn','fl-point-btn-sidebar'].forEach(id => document.getElementById(id)?.classList.toggle('active', mode === 'point'));
+  ['fl-box-btn',  'fl-box-btn-sidebar'  ].forEach(id => document.getElementById(id)?.classList.toggle('active', mode === 'box'));
+  const hint = document.getElementById('fl-hint-text');
+  if (hint) hint.textContent = mode === 'box'
+    ? 'Draw a box on the map for a river flood briefing of that area.'
+    : 'Click any spot on the map for a river flood briefing.\n\nRequires MCP server running.';
+}
+function flClearBox() {
+  if (_flBoxRect) { _flBoxRect.remove(); _flBoxRect = null; }
+  _flBoxStart = null;
+}
+function flOnMouseDown(e) {
+  if (!floodMode || floodInputMode !== 'box') return;
+  map.dragging.disable();
+  flClearBox();
+  _flBoxStart = e.latlng;
+}
+function flOnMouseMove(e) {
+  if (!_flBoxStart) return;
+  const bounds = L.latLngBounds(_flBoxStart, e.latlng);
+  if (_flBoxRect) { _flBoxRect.setBounds(bounds); }
+  else { _flBoxRect = L.rectangle(bounds, { color: '#3388ff', weight: 2, fillColor: '#3388ff', fillOpacity: 0.08, dashArray: '4' }).addTo(map); }
+}
+function flOnMouseUp(e) {
+  if (!_flBoxStart) return;
+  map.dragging.enable();
+  const bounds = L.latLngBounds(_flBoxStart, e.latlng);
+  const center = bounds.getCenter();
+  _flBoxStart = null;
+  runFloodAgent(center.lat, center.lng);
+}
+
 function ncApplyMapAlerts(d, ma) {
   const { tornadoWarning, tornadoWatch, svreWarning, svreWatch, extremeEvent, spcLevel } = ma;
   const spc = spcLevel ?? 'NONE'; // location-specific SPC level from polygon check
@@ -5554,8 +5646,8 @@ function renderNowcast(d, bounds) {
 // FIRE WEATHER AGENT
 // ═══════════════════════════════════════════════════════════════════
 
-let fireMode = false;
-let _fwDrag = null;
+let fireMode = false, fireInputMode = 'point';
+let _fwDrag = null, _fwBoxStart = null, _fwBoxRect = null;
 
 function toggleFireMode() {
   fireMode = !fireMode;
@@ -5568,6 +5660,7 @@ function toggleFireMode() {
 
 function closeFirePanel() {
   fireMode = false;
+  fwClearBox();
   document.getElementById('fire-panel').style.display = 'none';
   document.getElementById('map-wrap').classList.remove('fw-mode');
   document.getElementById('agent-fire-btn')?.classList.remove('active');
@@ -5683,8 +5776,8 @@ function renderFireAgent(d) {
 // FLOOD AGENT
 // ═══════════════════════════════════════════════════════════════════
 
-let floodMode = false;
-let _flDrag = null;
+let floodMode = false, floodInputMode = 'point';
+let _flDrag = null, _flBoxStart = null, _flBoxRect = null;
 
 function toggleFloodMode() {
   floodMode = !floodMode;
@@ -5697,6 +5790,7 @@ function toggleFloodMode() {
 
 function closeFloodPanel() {
   floodMode = false;
+  flClearBox();
   document.getElementById('flood-panel').style.display = 'none';
   document.getElementById('map-wrap').classList.remove('fl-mode');
   document.getElementById('agent-flood-btn')?.classList.remove('active');
