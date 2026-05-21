@@ -371,6 +371,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .nc-threat-LOW{background:rgba(0,95,25,0.45);border:1px solid #00bb44;color:#99eebb}
 .nc-threat-MARGINAL{background:rgba(0,75,110,0.45);border:1px solid #0099cc;color:#88ddff}
 .nc-threat-NONE{background:rgba(15,40,65,0.7);border:1px solid #1e3a55;color:#7a9ab8}
+.nc-threat-TSTM{background:rgba(20,50,120,0.45);border:1px solid #3366cc;color:#aaccff}
 .nc-why{font-size:11px;color:#d8eaf8;line-height:1.72;margin-bottom:12px;background:rgba(80,130,200,0.07);border-left:3px solid rgba(80,130,200,0.35);padding:9px 11px;border-radius:0 5px 5px 0}
 .nc-section-hdr{font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#6a9abf;font-weight:700;margin:13px 0 7px}
 .nc-cond-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:5px}
@@ -387,7 +388,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* ── FIRE WEATHER AGENT PANEL ───────────────────────────────────── */
 #map-wrap.fw-mode,#map-wrap.fw-mode .leaflet-container,
 #map-wrap.fw-mode .leaflet-interactive{cursor:crosshair !important}
-#fire-panel{position:fixed;top:55px;right:10px;width:315px;background:#1a0e06;border:1px solid rgba(210,90,30,0.3);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
+#fire-panel{position:fixed;top:55px;left:270px;width:315px;background:#1a0e06;border:1px solid rgba(210,90,30,0.3);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
 #fire-header{padding:10px 13px;border-bottom:1px solid rgba(210,90,30,0.2);display:flex;justify-content:space-between;align-items:center;background:#1a0e06;gap:8px;cursor:move;user-select:none}
 #fire-body{overflow-y:auto;max-height:calc(100vh - 115px);padding:12px 13px;scrollbar-width:thin;scrollbar-color:#6b3018 transparent}
 #fire-body::-webkit-scrollbar{width:7px}
@@ -422,7 +423,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* ── FLOOD AGENT PANEL ──────────────────────────────────────────── */
 #map-wrap.fl-mode,#map-wrap.fl-mode .leaflet-container,
 #map-wrap.fl-mode .leaflet-interactive{cursor:crosshair !important}
-#flood-panel{position:fixed;top:55px;right:10px;width:315px;background:#050f1a;border:1px solid rgba(30,90,200,0.3);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
+#flood-panel{position:fixed;top:55px;left:595px;width:315px;background:#050f1a;border:1px solid rgba(30,90,200,0.3);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
 #flood-header{padding:10px 13px;border-bottom:1px solid rgba(30,90,200,0.2);display:flex;justify-content:space-between;align-items:center;background:#050f1a;gap:8px;cursor:move;user-select:none}
 #flood-body{overflow-y:auto;max-height:calc(100vh - 115px);padding:12px 13px;scrollbar-width:thin;scrollbar-color:#1a3060 transparent}
 #flood-body::-webkit-scrollbar{width:7px}
@@ -1130,10 +1131,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
       </div>
 
-      <!-- Fire Weather card -->
+      <!-- Fire Forecast card -->
       <div class="agent-card" id="agent-card-fire">
         <div class="agent-card-hdr">
-          <span class="agent-card-title">🔥 Fire Weather Agent</span>
+          <span class="agent-card-title">🔥 Fire Forecast</span>
           <span class="agent-card-badge live">● Live</span>
         </div>
         <div class="agent-card-desc">Click a point on the map for a fire weather risk briefing — fuel drought, RH/wind conditions, SPC fire outlook, red flag alerts, and a composite 0–10 risk score.</div>
@@ -1142,10 +1143,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
       </div>
 
-      <!-- Flood card -->
+      <!-- Flood Forecast card -->
       <div class="agent-card" id="agent-card-flood">
         <div class="agent-card-hdr">
-          <span class="agent-card-title">🌊 Flood Agent</span>
+          <span class="agent-card-title">🌊 Flood Forecast</span>
           <span class="agent-card-badge live">● Live</span>
         </div>
         <div class="agent-card-desc">Click a point on the map for a river flood briefing — NWS gauge network (75-mile radius), active flood warnings, 24h precipitation, and soil saturation.</div>
@@ -1500,7 +1501,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <!-- FIRE WEATHER AGENT PANEL — outside map-wrap so overflow:hidden doesn't clip it -->
   <div id="fire-panel">
     <div id="fire-header" onmousedown="fwPanelDragStart(event)">
-      <span id="fire-title">🔥 Fire Weather</span>
+      <span id="fire-title">🔥 Fire Forecast</span>
       <button id="fire-close" onclick="closeFirePanel()">✕</button>
     </div>
     <div id="fire-body">
@@ -1511,7 +1512,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <!-- FLOOD AGENT PANEL — outside map-wrap so overflow:hidden doesn't clip it -->
   <div id="flood-panel">
     <div id="flood-header" onmousedown="flPanelDragStart(event)">
-      <span id="flood-title">🌊 Flood Intelligence</span>
+      <span id="flood-title">🌊 Flood Forecast</span>
       <button id="flood-close" onclick="closeFloodPanel()">✕</button>
     </div>
     <div id="flood-body">
@@ -5350,6 +5351,7 @@ function ncApplyMapAlerts(d, ma) {
   else if (svreWarning  || spc === 'ENHANCED')        tl = 'ELEVATED';
   else if (svreWatch    || spc === 'SLIGHT')          tl = 'LOW';
   else if (spc === 'MARGINAL')                        tl = 'MARGINAL';
+  else if (spc === 'TSTM')                            tl = 'TSTM';
   else                                                tl = 'NONE';
 
   const sl = d.location?.state ?? 'this area';
@@ -5376,6 +5378,9 @@ function ncApplyMapAlerts(d, ma) {
   } else if (tl === 'MARGINAL') {
     headline = 'MARGINAL RISK — Low but nonzero severe threat';
     whyItMatters = `SPC Marginal Risk — some storms may briefly become severe.${rpt}`;
+  } else if (tl === 'TSTM') {
+    headline = 'General Thunderstorm Area — storms likely, no categorical severe risk';
+    whyItMatters = `This location is within the SPC General Thunderstorm (TSTM) outlook. Thunderstorms are expected but are not anticipated to reach severe thresholds. Hail under 1", winds under 58 mph, no tornado threat expected.${rpt}`;
   } else {
     headline = 'No significant severe weather threat';
     whyItMatters = `No active severe weather threats for this location.${rpt}`;
@@ -5392,12 +5397,14 @@ function ncApplyMapAlerts(d, ma) {
   d.headline = headline;
   d.whyItMatters = whyItMatters;
   d.activeThreats = activeThreats;
-  // Override SPC level with location-specific value; suppress national text if no local risk
+  // Override SPC level with location-specific value; suppress national text only when truly NONE
   d.spc = {
     level: spcLevel,
-    excerpt: (spcLevel === 'NONE' || spcLevel === 'TSTM')
+    excerpt: spcLevel === 'NONE'
       ? 'No SPC categorical severe weather risk for this location.'
-      : (d.spc?.excerpt ?? '')
+      : spcLevel === 'TSTM'
+        ? `General Thunderstorm area — thunderstorms expected but not forecast to be severe. ${d.spc?.excerpt ?? ''}`
+        : (d.spc?.excerpt ?? '')
   };
 }
 
@@ -5497,8 +5504,8 @@ function fwPanelDragStart(e) {
   if (e.target.closest('button')) return;
   const panel = document.getElementById('fire-panel');
   const rect = panel.getBoundingClientRect();
-  if (!panel.style.left) { panel.style.left = rect.left + 'px'; panel.style.right = 'auto'; }
-  _fwDrag = { startX: e.clientX, startY: e.clientY, startLeft: parseInt(panel.style.left) || rect.left, startTop: parseInt(panel.style.top) || rect.top };
+  panel.style.left = rect.left + 'px'; panel.style.right = 'auto';
+  _fwDrag = { startX: e.clientX, startY: e.clientY, startLeft: rect.left, startTop: rect.top };
   document.addEventListener('mousemove', fwPanelDragMove);
   document.addEventListener('mouseup',   fwPanelDragEnd);
   e.preventDefault();
@@ -5626,8 +5633,8 @@ function flPanelDragStart(e) {
   if (e.target.closest('button')) return;
   const panel = document.getElementById('flood-panel');
   const rect = panel.getBoundingClientRect();
-  if (!panel.style.left) { panel.style.left = rect.left + 'px'; panel.style.right = 'auto'; }
-  _flDrag = { startX: e.clientX, startY: e.clientY, startLeft: parseInt(panel.style.left) || rect.left, startTop: parseInt(panel.style.top) || rect.top };
+  panel.style.left = rect.left + 'px'; panel.style.right = 'auto';
+  _flDrag = { startX: e.clientX, startY: e.clientY, startLeft: rect.left, startTop: rect.top };
   document.addEventListener('mousemove', flPanelDragMove);
   document.addEventListener('mouseup',   flPanelDragEnd);
   e.preventDefault();
