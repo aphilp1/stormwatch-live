@@ -1931,6 +1931,11 @@ function initMap() {
   mtGroup          = L.layerGroup();
   nhdGroup         = L.layerGroup();
 
+  // Pane for point markers — sits above overlayPane (z:400) so gauge dots are always
+  // clickable even when covered by an alert polygon brought to front.
+  map.createPane('markerLayerPane');
+  map.getPane('markerLayerPane').style.zIndex = 450;
+
   map.on('click', (e) => {
     if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
     if (fireMode  && fireInputMode  === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
@@ -4225,7 +4230,7 @@ async function loadUSGSGauges() {
       '?where=1%3D1&outFields=gaugelid,location,observed,status,units,waterbody,state,obstime,action,flood,moderate,major,secvalue,secunit,url&returnGeometry=true&f=geojson&resultRecordCount=5000';
     const data = await fetchJson(url, 25000);
     const features = data?.features ?? [];
-    const canvas = L.canvas({ padding: 0.5 });
+    const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
     let count = 0;
     for (const feat of features) {
       const [lon, lat] = feat.geometry?.coordinates ?? [];
@@ -4461,7 +4466,7 @@ async function loadUSGSFlow() {
   const note = document.getElementById('usgsflow-note');
   note.textContent = 'loading…';
   usgsFlowGroup.clearLayers();
-  const canvas = L.canvas({ padding: 0.5 });
+  const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
   let total = 0;
   let url = 'https://api.waterdata.usgs.gov/ogcapi/v0/collections/latest-continuous/items?f=json&parameter_code=00060&limit=10000';
   try {
@@ -4735,6 +4740,7 @@ function addFIMMarkers(gauges) {
     const flooding = stage !== 'normal' && stage !== 'unknown';
 
     const marker = L.circleMarker([g.latitude, g.longitude], {
+      pane:        'markerLayerPane',
       radius:      flooding ? 8 : 5,
       color:       cfg.color,
       fillColor:   cfg.fill,
@@ -4855,7 +4861,7 @@ async function loadFireIncidents() {
   try {
     const data = await fetchJson(NIFC_INCIDENTS, 20000);
     const features = data?.features ?? [];
-    const canvas = L.canvas({ padding: 0.5 });
+    const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
     let count = 0;
     for (const feat of features) {
       const coords = feat.geometry?.coordinates;
@@ -5142,7 +5148,7 @@ async function loadRAWS() {
   const note = document.getElementById('raws-note');
   note.textContent = 'loading…';
   rawsGroup.clearLayers();
-  const canvas = L.canvas({ padding: 0.5 });
+  const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
   try {
     const data = await fetchJson(RAWS_URL, 30000);
     const features = data?.features ?? [];
@@ -6052,6 +6058,7 @@ async function loadMetarStations() {
       const tmpF = (p.tmpf != null && !isNaN(p.tmpf)) ? p.tmpf : null;
       const col = staTempColor(tmpF);
       const m = L.circleMarker([p.lat, p.lon], {
+        pane: 'markerLayerPane',
         radius: 4, fillColor: col.fill, color: col.stroke,
         weight: 1, fillOpacity: 0.85, opacity: 1
       });
@@ -6142,6 +6149,7 @@ async function loadMontanaStations() {
       const tempF = ob['Air Temperature @ 2 m [°F]'];
       const col = staTempColor(tempF);
       const marker = L.circleMarker([m.latitude, m.longitude], {
+        pane: 'markerLayerPane',
         radius: 5, fillColor: col.fill, color: col.stroke,
         weight: 1.5, fillOpacity: 0.85, opacity: 1
       });
