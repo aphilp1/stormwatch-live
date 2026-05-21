@@ -810,7 +810,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
           <div class="layer-row">
             <label class="toggle"><input type="checkbox" id="lyr-nhd" onchange="toggleLayer('nhd',this.checked)"><span class="toggle-slider"></span></label>
-            <span class="layer-label">NHD+ Stream Network</span>
+            <span class="layer-label">Stream Network</span>
             <span class="layer-note" id="nhd-note">off</span>
           </div>
           <div class="opacity-row" id="nhd-opacity-row" style="display:none">
@@ -2987,71 +2987,87 @@ async function loadNHDStreams() {
   clearTimeout(nhdLoadTimer);
   nhdLoadTimer = setTimeout(async () => {
     const b = map.getBounds();
-    // Filter to higher-order streams at lower zooms to avoid overloading
-    const minOrder = z < 10 ? 5 : z < 11 ? 4 : z < 12 ? 3 : 1;
-    const bbox = `${b.getWest().toFixed(4)},${b.getSouth().toFixed(4)},${b.getEast().toFixed(4)},${b.getNorth().toFixed(4)}`;
-    const where = minOrder > 1 ? `StreamOrde >= ${minOrder}` : '1=1';
+    // Overpass bbox order: south,west,north,east
+    const s = b.getSouth().toFixed(4), w = b.getWest().toFixed(4);
+    const n = b.getNorth().toFixed(4), e = b.getEast().toFixed(4);
+    // Zoom-based waterway type filter — coarser at low zoom to avoid overload
+    const wtypes = z < 10 ? 'river'
+      : z < 11 ? 'river|canal'
+      : z < 12 ? 'river|canal|stream'
+      : 'river|canal|stream|drain|ditch';
     document.getElementById('nhd-note').textContent = 'loading…';
     try {
-      const url = `https://hydro.nationalmap.gov/arcgis/rest/services/NHDPlus_HR/MapServer/2/query?` +
-        `geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects` +
-        `&where=${encodeURIComponent(where)}&outFields=GNIS_Name,ReachCode,StreamOrde,FCode,LengthKM` +
-        `&returnGeometry=true&resultRecordCount=2000&f=geojson`;
-      const res = await fetch(url);
+      const query = `[out:json][timeout:20];(way["waterway"~"^(${wtypes})$"](${s},${w},${n},${e}););out geom tags;`;
+      const res = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: query
+      });
+      if (res.status === 429) throw new Error('rate-limited');
       if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json();
-      const features = data.features ?? [];
+      const elements = (data.elements ?? []).filter(el => el.geometry?.length >= 2);
       nhdGroup.clearLayers();
-      if (features.length === 0) { document.getElementById('nhd-note').textContent = 'no data here'; return; }
-      L.geoJSON(data, {
-        style: f => {
-          const order = f.properties?.StreamOrde ?? 1;
-          return { color: '#1a65c0', weight: Math.min(5, Math.max(1, order * 0.65)), opacity: nhdOpacity };
-        },
+      if (elements.length === 0) { document.getElementById('nhd-note').textContent = 'no waterways'; return; }
+      const WT_W = { river: 4.5, canal: 2.5, stream: 1.8, drain: 1.2, ditch: 1 };
+      L.geoJSON({
+        type: 'FeatureCollection',
+        features: elements.map(el => ({
+          type: 'Feature',
+          properties: { ...el.tags, osmId: el.id },
+          geometry: { type: 'LineString', coordinates: el.geometry.map(p => [p.lon, p.lat]) }
+        }))
+      }, {
+        style: f => ({
+          color: '#1a65c0',
+          weight: Math.min(6, (WT_W[f.properties?.waterway] ?? 1.5)),
+          opacity: nhdOpacity
+        }),
         onEachFeature: (f, lyr) => {
-          const name = f.properties?.GNIS_Name || 'Unnamed reach';
-          lyr.bindTooltip(name, { sticky: true, direction: 'top', className: 'nhd-tip' });
-          lyr.on('click', e => {
-            L.DomEvent.stopPropagation(e);
-            if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
-            if (fireMode  && fireInputMode  === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
-            if (floodMode && floodInputMode === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
-            showNHDCard(f.properties ?? {});
+          const nm = f.properties?.name || f.properties?.['name:en'] || 'Unnamed waterway';
+          lyr.bindTooltip(nm, { sticky: true, direction: 'top', className: 'nhd-tip' });
+          lyr.on('click', ev => {
+            L.DomEvent.stopPropagation(ev);
+            if (nowcastMode && nowcastInputMode === 'point') { runNowcast(ev.latlng.lat, ev.latlng.lng); return; }
+            if (fireMode  && fireInputMode  === 'point') { runFireAgent(ev.latlng.lat, ev.latlng.lng); return; }
+            if (floodMode && floodInputMode === 'point') { runFloodAgent(ev.latlng.lat, ev.latlng.lng); return; }
+            showNHDCard(f.properties);
           });
         }
       }).addTo(nhdGroup);
-      document.getElementById('nhd-note').textContent = `${features.length} reaches`;
+      document.getElementById('nhd-note').textContent = `${elements.length} waterways`;
     } catch (err) {
-      console.error('NHD load error:', err);
-      document.getElementById('nhd-note').textContent = 'load error';
+      console.error('Stream load error:', err);
+      document.getElementById('nhd-note').textContent =
+        err.message === 'rate-limited' ? 'rate limit — retry' : 'load error';
     }
-  }, 400);
+  }, 700);
 }
 
 function showNHDCard(p) {
-  const FTYPE = { 460:'Stream / River', 558:'Artificial Path', 336:'Canal / Ditch',
-                  334:'Connector', 420:'Underground Conduit', 428:'Pipeline' };
-  const fbase = p.FCode ? Math.floor(p.FCode / 10) * 10 : 0;
-  const streamType = FTYPE[p.FCode] ?? FTYPE[fbase] ?? 'Hydrographic Feature';
-  const name = p.GNIS_Name || 'Unnamed stream reach';
-  const order = p.StreamOrde ?? '–';
-  const orderDesc = order >= 7 ? 'Major river' : order >= 5 ? 'Large river' : order >= 4 ? 'Medium stream' : order >= 3 ? 'Small stream' : 'Headwater / tributary';
+  const WT = { river:'River', canal:'Canal / Ditch', stream:'Stream', drain:'Drain',
+               ditch:'Ditch', brook:'Brook', tidal_channel:'Tidal Channel' };
+  const wtype  = p.waterway || 'waterway';
+  const label  = WT[wtype] || wtype.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  const name   = p.name || p['name:en'] || 'Unnamed waterway';
+  const altName = [p['alt_name'], p['old_name']].filter(Boolean).join(' / ');
 
   document.getElementById('det-event').textContent = name;
   document.getElementById('det-event').style.color = '#2468cc';
   document.getElementById('det-chips').innerHTML =
-    `<span style="background:#ddeeff;color:#1040a0;border:1px solid #6090dd;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">NHD+ Flowline</span>` +
-    (order !== '–' ? `<span style="background:#e8f4e8;color:#1a5a1a;border:1px solid #60a060;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">Order ${order} · ${orderDesc}</span>` : '');
-  document.getElementById('det-sev-desc').textContent = streamType;
-  document.getElementById('det-area').textContent = p.LengthKM ? `${p.LengthKM.toFixed(2)} km in view` : 'USGS NHD Plus High Resolution';
-  document.getElementById('det-eff-lbl').textContent  = 'Reach Code';
-  document.getElementById('det-exp-lbl').textContent  = 'Feature Code';
-  document.getElementById('det-eff').textContent  = p.ReachCode ?? '–';
-  document.getElementById('det-exp').textContent  = p.FCode     ?? '–';
-  document.getElementById('det-desc').textContent =
-    `${name} is a ${streamType.toLowerCase()} with Strahler stream order ${order}${order !== '–' ? ' (' + orderDesc + ')' : ''}. ` +
-    `Stream order indicates watershed position — order 1 is a headwater tributary, order 7+ is a major river like the Mississippi or Missouri. ` +
-    `${p.ReachCode ? 'Reach code ' + p.ReachCode + ' uniquely identifies this NHD reach.' : ''}\n\nSource: USGS NHD Plus High Resolution FeatureServer`;
+    `<span style="background:#ddeeff;color:#1040a0;border:1px solid #6090dd;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">OSM Waterway</span>` +
+    `<span style="background:#e8f4e8;color:#1a5a1a;border:1px solid #60a060;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">${label}</span>`;
+  document.getElementById('det-sev-desc').textContent = label;
+  document.getElementById('det-area').textContent = 'OpenStreetMap';
+  document.getElementById('det-eff-lbl').textContent = 'Waterway Type';
+  document.getElementById('det-exp-lbl').textContent  = 'OSM ID';
+  document.getElementById('det-eff').textContent = label;
+  document.getElementById('det-exp').textContent = p.osmId ?? '–';
+  let desc = `${name} is a ${label.toLowerCase()} mapped in OpenStreetMap.`;
+  if (altName) desc += `\nAlso known as: ${altName}`;
+  if (p.wikipedia) desc += `\nWikipedia: ${p.wikipedia}`;
+  desc += '\n\nSource: OpenStreetMap contributors (overpass-api.de)';
+  document.getElementById('det-desc').textContent = desc;
   document.getElementById('detail').style.display = 'block';
 }
 
