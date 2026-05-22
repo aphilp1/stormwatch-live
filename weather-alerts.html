@@ -1019,6 +1019,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff7700;border-color:#cc4400"></div>400–600 High</div>
             <div class="usgs-key-row"><div class="usgs-dot" style="background:#cc0000;border-color:#880000"></div>600+ Extreme</div>
             <div class="usgs-key-row"><div class="usgs-dot" style="background:#dd00dd;border-color:#880088;width:9px;height:9px"></div>Fire ignition (LCC)</div>
+            <div style="font-size:9px;color:#556677;font-style:italic;margin-top:6px">Sample Data Provided by Fire Neural Network&#8482;</div>
           </div>
 
         </div>
@@ -3108,7 +3109,7 @@ function showDryLtgCard(p) {
 
   let html = '<div class="wc-body">';
   rows.forEach(([k, v]) => { html += `<div class="wc-row"><span class="wc-k">${k}</span><span class="wc-v">${v}</span></div>`; });
-  html += '<div class="wc-src">Dry lightning fire detection · May 11–12 2026</div>';
+  html += '<div class="wc-src">Sample Data Provided by Fire Neural Network&#8482; · May 11–12 2026</div>';
   html += '</div>';
 
   const custom = document.getElementById('det-custom');
