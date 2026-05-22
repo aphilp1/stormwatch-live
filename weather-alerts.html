@@ -1005,6 +1005,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
 
         <div class="layer-group">
+          <div class="layer-group-title">Experimental</div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-dry-ltg" onchange="toggleLayer('dry-ltg',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Dry Lightning Strikes</span>
+            <span class="layer-note" id="dry-ltg-note">off</span>
+          </div>
+          <div class="usgs-key" id="dry-ltg-key" style="display:none">
+            <div class="usgs-key-hdr">KBDI Drought · May 11–12 2026 · FL</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#98d600;border-color:#66a200"></div>0–200 Low</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ffd700;border-color:#aa9000"></div>200–400 Moderate</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff7700;border-color:#cc4400"></div>400–600 High</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#cc0000;border-color:#880000"></div>600+ Extreme</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#dd00dd;border-color:#880088;width:9px;height:9px"></div>Fire ignition (LCC)</div>
+          </div>
+
+        </div>
+
+        <div class="layer-group">
           <div class="layer-group-title">Base Map</div>
           <div class="layer-row">
             <label class="toggle"><input type="radio" name="base" value="light" checked onchange="setBase('light')"><span class="toggle-slider"></span></label>
@@ -1865,6 +1884,7 @@ let fwxD1Group = null, fwxD1Enabled = false;
 let fwxD2Group = null, fwxD2Enabled = false;
 let rawsGroup = null, rawsEnabled = false, rawsLoaded = false;
 let kbdiLayer = null, kbdiEnabled = false, kbdiOpacity = 0.75;
+let dryLtgGroup = null, dryLtgEnabled = false, dryLtgLoaded = false;
 let windninjaGroup = L.layerGroup(), windninjaEnabled = false;
 let redFlagGroup = null, redFlagEnabled = false;
 let fwxWatchGroup = null, fwxWatchEnabled = false;
@@ -1933,6 +1953,7 @@ function initMap() {
   metarGroup       = L.layerGroup();
   mtGroup          = L.layerGroup();
   nhdGroup         = L.layerGroup();
+  dryLtgGroup      = L.layerGroup();
 
   // NHD stream lines — above alert polygons (overlayPane z:400) so they stay clickable
   // even when an alert polygon covers the same area and calls bringToFront().
@@ -2990,6 +3011,16 @@ async function toggleLayer(name, on) {
       nhdGroup.clearLayers();
       document.getElementById('nhd-note').textContent = 'off';
     }
+  } else if (name === 'dry-ltg') {
+    dryLtgEnabled = on;
+    document.getElementById('dry-ltg-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      dryLtgGroup.addTo(map);
+      if (!dryLtgLoaded) loadDryLtg();
+    } else {
+      dryLtgGroup.remove();
+      document.getElementById('dry-ltg-note').textContent = 'off';
+    }
   }
 }
 
@@ -2997,6 +3028,93 @@ function setNhdOpacity(v) {
   nhdOpacity = v / 100;
   document.getElementById('nhd-opacity-val').textContent = v + '%';
   nhdGroup.eachLayer(l => { if (l.setStyle) l.setStyle({ opacity: nhdOpacity }); });
+}
+
+function _dryLtgStyle(kbdi) {
+  if (kbdi >= 600) return { fill: '#cc0000', stroke: '#880000' };
+  if (kbdi >= 400) return { fill: '#ff7700', stroke: '#cc4400' };
+  if (kbdi >= 200) return { fill: '#ffd700', stroke: '#aa9000' };
+  return { fill: '#98d600', stroke: '#66a200' };
+}
+
+async function loadDryLtg() {
+  document.getElementById('dry-ltg-note').textContent = 'loading…';
+  try {
+    const res = await fetch('data/day_fl_det.geojson');
+    if (!res.ok) throw new Error(`${res.status}`);
+    const data = await res.json();
+    dryLtgGroup.clearLayers();
+    const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
+    (data.features || []).forEach(f => {
+      const p = f.properties;
+      const [lon, lat] = f.geometry.coordinates;
+      const isLcc = p.lcc != null;
+      const c = isLcc ? { fill: '#dd00dd', stroke: '#880088' } : _dryLtgStyle(p.kbdi ?? 0);
+      const marker = L.circleMarker([lat, lon], {
+        pane: 'markerLayerPane', renderer: canvas,
+        radius: isLcc ? 6 : 3,
+        fillColor: c.fill, color: c.stroke,
+        weight: isLcc ? 2 : 1, fillOpacity: 0.85, opacity: 1,
+      });
+      const tip = `${p.dttime_utc ?? '–'} UTC · KBDI ${p.kbdi ?? '–'} · ${p.hrl?.toFixed(1) ?? '–'}h dry${isLcc ? ' · ⚑ Fire ignition' : ''}`;
+      marker.bindTooltip(tip, { sticky: true, direction: 'top' });
+      marker.on('click', ev => {
+        L.DomEvent.stopPropagation(ev);
+        if (nowcastMode && nowcastInputMode === 'point') { runNowcast(ev.latlng.lat, ev.latlng.lng); return; }
+        if (fireMode  && fireInputMode  === 'point') { runFireAgent(ev.latlng.lat, ev.latlng.lng); return; }
+        if (floodMode && floodInputMode === 'point') { runFloodAgent(ev.latlng.lat, ev.latlng.lng); return; }
+        showDryLtgCard(p);
+      });
+      marker.addTo(dryLtgGroup);
+    });
+    document.getElementById('dry-ltg-note').textContent = `${(data.features?.length ?? 0).toLocaleString()} strikes`;
+    dryLtgLoaded = true;
+  } catch(e) {
+    document.getElementById('dry-ltg-note').textContent = 'error — HTTP server required';
+    console.error('loadDryLtg:', e);
+  }
+}
+
+function showDryLtgCard(p) {
+  ensureDetStandard();
+  document.getElementById('det-event').textContent = (p.dttime_utc ?? '–') + ' UTC';
+  document.getElementById('det-event').style.color = p.lcc != null ? '#dd4400' : '#bb7700';
+
+  const polAbs = Math.abs(p.polarity ?? 0).toLocaleString();
+  const polSign = (p.polarity ?? 0) >= 0 ? '+' : '−';
+  let chips = `<span style="background:#12182a;color:#99a;border:1px solid #334;border-radius:5px;padding:3px 9px;font-size:10px;font-weight:700">${polSign}${polAbs} A</span>`;
+  if ((p.polarity ?? 0) > 0) chips += `<span style="background:#fffbe8;color:#8a6200;border:1px solid #c8a000;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">Positive CG</span>`;
+  else chips += `<span style="background:#e8f0ff;color:#204080;border:1px solid #4060c0;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">Negative CG</span>`;
+  if (p.lcc != null) chips += `<span style="background:#ffe8ff;color:#880088;border:1px solid #cc00cc;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">⚑ Fire Ignition</span>`;
+  document.getElementById('det-chips').innerHTML = chips;
+  document.getElementById('det-sev-desc').textContent = '';
+
+  ['det-area-row','det-dates-row','det-hl-wrap','det-instr-wrap','det-zoom','det-desc-row']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+
+  const kbdi = p.kbdi ?? 0;
+  const kbdiLabel = kbdi >= 600 ? 'Extreme' : kbdi >= 400 ? 'High' : kbdi >= 200 ? 'Moderate' : 'Low';
+  const kbdiColor = kbdi >= 600 ? '#cc0000' : kbdi >= 400 ? '#dd6600' : kbdi >= 200 ? '#aa8800' : '#448800';
+
+  const rows = [
+    ['KBDI', `<span style="color:${kbdiColor};font-weight:700">${kbdi}</span>&ensp;<span style="font-size:10px;color:#778">${kbdiLabel} drought</span>`],
+    ['Energy Release (ERC)', p.erc != null ? p.erc.toFixed(1) : '–'],
+    ['Hours Since Rain', p.hrl != null ? p.hrl.toFixed(1) + ' hrs' : '–'],
+    ['24h Precip', p.precip24h != null && p.precip24h >= 0 ? p.precip24h.toFixed(3) + ' in' : '–'],
+    ['RH Range', p.relh_min != null ? `${Math.round(p.relh_min)}% – ${Math.round(p.relh_max)}%` : '–'],
+    ['Location', `${p.ltg_lat?.toFixed(4)}°N, ${Math.abs(p.ltg_lon ?? 0).toFixed(4)}°W`],
+  ];
+  if (p.lcc != null) rows.push(['LCC Score', p.lcc.toFixed(3)]);
+
+  let html = '<div class="wc-body">';
+  rows.forEach(([k, v]) => { html += `<div class="wc-row"><span class="wc-k">${k}</span><span class="wc-v">${v}</span></div>`; });
+  html += '<div class="wc-src">Dry lightning fire detection · May 11–12 2026</div>';
+  html += '</div>';
+
+  const custom = document.getElementById('det-custom');
+  custom.style.display = 'block';
+  custom.innerHTML = html;
+  document.getElementById('detail').style.display = 'flex';
 }
 
 async function loadNHDStreams() {
