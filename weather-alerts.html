@@ -1021,6 +1021,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <div class="usgs-key-row"><div class="usgs-dot" style="background:#dd00dd;border-color:#880088;width:9px;height:9px"></div>Fire ignition (LCC)</div>
             <div style="font-size:9px;color:#556677;font-style:italic;margin-top:6px">Sample Data Provided by Fire Neural Network&#8482;</div>
           </div>
+          <div id="dry-ltg-hindcast-panel" style="display:none;padding-left:44px;margin-top:2px;margin-bottom:4px">
+            <button class="wn-run-btn" id="dry-ltg-hindcast-btn" onclick="runDryLtgHindcast()">Run Hindcast</button>
+            <button class="wn-run-btn" id="dry-ltg-hindcast-clear" onclick="clearDryLtgHindcast()" style="display:none;margin-left:4px;background:#2a1010">Clear</button>
+            <div id="dry-ltg-hindcast-note" style="font-size:9px;color:#667788;margin-top:3px"></div>
+          </div>
 
         </div>
 
@@ -1886,6 +1891,7 @@ let fwxD2Group = null, fwxD2Enabled = false;
 let rawsGroup = null, rawsEnabled = false, rawsLoaded = false;
 let kbdiLayer = null, kbdiEnabled = false, kbdiOpacity = 0.75;
 let dryLtgGroup = null, dryLtgEnabled = false, dryLtgLoaded = false;
+let hindcastGroup = null;
 let windninjaGroup = L.layerGroup(), windninjaEnabled = false;
 let redFlagGroup = null, redFlagEnabled = false;
 let fwxWatchGroup = null, fwxWatchEnabled = false;
@@ -1955,6 +1961,7 @@ function initMap() {
   mtGroup          = L.layerGroup();
   nhdGroup         = L.layerGroup();
   dryLtgGroup      = L.layerGroup();
+  hindcastGroup    = L.layerGroup();
 
   // NHD stream lines — above alert polygons (overlayPane z:400) so they stay clickable
   // even when an alert polygon covers the same area and calls bringToFront().
@@ -3015,11 +3022,13 @@ async function toggleLayer(name, on) {
   } else if (name === 'dry-ltg') {
     dryLtgEnabled = on;
     document.getElementById('dry-ltg-key').style.display = on ? 'block' : 'none';
+    document.getElementById('dry-ltg-hindcast-panel').style.display = on ? 'block' : 'none';
     if (on) {
       dryLtgGroup.addTo(map);
       if (!dryLtgLoaded) loadDryLtg();
     } else {
       dryLtgGroup.remove();
+      clearDryLtgHindcast();
       document.getElementById('dry-ltg-note').textContent = 'off';
     }
   }
@@ -3116,6 +3125,113 @@ function showDryLtgCard(p) {
   custom.style.display = 'block';
   custom.innerHTML = html;
   document.getElementById('detail').style.display = 'flex';
+}
+
+function clearDryLtgHindcast() {
+  if (hindcastGroup) { hindcastGroup.clearLayers(); hindcastGroup.remove(); }
+  document.getElementById('dry-ltg-hindcast-note').textContent = '';
+  document.getElementById('dry-ltg-hindcast-btn').disabled = false;
+  document.getElementById('dry-ltg-hindcast-clear').style.display = 'none';
+}
+
+async function runDryLtgHindcast() {
+  const btn  = document.getElementById('dry-ltg-hindcast-btn');
+  const note = document.getElementById('dry-ltg-hindcast-note');
+  const clr  = document.getElementById('dry-ltg-hindcast-clear');
+  btn.disabled = true;
+  note.textContent = 'querying NIFC…';
+  clearDryLtgHindcast();
+  btn.disabled = true;
+
+  // FNN data bbox (FL + panhandle)
+  const bbox = '-87.65,24.4,-80.0,31.1';
+  const perimUrl =
+    'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/' +
+    'WFIGS_Interagency_Perimeters_YearToDate/FeatureServer/0/query' +
+    `?where=1%3D1&geometry=${bbox}&geometryType=esriGeometryEnvelope` +
+    '&inSR=4326&spatialRel=esriSpatialRelIntersects' +
+    '&outFields=poly_IncidentName,poly_GISAcres,attr_FireDiscoveryDateTime,' +
+    'attr_FireCauseGeneral,attr_POOState,attr_PercentContained,' +
+    'attr_InitialLatitude,attr_InitialLongitude' +
+    '&returnGeometry=true&f=geojson&resultRecordCount=500';
+
+  let perims = [];
+  try {
+    const res = await fetch(perimUrl);
+    const data = await res.json();
+    perims = data.features || [];
+  } catch(e) { console.warn('hindcast perims:', e); }
+
+  if (perims.length === 0) {
+    note.textContent = 'No NIFC records found for this area.';
+    btn.disabled = false;
+    return;
+  }
+
+  hindcastGroup.addTo(map);
+
+  perims.forEach(f => {
+    const p = f.properties;
+    const name  = p.poly_IncidentName || 'Fire';
+    const acres = p.poly_GISAcres != null ? Math.round(p.poly_GISAcres).toLocaleString() + ' ac' : '–';
+    const pct   = p.attr_PercentContained != null ? p.attr_PercentContained + '% contained' : '';
+    const cause = p.attr_FireCauseGeneral || '–';
+    let dtStr = '–';
+    if (p.attr_FireDiscoveryDateTime) {
+      const d = new Date(p.attr_FireDiscoveryDateTime);
+      dtStr = d.toISOString().slice(0, 10);
+    }
+
+    const poly = L.geoJSON(f, {
+      pane: 'nhdPane',
+      style: { color: '#ff4400', weight: 2, fillColor: '#ff8800', fillOpacity: 0.18, dashArray: '4 3' },
+    });
+    poly.bindTooltip(`${name} · ${acres} · ${dtStr}`, { sticky: true, direction: 'top' });
+    poly.on('click', ev => {
+      L.DomEvent.stopPropagation(ev);
+      if (nowcastMode && nowcastInputMode === 'point') { runNowcast(ev.latlng.lat, ev.latlng.lng); return; }
+      if (fireMode  && fireInputMode  === 'point') { runFireAgent(ev.latlng.lat, ev.latlng.lng); return; }
+      if (floodMode && floodInputMode === 'point') { runFloodAgent(ev.latlng.lat, ev.latlng.lng); return; }
+      ensureDetStandard();
+      document.getElementById('det-event').textContent = name;
+      document.getElementById('det-event').style.color = '#ff4400';
+      document.getElementById('det-chips').innerHTML =
+        `<span style="background:#fff0e0;color:#cc4400;border:1px solid #ff6600;border-radius:5px;padding:3px 9px;font-size:10px;font-weight:700">NIFC Fire Perimeter</span>`;
+      document.getElementById('det-sev-desc').textContent = '';
+      ['det-area-row','det-dates-row','det-hl-wrap','det-instr-wrap','det-zoom','det-desc-row']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+      const rows = [
+        ['Discovered', dtStr],
+        ['Area', acres],
+        ['Cause', cause],
+        ['Contained', pct || '–'],
+        ['State', p.attr_POOState || '–'],
+      ];
+      let html = '<div class="wc-body">';
+      rows.forEach(([k,v]) => { html += `<div class="wc-row"><span class="wc-k">${k}</span><span class="wc-v">${v}</span></div>`; });
+      html += '<div class="wc-src">NIFC WFIGS · 2026 YTD fire perimeters</div></div>';
+      const c = document.getElementById('det-custom');
+      c.style.display = 'block';
+      c.innerHTML = html;
+      document.getElementById('detail').style.display = 'flex';
+    });
+    poly.addTo(hindcastGroup);
+
+    // Plot ignition point if coordinates exist
+    if (p.attr_InitialLatitude && p.attr_InitialLongitude) {
+      L.circleMarker([p.attr_InitialLatitude, p.attr_InitialLongitude], {
+        pane: 'markerLayerPane',
+        radius: 5, fillColor: '#ff4400', color: '#881100',
+        weight: 2, fillOpacity: 0.95, opacity: 1,
+      }).bindTooltip(`⊙ ${name} ignition · ${dtStr}`, { sticky: true, direction: 'top' })
+        .addTo(hindcastGroup);
+    }
+  });
+
+  const lightning = perims.filter(f => (f.properties.attr_FireCauseGeneral || '').toLowerCase().includes('lightning'));
+  note.textContent = `${perims.length} fires · ${lightning.length} lightning-caused · 2026 YTD (latest: May 4)`;
+  clr.style.display = 'inline-block';
+  btn.disabled = false;
 }
 
 async function loadNHDStreams() {
