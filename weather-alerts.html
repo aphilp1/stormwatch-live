@@ -96,6 +96,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .opacity-row{display:flex;align-items:center;gap:8px;padding-left:44px;margin-top:-4px;margin-bottom:8px}
 .opacity-row input[type=range]{flex:1;accent-color:#4488ff}
 .fema-tiles{filter:saturate(6) contrast(1.4)}
+.naqfc-tiles{filter:saturate(5) contrast(1.8) brightness(1.05)}
 #zoom-badge{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(15,15,30,0.78);border:1px solid var(--border);border-radius:20px;padding:4px 14px;z-index:700;backdrop-filter:blur(8px);display:flex;align-items:baseline;gap:5px;pointer-events:none;user-select:none}
 #zoom-badge .zb-label{font-size:8px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.5);font-weight:700}
 #zoom-badge .zb-val{font-size:15px;font-weight:700;color:#e8ecf6;line-height:1}
@@ -264,7 +265,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #fema-legend{left:981px}
 
 /* ── USGS GAUGE CARD ────────────────────────────────────────────── */
-#ugc{position:absolute;bottom:36px;left:300px;background:rgba(20,20,40,0.93);border:1px solid var(--border);border-radius:8px;padding:12px 14px;z-index:750;width:264px;backdrop-filter:blur(6px);display:none}
+#ugc{position:absolute;top:55px;left:300px;background:rgba(20,20,40,0.93);border:1px solid var(--border);border-radius:8px;padding:12px 14px;z-index:750;width:264px;max-height:calc(100% - 65px);overflow-y:auto;backdrop-filter:blur(6px);display:none;scrollbar-width:thin;scrollbar-color:#3a4060 transparent}
+#ugc::-webkit-scrollbar{width:7px}
+#ugc::-webkit-scrollbar-track{background:transparent}
+#ugc::-webkit-scrollbar-thumb{background:#3a4060;border-radius:4px}
+#ugc::-webkit-scrollbar-thumb:hover{background:#5a6090}
 #ugc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px}
 #ugc-name{font-size:12px;font-weight:700;color:#e8ecf6;line-height:1.35;padding-right:6px}
 #ugc-close{background:none;border:none;color:#8892a4;cursor:pointer;font-size:18px;padding:0;line-height:1;flex-shrink:0}
@@ -874,6 +879,72 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
               <button class="viirs-day-btn" data-days="0" onclick="setViirsDate(0)">Today</button>
               <button class="viirs-day-btn" data-days="2" onclick="setViirsDate(2)">2d Ago</button>
             </div>
+          </div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-hms-smoke" onchange="toggleLayer('hms-smoke',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">HMS Smoke Plumes</span>
+            <span class="layer-note" id="hms-note">off</span>
+          </div>
+          <div class="opacity-row" id="hms-opacity-row" style="display:none">
+            <input type="range" min="10" max="100" value="80" oninput="setHmsOpacity(this.value)">
+            <span id="hms-opacity-val">80%</span>
+          </div>
+          <div class="usgs-key" id="hms-key" style="display:none">
+            <div class="usgs-key-hdr">NOAA/NESDIS HMS · GOES Satellite · Daily</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ffee88;border-color:#aaaa00"></div>Light Smoke</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff8800;border-color:#cc4400"></div>Medium Smoke</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#cc2200;border-color:#880000"></div>Heavy Smoke</div>
+          </div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-naqfc-smoke" onchange="toggleLayer('naqfc-smoke',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Smoke Forecast (NAQFC)</span>
+            <span class="layer-note" id="naqfc-note">off</span>
+          </div>
+          <div class="opacity-row" id="naqfc-opacity-row" style="display:none">
+            <input type="range" min="10" max="100" value="70" oninput="setNaqfcOpacity(this.value)">
+            <span id="naqfc-opacity-val">70%</span>
+          </div>
+          <div id="naqfc-time-row" style="display:none;padding-left:44px;margin-top:-4px;margin-bottom:6px">
+            <div class="usgs-key-hdr" style="margin-bottom:5px">Forecast Hour</div>
+            <div style="display:flex;gap:3px">
+              <button class="viirs-day-btn active" data-hours="0" onclick="setNaqfcTime(0)">Now</button>
+              <button class="viirs-day-btn" data-hours="6" onclick="setNaqfcTime(6)">+6h</button>
+              <button class="viirs-day-btn" data-hours="12" onclick="setNaqfcTime(12)">+12h</button>
+              <button class="viirs-day-btn" data-hours="24" onclick="setNaqfcTime(24)">+24h</button>
+              <button class="viirs-day-btn" data-hours="48" onclick="setNaqfcTime(48)">+48h</button>
+            </div>
+          </div>
+          <div class="usgs-key" id="naqfc-key" style="display:none">
+            <div class="usgs-key-hdr">NOAA NAQFC · Surface PM2.5 · 48-hr forecast · Updated 6Z &amp; 12Z</div>
+            <div style="display:flex;height:11px;border-radius:3px;overflow:hidden;margin:6px 0 3px;border:1px solid rgba(0,0,0,0.12)">
+              <div style="flex:1;background:#00e400"></div>
+              <div style="flex:2;background:#ffff00"></div>
+              <div style="flex:2;background:#ff7e00"></div>
+              <div style="flex:1;background:#ff0000"></div>
+              <div style="flex:1;background:#8f3f97"></div>
+              <div style="flex:1;background:#7e0023"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--text3);margin-bottom:3px">
+              <span>0</span><span>12</span><span>35</span><span>55</span><span>150</span><span>250+</span>
+            </div>
+            <div style="font-size:9px;color:var(--text3)">PM2.5 µg/m³ · AQI color scale</div>
+          </div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-airnow" onchange="toggleLayer('airnow',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">AirNow PM2.5 Stations</span>
+            <span class="layer-note" id="airnow-note">off</span>
+          </div>
+          <div class="usgs-key" id="airnow-key" style="display:none">
+            <div class="usgs-key-hdr">EPA AirNow · Current PM2.5 AQI · Reporting Areas</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#00e400;border-color:#009900"></div>Good (0–50)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ffff00;border-color:#aaaa00"></div>Moderate (51–100)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff7e00;border-color:#cc5500"></div>Unhealthy – Sensitive (101–150)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff0000;border-color:#cc0000"></div>Unhealthy (151–200)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#8f3f97;border-color:#660077"></div>Very Unhealthy (201–300)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#7e0023;border-color:#550011"></div>Hazardous (301+)</div>
           </div>
 
           <div class="layer-row">
@@ -1773,6 +1844,19 @@ const FWX_DN = {
   10: { label:'Extreme',         c:'#990066', f:'#E600A9', fo:0.38, w:2.5 },
 };
 const FWX_DT = { label:'Dry Thunderstorm', c:'#4433aa', f:'#7766ee', fo:0.15, w:1.5 };
+const AIRNOW_CAT = {
+  'Good':                           { fill:'#00e400', stroke:'#009900', label:'Good',               aqi:'0–50'    },
+  'Moderate':                       { fill:'#ffff00', stroke:'#aaaa00', label:'Moderate',            aqi:'51–100'  },
+  'Unhealthy for Sensitive Groups': { fill:'#ff7e00', stroke:'#cc5500', label:'Unhealthy (Sensitive)',aqi:'101–150' },
+  'Unhealthy':                      { fill:'#ff0000', stroke:'#cc0000', label:'Unhealthy',           aqi:'151–200' },
+  'Very Unhealthy':                 { fill:'#8f3f97', stroke:'#660077', label:'Very Unhealthy',      aqi:'201–300' },
+  'Hazardous':                      { fill:'#7e0023', stroke:'#550011', label:'Hazardous',           aqi:'301+'    },
+};
+const HMS_STYLE = {
+  5:  { label:'Light',  fillColor:'#ffee88', color:'#aaaa00', baseFill:0.28, weight:1   },
+  16: { label:'Medium', fillColor:'#ff8800', color:'#cc4400', baseFill:0.40, weight:1.5 },
+  27: { label:'Heavy',  fillColor:'#cc2200', color:'#880000', baseFill:0.55, weight:2   },
+};
 
 // SPC outlook colors
 const SPC_STYLES = {
@@ -1886,6 +1970,9 @@ let fwxD2Group = null, fwxD2Enabled = false;
 let rawsGroup = null, rawsEnabled = false, rawsLoaded = false;
 let kbdiLayer = null, kbdiEnabled = false, kbdiOpacity = 0.75;
 let dryLtgGroup = null, dryLtgEnabled = false, dryLtgLoaded = false;
+let hmsGroup = null, hmsEnabled = false, hmsOpacity = 0.80;
+let airnowGroup = null, airnowEnabled = false, airnowLoaded = false;
+let naqfcLayer = null, naqfcEnabled = false, naqfcOpacity = 0.70, naqfcForecastHours = 0;
 let windninjaGroup = L.layerGroup(), windninjaEnabled = false;
 let redFlagGroup = null, redFlagEnabled = false;
 let fwxWatchGroup = null, fwxWatchEnabled = false;
@@ -1943,6 +2030,8 @@ function initMap() {
   rawsGroup    = L.layerGroup();           // RAWS weather stations
   redFlagGroup = L.layerGroup();           // Red Flag Warnings (from NWS alerts)
   fwxWatchGroup = L.layerGroup();          // Fire Weather Watches (from NWS alerts)
+  hmsGroup      = L.layerGroup();          // NOAA HMS smoke plumes
+  airnowGroup   = L.layerGroup();          // EPA AirNow PM2.5 stations
   torWarnGroup     = L.layerGroup();
   torWatchGroup    = L.layerGroup();
   svrTstmGroup     = L.layerGroup();
@@ -1970,7 +2059,7 @@ function initMap() {
     if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
     if (fireMode  && fireInputMode  === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
     if (floodMode && floodInputMode === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
-    if (!nowcastMode && !fireMode && !floodMode) { closeDetail(); onModMapClick(e); }
+    if (!nowcastMode && !fireMode && !floodMode) { onModMapClick(e); }
   });
   map.on('mousedown', ncOnMouseDown);
   map.on('mousemove', ncOnMouseMove);
@@ -2905,6 +2994,38 @@ async function toggleLayer(name, on) {
       if (smokeLayer) { smokeLayer.remove(); smokeLayer = null; }
       document.getElementById('smoke-note').textContent = 'off';
     }
+  } else if (name === 'hms-smoke') {
+    hmsEnabled = on;
+    document.getElementById('hms-opacity-row').style.display = on ? 'flex' : 'none';
+    document.getElementById('hms-key').style.display = on ? 'block' : 'none';
+    if (on) { hmsGroup.addTo(map); loadHMSSmoke(); }
+    else { hmsGroup.clearLayers(); hmsGroup.remove(); document.getElementById('hms-note').textContent = 'off'; }
+  } else if (name === 'naqfc-smoke') {
+    naqfcEnabled = on;
+    document.getElementById('naqfc-opacity-row').style.display = on ? 'flex' : 'none';
+    document.getElementById('naqfc-time-row').style.display = on ? 'block' : 'none';
+    document.getElementById('naqfc-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      naqfcForecastHours = 0;
+      document.querySelectorAll('#naqfc-time-row .viirs-day-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.hours === '0'));
+      naqfcLayer = L.tileLayer.wms(
+        'https://mapservices.weather.noaa.gov/raster/services/air_quality/ndgd_smoke_sfc_1hr_avg_time/ImageServer/WMSServer',
+        { layers:'ndgd_smoke_sfc_1hr_avg_time', format:'image/png', transparent:true,
+          version:'1.3.0', TIME:getNaqfcTimeStr(0), className:'naqfc-tiles',
+          opacity:naqfcOpacity, zIndex:152, attribution:'NOAA NAQFC Smoke Forecast' }
+      );
+      naqfcLayer.addTo(map);
+      document.getElementById('naqfc-note').textContent = 'now';
+    } else {
+      if (naqfcLayer) { naqfcLayer.remove(); naqfcLayer = null; }
+      document.getElementById('naqfc-note').textContent = 'off';
+    }
+  } else if (name === 'airnow') {
+    airnowEnabled = on;
+    document.getElementById('airnow-key').style.display = on ? 'block' : 'none';
+    if (on) { airnowGroup.addTo(map); if (!airnowLoaded) loadAirnow(); }
+    else { airnowGroup.remove(); document.getElementById('airnow-note').textContent = 'off'; }
   } else if (name === 'red-flag') {
     redFlagEnabled = on;
     if (on) { redFlagGroup.addTo(map); renderFireAlertLayers(); }
@@ -3329,7 +3450,7 @@ function setBase(name) {
   Object.values(baseLayers).forEach(l=>{ if(l && map.hasLayer(l)) l.remove(); });
   baseLayers[name].addTo(map);
   // Keep overlay groups on top
-  [fwxD2Group,fwxD1Group,spc2Group,spc1Group,firePerimGroup,metarGroup,mtGroup,rawsGroup,usgsFlowGroup,usgsGroup,inundationGroup,fimGroup,fireIncidentsGroup,redFlagGroup,fwxWatchGroup,torWarnGroup,torWatchGroup,svrTstmGroup,flfWarnGroup,winStmGroup,blizzGroup,redFlagAlrtGroup,otherAlvGroup,alertGroup].forEach(g=>{ if(map.hasLayer(g)) g.bringToFront(); });
+  [hmsGroup,fwxD2Group,fwxD1Group,spc2Group,spc1Group,firePerimGroup,metarGroup,mtGroup,rawsGroup,usgsFlowGroup,usgsGroup,inundationGroup,fimGroup,fireIncidentsGroup,airnowGroup,redFlagGroup,fwxWatchGroup,torWarnGroup,torWatchGroup,svrTstmGroup,flfWarnGroup,winStmGroup,blizzGroup,redFlagAlrtGroup,otherAlvGroup,alertGroup].forEach(g=>{ if(map.hasLayer(g)) g.bringToFront(); });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -4367,7 +4488,14 @@ function reflowText(s) {
     .replace(/([^\n])\n([^\n])/g, '$1 $2')
     .trim();
 }
-function fmtDT(d){return d.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
+function fmtDT(d){return d instanceof Date && !isNaN(d) ? d.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';}
+function parseNifcDate(s) {
+  if (!s) return null;
+  // NIFC format: "2026-01-31 18:2600 UTC" — missing colon between MM and SS
+  const m = String(s).match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}):(\d{2})(\d{2})/);
+  const d = m ? new Date(`${m[1]}T${m[2]}:${m[3]}:${m[4]}Z`) : new Date(s);
+  return isNaN(d) ? null : d;
+}
 function fmtExp(d){
   const diff=d-Date.now();
   if(diff<0) return 'expired';
@@ -4532,7 +4660,7 @@ async function showUsgsGaugeCard(p) {
     const thrModerate = parseFloat(cats.moderate?.stage);
     const thrMajor    = parseFloat(cats.major?.stage);
 
-    const fmtThr = v => isNaN(v) ? '–' : `${v.toFixed(1)} ${u}`;
+    const fmtThr = v => (isNaN(v) || v < -900) ? '–' : `${v.toFixed(1)} ${u}`;
     document.getElementById('ugc-thr-action').textContent   = fmtThr(thrAction);
     document.getElementById('ugc-thr-minor').textContent    = fmtThr(thrMinor);
     document.getElementById('ugc-thr-moderate').textContent = fmtThr(thrModerate);
@@ -4546,7 +4674,7 @@ async function showUsgsGaugeCard(p) {
         { v:thrModerate, lbl:'moderate flood stage',  color:STAGE_CFG.moderate.fill },
         { v:thrMinor,    lbl:'minor flood stage',     color:STAGE_CFG.minor.fill },
         { v:thrAction,   lbl:'action stage',          color:STAGE_CFG.action.fill },
-      ].filter(t => !isNaN(t.v));
+      ].filter(t => !isNaN(t.v) && t.v > -900);
       const above = tiers.find(t => obs >= t.v);
       if (above) {
         ctx.textContent = `${(obs - above.v).toFixed(1)} ${u} above ${above.lbl}`;
@@ -5033,20 +5161,26 @@ async function loadFireIncidents() {
       const [lon, lat] = coords;
       if (lat == null || isNaN(lat)) continue;
       const p = feat.properties;
-      const name  = p.IncidentName || p.incident_name || p.Name || 'Unknown Fire';
-      const acres = Math.max(p.DailyAcres || p.IncidentSize || p.GISAcres || p.Acres || 0, 0);
+      const name  = p.Name || p.IncidentName || p.incident_name || 'Unknown Fire';
+      const acres = Math.max(p.DailyAcres || p.CalculatedAcres || p.CALC_GISAcres || p.DiscoveryAcres || 0, 0);
       const pct   = p.PercentContained != null ? p.PercentContained : null;
       const state = p.POOState || p.State || p.state || '';
       const r = Math.min(12, Math.max(5, Math.log10(Math.max(acres, 10)) * 2.5));
       const marker = L.circleMarker([lat, lon], {
-        renderer: canvas, radius: Math.round(r),
+        renderer: canvas, pane: 'markerLayerPane', radius: Math.round(r),
         color: '#aa1100', fillColor: '#ff4400',
         weight: 1.5, opacity: 1, fillOpacity: 0.85,
       });
       const acresStr = acres ? Math.round(acres).toLocaleString() : '?';
       const pctStr   = pct != null ? pct + '%' : '?%';
-      const disco    = p.FireDiscoveryDateTime || p.DiscoveryDateTime || null;
-      const discoStr = disco ? new Date(disco).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : null;
+      const disco    = p.Discovery_Date || p.FireDiscoveryDateTime || p.DiscoveryDateTime || null;
+      const discoStr = (() => {
+        if (!disco) return null;
+        // NIFC format: "2026-01-31 18:2600 UTC" — MMSS without colon between MM and SS
+        const m = String(disco).match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}):(\d{2})(\d{2})/);
+        const d = m ? new Date(`${m[1]}T${m[2]}:${m[3]}:${m[4]}Z`) : new Date(disco);
+        return isNaN(d) ? null : d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+      })();
       marker.bindTooltip(
         `<b>${esc(name)}</b><br>${acresStr} acres · ${pctStr} contained` +
         (state ? `<br>${esc(state)}` : '') +
@@ -5101,13 +5235,13 @@ async function loadFirePerimeters() {
 
 function showFireCard(p, lat, lon) {
   ensureDetStandard();
-  const name     = p.IncidentName || p.incident_name || p.Name || 'Wildfire Incident';
-  const type     = p.IncidentTypeCategory || p.IncidentType || 'Wildfire';
+  const name     = p.Name || p.IncidentName || p.incident_name || 'Wildfire Incident';
+  const type     = p.Incident_Type_Kind || p.IncidentTypeCategory || p.IncidentType || 'Wildfire';
   const state    = p.POOState || p.State || p.state || null;
-  const county   = p.POOCounty || p.County || p.county || null;
-  const acres    = p.DailyAcres || p.IncidentSize || p.GISAcres || p.Acres || null;
+  const county   = p.County || p.POOCounty || p.county || null;
+  const acres    = p.DailyAcres || p.CalculatedAcres || p.CALC_GISAcres || p.DiscoveryAcres || null;
   const pct      = p.PercentContained != null ? p.PercentContained : null;
-  const disco    = p.FireDiscoveryDateTime || p.DiscoveryDateTime || null;
+  const disco    = p.Discovery_Date || p.FireDiscoveryDateTime || p.DiscoveryDateTime || null;
 
   document.getElementById('det-event').textContent = name;
   document.getElementById('det-event').style.color = '#ff4400';
@@ -5124,7 +5258,7 @@ function showFireCard(p, lat, lon) {
   document.getElementById('det-area').textContent = [county, state].filter(Boolean).join(', ') || '—';
   document.getElementById('det-eff-lbl').textContent = 'Discovered';
   document.getElementById('det-exp-lbl').textContent = 'Size';
-  document.getElementById('det-eff').textContent = disco ? fmtDT(new Date(disco)) : '—';
+  document.getElementById('det-eff').textContent = disco ? fmtDT(parseNifcDate(disco)) : '—';
   document.getElementById('det-exp').textContent = acres ? Math.round(acres).toLocaleString() + ' acres' : '—';
   document.getElementById('det-hl').textContent = pct != null ? pct + '% contained' : '—';
   document.getElementById('det-hl-wrap').style.display = 'block';
@@ -5281,11 +5415,15 @@ function renderAlertTypeLayers() {
 // VIIRS FIRE HOTSPOTS (date-selectable)
 // ═══════════════════════════════════════════════════════════════════
 
+function localDateStr(daysBack) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysBack);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 function initViirs() {
   if (smokeLayer) { smokeLayer.remove(); smokeLayer = null; }
-  const d = new Date();
-  d.setDate(d.getDate() - viirsDaysBack);
-  const date = d.toISOString().slice(0, 10);
+  const date = localDateStr(viirsDaysBack);
   smokeLayer = L.tileLayer.wms(
     'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
     { layers:'VIIRS_NOAA20_Thermal_Anomalies_375m_All', format:'image/png',
@@ -5302,6 +5440,220 @@ function setViirsDate(daysBack) {
   document.querySelectorAll('.viirs-day-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.days) === daysBack));
   if (smokeEnabled) initViirs();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// EPA AIRNOW PM2.5 STATIONS
+// ═══════════════════════════════════════════════════════════════════
+
+async function loadAirnow() {
+  const note = document.getElementById('airnow-note');
+  note.textContent = 'loading…';
+  airnowGroup.clearLayers();
+  const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
+  try {
+    const res = await fetch('http://localhost:3456/airnow', { cache:'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const seen = new Set();
+    let count = 0;
+    for (const line of text.split(/\r?\n/)) {
+      const f = line.split('|');
+      if (f.length < 14) continue;
+      if (f[11] !== 'PM2.5') continue;
+      if (f[5] !== 'O') continue;
+      const lat = parseFloat(f[9]), lon = parseFloat(f[10]);
+      if (isNaN(lat) || isNaN(lon) || (lat === 0 && lon === 0)) continue;
+      const key = `${f[9]},${f[10]}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const aqi = parseInt(f[12]);
+      const cat = f[13].trim();
+      const s = AIRNOW_CAT[cat] || { fill:'#aaaaaa', stroke:'#777777', label:cat, aqi:'–' };
+      const props = { city:f[7].trim(), state:f[8].trim(), aqi, cat, s, time:f[2].trim(), tz:f[3].trim() };
+      const marker = L.circleMarker([lat, lon], {
+        radius:5, color:s.stroke, fillColor:s.fill,
+        weight:1.2, opacity:1, fillOpacity:0.85,
+        pane:'markerLayerPane', renderer:canvas,
+      });
+      marker.bindTooltip(
+        `<b>${props.city}, ${props.state}</b><br>PM2.5 AQI: ${aqi} · ${cat}`,
+        { sticky:true }
+      );
+      marker.on('click', () => showAirnowCard(props));
+      marker.addTo(airnowGroup);
+      count++;
+    }
+    note.textContent = `${count} stations`;
+    airnowLoaded = true;
+  } catch(e) {
+    note.textContent = 'unavailable';
+    console.warn('AirNow load error:', e);
+  }
+}
+
+function showAirnowCard(p) {
+  ['det-area-row','det-dates-row','det-hl-wrap','det-instr-wrap','det-zoom','det-desc-row']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  document.getElementById('det-event').textContent = `${p.city}, ${p.state}`;
+  document.getElementById('det-event').style.color = p.s.stroke;
+  document.getElementById('det-chips').innerHTML = '';
+  document.getElementById('det-sev-desc').textContent = 'EPA AirNow · PM2.5 Reporting Area';
+  const custom = document.getElementById('det-custom');
+  custom.style.display = 'block';
+  custom.innerHTML = `
+    <div style="padding:10px 0 4px">
+      ${p.time ? `<div style="font-size:11px;color:#666;margin-bottom:10px">Observed: ${p.time} ${p.tz}</div>` : ''}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:36px;height:36px;border-radius:50%;background:${p.s.fill};border:2px solid ${p.s.stroke};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:${p.aqi>100?'#fff':'#333'}">${p.aqi}</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#222">${p.s.label}</div>
+          <div style="font-size:10px;color:#666">AQI ${p.s.aqi} range</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#555;line-height:1.6">
+        PM2.5 air quality index based on current surface measurements in the ${p.city} reporting area.
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:8px">
+        Source: EPA AirNow · airnow.gov
+      </div>
+    </div>`;
+  document.getElementById('detail').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// NOAA HMS SMOKE PLUMES
+// ═══════════════════════════════════════════════════════════════════
+
+function parseHmsKml(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  const results = [];
+  for (const pm of doc.querySelectorAll('Placemark')) {
+    const desc = pm.querySelector('description')?.textContent || '';
+    const styleUrl = pm.querySelector('styleUrl')?.textContent || '';
+
+    // Density from description text ("Density: 5") or styleUrl (#Smoke_Light_style)
+    let density = null;
+    const densMatch = desc.match(/Density:\s*(\d+)/i);
+    if (densMatch) density = parseInt(densMatch[1]);
+    if (!density) {
+      if (styleUrl.includes('Heavy'))  density = 27;
+      else if (styleUrl.includes('Medium')) density = 16;
+      else density = 5;
+    }
+
+    // Start time from description text
+    let startTime = '';
+    const stMatch = desc.match(/Start Time:\s*(.+)/i);
+    if (stMatch) startTime = stMatch[1].trim();
+
+    const s = HMS_STYLE[density] || HMS_STYLE[5];
+    for (const polyEl of pm.querySelectorAll('Polygon')) {
+      const coordEl = polyEl.querySelector('outerBoundaryIs LinearRing coordinates') ||
+                      polyEl.querySelector('coordinates');
+      if (!coordEl) continue;
+      const coords = coordEl.textContent.trim().split(/\s+/).map(c => {
+        const p = c.split(',');
+        const lng = parseFloat(p[0]), lat = parseFloat(p[1]);
+        return (!isNaN(lat) && !isNaN(lng)) ? [lat, lng] : null;
+      }).filter(Boolean);
+      if (coords.length >= 3) results.push({ density, startTime, s, coords });
+    }
+  }
+  return results;
+}
+
+async function loadHMSSmoke() {
+  const note = document.getElementById('hms-note');
+  note.textContent = 'loading…';
+  hmsGroup.clearLayers();
+  try {
+    const res = await fetch('http://localhost:3456/hms-smoke', { cache:'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const features = parseHmsKml(text);
+    let counts = { 5:0, 16:0, 27:0 };
+    for (const f of features) {
+      const poly = L.polygon(f.coords, {
+        color: f.s.color,
+        fillColor: f.s.fillColor,
+        weight: f.s.weight,
+        opacity: 0.85,
+        fillOpacity: f.s.baseFill * hmsOpacity,
+        hmsDensity: f.density,
+      });
+      poly.bindTooltip(
+        `<b>HMS Smoke · ${f.s.label}</b>${f.startTime ? '<br>'+f.startTime+' UTC' : ''}`,
+        { sticky: true, className: 'leaflet-tooltip' }
+      );
+      poly.on('click', () => showHmsCard(f));
+      poly.addTo(hmsGroup);
+      counts[f.density] = (counts[f.density] || 0) + 1;
+    }
+    const total = features.length;
+    note.textContent = total ? `${total} plumes` : 'none today';
+  } catch(e) {
+    note.textContent = 'unavailable';
+    console.warn('HMS Smoke load error:', e);
+  }
+}
+
+function setHmsOpacity(val) {
+  hmsOpacity = val / 100;
+  document.getElementById('hms-opacity-val').textContent = val + '%';
+  hmsGroup.getLayers().forEach(l => {
+    const s = HMS_STYLE[l.options.hmsDensity] || HMS_STYLE[5];
+    l.setStyle({ fillOpacity: s.baseFill * hmsOpacity });
+  });
+}
+
+function setNaqfcOpacity(val) {
+  naqfcOpacity = val / 100;
+  document.getElementById('naqfc-opacity-val').textContent = val + '%';
+  if (naqfcLayer) naqfcLayer.setOpacity(naqfcOpacity);
+}
+
+function getNaqfcTimeStr(offsetHours) {
+  const t = new Date();
+  t.setHours(t.getUTCHours() + offsetHours);
+  t.setMinutes(0, 0, 0);
+  return t.toISOString().slice(0, 19) + 'Z';
+}
+
+function setNaqfcTime(hours) {
+  naqfcForecastHours = hours;
+  document.querySelectorAll('#naqfc-time-row .viirs-day-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.hours) === hours));
+  const label = hours === 0 ? 'now' : `+${hours}h`;
+  document.getElementById('naqfc-note').textContent = label;
+  if (naqfcLayer) naqfcLayer.setParams({ TIME: getNaqfcTimeStr(hours) });
+}
+
+function showHmsCard(f) {
+  ['det-area-row','det-dates-row','det-hl-wrap','det-instr-wrap','det-zoom','det-desc-row']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  document.getElementById('det-event').textContent = `HMS Smoke · ${f.s.label}`;
+  document.getElementById('det-event').style.color = f.s.color;
+  document.getElementById('det-chips').innerHTML = '';
+  document.getElementById('det-sev-desc').textContent = 'NOAA/NESDIS Hazard Mapping System';
+  const custom = document.getElementById('det-custom');
+  custom.style.display = 'block';
+  custom.innerHTML = `
+    <div style="padding:10px 0 4px">
+      ${f.startTime ? `<div style="font-size:11px;color:#666;margin-bottom:10px">Detected: ${f.startTime} UTC</div>` : ''}
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:18px;height:18px;border-radius:4px;background:${f.s.fillColor};border:2px solid ${f.s.color};flex-shrink:0"></div>
+        <span style="font-size:13px;font-weight:700;color:#222">${f.s.label} Smoke Plume</span>
+      </div>
+      <div style="font-size:11px;color:#555;line-height:1.6">
+        Satellite-detected smoke plume from the NOAA/NESDIS Hazard Mapping System (HMS),
+        using GOES-East and GOES-West imagery analyzed by trained meteorologists.
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:8px">
+        Source: NOAA Office of Satellite and Product Operations · Updated daily
+      </div>
+    </div>`;
+  document.getElementById('detail').style.display = 'flex';
 }
 
 // ═══════════════════════════════════════════════════════════════════

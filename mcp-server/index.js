@@ -3007,6 +3007,36 @@ createServer(async (req, res) => {
     return;
   }
 
+  if (url.pathname === "/airnow") {
+    try {
+      const r = await fetch("https://files.airnowtech.org/airnow/today/reportingarea.dat");
+      if (!r.ok) { res.writeHead(r.status); res.end(`AirNow fetch failed: ${r.status}`); return; }
+      const text = await r.text();
+      res.setHeader("Content-Type", "text/plain");
+      res.end(text);
+    } catch (err) {
+      process.stderr.write(`[stormwatch] /airnow error: ${err.message}\n`);
+      res.writeHead(502); res.end(`Proxy error: ${err.message}`);
+    }
+    return;
+  }
+
+  if (url.pathname === "/hms-smoke") {
+    try {
+      const r = await fetch("https://www.ospo.noaa.gov/data/land/fire/smoke.kml", {
+        headers: { "User-Agent": "StormWatch/1.0 (weather mapping app)" }
+      });
+      if (!r.ok) { res.writeHead(r.status); res.end(`KML fetch failed: ${r.status}`); return; }
+      const kml = await r.text();
+      res.setHeader("Content-Type", "application/xml");
+      res.end(kml);
+    } catch (err) {
+      process.stderr.write(`[stormwatch] /hms-smoke error: ${err.message}\n`);
+      res.writeHead(502); res.end(`Proxy error: ${err.message}`);
+    }
+    return;
+  }
+
   res.writeHead(404);
   res.end(JSON.stringify({ error: "Not found" }));
 }).on('error', (err) => {
