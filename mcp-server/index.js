@@ -2444,14 +2444,25 @@ server.tool(
     let pm;
     while ((pm = pmRe.exec(kmlText)) !== null) {
       const block = pm[1];
-      const densMatch = block.match(/Density:\s*(\d+)/i);
-      const timeMatch = block.match(/Start Time:\s*([^\n<]+)/i);
+      const densTextMatch = block.match(/Density:\s*(Light|Medium|Heavy)/i);
+      const styleMatch    = block.match(/#Smoke_(Light|Medium|Heavy)_style/i);
+      const densRaw = densTextMatch?.[1] || styleMatch?.[1] || null;
       const coordMatch = block.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
-      if (!densMatch || !coordMatch) continue;
+      if (!densRaw || !coordMatch) continue;
 
-      const density = parseInt(densMatch[1]);
-      const label = density >= 27 ? "Heavy" : density >= 16 ? "Medium" : "Light";
-      const startTime = timeMatch ? timeMatch[1].trim() : null;
+      const label   = densRaw.charAt(0).toUpperCase() + densRaw.slice(1).toLowerCase();
+      const density = label === "Heavy" ? 27 : label === "Medium" ? 16 : 5;
+      const timeMatch = block.match(/Start Time:\s*([^\n<]+)/i);
+      const rawTime = timeMatch ? timeMatch[1].trim() : null;
+      // Convert Julian-day format "2026147 1200UTC" → "May 27, 2026 12:00 UTC"
+      const startTime = (() => {
+        if (!rawTime) return null;
+        const jm = rawTime.match(/^(\d{4})(\d{3})\s+(\d{2})(\d{2})UTC$/i);
+        if (!jm) return rawTime;
+        const d = new Date(Date.UTC(parseInt(jm[1]), 0, parseInt(jm[2])));
+        return d.toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric", timeZone:"UTC" })
+          + ` ${jm[3]}:${jm[4]} UTC`;
+      })();
 
       // Parse coordinate pairs to build bounding box
       const coordStr = coordMatch[1].trim();
@@ -2614,11 +2625,13 @@ server.tool(
       let pm;
       while ((pm = pmRe.exec(kmlText)) !== null) {
         const block = pm[1];
-        const densMatch = block.match(/Density:\s*(\d+)/i);
+        const densTextMatch = block.match(/Density:\s*(Light|Medium|Heavy)/i);
+        const styleMatch    = block.match(/#Smoke_(Light|Medium|Heavy)_style/i);
+        const densRaw = densTextMatch?.[1] || styleMatch?.[1] || null;
         const coordMatch = block.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
-        if (!densMatch || !coordMatch) continue;
-        const density = parseInt(densMatch[1]);
-        const label = density >= 27 ? "Heavy" : density >= 16 ? "Medium" : "Light";
+        if (!densRaw || !coordMatch) continue;
+        const label   = densRaw.charAt(0).toUpperCase() + densRaw.slice(1).toLowerCase();
+        const density = label === "Heavy" ? 27 : label === "Medium" ? 16 : 5;
         const coordStr = coordMatch[1].trim();
         let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
         let pointCount = 0;

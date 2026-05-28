@@ -5532,20 +5532,38 @@ function parseHmsKml(text) {
     const desc = pm.querySelector('description')?.textContent || '';
     const styleUrl = pm.querySelector('styleUrl')?.textContent || '';
 
-    // Density from description text ("Density: 5") or styleUrl (#Smoke_Light_style)
+    // Density: text label primary ("Density: Light/Medium/Heavy"),
+    // styleUrl fallback (#Smoke_Light_style), then numeric legacy format
     let density = null;
-    const densMatch = desc.match(/Density:\s*(\d+)/i);
-    if (densMatch) density = parseInt(densMatch[1]);
-    if (!density) {
-      if (styleUrl.includes('Heavy'))  density = 27;
-      else if (styleUrl.includes('Medium')) density = 16;
-      else density = 5;
+    const densTextMatch = desc.match(/Density:\s*(Light|Medium|Heavy)/i);
+    const styleMatch    = styleUrl.match(/Smoke_(Light|Medium|Heavy)_style/i);
+    const densNumMatch  = desc.match(/Density:\s*(\d+)/i);
+    if (densTextMatch) {
+      const lbl = densTextMatch[1].toLowerCase();
+      density = lbl === 'heavy' ? 27 : lbl === 'medium' ? 16 : 5;
+    } else if (styleMatch) {
+      const lbl = styleMatch[1].toLowerCase();
+      density = lbl === 'heavy' ? 27 : lbl === 'medium' ? 16 : 5;
+    } else if (densNumMatch) {
+      density = parseInt(densNumMatch[1]);
+    } else {
+      density = 5;
     }
 
-    // Start time from description text
+    // Start time: convert Julian-day format "2026147 1200UTC" → "May 27, 2026 12:00 UTC"
     let startTime = '';
-    const stMatch = desc.match(/Start Time:\s*(.+)/i);
-    if (stMatch) startTime = stMatch[1].trim();
+    const stMatch = desc.match(/Start Time:\s*([^\n<]+)/i);
+    if (stMatch) {
+      const raw = stMatch[1].trim();
+      const jm = raw.match(/^(\d{4})(\d{3})\s+(\d{2})(\d{2})UTC$/i);
+      if (jm) {
+        const d = new Date(Date.UTC(parseInt(jm[1]), 0, parseInt(jm[2])));
+        startTime = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric', timeZone:'UTC' })
+          + ` ${jm[3]}:${jm[4]} UTC`;
+      } else {
+        startTime = raw;
+      }
+    }
 
     const s = HMS_STYLE[density] || HMS_STYLE[5];
     for (const polyEl of pm.querySelectorAll('Polygon')) {
