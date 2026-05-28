@@ -62,6 +62,7 @@ const US_STATES = {
   SD:'South Dakota', TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont',
   VA:'Virginia', WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming',
   DC:'District of Columbia',
+  PR:'Puerto Rico', VI:'Virgin Islands', GU:'Guam', AS:'American Samoa', MP:'Northern Mariana Islands',
 };
 const STATE_NAME_TO_ABBREV = Object.fromEntries(Object.entries(US_STATES).map(([k, v]) => [v.toLowerCase(), k]));
 
@@ -121,19 +122,42 @@ async function geocode(location) {
 
   // If we identified a state, fetch multiple results and filter by admin1
   if (stateFilter && cityQuery) {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityQuery)}&count=10&language=en&format=json`;
-    const res = await fetch(url);
-    if (res.ok) {
-      const data = await res.json();
-      const match = (data.results ?? []).find(r =>
+    // Pass 1: search just the city name, filter by state
+    const url1 = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityQuery)}&count=10&language=en&format=json`;
+    const res1 = await fetch(url1);
+    if (res1.ok) {
+      const data1 = await res1.json();
+      const match = (data1.results ?? []).find(r =>
         r.country_code === 'US' && r.admin1?.toLowerCase() === stateFilter.toLowerCase()
       );
       if (match) return { lat: match.latitude, lon: match.longitude, name: `${match.name}, ${match.admin1}` };
     }
-    // State filter found nothing — fall through to unfiltered search below
+
+    // Pass 2: search the full original string, filter by state (catches "Pikes Peak Colorado")
+    const url2 = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(trimmed)}&count=10&language=en&format=json`;
+    const res2 = await fetch(url2);
+    if (res2.ok) {
+      const data2 = await res2.json();
+      const results2 = data2.results ?? [];
+      const stateMatch = results2.find(r =>
+        r.country_code === 'US' && r.admin1?.toLowerCase() === stateFilter.toLowerCase()
+      );
+      if (stateMatch) return { lat: stateMatch.latitude, lon: stateMatch.longitude, name: `${stateMatch.name}, ${stateMatch.admin1}` };
+      // At minimum keep it in the US rather than falling to a foreign result
+      const usMatch = results2.find(r => r.country_code === 'US');
+      if (usMatch) return { lat: usMatch.latitude, lon: usMatch.longitude, name: `${usMatch.name}, ${usMatch.admin1 ?? 'US'}` };
+    }
+
+    // Pass 3: city-only search, take any US result
+    const res3 = await fetch(url1);
+    if (res3.ok) {
+      const data3 = await res3.json();
+      const usMatch = (data3.results ?? []).find(r => r.country_code === 'US');
+      if (usMatch) return { lat: usMatch.latitude, lon: usMatch.longitude, name: `${usMatch.name}, ${usMatch.admin1 ?? 'US'}` };
+    }
   }
 
-  // Fallback: progressive candidate search (full string → strip suffix words)
+  // Fallback: progressive candidate search — prefer US results at each step
   const candidates = [trimmed];
   const noCommaSuffix = trimmed.replace(/,\s*.+$/, '').trim();
   if (noCommaSuffix && noCommaSuffix !== trimmed) candidates.push(noCommaSuffix);
@@ -144,11 +168,13 @@ async function geocode(location) {
   const tries = candidates.filter(c => c.length > 0 && !seen.has(c) && seen.add(c));
 
   for (const query of tries) {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`;
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Geocoding failed: ${res.status}`);
     const data = await res.json();
-    const r = data.results?.[0];
+    const results = data.results ?? [];
+    // Prefer US result; fall back to first result only if nothing US found
+    const r = results.find(r => r.country_code === 'US') ?? results[0];
     if (r) return { lat: r.latitude, lon: r.longitude, name: `${r.name}, ${r.admin1 ?? r.country_code}` };
   }
 
@@ -183,9 +209,13 @@ server.tool(
     state: z.string().length(2).toUpperCase().describe("Two-letter US state code, e.g. OK, TX, FL"),
   },
   async ({ state }) => {
-    const url = `https://api.weather.gov/alerts/active?area=${state.toUpperCase()}&status=actual`;
+    const upperState = state.toUpperCase();
+    if (!US_STATES[upperState] && upperState !== 'PR' && upperState !== 'VI' && upperState !== 'GU') {
+      return { content: [{ type: "text", text: `"${state}" is not a recognized US state or territory code. Use a two-letter abbreviation like TX, CA, FL, MT, or PR.` }] };
+    }
+    const url = `https://api.weather.gov/alerts/active?area=${upperState}&status=actual`;
     const res = await fetch(url, { headers: NWS_HEADERS });
-    if (!res.ok) throw new Error(`NWS API error: ${res.status}`);
+    if (!res.ok) return { content: [{ type: "text", text: `NWS alerts temporarily unavailable for ${upperState} (error ${res.status}). Try again shortly.` }] };
     const data = await res.json();
 
     const alerts = data.features ?? [];
@@ -283,14 +313,15 @@ server.tool(
       }
     } catch (_) {}
 
-    const stage = a.observed != null ? `${a.observed} ${a.units ?? "ft"}` : "unknown";
+    const stage = (a.observed != null && a.observed > -900) ? `${a.observed} ${a.units ?? "ft"}` : "unknown";
+    const obstime = a.obstime && !String(a.obstime).startsWith('0001') ? a.obstime : "unknown";
     const status = a.status ?? "unknown";
     const waterbody = a.waterbody ? ` on the ${a.waterbody}` : "";
 
     return {
       content: [{
         type: "text",
-        text: `Nearest gauge to ${placeName}: ${a.location}${waterbody} (${lid?.toUpperCase()})\nDistance: ${nearestDist.toFixed(1)} km away\nCurrent stage: ${stage}\nFlood status: ${status}\nLast observed: ${a.obstime ?? "unknown"}${extra}`,
+        text: `Nearest gauge to ${placeName}: ${a.location}${waterbody} (${lid?.toUpperCase()})\nDistance: ${nearestDist.toFixed(1)} km away\nCurrent stage: ${stage}\nFlood status: ${status}\nLast observed: ${obstime}${extra}`,
       }],
     };
   }
@@ -609,11 +640,18 @@ server.tool(
     date: z.string().describe("Date in YYYY-MM-DD format, e.g. '2024-05-03' or '2023-04-27'. Must be a past date."),
   },
   async ({ location, date }) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return { content: [{ type: "text", text: `Date must be in YYYY-MM-DD format, e.g. "2024-07-04".` }] };
+    }
+    const dateMs = new Date(date + 'T12:00:00Z').getTime();
+    if (isNaN(dateMs) || dateMs < new Date('1940-01-01').getTime() || dateMs > Date.now() - 86400000) {
+      return { content: [{ type: "text", text: `Date must be between 1940-01-01 and yesterday. Got: "${date}".` }] };
+    }
     const { lat, lon, name: placeName } = await geocode(location);
 
     const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,windspeed_10m_max,weathercode&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`Historical weather API error: ${res.status}`);
+    if (!res.ok) return { content: [{ type: "text", text: `Historical weather unavailable for ${placeName} on ${date} (API error ${res.status}).` }] };
     const data = await res.json();
 
     const d = data.daily;
@@ -1220,27 +1258,27 @@ server.tool(
         if (deficit != null) lines.push(`  Moisture deficit:   ${deficit}" (ET minus precip)`);
 
         // ── Severity rating — primary driver is 90-day precip; dry days secondary ──
-        let severity = "NORMAL";
+        let severity = "LOW";
         const reasons = [];
 
         // Precipitation total (primary)
         if      (total90 < 0.5)  { severity = "EXTREME";  reasons.push(`only ${total90.toFixed(2)}" in 90 days`); }
-        else if (total90 < 2.0)  { severity = "HIGH";     reasons.push(`only ${total90.toFixed(2)}" in 90 days`); }
+        else if (total90 < 2.0)  { severity = "CRITICAL"; reasons.push(`only ${total90.toFixed(2)}" in 90 days`); }
         else if (total90 < 5.0)  { severity = "ELEVATED"; reasons.push(`${total90.toFixed(2)}" in 90 days`); }
 
         // Dry days — only meaningful when total precip is also low
         if (dryDays >= 75 && total90 < 5.0 && severity !== "EXTREME") {
-          if (severity !== "HIGH") severity = "HIGH";
+          if (severity !== "CRITICAL") severity = "CRITICAL";
           reasons.push(`${dryDays} dry days`);
-        } else if (dryDays >= 50 && total90 < 3.0 && severity === "NORMAL") {
+        } else if (dryDays >= 50 && total90 < 3.0 && severity === "LOW") {
           severity = "ELEVATED"; reasons.push(`${dryDays} dry days`);
         }
 
         // Days since last meaningful rain
         if (sinceRain >= 60 && total90 < 3.0) {
-          if (severity === "NORMAL" || severity === "ELEVATED") severity = "HIGH";
+          if (severity === "LOW" || severity === "ELEVATED") severity = "CRITICAL";
           reasons.push(`${sinceRain} days without 0.10" rain`);
-        } else if (sinceRain >= 30 && total90 < 5.0 && severity === "NORMAL") {
+        } else if (sinceRain >= 30 && total90 < 5.0 && severity === "LOW") {
           severity = "ELEVATED"; reasons.push(`${sinceRain} days without meaningful rain`);
         }
 
@@ -1248,7 +1286,7 @@ server.tool(
         if (deficit != null) {
           const defNum = parseFloat(deficit);
           if (defNum > 10 && severity !== "EXTREME") {
-            if (severity === "NORMAL" || severity === "ELEVATED") severity = "HIGH";
+            if (severity === "LOW" || severity === "ELEVATED") severity = "CRITICAL";
             reasons.push(`${defNum.toFixed(1)}" moisture deficit (ET exceeds precip)`);
           }
         }
@@ -1260,15 +1298,15 @@ server.tool(
         if (rh != null && rh < 15) {
           severity = "EXTREME"; reasons.push(`RH ${rh}% (critical fire weather threshold)`);
         } else if (rh != null && rh < 25) {
-          if (severity === "NORMAL") severity = "ELEVATED";
+          if (severity === "LOW") severity = "ELEVATED";
           reasons.push(`RH ${rh}% (below fire weather threshold)`);
         }
 
         const SEVERITY_DESC = {
           EXTREME:  "EXTREME — fuel moisture conditions approaching historic lows. ERC likely at or above 90th percentile. Fire ignition easy, growth explosive.",
-          HIGH:     "HIGH — well-dried fuels with significant moisture deficit. Active fire weather day if wind/RH align. ERC elevated.",
+          CRITICAL: "CRITICAL — well-dried fuels with significant moisture deficit. Active fire weather day if wind/RH align. ERC elevated.",
           ELEVATED: "ELEVATED — fuels drying below seasonal normal. Monitor wind and RH trends.",
-          NORMAL:   "NORMAL — fuel moisture appears near seasonal average.",
+          LOW:      "LOW — fuel moisture appears near seasonal average.",
         };
 
         lines.push(`\nFIRE ENVIRONMENT: ${severity}`);
@@ -1570,7 +1608,8 @@ server.tool(
         const t = new Date(r[0]);
         return t <= now && new Date(t.getTime() + 3 * 3600000) > now;
       }) ?? rows[0];
-      const kp = cur ? parseFloat(cur[1]) : null;
+      const kpRaw = cur ? parseFloat(cur[1]) : NaN;
+      const kp = isNaN(kpRaw) ? null : kpRaw;
       const KP_DESC = kp == null ? "?" :
         kp >= 8 ? "G4-G5 SEVERE/EXTREME — widespread power grid impacts, aurora to low latitudes" :
         kp >= 6 ? "G2-G3 MODERATE/STRONG — aurora in northern US, satellite drag increases" :
@@ -1586,11 +1625,12 @@ server.tool(
         return t > now && t < new Date(now.getTime() + 24 * 3600000);
       });
       if (upcoming.length) {
-        const maxKp = Math.max(...upcoming.map(r => parseFloat(r[1])));
-        lines.push(`  Next 24h max Kp: ${maxKp.toFixed(1)}`);
+        const kpVals = upcoming.map(r => parseFloat(r[1])).filter(v => !isNaN(v));
+        if (kpVals.length) lines.push(`  Next 24h max Kp: ${Math.max(...kpVals).toFixed(1)}`);
         lines.push(`  Forecast: ${upcoming.slice(0, 6).map(r => {
           const t = new Date(r[0]).toLocaleTimeString([], { hour: "numeric" });
-          return `${t}→Kp${parseFloat(r[1]).toFixed(1)}`;
+          const kpVal = parseFloat(r[1]);
+          return `${t}→Kp${isNaN(kpVal) ? "?" : kpVal.toFixed(1)}`;
         }).join("  ")}`);
       }
 
@@ -1813,6 +1853,14 @@ server.tool(
   }
 );
 
+function capeToLP(cape) {
+  if (!cape || cape < 100) return 0;
+  if (cape < 500)  return (cape - 100) / 400 * 5;
+  if (cape < 1500) return 5 + (cape - 500) / 1000 * 10;
+  if (cape < 3000) return 15 + (cape - 1500) / 1500 * 15;
+  return Math.min(100, 30 + (cape - 3000) / 1000 * 10);
+}
+
 // ── Tool 24: Lightning potential ─────────────────────────────────────────────
 
 server.tool(
@@ -1844,7 +1892,8 @@ server.tool(
     const cape = h.cape?.[startIdx];
     const li   = h.lifted_index?.[startIdx];
     const cin  = h.convective_inhibition?.[startIdx];
-    const lp   = h.lightning_potential?.[startIdx];
+    const lpApi = h.lightning_potential?.[startIdx] ?? 0;
+    const lp = lpApi > 0 ? lpApi : capeToLP(h.cape?.[startIdx] ?? 0);
 
     lines.push(`\nCURRENT INSTABILITY:`);
     if (cape != null) {
@@ -1868,7 +1917,8 @@ server.tool(
     for (let i = startIdx; i < Math.min(startIdx + hours, h.time.length, startIdx + 24); i += 3) {
       const t     = new Date(h.time[i]).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
       const capeV = h.cape?.[i] ?? 0;
-      const lpV   = h.lightning_potential?.[i] ?? 0;
+      const lpApiV = h.lightning_potential?.[i] ?? 0;
+      const lpV = lpApiV > 0 ? lpApiV : capeToLP(h.cape?.[i] ?? 0);
       const risk  = lpV > 20 ? "HIGH ⚡⚡" : lpV > 5 ? "MODERATE ⚡" : capeV > 500 ? "LOW-MOD" : "LOW";
       lines.push(`  ${t}: CAPE ${capeV.toFixed(0)} J/kg | LP ${lpV.toFixed(1)} — ${risk}`);
       if (lpV > peakLp) { peakLp = lpV; peakTime = h.time[i]; }
@@ -2200,10 +2250,9 @@ server.tool(
     score = Math.min(10, Math.round(score * 10) / 10);
     const RATING =
       score >= 9 ? "EXTREME — life-threatening fire weather conditions" :
-      score >= 7 ? "VERY HIGH — significant fire spread likely if ignition occurs" :
-      score >= 5 ? "HIGH — active fire weather concerns, monitor closely" :
-      score >= 3 ? "MODERATE — elevated fire danger, above normal" :
-      score >= 1 ? "LOW-MODERATE — some fire weather concern" :
+      score >= 6 ? "CRITICAL — significant fire spread likely if ignition occurs" :
+      score >= 3 ? "ELEVATED — active fire weather concerns, monitor closely" :
+      score >= 1 ? "LOW — some fire weather concern" :
       "LOW — no significant fire weather concern";
 
     const lines = [
@@ -2249,7 +2298,15 @@ server.tool(
     } catch (_) {}
 
     const [alertsRes, fcast24Res, aqiRes, gaugeRes] = await Promise.allSettled([
-      fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null),
+      Promise.all([
+        fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null),
+        stateCode ? fetch(`https://api.weather.gov/alerts/active?area=${stateCode}&status=actual`, { headers: NWS_HEADERS }).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
+      ]).then(([pointData, stateData]) => {
+        const pointFeatures = pointData?.features ?? [];
+        const stateFeatures = stateData?.features ?? [];
+        const seen = new Set(pointFeatures.map(f => f.properties?.id).filter(Boolean));
+        return { features: [...pointFeatures, ...stateFeatures.filter(f => !seen.has(f.properties?.id))] };
+      }),
       fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
         `&hourly=temperature_2m,precipitation,windspeed_10m,windgusts_10m,weathercode,cape` +
@@ -2374,6 +2431,17 @@ server.tool(
       );
       if (sRes.ok) stations = await sRes.json();
     } catch (_) {}
+
+    // AWDB API sometimes ignores proximity params — apply manual filter if too many returned
+    if (Array.isArray(stations) && stations.length > 15) {
+      const radiusKm = radius_miles * 1.60934;
+      stations = stations
+        .filter(st => st.latitude != null && st.longitude != null)
+        .map(st => ({ ...st, _dist: distKm(lat, lon, st.latitude, st.longitude) }))
+        .filter(st => st._dist <= radiusKm)
+        .sort((a, b) => a._dist - b._dist)
+        .slice(0, 8);
+    }
 
     if (!Array.isArray(stations) || !stations.length) {
       return { content: [{ type: "text", text: `No active SNOTEL stations found within ${radius_miles} miles of ${placeName}. Try increasing the radius or choosing a location near major US mountain ranges (Rockies, Sierra, Cascades, Wasatch).` }] };
