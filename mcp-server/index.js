@@ -17,6 +17,25 @@ const server = new McpServer({
 
 const NWS_HEADERS = { "User-Agent": `StormWatchMCP/2.0 (${process.env.NWS_EMAIL ?? "+https://github.com/aphilp1/stormwatch-live"})` };
 
+// Fetch the current-day HMS smoke KML from NOAA/NESDIS satepsanone server.
+// Falls back to yesterday if today's file isn't posted yet (published ~15Z daily).
+async function fetchHmsKml() {
+  const HMS_BASE = "https://satepsanone.nesdis.noaa.gov/pub/FIRE/web/HMS/Smoke_Polygons/KML";
+  const UA = { "User-Agent": "StormWatchMCP/2.0 (+https://github.com/aphilp1/stormwatch-live)" };
+  for (let daysBack = 0; daysBack <= 1; daysBack++) {
+    const d = new Date(Date.now() - daysBack * 86_400_000);
+    const yyyy = d.getUTCFullYear();
+    const mm   = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dd   = String(d.getUTCDate()).padStart(2, "0");
+    const url  = `${HMS_BASE}/${yyyy}/${mm}/hms_smoke${yyyy}${mm}${dd}.kml`;
+    try {
+      const r = await fetch(url, { headers: UA });
+      if (r.ok) return await r.text();
+    } catch (_) {}
+  }
+  throw new Error("HMS smoke KML not available for today or yesterday");
+}
+
 function distKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -2405,6 +2424,310 @@ server.tool(
   }
 );
 
+// ── Tool 28: HMS Smoke Plumes ────────────────────────────────────────────────
+
+server.tool(
+  "get_hms_smoke",
+  "Get current wildfire smoke plume coverage from the NOAA/NESDIS Hazard Mapping System (HMS). Returns smoke density at a given location (Light/Medium/Heavy) and a national summary of active smoke plumes. HMS uses GOES satellite imagery analyzed daily by meteorologists.",
+  {
+    location: z.string().describe("City name or location to check for smoke coverage, e.g. 'Boise ID', 'Denver CO', 'Portland Oregon'"),
+  },
+  async ({ location }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    // Fetch HMS KML — current day (falls back to yesterday if not yet posted)
+    const kmlText = await fetchHmsKml();
+
+    // Parse plumes from KML description text
+    const plumes = [];
+    const pmRe = /<Placemark>([\s\S]*?)<\/Placemark>/gi;
+    let pm;
+    while ((pm = pmRe.exec(kmlText)) !== null) {
+      const block = pm[1];
+      const densMatch = block.match(/Density:\s*(\d+)/i);
+      const timeMatch = block.match(/Start Time:\s*([^\n<]+)/i);
+      const coordMatch = block.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
+      if (!densMatch || !coordMatch) continue;
+
+      const density = parseInt(densMatch[1]);
+      const label = density >= 27 ? "Heavy" : density >= 16 ? "Medium" : "Light";
+      const startTime = timeMatch ? timeMatch[1].trim() : null;
+
+      // Parse coordinate pairs to build bounding box
+      const coordStr = coordMatch[1].trim();
+      let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+      let pointCount = 0;
+      for (const pair of coordStr.split(/\s+/)) {
+        const parts = pair.split(",");
+        if (parts.length < 2) continue;
+        const pLon = parseFloat(parts[0]), pLat = parseFloat(parts[1]);
+        if (isNaN(pLon) || isNaN(pLat)) continue;
+        if (pLon < minLon) minLon = pLon; if (pLon > maxLon) maxLon = pLon;
+        if (pLat < minLat) minLat = pLat; if (pLat > maxLat) maxLat = pLat;
+        pointCount++;
+      }
+      if (pointCount < 3) continue;
+      plumes.push({ density, label, startTime, minLat, maxLat, minLon, maxLon });
+    }
+
+    // Count by density
+    const counts = { Light: 0, Medium: 0, Heavy: 0 };
+    for (const p of plumes) counts[p.label]++;
+
+    // Find plumes covering this location (with 0.5° buffer)
+    const buf = 0.5;
+    const local = plumes.filter(p =>
+      lat >= p.minLat - buf && lat <= p.maxLat + buf &&
+      lon >= p.minLon - buf && lon <= p.maxLon + buf
+    );
+
+    const lines = [`HMS Smoke Plumes — ${placeName}`, "─".repeat(44)];
+
+    if (local.length === 0) {
+      lines.push("✅ No satellite-detected smoke plumes over this location.");
+    } else {
+      const worst = local.reduce((a, b) => b.density > a.density ? b : a);
+      lines.push(`⚠️  Smoke detected at this location: ${worst.label} density`);
+      lines.push(`   (${local.length} plume${local.length > 1 ? "s" : ""} in area)`);
+      if (worst.startTime) lines.push(`   Detection time: ${worst.startTime} UTC`);
+      if (local.length > 1) {
+        const densities = [...new Set(local.map(p => p.label))].join(", ");
+        lines.push(`   Density categories present: ${densities}`);
+      }
+    }
+
+    lines.push(`\nNational HMS Summary (${plumes.length} active plumes):`);
+    if (counts.Heavy)  lines.push(`  🔴 Heavy:  ${counts.Heavy} plume${counts.Heavy > 1 ? "s" : ""}`);
+    if (counts.Medium) lines.push(`  🟠 Medium: ${counts.Medium} plume${counts.Medium > 1 ? "s" : ""}`);
+    if (counts.Light)  lines.push(`  🟡 Light:  ${counts.Light} plume${counts.Light > 1 ? "s" : ""}`);
+    if (!plumes.length) lines.push("  No active smoke plumes detected nationally.");
+
+    lines.push(`\nSource: NOAA/NESDIS Hazard Mapping System — GOES satellite, updated daily`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Tool 29: AirNow PM2.5 stations ───────────────────────────────────────────
+
+server.tool(
+  "get_airnow_stations",
+  "Get current PM2.5 air quality readings from nearby EPA AirNow reporting areas. Returns the closest monitoring stations with their AQI values, categories, and observation times. Based on real surface measurements — not model output.",
+  {
+    location: z.string().describe("City name or location, e.g. 'Sacramento CA', 'Salt Lake City UT', 'Billings Montana'"),
+    radius_miles: z.number().int().min(25).max(300).default(100).describe("Search radius for AirNow stations in miles (default 100)"),
+  },
+  async ({ location, radius_miles }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    const res = await fetch("https://files.airnowtech.org/airnow/today/reportingarea.dat");
+    if (!res.ok) throw new Error(`AirNow fetch failed: ${res.status}`);
+    const text = await res.text();
+
+    const AQI_LABEL = [
+      { max: 50,  label: "Good",                          emoji: "🟢" },
+      { max: 100, label: "Moderate",                      emoji: "🟡" },
+      { max: 150, label: "Unhealthy for Sensitive Groups", emoji: "🟠" },
+      { max: 200, label: "Unhealthy",                     emoji: "🔴" },
+      { max: 300, label: "Very Unhealthy",                 emoji: "🟣" },
+      { max: Infinity, label: "Hazardous",                emoji: "⚫" },
+    ];
+
+    const stations = [];
+    for (const line of text.split(/\r?\n/)) {
+      const f = line.split("|");
+      if (f.length < 14) continue;
+      if (f[11] !== "PM2.5") continue;
+      if (f[5] !== "O") continue; // observed only
+      const sLat = parseFloat(f[9]), sLon = parseFloat(f[10]);
+      if (isNaN(sLat) || isNaN(sLon)) continue;
+      const dist = distKm(lat, lon, sLat, sLon) * 0.621371;
+      if (dist > radius_miles) continue;
+      const aqi = parseInt(f[12]);
+      if (isNaN(aqi)) continue;
+      const cat = AQI_LABEL.find(c => aqi <= c.max) ?? AQI_LABEL.at(-1);
+      stations.push({
+        city: f[7].trim(), state: f[8].trim(),
+        aqi, cat, dist: Math.round(dist),
+        time: f[2].trim(), tz: f[3].trim(),
+      });
+    }
+
+    stations.sort((a, b) => a.dist - b.dist);
+
+    const lines = [`AirNow PM2.5 Stations — ${placeName} (${radius_miles} mi radius)`, "─".repeat(50)];
+
+    if (!stations.length) {
+      lines.push(`No PM2.5 reporting areas found within ${radius_miles} miles. Try increasing the radius.`);
+    } else {
+      lines.push(`${stations.length} station${stations.length > 1 ? "s" : ""} found:\n`);
+      for (const s of stations.slice(0, 8)) {
+        lines.push(`${s.cat.emoji} ${s.city}, ${s.state} — AQI ${s.aqi} (${s.cat.label})`);
+        lines.push(`   ${s.dist} mi away · Observed ${s.time} ${s.tz}`);
+      }
+      if (stations.length > 8) lines.push(`  ... and ${stations.length - 8} more stations`);
+      const worst = stations.reduce((a, b) => b.aqi > a.aqi ? b : a);
+      lines.push(`\nWorst in area: ${worst.city}, ${worst.state} — AQI ${worst.aqi} (${worst.cat.label}) ${worst.cat.emoji}`);
+    }
+
+    lines.push(`\nSource: EPA AirNow · airnow.gov · Real-time surface measurements`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+// ── Tool 30: Smoke situation report (combined) ────────────────────────────────
+
+server.tool(
+  "get_smoke_situation",
+  "Get a comprehensive wildfire smoke situation report for any US location — combines EPA AirNow PM2.5 surface readings, NOAA HMS satellite-detected smoke plumes, and Open-Meteo air quality model output. Use this for a complete picture of smoke impacts.",
+  {
+    location: z.string().describe("City name or location, e.g. 'Bend OR', 'Missoula Montana', 'Fresno CA'"),
+  },
+  async ({ location }) => {
+    const { lat, lon, name: placeName } = await geocode(location);
+
+    // Fetch all three sources in parallel
+    const [hmsRes, airnowRes, aqiRes] = await Promise.allSettled([
+      fetchHmsKml().catch(() => null),
+      fetch("https://files.airnowtech.org/airnow/today/reportingarea.dat")
+        .then(r => r.ok ? r.text() : null),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm2_5,us_aqi&timezone=auto&forecast_days=1`)
+        .then(r => r.ok ? r.json() : null),
+    ]);
+
+    const AQI_LABEL = [
+      { max: 50,  label: "Good",                          emoji: "🟢" },
+      { max: 100, label: "Moderate",                      emoji: "🟡" },
+      { max: 150, label: "Unhealthy for Sensitive Groups", emoji: "🟠" },
+      { max: 200, label: "Unhealthy",                     emoji: "🔴" },
+      { max: 300, label: "Very Unhealthy",                 emoji: "🟣" },
+      { max: Infinity, label: "Hazardous",                emoji: "⚫" },
+    ];
+
+    const lines = [`Smoke Situation Report — ${placeName}`, "═".repeat(46)];
+
+    // ── HMS satellite smoke ──
+    let hmsResult = "unavailable";
+    if (hmsRes.status === "fulfilled" && hmsRes.value) {
+      const kmlText = hmsRes.value;
+      const plumes = [];
+      const pmRe = /<Placemark>([\s\S]*?)<\/Placemark>/gi;
+      let pm;
+      while ((pm = pmRe.exec(kmlText)) !== null) {
+        const block = pm[1];
+        const densMatch = block.match(/Density:\s*(\d+)/i);
+        const coordMatch = block.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
+        if (!densMatch || !coordMatch) continue;
+        const density = parseInt(densMatch[1]);
+        const label = density >= 27 ? "Heavy" : density >= 16 ? "Medium" : "Light";
+        const coordStr = coordMatch[1].trim();
+        let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+        let pointCount = 0;
+        for (const pair of coordStr.split(/\s+/)) {
+          const parts = pair.split(",");
+          if (parts.length < 2) continue;
+          const pLon = parseFloat(parts[0]), pLat = parseFloat(parts[1]);
+          if (isNaN(pLon) || isNaN(pLat)) continue;
+          if (pLon < minLon) minLon = pLon; if (pLon > maxLon) maxLon = pLon;
+          if (pLat < minLat) minLat = pLat; if (pLat > maxLat) maxLat = pLat;
+          pointCount++;
+        }
+        if (pointCount >= 3) plumes.push({ density, label, minLat, maxLat, minLon, maxLon });
+      }
+      const buf = 0.5;
+      const local = plumes.filter(p =>
+        lat >= p.minLat - buf && lat <= p.maxLat + buf &&
+        lon >= p.minLon - buf && lon <= p.maxLon + buf
+      );
+      if (local.length === 0) {
+        hmsResult = "✅ No satellite smoke plumes detected at this location";
+      } else {
+        const worst = local.reduce((a, b) => b.density > a.density ? b : a);
+        hmsResult = `⚠️  ${worst.label} smoke plume detected (${local.length} plume${local.length > 1 ? "s" : ""} overhead)`;
+      }
+    }
+    lines.push(`\n🛰  HMS Satellite (NOAA/NESDIS):\n   ${hmsResult}`);
+
+    // ── AirNow surface observations ──
+    let airnowResult = "unavailable";
+    if (airnowRes.status === "fulfilled" && airnowRes.value) {
+      const stations = [];
+      for (const line of airnowRes.value.split(/\r?\n/)) {
+        const f = line.split("|");
+        if (f.length < 14 || f[11] !== "PM2.5" || f[5] !== "O") continue;
+        const sLat = parseFloat(f[9]), sLon = parseFloat(f[10]);
+        if (isNaN(sLat) || isNaN(sLon)) continue;
+        const dist = distKm(lat, lon, sLat, sLon) * 0.621371;
+        if (dist > 75) continue;
+        const aqi = parseInt(f[12]);
+        if (isNaN(aqi)) continue;
+        const cat = AQI_LABEL.find(c => aqi <= c.max) ?? AQI_LABEL.at(-1);
+        stations.push({ city: f[7].trim(), state: f[8].trim(), aqi, cat, dist: Math.round(dist) });
+      }
+      stations.sort((a, b) => a.dist - b.dist);
+      if (!stations.length) {
+        airnowResult = "No AirNow stations within 75 miles";
+      } else {
+        const nearest = stations[0];
+        const worst = stations.reduce((a, b) => b.aqi > a.aqi ? b : a);
+        airnowResult = `${nearest.cat.emoji} Nearest (${nearest.city}, ${nearest.state}, ${nearest.dist} mi): AQI ${nearest.aqi} — ${nearest.cat.label}`;
+        if (worst.city !== nearest.city) {
+          airnowResult += `\n   ${worst.cat.emoji} Worst nearby (${worst.city}, ${worst.state}): AQI ${worst.aqi} — ${worst.cat.label}`;
+        }
+        if (stations.length > 1) airnowResult += `\n   (${stations.length} stations within 75 mi)`;
+      }
+    }
+    lines.push(`\n📡 AirNow Surface (EPA):\n   ${airnowResult}`);
+
+    // ── Open-Meteo model AQI ──
+    let modelResult = "unavailable";
+    if (aqiRes.status === "fulfilled" && aqiRes.value) {
+      const h = aqiRes.value.hourly;
+      const now = new Date();
+      const idx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
+      const aqi = h.us_aqi[idx];
+      const pm25 = h.pm2_5[idx];
+      if (aqi != null) {
+        const cat = AQI_LABEL.find(c => aqi <= c.max) ?? AQI_LABEL.at(-1);
+        modelResult = `${cat.emoji} AQI ${aqi} — ${cat.label}`;
+        if (pm25 != null) modelResult += ` | PM2.5 ${pm25.toFixed(1)} µg/m³`;
+        // 6-hour trend
+        const trend = [];
+        for (let i = idx; i < Math.min(idx + 6, h.time.length); i++) {
+          if (h.us_aqi[i] == null) continue;
+          const tCat = AQI_LABEL.find(c => h.us_aqi[i] <= c.max);
+          trend.push(`${new Date(h.time[i]).toLocaleTimeString([],{hour:'numeric'})} AQI ${h.us_aqi[i]} ${tCat?.emoji ?? ""}`);
+        }
+        if (trend.length) modelResult += `\n   Next 6h: ${trend.join(" → ")}`;
+      }
+    }
+    lines.push(`\n🌐 Open-Meteo Model:\n   ${modelResult}`);
+
+    // ── Health guidance ──
+    const worstAqi = (() => {
+      if (aqiRes.status === "fulfilled" && aqiRes.value?.hourly) {
+        const h = aqiRes.value.hourly;
+        const now = new Date();
+        const idx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
+        return h.us_aqi[idx] ?? 0;
+      }
+      return 0;
+    })();
+    const healthCat = AQI_LABEL.find(c => worstAqi <= c.max) ?? AQI_LABEL.at(-1);
+    const healthAdvice = {
+      "Good":                          "Air quality is satisfactory. No restrictions needed.",
+      "Moderate":                       "Unusually sensitive individuals should consider limiting prolonged outdoor exertion.",
+      "Unhealthy for Sensitive Groups": "Sensitive groups (elderly, children, heart/lung disease) should reduce prolonged outdoor exertion.",
+      "Unhealthy":                      "Everyone should reduce prolonged outdoor exertion. Sensitive groups should avoid it.",
+      "Very Unhealthy":                 "Everyone should avoid prolonged outdoor exertion. Sensitive groups should remain indoors.",
+      "Hazardous":                      "Health emergency — everyone should avoid all outdoor activity. Stay indoors with windows closed.",
+    }[healthCat.label] ?? "";
+    if (healthAdvice) lines.push(`\n💊 Health Guidance:\n   ${healthAdvice}`);
+
+    lines.push(`\nSources: NOAA HMS · EPA AirNow · Open-Meteo Air Quality`);
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
 // ────────────────────────────────────────────────────────────────────────────
 // Severe Weather Nowcast agent — called by /nowcast HTTP endpoint
 
@@ -3023,11 +3346,7 @@ createServer(async (req, res) => {
 
   if (url.pathname === "/hms-smoke") {
     try {
-      const r = await fetch("https://www.ospo.noaa.gov/data/land/fire/smoke.kml", {
-        headers: { "User-Agent": "StormWatch/1.0 (weather mapping app)" }
-      });
-      if (!r.ok) { res.writeHead(r.status); res.end(`KML fetch failed: ${r.status}`); return; }
-      const kml = await r.text();
+      const kml = await fetchHmsKml();
       res.setHeader("Content-Type", "application/xml");
       res.end(kml);
     } catch (err) {
