@@ -25,24 +25,24 @@ HRRR = {
 }
 
 # ── WindNinja snapshot — init: 315° NW / 29 mph (700 hPa 12z OTX sounding) ──
-# Download WindNinja from: https://www.firelab.org/project/windninja
-# Run with: domain = Missoula MT area, speed=29 mph, dir=315 deg, momentum solver
-# Extract point values at station coordinates, fill in (dir_deg, spd_mph) tuples
-# Station coords: KMSO 46.916N -114.090W | MPOI 46.876N -114.082W
-#                 BLMM8 46.832N -114.216W | TS897 46.749N -114.066W
+# 12mi grid, center 46.9/-114.1, DEM shared with Case 1 — windninja_case2_wider.py
+# Station coords updated to NIFC-authoritative (2026-05-28):
+#   MPOI/Point Six = PNTM8: 47.04136N -113.98631W 7897ft (NOT old assumed 46.876N -114.082W)
+#   BLMM8 = foothills SE Missoula: 46.82073N -114.10089W (NOT old 46.832N -114.216W)
+# NOTE: HRRR values below still use old coords — re-run hrrr_test.py to update
 WINDNINJA = {
-    "KMSO":  (314, 28.9),   # 46.9/-114.1 grid, 315/29 init — near-ambient valley floor
-    "MPOI":  (315, 28.1),   # 46.9/-114.1 grid — near-ambient at 6300ft exposed ridge
-    "BLMM8": (309, 38.8),   # 46.9/-114.1 grid — 34% terrain acceleration on Blue Mtn
-    "TS897": None,           # outside 8mi grid; need wider run to capture 46.749N
+    "KMSO":  (314, 28.3),   # 12mi grid — near-ambient valley floor (0.98x)
+    "MPOI":  (313, 40.6),   # PNTM8 NIFC coords 7897ft — 40% terrain amplification (1.40x)
+    "BLMM8": (320, 29.2),   # NIFC foothills coords — near-ambient (1.01x), sheltered
+    "TS897": (323, 27.2),   # Lolo — now captured with 12mi grid (0.94x)
 }
 
 # ── Fetch GFS (Open-Meteo historical forecast ~13km) ─────────────────────────
 LOCS = {
-    "KMSO":  (46.916, -114.090),
-    "MPOI":  (46.876, -114.082),
-    "BLMM8": (46.832, -114.216),
-    "TS897": (46.749, -114.066),
+    "KMSO":  (46.916,    -114.090),
+    "MPOI":  (47.04136,  -113.98631),  # PNTM8 NIFC authoritative (updated 2026-05-28)
+    "BLMM8": (46.82073,  -114.10089),  # NIFC foothills SE (updated 2026-05-28, was 46.832/-114.216)
+    "TS897": (46.749,    -114.066),
 }
 print("Fetching GFS...", end=" ", flush=True)
 gfs = {}

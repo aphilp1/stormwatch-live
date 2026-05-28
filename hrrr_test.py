@@ -4,10 +4,10 @@ from herbie import Herbie
 import numpy as np
 
 STATIONS = {
-    "KMSO":  (46.916, -114.090, "KMSO  3205ft"),
-    "MPOI":  (46.876, -114.082, "PtSix 6300ft"),
-    "BLMM8": (46.832, -114.216, "BluMt 3412ft"),
-    "TS897": (46.749, -114.066, "Lolo  3200ft"),
+    "KMSO":  (46.916,    -114.090,   "KMSO  3205ft"),
+    "MPOI":  (47.04136,  -113.98631, "PtSix 7897ft"),  # PNTM8 NIFC authoritative (2026-05-28)
+    "BLMM8": (46.82073,  -114.10089, "BluMt 3412ft"),  # NIFC foothills SE (2026-05-28)
+    "TS897": (46.749,    -114.066,   "Lolo  3200ft"),
 }
 
 TARGET_HOURS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
