@@ -60,6 +60,31 @@ precisely the scale HRRR cannot resolve. This IS the thesis, stated in peer-revi
 literature. WindNinja resolves the smooth terrain amplification; hydraulic jumps are
 out of scope for any diagnostic solver and require WRF/WRF-SFIRE.
 
+## HONEST PROGRAM ASSESSMENT (Opus 2026-05-30)
+
+Four headline candidate findings, zero survivors:
+  1.42x amplification constant -- withdrawn (coordinate artifact)
+  +9.8 mph speed bias -- collapsed to +3, then consistent-with-zero
+  Timing thesis -- broken on Camp Fire anchor, all candidates killed
+  Cross-case "all catastrophic at 25 mph" -- selection effect
+
+THIS IS NOT FAILURE. Each killed finding taught something real:
+  - Coordinates dominate amplification (spatial gradients are huge)
+  - HRRR is a good BC for low-terrain downslope (VALIDATES pipeline premise)
+  - Timing mechanism lives in surface-vs-aloft lag, not 700 hPa
+  - Method has hard boundary at hydraulic jumps
+
+THE SINGULAR TEST THAT MATTERS:
+Does BC-corrected WindNinja beat raw HRRR at terrain stations out-of-sample?
+This is RAWS-gated. Currently unrunnable. Everything else is infrastructure.
+
+CRITICAL PATH: RAWS access (Synoptic research tier, WRCC outreach) is the
+actual gate between "impressive apparatus" and "validated science." Treat
+this as the most important unresolved item, not another engineering build.
+
+Confidence engine + surrogate WindNinja = real, valuable, build them.
+But they are INFRASTRUCTURE FOR TESTING, not the test itself.
+
 ## AUDIT FINDINGS — 2026-05-30 (coordinate correction)
 
 **The 1.4x terrain amplification "constant" is WITHDRAWN.**
