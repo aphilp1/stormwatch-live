@@ -18,6 +18,17 @@ We also pull fxx=1,3,4,5 to show how the aloft wind evolves through the morning.
 Output goes straight into bc_label_generator.py as:
     HRRR_PRIOR_SPEED = <value>   # mph
     HRRR_PRIOR_DIR   = <value>   # degrees, met convention
+
+Terrain-height note:
+700 hPa is a pressure surface, not a fixed height. It sits ~3000m in a neutral
+airmass, drops toward ~2700m in cold air. Where domain terrain approaches that
+altitude, HRRR extrapolates 700 hPa below-ground and the values are meaningless.
+Camp Fire domain (Feather River foothills, max ~1000m): SAFE -- 700 hPa is 2000m
+above terrain. No extrapolation concern. The +9.8 mph BC residual is physically
+real, not an artifact.
+For high-terrain domains (Missoula ridges ~2300m, Santa Ana peaks ~3500m):
+check HGT:700 mb over the domain and flag points within 200m of terrain. See
+hrrr_700hpa_case8.py for the guard implementation.
 """
 import warnings
 warnings.filterwarnings("ignore")

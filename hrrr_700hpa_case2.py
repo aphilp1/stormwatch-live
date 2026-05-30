@@ -22,6 +22,16 @@ Domain: Missoula valley + surrounding ridges
 This is a PBL_TRANSIENT event (cold frontal wind shift). WindNinja applicability
 is PARTIAL -- it can snapshot the pre-front NW regime and the post-front regime
 but cannot model the transition itself.
+
+Terrain-height WARNING for this domain:
+700 hPa in cold post-frontal air drops toward ~2700m. Point Six (PNTM8) ridge
+is at 2323m and surrounding peaks reach ~2500m -- only 200-400m below 700 hPa.
+In the Dec 17 cold column, some high grid cells may have 700 hPa extrapolated
+below-ground. This is one of TWO reasons the domain-mean 700 hPa was unusable
+for this case (the other: frontal boundary straddle). See the BC audit finding
+in case2_reconstruction.py.
+TODO: re-run with HGT:700 mb guard (see hrrr_700hpa_case8.py template) to
+confirm how many Missoula domain cells were extrapolated on Dec 17 2025.
 """
 import warnings
 warnings.filterwarnings("ignore")
