@@ -42,6 +42,11 @@ set in the current pipeline — several are independent ridge sites usable as
 | Station | Type | Role | Notes for the audit |
 |---|---|---|---|
 **Verified from Brewer & Clements 2020 Table 1 (PDF extraction 2026-05-30):**
+Note: Table 1 caption is "Description of weather stations used in this analysis"
+with columns: StationName, StationID, Lat/Lon, Elevation(m), Type, RecordSpan.
+Opus's HTML fetch failed to render the table cells. The PDF text extraction
+confirmed these are the station description coordinates, not FM-100 climatology.
+Jarbo Gap (39.74, -121.49, 773m) cross-validates against NIFC authoritative ✓
 
 | Station | ID | Lat | Lon | Elev | Role | Key notes |
 |---|---|---|---|---|---|---|
