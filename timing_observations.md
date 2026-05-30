@@ -130,11 +130,16 @@ as the amplification work.
 
 Scoreboard: 2 CONFIRMS (Tubbs, Thomas), 1 BREAKS (Camp Fire).
 
-**Tubbs control test result:** Fire site peaked 4h BEFORE domain mean; control peaked
-4h AFTER domain mean. That's an 8-hour asymmetry -- NOT consistent with simple
-translating-feature geometry (which would expect both to lead/lag symmetrically).
-At 700 hPa we cannot call this canyon channeling (canyon flow isn't in the 700 hPa
-field), but it's a genuine positional difference worth noting.
+**Tubbs control test result: antisymmetry DISSOLVED by geometry check (2026-05-30).**
+Fire site peaked 4h before domain mean; control peaked 4h after. Initial read:
+"not consistent with simple translating-feature geometry."
+Geometry check: at the fire-site-peak time (fxx=10), flow direction was ~335 NNW.
+Fire site (38.57N, -122.58W) is 0.37 deg NORTH and 0.78 deg WEST of control
+(38.20N, -121.80W). For NNW flow, fire site is on the upwind side. NNW flow hits
+the coastal mountains (fire site) first, then reaches the valley foothills (control).
+The +4/-4 split IS consistent with translating-feature geometry -- it is purely
+positional. No terrain-advance signal survived this check.
+This was the last candidate finding in the timing thread. It did not survive.
 
 **Camp Fire vs Tubbs/Thomas:** Camp Fire is the narrow gap/canyon mechanism (Feather
 River Canyon). Tubbs and Thomas are broader downslope events over wider terrain. The
@@ -143,6 +148,14 @@ informative: broader downslope peaks before ignition; narrow gap/canyon peaks af
 
 **Thomas archive limitation:** HRRR Dec 2017 (HRRRv2) only stores 18h forecasts from
 00z run. Used stitch of Dec 3 00z (fxx=0-18) + Dec 4 00z (fxx=0-15, from Case 8).
+
+## DATA CEILING REACHED (2026-05-30)
+
+Every remaining timing question routes through RAWS obs or more events.
+The 700 hPa domain series has been fully worked; nothing further is extractable
+without either (a) RAWS surface-vs-aloft lag data or (b) a larger event library.
+
+Thread is parked. Resume when RAWS data access comes through.
 
 ## REMAINING REQUIREMENTS BEFORE CLAIMING A FINDING
 
