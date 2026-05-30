@@ -35,6 +35,36 @@ When 700 hPa gives systematic BC errors in a domain, sample HRRR at the model le
 nearest actual ridgetop elevation instead. Feature name: `ridgetop_level_wind` (replaces
 `w700_speed_mph` for steep terrain domains). Not needed for Camp Fire; relevant for Missoula/SoCal.
 
+## AUDIT FINDINGS — 2026-05-30 (coordinate correction)
+
+**The 1.4x terrain amplification "constant" is WITHDRAWN.**
+All three data points had problems:
+- Camp Fire Jarbo 1.42x: wrong coordinates (39.977 → correct 39.736). At correct coords: 1.12x.
+- Missoula PNTM8 1.40x: had coord correction (46.876→47.041). Ratio not re-derived at correct coords yet. Could move either direction.
+- Thomas Topa Topa 1.44x: unobserved prediction, BC from assumed ratio. Never validated.
+Do NOT cite this as a finding until re-derived at verified coords with consistent conventions.
+Amplification ratio is EXTREMELY sensitive to coordinates (huge spatial gradients are the premise).
+Coordinate verification is a permanent precondition for every ratio reported.
+
+**The +9.8 mph HRRR speed bias is largely withdrawn.**
+At correct Jarbo coords with correct gust-factor convention (sustained vs sustained):
+- WN at 35 mph BC → Jarbo sustained 39.3 mph vs observed 32 mph (+23% overshoot)
+- WN at 25 mph BC → Jarbo sustained 28.8 mph vs observed 32 mph (-10% undershoot)
+- Optimal BC ≈ 28 mph. HRRR 700 hPa domain mean = 25.2 mph. Real gap ≈ +3 mph.
+Treat +3 mph as consistent-with-zero: one station, one event, interpolated result.
+
+**CORRECTED thesis (stronger, not weaker):**
+"HRRR 700 hPa is a near-unbiased BC for LOW-TERRAIN downslope events; WindNinja adds
+real sub-1km terrain structure that HRRR structurally cannot resolve." Both BAMS papers
+independently confirm this. Value-add was never fixing broken HRRR — it's the terrain detail.
+Where real BC bias may still exist: HIGH-TERRAIN regime (Missoula, Thomas) where 700 hPa
+breaks down. That's where the terrain-height guard lives. Camp Fire tells us where the
+correction ISN'T needed, which is equally valuable.
+
+**Next step for amplification:** Pull Brewer & Clements 2020 Table 1 (open access:
+mdpi.com/2073-4433/11/1/47) for the 7-station network with verified coords + observed values.
+Re-derive Camp Fire ratio at those coords. Then re-derive Missoula and Thomas independently.
+
 ## The Core Principle (from NeuralGCM analogy)
 Correct WindNinja's *inputs* (BCs), not its *outputs*. Keep the mass-conservation solver as backbone. The learned layer predicts the forcing; WN solves the terrain field. This ensures every corrected field is mass-consistent by construction.
 
