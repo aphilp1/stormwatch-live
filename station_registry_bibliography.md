@@ -41,12 +41,12 @@ set in the current pipeline — several are independent ridge sites usable as
 
 | Station | Type | Role | Notes for the audit |
 |---|---|---|---|
-| **Jarbo Gap** | CAL FIRE RAWS **041214** | Primary / anchor | **NIFC coords 39.735944, -121.488944, ~2535 ft, ridge, SE aspect.** "Worst-case" NE-foehn site. NOTE this is 39.74N — *north* of the 39.56 ignition; confirm which coords your WindNinja extraction used. Observed 8 Nov: sustained ~32 mph, gust 52 mph, peak ~4 AM PST. |
-| **Colby Mountain** | RAWS | Held-out ridge | Paper: downslope NE/ENE, **peak gust ≥26 m/s (~58 mph)**, late-morning 8th. Strong amplification target. |
-| **Saddleback** | RAWS | Held-out ridge | Paper: **peak gust ≥26 m/s (~58 mph)**. Strong amplification target. |
-| **Humbug (Summit)** | RAWS | Held-out ridge | Paper: similar downslope conditions. |
-| **Openshaw** | RAWS | Network | Used in the in-situ analysis. |
-| **Stirling City** | PG&E wx | Network | Non-RAWS; PG&E mesonet. |
+| **Jarbo Gap** | CAL FIRE RAWS **041214** | Primary / anchor | NIFC coords 39.735944, -121.488944, ~2535 ft, ridge, SE aspect. Observed 8 Nov: sustained ~32 mph, gust 52 mph, peak ~4 AM PST. **BURNOVER WARNING:** clip data before ~14:00 UTC Nov 9 (06:00 PST) — paper Fig 7A marks as "questionable" after that point (soil temps >40C, station likely burned ~08:00 PST Nov 9). |
+| **Colby Mountain** | RAWS | **Held-out A** | Confirmed: gusts **≥26 m/s (~58 mph)**, sustained **≥10 m/s (~22 mph)**. Strong ridge amplification target. Coords: pull from paper Table 1 PDF. |
+| **Saddleback** | RAWS | **Held-out B** | Confirmed: gusts **≥26 m/s (~58 mph)**, sustained **≥10 m/s (~22 mph)**. Strong ridge amplification target. Coords: pull from paper Table 1 PDF. |
+| **Humbug Mountain** | RAWS | **Low-end control** | Paper name: "Humbug Mountain" (also "Humbug Summit" in text — ambiguous). **WEAK site:** gusts ~14 m/s (~31 mph), sustained ~5 m/s (~11 mph). Useful as low-amplification control, NOT a strong target. |
+| **Openshaw** | RAWS | Network | In paper network. Large direction error in WRF validation (Openshaw was the worst direction site, 54°→35° when dropped). Verify coords before using. |
+| **Stirling City** | PG&E wx | **UNRELIABLE** | Paper documents erratic behavior — two periods of weak SE flow, possibly under a rotor. DROP from validation. Same class as Atlas Peak (Tubbs). |
 | **Red Hill Lookout** | PG&E wx | Network | Non-RAWS; PG&E mesonet. |
 
 **Concow / Paradise / Pulga reality check:** these *towns* likely had **no dedicated
@@ -69,10 +69,17 @@ which the literature already measured at ~58 mph.
      gave the best NE-wind forecast but *delayed the wind decline*. A timing-bust signature.
 2. **Brewer & Clements (2020)** — "The 2018 Camp Fire: Meteorological Analysis Using
    In Situ Observations and Numerical Simulations," *Atmosphere* 11(1):47.
-   mdpi.com/2073-4433/11/1/47
+   mdpi.com/2073-4433/11/1/47  (open access; PDF: /pdf, XML: /xml)
    - The 5-RAWS + 2-PG&E network above; mobile Doppler lidar deployed 8 Nov.
-   - Jarbo Gap sustained >12 m/s NE through the night; synoptically forced downslope
-     **gap** winds. Reno (REV) sounding shows the descending midlevel stable layer.
+   - Jarbo Gap sustained >12 m/s NE through the night; gap-flow mechanism confirmed.
+     WRF cross-sections: subcritical → supercritical down the lee, hydraulic jumps.
+     Strongest winds near the crest; 10-20 m/s just above surface near Concow/Paradise.
+   - **Model bias:** WRF had a HIGH bias vs observations (over-predicted), especially
+     at low wind speeds -- most points above 1:1 line. RMSE 3.34 m/s speed, 54° direction.
+     After dropping Stirling City: 2.78 m/s. After dropping Openshaw: 35° direction.
+     Sign of bias is station- and speed-dependent -- not a domain constant.
+   - **Table 1** has verified station coords + elevations -- NOT readable from HTML.
+     Use PDF or XML version to get coordinates. Apply elevation cross-check on each.
 3. **IBHS (2019)** — "Post-Event Investigation: California Wildfires of 2017 and 2018."
    ibhs.org/wp-content/uploads/member_docs/camp-fire-report_ibhs-1.pdf
    - Has the **Jarbo Gap hourly gust+sustained time series, 00 UTC 8 Nov – 12 UTC 9 Nov**

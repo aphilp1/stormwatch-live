@@ -43,34 +43,57 @@ from typing import Callable, Dict, List, Optional, Tuple
 # 1. CONFIG  --  edit this block per event
 # ---------------------------------------------------------------------------
 
-# Observed RAWS peak gusts (mph). Fill in real values; use None for stations
-# you don't have obs for (they're excluded from scoring).
+# Observed RAWS peak gusts (mph) and sustained (mph).
+# Station network: Brewer & Clements 2020 (Atmosphere 11(1):47).
+# Five RAWS confirmed in paper: Jarbo Gap, Openshaw, Colby Mountain,
+# Saddleback, Humbug Mountain. Plus Stirling City + Red Hill Lookout (PG&E, unreliable).
 #
-# Station network from peer-reviewed literature (Brewer & Clements 2020;
-# Mass et al. 2021 BAMS). Concow/Paradise/Pulga had NO dedicated RAWS in 2018.
-# Held-out validation targets are Colby Mountain and Saddleback (both >=58 mph
-# from literature), not town-named stations that don't exist.
+# Concow/Paradise/Pulga had NO dedicated RAWS in 2018 -- see paper.
 #
-# Jarbo Gap coords: 39.735944, -121.488944 (NIFC authoritative, corrected 2026-05-30)
-# Jarbo Gap Synoptic ID: JBGC1
-# NOTE: 52 mph at Jarbo -- gust or sustained? Resolve from IBHS report Fig 1
-# (full gust+sustained curve for 00z Nov 8 -- 12z Nov 9).
+# Jarbo Gap:
+#   Coords: 39.735944, -121.488944 (NIFC authoritative, corrected 2026-05-30)
+#   Synoptic ID: JBGC1
+#   Observed: sustained ~32 mph, gust 52 mph (Brewer & Clements 2020 / IBHS 2019)
+#   BURNOVER WARNING: clip data series before ~14:00 UTC Nov 9 (06:00 PST).
+#   Paper Fig 7A marks data as "questionable" after that point (soil temps >40C,
+#   erratic winds -- station likely burned over ~08:00 PST Nov 9).
+#
+# Colby Mountain: gusts >=26 m/s (~58 mph), sustained >=10 m/s (~22 mph)  [HELD-OUT A]
+# Saddleback:     gusts >=26 m/s (~58 mph), sustained >=10 m/s (~22 mph)  [HELD-OUT B]
+# Humbug Mountain (NOT "Humbug Summit"): gusts ~14 m/s (~31 mph), sustained ~5 m/s (~11 mph)
+#   --> LOW-END CONTROL only, not a strong amplification target.
+#
+# Stirling City (PG&E): UNRELIABLE -- paper documents erratic behavior, possibly
+#   under a rotor in downslope winds. DROP from validation. Same class as Atlas Peak (Tubbs).
+#
+# Station coordinates: Table 1 of Brewer & Clements 2020 has verified coords + elevations.
+# HTML extraction failed -- use PDF or XML: mdpi.com/2073-4433/11/1/47/pdf
+# Apply elevation cross-check: ridge RAWS at ~58 mph should sit near a ridgeline.
+
 OBSERVED_GUSTS: Dict[str, Optional[float]] = {
-    "jarbo_gap":     52.0,   # confirmed; gust vs sustained TBD from IBHS report
-    "colby_mtn":     None,   # literature: >=58 mph (26 m/s) -- held-out target A
-    "saddleback":    None,   # literature: >=58 mph (26 m/s) -- held-out target B
-    "openshaw":      None,   # in Mass et al. 2021 station set -- fetch when available
-    "humbug":        None,   # in Mass et al. 2021 station set -- fetch when available
+    "jarbo_gap":      52.0,   # gust; sustained = 32 mph; clip before 14z Nov 9
+    "colby_mtn":      None,   # literature: gust >=58 mph, sustained >=22 mph -- HELD-OUT A
+    "saddleback":     None,   # literature: gust >=58 mph, sustained >=22 mph -- HELD-OUT B
+    "openshaw":       None,   # paper network; coords TBD from Table 1 PDF
+    "humbug_mtn":     None,   # LOW-END CONTROL: gust ~31 mph, sustained ~11 mph
 }
 
-# Per-station weight in the score (e.g. trust an exposed ridge site more than a
-# sheltered valley one). Defaults to 1.0 for any station not listed.
+# Sustained obs for sustained-to-sustained comparison (GUST_FACTOR=1.625 convention)
+OBSERVED_SUSTAINED: Dict[str, Optional[float]] = {
+    "jarbo_gap":      32.0,   # confirmed from Brewer & Clements 2020
+    "colby_mtn":      None,   # >=22 mph (>=10 m/s) per paper
+    "saddleback":     None,   # >=22 mph (>=10 m/s) per paper
+    "openshaw":       None,
+    "humbug_mtn":     None,   # ~11 mph (~5 m/s) per paper -- weak site
+}
+
+# Per-station weight in the score.
 STATION_WEIGHTS: Dict[str, float] = {
     "jarbo_gap":  1.0,
-    "colby_mtn":  1.0,   # ridge site, held-out
-    "saddleback": 1.0,   # ridge site, held-out
-    "openshaw":   0.8,   # lower confidence until coords verified
-    "humbug":     0.8,
+    "colby_mtn":  1.0,   # strong ridge, held-out
+    "saddleback": 1.0,   # strong ridge, held-out
+    "openshaw":   0.8,   # coords TBD
+    "humbug_mtn": 0.3,   # low-end control only; weak amplification
 }
 
 # Gust factor: WindNinja outputs SUSTAINED wind; RAWS reports GUSTS.
