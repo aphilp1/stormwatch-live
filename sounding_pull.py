@@ -38,8 +38,19 @@ IEM_RAOB_BASE = "https://mesonet.agron.iastate.edu/json/raob.json"
 STATIONS = {
     "REV": {"name": "Reno NV",        "lat": 39.57, "lon": -119.80},
     "OAK": {"name": "Oakland CA",     "lat": 37.73, "lon": -122.22},
+    "VBG": {"name": "Vandenberg CA",  "lat": 34.74, "lon": -120.57},  # Thomas upwind
     "TFX": {"name": "Great Falls MT", "lat": 47.46, "lon": -111.38},
-    "OTX": {"name": "Spokane WA",     "lat": 47.68, "lon": -117.63},
+    "OTX": {"name": "Spokane WA",     "lat": 47.68, "lon": -117.63},  # Missoula upwind
+}
+
+# Ridge stations per event for inversion-altitude cross-check
+# Compare inversion base altitude to ridge station elevation
+RIDGE_STATIONS = {
+    "camp_fire_2018":    [("JBGC1 Jarbo Gap",    773)],   # m; well below 1940m inv
+    "thomas_fire_2017":  [("Topa Topa ~6230ft",  1899)],  # m; check vs VBG inv
+    "missoula_dec2025":  [("PNTM8 Point Six",    2408)],  # m; check vs OTX inv
+    "tubbs_fire_2017":   [("Hawkeye (approx)",    600)],   # m; approx
+    "kincade_2019":      [("Pine Flat Road (approx)", 400)],
 }
 
 # Events: list of (event_name, station_id, date_utc, hours_to_pull)
@@ -47,9 +58,12 @@ PULLS = [
     ("camp_fire_2018",   "REV", "2018-11-08", [0, 12]),
     ("tubbs_fire_2017",  "OAK", "2017-10-08", [0, 12]),
     ("tubbs_fire_2017",  "OAK", "2017-10-09", [0]),      # day of max spread
-    ("thomas_fire_2017", "REV", "2017-12-04", [0, 12]),
+    ("thomas_fire_2017", "REV", "2017-12-04", [0, 12]),  # Reno -- east-side ref
+    ("thomas_fire_2017", "VBG", "2017-12-04", [0, 12]),  # Vandenberg -- west-side ref
     ("kincade_2019",     "OAK", "2019-10-23", [0, 12]),
-    ("kincade_2019",     "OAK", "2019-10-24", [0]),      # day of 102 mph gust
+    ("kincade_2019",     "OAK", "2019-10-24", [0]),
+    # Missoula -- OTX is the upwind sounding used in dec17_final.py
+    ("missoula_dec2025", "OTX", "2025-12-17", [0, 12]),
 ]
 
 
@@ -258,6 +272,57 @@ if __name__ == "__main__":
         print(f"  {r['event']:^20} | {r['station']:>4} | "
               f"{r['date']} {r['hour']:02d}z | "
               f"{spd_s:>10} | {dir_s:>10} | {hgt_s:>10} | {inv_s}")
+
+    # ---------------------------------------------------------------------------
+    # Inversion-altitude cross-check: which ridge stations are above the lid?
+    # ---------------------------------------------------------------------------
+    print()
+    print("=" * 72)
+    print("  INVERSION-ALTITUDE TERRAIN CHECK")
+    print("  Compare inversion base to ridge station elevation per event")
+    print("  Below inversion lid = station samples gap flow (sub-inversion)")
+    print("  Above inversion lid = station samples free-atmosphere flow (aloft)")
+    print("=" * 72)
+
+    # Collect best inversion per event (use 12z if available, else 00z)
+    event_inversions = {}
+    for key, r in results.items():
+        ev = r["event"]
+        inv = r["bc"]["inversion"]
+        if inv is None:
+            continue
+        # Prefer 12z
+        if ev not in event_inversions or r["hour"] == 12:
+            event_inversions[ev] = {
+                "station": r["station"], "date": r["date"], "hour": r["hour"],
+                "inv_base_m": inv["base_hght"], "inv_top_m": inv["top_hght"],
+                "inv_strength_c": inv["strength_c"],
+                "stn_700_hgt": r["bc"]["700hPa"].get("hght_m"),
+            }
+
+    for event, ridge_stns in RIDGE_STATIONS.items():
+        inv_data = event_inversions.get(event)
+        print(f"\n  {event}")
+        if not inv_data:
+            print(f"    No inversion data available")
+            continue
+        inv_base = inv_data["inv_base_m"]
+        inv_top  = inv_data["inv_top_m"]
+        h700     = inv_data["stn_700_hgt"]
+        print(f"    Sounding: {inv_data['station']} {inv_data['date']} {inv_data['hour']:02d}z")
+        print(f"    Inversion: {inv_base:.0f}–{inv_top:.0f}m base–top "
+              f"(+{inv_data['inv_strength_c']:.1f}°C)")
+        if h700:
+            print(f"    700 hPa level: {h700:.0f}m  "
+                  f"(above inversion: {h700 - inv_top:.0f}m clearance)")
+        for ridge_name, ridge_m in ridge_stns:
+            if ridge_m < inv_base:
+                verdict = f"BELOW lid by {inv_base - ridge_m:.0f}m -- samples gap flow ✓"
+            elif ridge_m > inv_top:
+                verdict = f"ABOVE lid by {ridge_m - inv_top:.0f}m -- samples free-atm flow"
+            else:
+                verdict = f"IN the inversion layer -- transition zone"
+            print(f"    {ridge_name:30s} {ridge_m:5.0f}m  -> {verdict}")
 
     # Save for downstream use
     out_path = "soundings_cache.json"
