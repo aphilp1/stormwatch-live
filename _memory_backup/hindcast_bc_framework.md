@@ -35,6 +35,31 @@ When 700 hPa gives systematic BC errors in a domain, sample HRRR at the model le
 nearest actual ridgetop elevation instead. Feature name: `ridgetop_level_wind` (replaces
 `w700_speed_mph` for steep terrain domains). Not needed for Camp Fire; relevant for Missoula/SoCal.
 
+## HYDRAULIC-JUMP METHOD BOUNDARY (Brewer & Clements 2020 — from Camp Fire paper)
+
+WindNinja is a mass-conserving DIAGNOSTIC solver. It does NOT produce hydraulic
+jumps or rotors (non-hydrostatic, transient features). This defines a hard method
+boundary that is separate from BC quality.
+
+**Testable prediction:** Stations WN cannot fit should cluster spatially with where
+WN/WRF shows jump/rotor structure. Stations in smooth flow should fit; stations
+under rotors will structurally never fit regardless of how good the BC is.
+
+**Station-QC rule:** "Near modeled hydraulic jump" = METHOD-OUT-OF-SCOPE, not a
+fit failure. The residual at such a station cannot be closed. Do not chase it.
+Example: Stirling City (Camp Fire) sits under a documented rotor — explicitly dropped.
+
+**Implication for mechanism_classifier:** "Near modeled hydraulic jump" is a
+diagnostic that explains low evidence_fraction or unfittable stations, distinguishing
+"method is wrong" from "station is in genuinely erratic flow no steady-state solver
+can capture." This should inform future classifier extensions.
+
+**For erratic-wind forecasting thesis:** The paper confirms the sub-grid jump/rotor
+structure is real, co-locates with where surface observations go haywire, and is
+precisely the scale HRRR cannot resolve. This IS the thesis, stated in peer-reviewed
+literature. WindNinja resolves the smooth terrain amplification; hydraulic jumps are
+out of scope for any diagnostic solver and require WRF/WRF-SFIRE.
+
 ## AUDIT FINDINGS — 2026-05-30 (coordinate correction)
 
 **The 1.4x terrain amplification "constant" is WITHDRAWN.**

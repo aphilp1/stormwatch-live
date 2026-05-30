@@ -63,12 +63,28 @@ from typing import Callable, Dict, List, Optional, Tuple
 # Humbug Mountain (NOT "Humbug Summit"): gusts ~14 m/s (~31 mph), sustained ~5 m/s (~11 mph)
 #   --> LOW-END CONTROL only, not a strong amplification target.
 #
-# Stirling City (PG&E): UNRELIABLE -- paper documents erratic behavior, possibly
-#   under a rotor in downslope winds. DROP from validation. Same class as Atlas Peak (Tubbs).
+# Stirling City (PG&E): METHOD-OUT-OF-SCOPE (not just unreliable).
+#   Brewer & Clements explicitly attributes erratic Stirling City readings to the
+#   station sitting UNDER A ROTOR in the hydraulic-jump structure of the downslope
+#   windstorm. WindNinja is a mass-conserving DIAGNOSTIC solver -- it does NOT
+#   produce hydraulic jumps or rotors (non-hydrostatic, transient features).
+#   Therefore Stirling City is structurally unfittable regardless of BC quality.
+#   The residual at that station can never be closed; chasing it is wrong.
+#   RULE: stations in modeled jump/rotor zones are METHOD-OUT-OF-SCOPE, not
+#   fit failures. DROP from BC sweep entirely.
 #
-# Station coordinates: Table 1 of Brewer & Clements 2020 has verified coords + elevations.
-# HTML extraction failed -- use PDF or XML: mdpi.com/2073-4433/11/1/47/pdf
-# Apply elevation cross-check: ridge RAWS at ~58 mph should sit near a ridgeline.
+# HYDRAULIC-JUMP METHOD BOUNDARY (Brewer & Clements 2020 -- key finding):
+#   The paper found subcritical->supercritical flow with multiple hydraulic jumps
+#   in WRF cross-sections. Erratic surface readings co-locate with rotor zones.
+#   This is a TESTABLE PREDICTION for the pipeline: stations WN cannot fit should
+#   cluster spatially with where WN (or WRF) shows jump/rotor structure. Stations
+#   in smooth flow should fit; stations under rotors will never fit.
+#   Adding "near modeled hydraulic jump" as a station-QC diagnostic distinguishes
+#   "method is wrong" from "this station is in genuinely erratic flow."
+#
+# Station coordinates: from Brewer & Clements 2020 Table 1 (PDF extraction, confirmed).
+# Jarbo cross-validates against NIFC exactly (39.74,-121.49,773m = 2535ft).
+# Apply elevation cross-check: ridge RAWS should sit near a ridgeline, not valley.
 
 # Station IDs and coordinates from Brewer & Clements 2020 Table 1 (verified)
 # NOTE: Saddleback (-120.86W) is 54km EAST of Jarbo -- different drainage.
