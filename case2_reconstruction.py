@@ -47,11 +47,20 @@ from mechanism_classifier import (
 # KNOWN DATA (from dec17_final.py + soundings + windninja_case2_wider.py)
 # ---------------------------------------------------------------------------
 
-# BC audit values (from hrrr_700hpa_case2.py run 2026-05-30)
-HRRR_700_SPEED_MPH = 76.9   # domain mean fxx=12 (12z valid) -- mid-level jet
-HRRR_700_DIR_DEG   = 251.4  # WSW -- NOT the surface driver for this event
-SOUNDING_BC_SPEED  = 28.8   # mph, OTX + TFX 12z identical -- post-frontal BL
-SOUNDING_BC_DIR    = 315.0  # NW
+# BC provenance — two separate paths, must not be conflated
+#
+# PATH 1: Sounding extraction (OTX + TFX 12z, both identical)
+#   -> THE COMMITTED, WORKING WN BC. 700 hPa post-frontal BL flow.
+SOUNDING_BC_SPEED  = 28.8   # mph (25 kt NW)
+SOUNDING_BC_DIR    = 315.0  # deg NW
+#
+# PATH 2: HRRR grid domain-mean extraction (hrrr_700hpa_case2.py, fxx=12)
+#   -> A DIAGNOSTIC showing why grid extraction fails here, NOT a BC candidate.
+#   The domain straddles the frontal boundary; grid mean picks up the pre-frontal
+#   WSW jet on the SE side. Possible compounding factor: cold airmass drops the
+#   700 hPa surface close to terrain over the highest Missoula grid cells.
+HRRR_GRID_700_SPEED = 76.9  # mph WSW -- artifact of frontal straddle
+HRRR_GRID_700_DIR   = 251.4 # deg WSW
 
 # WindNinja results (315 deg / 29 mph init, 12mi grid)
 # from windninja_case2_wider.py -- PNTM8 NIFC authoritative coords
@@ -117,36 +126,38 @@ result = classify(diag)
 
 def print_bc_audit():
     print()
-    print("BC AUDIT")
+    print("BC AUDIT — TWO PROVENANCE PATHS (must not be conflated)")
     print("=" * 70)
-    print(f"  HRRR 700 hPa domain mean (fxx=12, 12z valid):")
-    print(f"    {HRRR_700_SPEED_MPH:.1f} mph @ {HRRR_700_DIR_DEG:.0f} deg WSW")
-    print(f"    --> MID-LEVEL JET STREAM, not the surface flow driver")
     print()
-    print(f"  Sounding-derived WN BC (OTX + TFX 12z, both identical):")
+    print("  PATH 1 — Sounding extraction (THE COMMITTED WN BC):")
     print(f"    {SOUNDING_BC_SPEED:.1f} mph @ {SOUNDING_BC_DIR:.0f} deg NW")
-    print(f"    --> POST-FRONTAL BOUNDARY LAYER FLOW -- the correct BC reference")
+    print(f"    Source: OTX + TFX radiosonde 12z Dec 17 2025, 700 hPa (both identical)")
+    print(f"    This IS the WindNinja init used in windninja_case2_wider.py.")
+    print(f"    It is the free-atmosphere post-frontal BL flow — physically correct BC.")
     print()
-    delta_s = HRRR_700_SPEED_MPH - SOUNDING_BC_SPEED
-    delta_d = (HRRR_700_DIR_DEG - SOUNDING_BC_DIR + 180) % 360 - 180
-    print(f"  Delta speed:     {delta_s:+.1f} mph")
-    print(f"  Delta direction: {delta_d:+.0f} deg")
+    print("  PATH 2 — HRRR grid domain-mean extraction (DIAGNOSTIC, NOT A BC):")
+    print(f"    {HRRR_GRID_700_SPEED:.1f} mph @ {HRRR_GRID_700_DIR:.0f} deg WSW")
+    print(f"    Source: hrrr_700hpa_case2.py domain mean, 00z fxx=12 (valid 12z)")
+    print(f"    This is NOT the BC. It is a diagnostic of what HRRR's 700 hPa grid")
+    print(f"    sees over the domain — and it fails here for two compounding reasons.")
     print()
-    print("  INTERPRETATION:")
-    print("  The HRRR 700 hPa domain mean is averaging over both sides of the frontal")
-    print("  boundary: pre-frontal WSW jet (SE of front) and post-frontal NW flow")
-    print("  (NW of front). The OTX/TFX soundings were already in post-frontal air")
-    print("  at 12z and correctly captured the 25 kt NW boundary-layer flow that")
-    print("  actually drives the Missoula terrain channeling.")
+    print("  WHY PATH 2 FAILS:")
+    print("  Reason 1 — FRONTAL STRADDLE: At 12z the frontal boundary runs through")
+    print("    the domain. The grid mean averages pre-frontal WSW jet (SE of front,")
+    print("    ~75-90 mph) with post-frontal NW low-level flow (NW of front, ~29 mph).")
+    print("    The mean is physically meaningless — two different airmasses.")
+    print("  Reason 2 — BELOW-GROUND EXTRAPOLATION (unconfirmed, likely partial):")
+    print("    In cold post-frontal air, the 700 hPa surface drops toward ~2700m.")
+    print("    Point Six (PNTM8) is at 2323m; surrounding peaks reach ~2500m.")
+    print("    HRRR may extrapolate 700 hPa below-ground over the highest cells.")
+    print("    TODO: confirm with HGT:700 mb guard (see hrrr_700hpa_case2.py).")
     print()
     print("  CONCLUSION FOR THE BC CORRECTION FRAMEWORK:")
-    print("  HRRR 700 hPa domain-mean as BC reference is VALID for SYNOPTIC_TERRAIN")
-    print("  only. For PBL_TRANSIENT frontal events:")
-    print("    - Use a sounding at an upwind post-frontal station (OTX or TFX)")
-    print("    - Or: use HRRR 850 hPa at a point NW of the domain (post-frontal air)")
-    print("    - The 700 hPa HRRR field straddling a front is NOT a BC input")
-    print("  This case is OUT OF SCOPE for the HRRR-700hPa -> WN BC learned map.")
-    print("  It belongs in the PBL_TRANSIENT validation set.")
+    print("  For SYNOPTIC_TERRAIN: HRRR 700 hPa domain-mean extraction is valid.")
+    print("  For PBL_TRANSIENT frontal events: use a sounding at an upwind post-")
+    print("  frontal station. Grid extraction straddling a front is not a BC input.")
+    print("  This case is OUT OF SCOPE for the HRRR->WN BC learned map. It belongs")
+    print("  in the PBL_TRANSIENT validation set as the negative example.")
 
 
 # ---------------------------------------------------------------------------

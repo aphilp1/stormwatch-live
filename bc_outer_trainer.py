@@ -59,22 +59,57 @@ import numpy as np
 # you overfit. The `DEFAULT_FEATURES` list is what the model actually uses --
 # trim it to match what you can reliably pull.
 
+# ---------------------------------------------------------------------------
+# PER-DOMAIN BC LEVEL TRUST
+# ---------------------------------------------------------------------------
+# The physically correct BC variable is "free-atmosphere wind at ridgetop height,"
+# not "700 hPa wind." 700 hPa is a convenient proxy that is VALID for low-terrain
+# domains (Camp Fire, ~1000m max) and UNRELIABLE for high-terrain domains (Missoula
+# ridges ~2300m, Santa Ana peaks up to 3506m), especially in cold airmasses where
+# the 700 hPa surface descends toward terrain.
+#
+# Carry BOTH features; use a per-domain flag to select which is trustworthy:
+#   w700_*              : valid when HGT:700mb > domain_max_terrain + 200m
+#   ridgetop_level_*    : preferred for high-terrain domains; sampled at the HRRR
+#                         model level nearest the upwind crest geometric height
+#
+# Do NOT swap one for the other — keep both in ALL_FEATURES so the outer trainer
+# can learn which matters per domain as N grows.
+
+DOMAIN_BC_LEVEL_TRUST: Dict[str, str] = {
+    "camp_fire_2018":          "w700",           # max terrain ~1000m, clear margin
+    "missoula_dec2025":        "ridgetop",        # PNTM8 2323m, cold air, marginal
+    "thomas_fire_2017":        "ridgetop",        # Topa Topa crest ~2000m, check HGT
+    # add new events here as cases are built
+}
+
 ALL_FEATURES: List[str] = [
-    "w700_speed_mph",      # 700 hPa wind speed over domain (primary driver)
-    "w700_dir_sin",        # 700 hPa wind direction, sin component
-    "w700_dir_cos",        # 700 hPa wind direction, cos component
-    "mslp_grad",           # MSLP gradient magnitude across domain (pressure forcing)
-    "z700_grad",           # 700 hPa geopotential-height gradient magnitude
-    "lapse_rate",          # low-level lapse rate (stability)
-    "froude_proxy",        # dimensionless mountain-height / Froude proxy
-    "shear_700_850",       # cross-level shear magnitude 700-850 hPa
-    "shear_700_500",       # cross-level shear magnitude 700-500 hPa
-    "temp_adv_700",        # 700 hPa temperature advection (frontal signature)
-    "bl_height",           # boundary-layer height
+    # --- 700 hPa reference (valid for low-terrain domains) ---
+    "w700_speed_mph",          # 700 hPa wind speed over domain
+    "w700_dir_sin",            # 700 hPa wind direction, sin component
+    "w700_dir_cos",            # 700 hPa wind direction, cos component
+    # --- ridgetop-level reference (preferred for high-terrain domains) ---
+    # sampled at HRRR model level nearest upwind crest geometric height
+    "ridgetop_speed_mph",      # wind speed at ridgetop level
+    "ridgetop_dir_sin",        # wind direction at ridgetop level, sin
+    "ridgetop_dir_cos",        # wind direction at ridgetop level, cos
+    # --- pressure forcing ---
+    "mslp_grad",               # MSLP gradient magnitude across domain
+    "z700_grad",               # 700 hPa geopotential-height gradient magnitude
+    # --- stability (controls amplification, mountain-wave setup) ---
+    "lapse_rate",              # low-level lapse rate
+    "froude_proxy",            # dimensionless mountain-height / Froude proxy
+    # --- shear ---
+    "shear_700_850",           # cross-level shear 700-850 hPa
+    "shear_700_500",           # cross-level shear 700-500 hPa
+    # --- frontal / BL ---
+    "temp_adv_700",            # 700 hPa temperature advection (frontal signature)
+    "bl_height",               # boundary-layer height
 ]
 
-# Start here. Three predictors for the speed residual is already generous at
-# small N. Expand only as events accumulate.
+# Start here for SYNOPTIC_TERRAIN low-terrain domains (Camp Fire, Iowa).
+# For high-terrain domains, swap w700_speed_mph -> ridgetop_speed_mph once
+# that field is populated. Expand only as events accumulate.
 DEFAULT_FEATURES: List[str] = [
     "w700_speed_mph",
     "mslp_grad",
