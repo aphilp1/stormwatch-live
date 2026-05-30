@@ -41,13 +41,21 @@ set in the current pipeline — several are independent ridge sites usable as
 
 | Station | Type | Role | Notes for the audit |
 |---|---|---|---|
-| **Jarbo Gap** | CAL FIRE RAWS **041214** | Primary / anchor | NIFC coords 39.735944, -121.488944, ~2535 ft, ridge, SE aspect. Observed 8 Nov: sustained ~32 mph, gust 52 mph, peak ~4 AM PST. **BURNOVER WARNING:** clip data before ~14:00 UTC Nov 9 (06:00 PST) — paper Fig 7A marks as "questionable" after that point (soil temps >40C, station likely burned ~08:00 PST Nov 9). |
-| **Colby Mountain** | RAWS | **Held-out A** | Confirmed: gusts **≥26 m/s (~58 mph)**, sustained **≥10 m/s (~22 mph)**. Strong ridge amplification target. Coords: pull from paper Table 1 PDF. |
-| **Saddleback** | RAWS | **Held-out B** | Confirmed: gusts **≥26 m/s (~58 mph)**, sustained **≥10 m/s (~22 mph)**. Strong ridge amplification target. Coords: pull from paper Table 1 PDF. |
-| **Humbug Mountain** | RAWS | **Low-end control** | Paper name: "Humbug Mountain" (also "Humbug Summit" in text — ambiguous). **WEAK site:** gusts ~14 m/s (~31 mph), sustained ~5 m/s (~11 mph). Useful as low-amplification control, NOT a strong target. |
-| **Openshaw** | RAWS | Network | In paper network. Large direction error in WRF validation (Openshaw was the worst direction site, 54°→35° when dropped). Verify coords before using. |
-| **Stirling City** | PG&E wx | **UNRELIABLE** | Paper documents erratic behavior — two periods of weak SE flow, possibly under a rotor. DROP from validation. Same class as Atlas Peak (Tubbs). |
-| **Red Hill Lookout** | PG&E wx | Network | Non-RAWS; PG&E mesonet. |
+**Verified from Brewer & Clements 2020 Table 1 (PDF extraction 2026-05-30):**
+
+| Station | ID | Lat | Lon | Elev | Role | Key notes |
+|---|---|---|---|---|---|---|
+| **Jarbo Gap** | **JBGC1** | 39.74 | -121.49 | 773m / 2536ft | Primary anchor | Ridge, SE aspect. Obs: sustained ~32 mph, gust 52 mph. **BURNOVER: clip before 14:00 UTC Nov 9** |
+| **Openshaw** | **CICC1** | 39.59 | -121.64 | **82m / 269ft** | **VALLEY FLOOR** | Elev cross-check FAIL for ridge target. Worst direction site in WRF validation. Weight 0.2. |
+| **Saddleback** | **SLEC1** | 39.63 | **-120.86** | 2033m / 6670ft | Held-out A | **54km EAST of Jarbo** — different drainage. Separate WN domain needed. Gust ≥58 mph per paper. |
+| **Colby Mtn** | **CBXC1** | 40.14 | -121.52 | 1830m / 6004ft | Held-out B | **44km NORTH of fire origin.** Separate WN domain needed. Gust ≥58 mph per paper. |
+| **Humbug Summit** | **HMRC1** | 40.11 | -121.38 | 2046m / 6713ft | Low-end control | Gusts ~31 mph (~14 m/s), sustained ~11 mph (~5 m/s). Weak amplification. |
+| **Stirling City** | PG131 | 39.91 | -121.53 | 1143m | **DROP** | PG&E, unreliable. Erratic behavior, possibly under rotor. |
+| **Red Hill Lookout** | PG129 | 40.03 | -121.18 | 1930m | Network | PG&E mesonet. |
+
+**DOMAIN IMPLICATION:** Saddleback (-120.86W) and Colby Mtn (40.14N) are 54km and 44km
+from Jarbo Gap respectively. A single 12mi WindNinja grid cannot cover all three.
+Options: (1) separate WN runs per station cluster, or (2) ~35mi grid (performance hit).
 
 **Concow / Paradise / Pulga reality check:** these *towns* likely had **no dedicated
 RAWS** in 2018 — Jarbo Gap is the RAWS that *covers* the Concow/Yankee Hill area.

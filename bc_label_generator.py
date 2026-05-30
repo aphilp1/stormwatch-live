@@ -70,30 +70,45 @@ from typing import Callable, Dict, List, Optional, Tuple
 # HTML extraction failed -- use PDF or XML: mdpi.com/2073-4433/11/1/47/pdf
 # Apply elevation cross-check: ridge RAWS at ~58 mph should sit near a ridgeline.
 
+# Station IDs and coordinates from Brewer & Clements 2020 Table 1 (verified)
+# NOTE: Saddleback (-120.86W) is 54km EAST of Jarbo -- different drainage.
+#       Colby Mtn (40.14N) is 44km NORTH of fire origin.
+#       These cannot share a 12mi WindNinja domain with Jarbo.
+#       Domain design: separate WN runs per station cluster, or ~35mi grid.
+# NOTE: Openshaw (82m / 269ft) is VALLEY FLOOR -- will show minimal amplification.
+#       Do NOT use as a primary BC calibration station.
+STATION_COORDS = {
+    "jarbo_gap":  (39.74, -121.49, 773,  "JBGC1"),   # 2536 ft, ridge -- anchor
+    "openshaw":   (39.59, -121.64, 82,   "CICC1"),   # 269 ft, VALLEY FLOOR -- low weight
+    "saddleback": (39.63, -120.86, 2033, "SLEC1"),   # 6670 ft, ridge -- held-out A
+    "colby_mtn":  (40.14, -121.52, 1830, "CBXC1"),   # 6004 ft, ridge -- held-out B
+    "humbug_mtn": (40.11, -121.38, 2046, "HMRC1"),   # 6713 ft, ridge -- low-end control
+}
+
 OBSERVED_GUSTS: Dict[str, Optional[float]] = {
-    "jarbo_gap":      52.0,   # gust; sustained = 32 mph; clip before 14z Nov 9
-    "colby_mtn":      None,   # literature: gust >=58 mph, sustained >=22 mph -- HELD-OUT A
-    "saddleback":     None,   # literature: gust >=58 mph, sustained >=22 mph -- HELD-OUT B
-    "openshaw":       None,   # paper network; coords TBD from Table 1 PDF
-    "humbug_mtn":     None,   # LOW-END CONTROL: gust ~31 mph, sustained ~11 mph
+    "jarbo_gap":  52.0,   # gust (Brewer & Clements 2020); sustained = 32 mph
+    "openshaw":   None,   # valley floor (82m) -- fetch, expect low values
+    "saddleback": None,   # literature: gust >=58 mph (~26 m/s) -- HELD-OUT A
+    "colby_mtn":  None,   # literature: gust >=58 mph (~26 m/s) -- HELD-OUT B
+    "humbug_mtn": None,   # literature: gust ~31 mph (~14 m/s) -- LOW-END CONTROL
 }
 
 # Sustained obs for sustained-to-sustained comparison (GUST_FACTOR=1.625 convention)
 OBSERVED_SUSTAINED: Dict[str, Optional[float]] = {
-    "jarbo_gap":      32.0,   # confirmed from Brewer & Clements 2020
-    "colby_mtn":      None,   # >=22 mph (>=10 m/s) per paper
-    "saddleback":     None,   # >=22 mph (>=10 m/s) per paper
-    "openshaw":       None,
-    "humbug_mtn":     None,   # ~11 mph (~5 m/s) per paper -- weak site
+    "jarbo_gap":  32.0,   # confirmed (Brewer & Clements 2020)
+    "openshaw":   None,   # valley floor -- expect low
+    "saddleback": None,   # >=22 mph (>=10 m/s) per paper
+    "colby_mtn":  None,   # >=22 mph (>=10 m/s) per paper
+    "humbug_mtn": None,   # ~11 mph (~5 m/s) per paper
 }
 
 # Per-station weight in the score.
 STATION_WEIGHTS: Dict[str, float] = {
     "jarbo_gap":  1.0,
-    "colby_mtn":  1.0,   # strong ridge, held-out
+    "openshaw":   0.2,   # valley floor -- near-useless for BC calibration
     "saddleback": 1.0,   # strong ridge, held-out
-    "openshaw":   0.8,   # coords TBD
-    "humbug_mtn": 0.3,   # low-end control only; weak amplification
+    "colby_mtn":  1.0,   # strong ridge, held-out
+    "humbug_mtn": 0.3,   # weak amplification -- low-end control only
 }
 
 # Gust factor: WindNinja outputs SUSTAINED wind; RAWS reports GUSTS.
