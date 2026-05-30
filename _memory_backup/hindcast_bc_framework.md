@@ -85,6 +85,42 @@ this as the most important unresolved item, not another engineering build.
 Confidence engine + surrogate WindNinja = real, valuable, build them.
 But they are INFRASTRUCTURE FOR TESTING, not the test itself.
 
+## APPARATUS vs VALIDATED SCIENCE LEDGER (updated 2026-05-30)
+
+VALIDATED APPARATUS (tested, falsifiable, passes):
+  - Surrogate WindNinja: 0.05 mph LOBO RMSE, degrades gracefully
+  - Confidence engine: fires correctly on real terrain fields
+  - Mechanism classifier: 18/18 stress test
+
+SOUND DESIGN PRINCIPLES (apparatus-side only -- not yet atmospheric truth):
+  - "Direction is the high-leverage BC input within WindNinja"
+    WHY IT'S APPARATUS NOT SCIENCE: speed-linearity is partly BUILT INTO
+    mass-conservation physics (doubling BC speed ~ doubles all speeds).
+    Direction-sensitivity is the genuinely empirical part -- it tells you
+    WHERE to spend the correction budget within the solver.
+    CAN'T YET CLAIM: direction correction beats speed correction against reality.
+    That requires RAWS comparison.
+  - "Terrain geometry modulates BC sensitivity"
+    This IS a real finding with teeth: narrow canyon (Jarbo, 0.16x direction range)
+    vs broad ridge (Topa Topa, 0.03x) -- connects terrain geometry to where
+    the confidence engine should fire hardest. NOT just restating the solver.
+
+NOT YET VALIDATED SCIENCE (all RAWS-gated):
+  - BC-corrected WN beats raw HRRR at held-out terrain stations out-of-sample
+  - Direction correction beats speed correction against real observations
+  - Amplification ratios at any station except Jarbo Gap
+
+PROVENANCE FLAGS:
+  - Jarbo Gap: NIFC-verified (39.735944, -121.488944, 773m) -- trustworthy
+  - Topa Topa: UNVERIFIED coordinates, was part of withdrawn 1.42x constant.
+    Sensitivity behavior (broad ridge → low direction range) is qualitatively
+    plausible from terrain geometry, but numbers don't carry Jarbo-level weight.
+  - All stations except Jarbo: coordinates and observations need verification
+
+CRITICAL PATH (only you can action this, not Claude Code):
+  Synoptic research-tier token application + WRCC/SJSU outreach.
+  This is the single gate between "impressive apparatus" and "validated science."
+
 ## AUDIT FINDINGS — 2026-05-30 (coordinate correction)
 
 **The 1.4x terrain amplification "constant" is WITHDRAWN.**
