@@ -63,11 +63,11 @@ aloft winds drop. Current operational approach may under-warn this window.
 For each new hindcast case, add a row to the table below when the 700 hPa
 time series is available. Note whether ignition was pre-peak, at-peak, or post-peak.
 
-| Case | Event | Domain mean peak | Domain mean at ignition | Domain verdict | Local (fire-site) peak | Local verdict |
-|---|---|---|---|---|---|---|
-| 4 | Camp Fire | 22.4 mph at fxx=18 (10 AM PST) | 21.1 mph (fxx=14, 06:33 PST) | **RISING -- BREAKS** | ~20 mph at fxx=12 (04 AM PST) | Declining -- confirms |
-| 9 | Tubbs Fire | 27.5 mph at fxx=2 (02z) | 23.6 mph (fxx=4, 04:45z) | **Declining -- confirms** | not yet extracted | TBD |
-| 8 | Thomas Fire | 31.8 mph at fxx=6 (06z) | 28.8 mph (fxx=9, 09:45z) | **Declining -- confirms** | not yet extracted | TBD |
+| Case | Event | Domain mean peak | Domain mean at ignition | Domain verdict | Control test |
+|---|---|---|---|---|---|
+| 4 | Camp Fire | fxx=18 (10 AM PST), 22.4 mph | 21.1 mph (fxx=14) | **BREAKS -- rising** | Not yet run |
+| 9 | Tubbs Fire | fxx=14 (14z Oct 8), 24.4 mph | fxx=28 (Oct 9 04:45z) | **CONFIRMS -- 14h before** | Site leads mean +4h; ctrl LAGS mean 4h → 8h difference → NOT simple geometry |
+| 8 | Thomas | Stitch required: ~midnight Dec 3-4 | fxx=33 (Dec 4 09:45z) | **CONFIRMS (stitched)** | Site leads mean +6h; ctrl leads mean +3h → 3h difference |
 
 ## AUDIT RESULT: Pre-registered prediction BROKEN for Camp Fire (2026-05-30)
 
@@ -93,20 +93,68 @@ flow peaks earlier than HRRR's domain-scale 700 hPa, which may be the relevant
 quantity for both warning timing and BC quality. But this is an inference from
 point extractions, not a pre-registered result, and needs verification.
 
-## REVISED STATUS
+## REVISED STATUS (2026-05-30 — after Opus critique)
 
-The simple "all SYNOPTIC_TERRAIN fires ignite on the declining 700 hPa limb" is NOT
-confirmed. Camp Fire's domain mean was rising at ignition.
+**The simple declining-limb thesis is WOUNDED.** Camp Fire domain mean was rising
+at ignition. Until Tubbs/Thomas overnight pulls are run (full overnight coverage,
+same as Camp), their post-peak claims may be truncation artifacts from the 12z run
+window, not confirmed post-peak ignitions.
 
-What may be real (requires proper testing):
-1. The LOCAL terrain-channeled flow at the fire site peaks EARLIER than the
-   domain-scale synoptic flow -- and it is the local flow, not the domain mean,
-   that is the operative timing signal.
-2. Tubbs and Thomas (domain mean declining at ignition) may differ from Camp Fire
-   (domain mean rising) in ways that matter for mechanism or forecast approach.
+**The local-lead observation (fire site peaks before domain mean) has two
+failure modes that prevent 700 hPa alone from resolving it:**
 
-Next steps before claiming any timing finding:
-1. Extract LOCAL point 700 hPa time series at fire sites for Tubbs and Thomas
-   (same as just done for Camp Fire) -- do they also show local peak before ignition?
-2. Contrast class: non-catastrophic days same terrain.
-3. Investigate WHY Camp Fire's local flow peaked earlier than domain mean.
+1. TRANSLATING-FEATURE GEOMETRY: Mass 2021 explicitly describes the shortwave/AWB
+   crest propagating SE across the domain. Any spatial average over a moving feature
+   smears/delays the peak vs any single point on the early/upwind side -- purely by
+   geometry, no terrain required. "Fire site peaks 2h before domain mean" may just be
+   "this point is on the early side of the moving max." A non-channeled control point
+   in the same domain should show the same lead if geometry, different lead if terrain.
+
+2. 700 hPa DOESN'T CONTAIN CANYON FLOW: The 700 hPa field is smooth at 3km.
+   Canyon/gap flow isn't IN it -- that's the whole reason WindNinja exists. What we
+   see as "Jarbo point peaks before mean" is the synoptic 700 hPa value above the
+   fire site, not resolved terrain channeling. "Canyon responds faster" can't be read
+   from 700 hPa alone.
+
+**The real timing mechanism test** is: does the SURFACE (RAWS) wind at a channeled
+site peak earlier, relative to the 700 hPa driver, than at a non-channeled site?
+That's the surface-vs-aloft lag question, and it needs RAWS obs -- same data gate
+as the amplification work.
+
+**What the Camp Fire pull DID cleanly produce:**
+  Camp Fire ignited on the RISING limb of the synoptic 700 hPa domain mean.
+  This is a finding (pre-registered, BREAKS). It means Tubbs and Thomas's
+  apparent post-peak ignition needs confirmation from overnight pulls.
+
+## UPDATED STATUS (2026-05-30 — after Tubbs/Thomas overnight pulls)
+
+Scoreboard: 2 CONFIRMS (Tubbs, Thomas), 1 BREAKS (Camp Fire).
+
+**Tubbs control test result:** Fire site peaked 4h BEFORE domain mean; control peaked
+4h AFTER domain mean. That's an 8-hour asymmetry -- NOT consistent with simple
+translating-feature geometry (which would expect both to lead/lag symmetrically).
+At 700 hPa we cannot call this canyon channeling (canyon flow isn't in the 700 hPa
+field), but it's a genuine positional difference worth noting.
+
+**Camp Fire vs Tubbs/Thomas:** Camp Fire is the narrow gap/canyon mechanism (Feather
+River Canyon). Tubbs and Thomas are broader downslope events over wider terrain. The
+domain mean's timing behavior differs between these sub-types. This may itself be
+informative: broader downslope peaks before ignition; narrow gap/canyon peaks after.
+
+**Thomas archive limitation:** HRRR Dec 2017 (HRRRv2) only stores 18h forecasts from
+00z run. Used stitch of Dec 3 00z (fxx=0-18) + Dec 4 00z (fxx=0-15, from Case 8).
+
+## REMAINING REQUIREMENTS BEFORE CLAIMING A FINDING
+
+1. Contrast class: non-catastrophic SYNOPTIC_TERRAIN events same terrain and period.
+   The 2/3 confirms are all selected cases -- need days when similar aloft wind did
+   NOT produce catastrophic fire.
+
+2. RAWS surface-vs-aloft lag test (gated on data access). The real timing mechanism
+   question is whether the SURFACE response lags the aloft driver differently at
+   channeled vs non-channeled sites. 700 hPa alone cannot answer this.
+
+3. The Camp Fire anomaly needs explanation. If gap/canyon fires systematically differ
+   from broader downslope fires in their timing structure, that is itself a finding
+   that refines the mechanism classification (separate timing behavior for gap vs
+   broad downslope within SYNOPTIC_TERRAIN).
