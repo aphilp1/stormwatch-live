@@ -87,7 +87,7 @@ which the literature already measured at ~58 mph.
 ### Station network — the two the literature standardized on
 | Station | Type | Role | Verified observations |
 |---|---|---|---|
-| **Hawkeye** | RAWS (record from ~1993, 24-yr) | Primary ridge | **Max gust 79 mph (69 kt)** 8–9 Oct — strongest NE gusts on record AND strongest from any direction (Mass & Ovens). ~45 km NW of Santa Rosa. |
+| **Hawkeye** | RAWS (record from ~1993, 24-yr) | Primary ridge | **Max gust 79 mph (69 kt)** 8–9 Oct — strongest NE gusts on record AND strongest from any direction (Mass & Ovens). **NIFC-confirmed (2026-05-30): 38.7351°N, -122.8371°W, 617m (2024 ft), WIMS 42010, CAL FIRE LNU.** Above Tubbs inversion lid (174m). Note: 79 mph is a GUST; sustained obs required before computing amplification ratio. |
 | **Santa Rosa** | RAWS (record from 1991, 26-yr) | Valley/lee | **Peak gust 68 mph (59 kt)**, 2nd-strongest NE-quadrant on record. At 11 UTC 9 Oct: T 32.8 °C, RH 7%, gust 27.3 m/s, FFWI 78. |
 | **Atlas Peak** | RAWS | **REJECTED by lit** | Tall trees shelter N/E → undersamples strong winds; only 6-yr record. **A direct warning for your own station selection.** |
 
@@ -112,6 +112,27 @@ which the literature already measured at ~58 mph.
 4. **SFSU thesis (Geosciences)** — tornado.sfsu.edu/.../Thesis_Final.html
    - Hawkeye 35 m/s (78 mph) 11pm 8 Oct; hydraulic-jump schematic; links to the
      1964/1970 Hanly Fire Diablo analog (Monteverdi 1973).
+
+---
+
+## EVENT 2b — THOMAS FIRE (2017-12-04) — station status
+
+**Topa Topa is NOT a RAWS station** (verified 2026-05-30 against NIFC CA NFDRS, NIFC
+Key RAWS, WRCC CA list — not found under any spelling). Coordinates used in CONUS404
+script (34.520°N, -119.080°W, ~6230 ft) are a geographic estimate of the Topa Topa
+PEAK, not an observable. Any prior "1.44x amplification" at Topa Topa had no real
+numerator — it was WindNinja model output at a summit point.
+
+**Real RAWS in Thomas Fire domain** (Ventura/SB County mountains):
+| Station | ID | Lat | Lon | Elev | Notes |
+|---|---|---|---|---|---|
+| Rose Valley II | ROVC1 (WIMS 45314) | 34.543°N | -119.185°W | 3336 ft (1017m) | BELOW VBG inversion lid (1388m) — sub-inversion flow |
+| Chuchupate | CUUC1 (WIMS 45302) | 34.8°N | -119.0°W | 4900 ft (1494m) | ABOVE lid — best available above-inversion target |
+| Ozena | WIMS 45303 | 34.682°N | -119.354°W | 3690 ft (1125m) | N. Ventura; verify vs lid |
+
+**VBG inversion (Wyoming, independent source): 1388m (00z Dec 4).** Chuchupate at 1494m
+sits above the lid and is the closest real above-inversion validation target. Needs full
+coord/elevation verification before use as a BC scoring station.
 
 ---
 
