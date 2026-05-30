@@ -7,6 +7,7 @@
 - [User profile](user_profile.md) — Windows 11 Dell laptop, non-technical, weather enthusiast building StormWatch Live
 - [Feedback & preferences](feedback.md) — response style, code approach, confirmed patterns
 - [14-case hindcast library](hindcast_expansion_tasks.md) — 9 done; event library (hindcast_event_library.md) supersedes numbered list; next: Tubbs→Kincade+Glass→Labor Day 2020 OR→Woolsey+NC→Yarnell+Carr
+- [Station registry](hindcast_station_registry.md) — NIFC-authoritative RAWS IDs + literature targets: Camp Fire (JBGC1+Colby+Saddleback), Tubbs/Kincade (Hawkeye shared anchor), Kincade=NW not NE wind
 - [HRRR→WN BC learning pipeline](hindcast_bc_framework.md) — NeuralGCM-informed framework: correct WN inputs not outputs; residual Δ(speed,dir) target; Camp Fire day-one: HRRR 25.2@50°, BC 35@45°, Δ+9.8mph; 700hPa scope=SYNOPTIC_TERRAIN only
 - [MCP bug backlog](mcp_bug_backlog.md) — 24 bugs from QA sweep; 9 fixed 2026-05-28; remaining: BUG-007/012/013/016/021 + cosmetics
 - [HRRR→WN BC learning pipeline](hindcast_bc_framework.md) — NeuralGCM-informed framework: correct WN inputs not outputs; residual Δ(speed,dir) target; inner BC sweep → outer linear regressor; bc_sweep.py not yet built locally

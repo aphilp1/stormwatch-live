@@ -45,18 +45,32 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 # Observed RAWS peak gusts (mph). Fill in real values; use None for stations
 # you don't have obs for (they're excluded from scoring).
-# Jarbo Gap = 52 mph is the known Camp Fire observation.
+#
+# Station network from peer-reviewed literature (Brewer & Clements 2020;
+# Mass et al. 2021 BAMS). Concow/Paradise/Pulga had NO dedicated RAWS in 2018.
+# Held-out validation targets are Colby Mountain and Saddleback (both >=58 mph
+# from literature), not town-named stations that don't exist.
+#
+# Jarbo Gap coords: 39.735944, -121.488944 (NIFC authoritative, corrected 2026-05-30)
+# Jarbo Gap Synoptic ID: JBGC1
+# NOTE: 52 mph at Jarbo -- gust or sustained? Resolve from IBHS report Fig 1
+# (full gust+sustained curve for 00z Nov 8 -- 12z Nov 9).
 OBSERVED_GUSTS: Dict[str, Optional[float]] = {
-    "jarbo_gap": 52.0,
-    "concow":    None,   # TODO: fill from RAWS archive
-    "paradise":  None,   # TODO
-    "pulga":     None,   # TODO
+    "jarbo_gap":     52.0,   # confirmed; gust vs sustained TBD from IBHS report
+    "colby_mtn":     None,   # literature: >=58 mph (26 m/s) -- held-out target A
+    "saddleback":    None,   # literature: >=58 mph (26 m/s) -- held-out target B
+    "openshaw":      None,   # in Mass et al. 2021 station set -- fetch when available
+    "humbug":        None,   # in Mass et al. 2021 station set -- fetch when available
 }
 
 # Per-station weight in the score (e.g. trust an exposed ridge site more than a
 # sheltered valley one). Defaults to 1.0 for any station not listed.
 STATION_WEIGHTS: Dict[str, float] = {
-    "jarbo_gap": 1.0,
+    "jarbo_gap":  1.0,
+    "colby_mtn":  1.0,   # ridge site, held-out
+    "saddleback": 1.0,   # ridge site, held-out
+    "openshaw":   0.8,   # lower confidence until coords verified
+    "humbug":     0.8,
 }
 
 # Gust factor: WindNinja outputs SUSTAINED wind; RAWS reports GUSTS.
