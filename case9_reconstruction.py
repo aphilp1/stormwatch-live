@@ -42,17 +42,19 @@ HRRR_700_IGNITION = {"speed_mph": 23.6, "dir_deg": 26.0,
 # Fire ignited at declining wind -- same timing-bust axis as documented in Mass 2021
 
 # WindNinja results at HRRR prior BC (24 mph @ 26 NNE)
-# NOTE: Hawkeye and Santa Rosa coordinates are APPROXIMATE -- IDs not yet verified.
-# All results below carry the §2.1 caveat: approximate coordinates = suspect ratio.
-WINDNINJA_HRRR_PRIOR = {
-    "ignition":   {"dir": 30, "spd": 20.2, "ratio": 0.84,
-                   "note": "slightly sheltered from NNE flow"},
-    "hawkeye":    {"dir": 31, "spd": 23.0, "ratio": 0.96,
-                   "note": "near-ambient -- COORDINATE SUSPECT (approx only)"},
-    "santa_rosa": {"dir": None, "spd": None, "ratio": None,
-                   "note": "outside 16mi grid (18.1mi from center)"},
-    "fountgrove": {"dir": 25, "spd": 21.4, "ratio": 0.89,
-                   "note": "slightly sheltered"},
+# STATUS: WITHHELD -- coordinates are approximate, IDs not yet verified.
+# Per protocol §1 prime directive: a number believed to be a coordinate
+# artifact is NOT a finding and does not travel in the results list.
+# Near-ambient ratios (0.84-0.96x) are consistent with WN extracting from
+# a sheltered cell due to wrong coordinates -- OPPOSITE sign from Jarbo's
+# 39.977 error (which pointed at MORE exposed terrain), same cause.
+# Reporting "Case 9 shows weak amplification" would seed a false pattern.
+# WITHHOLD until verified coordinates from live registry.
+WINDNINJA_WITHHELD = {
+    "ignition":   {"dir": 30, "spd": 20.2, "ratio": 0.84},
+    "hawkeye":    {"dir": 31, "spd": 23.0, "ratio": 0.96},
+    "santa_rosa": {"dir": None, "spd": None, "ratio": None},
+    "fountgrove": {"dir": 25, "spd": 21.4, "ratio": 0.89},
 }
 
 # Validation targets (Mass & Ovens 2019 BAMS) -- GUSTS
@@ -105,60 +107,64 @@ def print_bc_audit():
 
 def print_wn_audit():
     print()
-    print("WINDNINJA AUDIT -- HRRR prior BC (24 mph @ 26 NNE)")
+    print("WINDNINJA -- WITHHELD (§1 prime directive)")
     print("=" * 70)
-    print("  ALL RESULTS CARRY §2.1 CAVEAT: Hawkeye/Santa Rosa coordinates")
-    print("  are APPROXIMATE (IDs not yet verified from live registry).")
-    print("  Near-ambient ratios (0.84-0.96x) may reflect coordinate error,")
-    print("  not actual terrain behavior. Do not interpret until coords confirmed.")
+    print("  WN ratios (0.84-0.96x) are WITHHELD pending verified coordinates.")
+    print("  Believed to be coordinate artifacts; reporting them as results risks")
+    print("  seeding a false 'Case 9 shows weak amplification' pattern.")
     print()
-    print(f"  {'Station':^22} | {'WN sust':>8} | {'Ratio':>6} | {'Obs gust':>9} | Notes")
-    print(f"  {'-'*22}-+-{'-'*8}-+-{'-'*6}-+-{'-'*9}-+-{'-'*30}")
-    for stid, wn in WINDNINJA_HRRR_PRIOR.items():
-        if wn["spd"] is None:
-            print(f"  {stid:^22} | {'---':>8} | {'---':>6} | {'---':>9} | {wn['note']}")
-            continue
-        og = OBSERVED_GUSTS.get(stid)
-        og_s = f"{og:.0f} mph" if og else "TBD"
-        print(f"  {stid:^22} | {wn['spd']:>6.1f}mph | {wn['ratio']:>6.2f}x | "
-              f"{og_s:>9} | {wn['note']}")
+    print("  Two unresolved explanations for the near-ambient result:")
+    print("    1. COORDINATE ERROR: approx Hawkeye (38.80N, 122.90W) likely misses")
+    print("       the actual ridge. WN extracts a sheltered cell (opposite-sign error")
+    print("       to Jarbo 39.977 which pointed at MORE exposed terrain -- same cause).")
+    print("    2. DIRECTION ERROR: true Diablo approach may be ~NE 40-45deg, not NNE 26.")
+    print("       Wrong approach angle changes terrain interaction entirely.")
     print()
-    print("  Hawkeye observed gust 79 mph >> WN prediction 23.0 mph (near-ambient).")
-    print("  Implied sustained ~49 mph (at gust factor ~1.625) far exceeds WN output.")
-    print("  This gap has two candidate explanations (protocol §1):")
-    print("    1. COORDINATE ERROR: approx coords (38.80N, 122.90W) miss the")
-    print("       actual Hawkeye ridge. WN extracts a sheltered cell.")
-    print("    2. DIRECTION ERROR: true Diablo at Mayacamas may be ~NE 40-45deg,")
-    print("       not NNE 26deg. Wrong approach angle changes terrain interaction.")
-    print("  Both must be resolved before any ratio is trusted. Pending: verified")
-    print("  Hawkeye station coordinates from Synoptic/WRCC registry.")
+    print("  When verified coords + obs arrive:")
+    print("    Falsifiable direction test: vary direction, hold speed, watch ridge ratios.")
+    print("    If ratios move significantly between 26deg and 45deg BC: direction matters.")
+    print("    If ratios don't move: neither direction nor speed is the story; answer is")
+    print("    pure terrain geometry independent of approach angle.")
 
 
 def print_findings():
     print()
-    print("KEY FINDINGS AND OPEN QUESTIONS")
+    print("FINDINGS AND FRAMING (protocol §1)")
     print("=" * 70)
     print()
-    print("  CONFIRMED:")
-    print("    1. SYNOPTIC_TERRAIN mechanism, score 0.90, margin 0.70")
-    print("    2. Terrain guard: clean (1889m margin; Mayacamas <1324m)")
-    print("    3. HRRR 700 hPa: 23.6 mph @ 26 NNE at ignition")
-    print("       Similar speed to Camp Fire (25.2 mph) -- different direction")
-    print("    4. Declining wind regime -- timing-bust axis same as Camp Fire")
+    print("  CONFIRMED (survived artifact checks):")
+    print("    1. SYNOPTIC_TERRAIN, score 0.90, margin 0.70")
+    print("    2. Terrain guard: clean, 1889m margin")
+    print("    3. HRRR 700 hPa at ignition: 23.6 mph @ 26 NNE")
+    print()
+    print("  TIMING OBSERVATION (new, not selected-for, mechanistically specific):")
+    print("    Wind was declining at ignition: 27.5 -> 23.6 -> 15.0 mph over 8 hours.")
+    print("    Fire ignited and ran on the DECLINING LIMB of the wind curve.")
+    print("    Camp Fire (Mass 2021): same declining-limb pattern documented.")
+    print("    THIS is the cross-case pattern worth elevating -- it predicts that")
+    print("    catastrophic runs lag peak wind, which changes when warnings should fire.")
+    print("    See timing_observations.md for the dedicated thread.")
+    print()
+    print("  WHAT '23-28 MPH AT 700 HPA ACROSS CASES' DOES AND DOES NOT MEAN:")
+    print("    Does NOT mean: these fires happened because of 23-28 mph aloft wind.")
+    print("    These events were SELECTED for being catastrophic Diablo fires.")
+    print("    Strong downslope fires naturally have strong-downslope winds. Circular.")
+    print("    The contrast class is missing: were there 23-28 mph NE 700 hPa days")
+    print("    over the same terrain that did NOT produce catastrophic fire? If so,")
+    print("    700 hPa speed alone doesn't discriminate -- terrain response does.")
+    print("    That contrast is buildable from HRRR archive (non-fire sample days).")
+    print()
+    print("    DOES support: 'HRRR aloft is consistent; terrain response is what varies'")
+    print("    -- the real thesis. Synoptic winds well-forecast (both BAMS papers).")
+    print("    All the action is in the terrain transfer function HRRR can't resolve.")
+    print("    This also reinforces speed-bias = consistent-with-zero: if 700 hPa is")
+    print("    consistently ~25 mph and a good BC, there's no speed bias to learn.")
+    print("    Value lives in direction, terrain geometry, and timing.")
     print()
     print("  OPEN (data-blocked):")
-    print("    A. Verified Hawkeye + Santa Rosa coordinates (Synoptic research tier)")
-    print("    B. Observed sustained winds (RAWS time series for gust-factor resolution)")
-    print("    C. BC sweep (direction especially -- 26 NNE may be wrong approach angle)")
-    print("    D. Colby/Saddleback Camp Fire sweep (Phase A; same data gate)")
-    print()
-    print("  CROSS-CASE NOTE:")
-    print("    Tubbs HRRR 700: 23.6 mph @ 26 NNE")
-    print("    Camp Fire HRRR 700: 25.2 mph @ 50 NE")
-    print("    Both ~24-25 mph at 700 hPa for fires producing 60-80 mph gusts.")
-    print("    If Tubbs BC also resolves to ~28 mph after sweep, that strengthens")
-    print("    the (small) speed-bias signal. If direction shifts substantially,")
-    print("    direction becomes the more informative BC component for Diablo events.")
+    print("    A. Verified Hawkeye + Santa Rosa coordinates + observed sustained winds")
+    print("    B. Direction-vary test (hold speed, sweep direction around 26-45 NNE/NE)")
+    print("    C. Camp Fire Phase A sweep (Colby/Saddleback; same data gate)")
 
 
 if __name__ == "__main__":
