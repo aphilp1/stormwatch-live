@@ -11,6 +11,31 @@ metadata:
 
 **Why:** The hindcast library's ultimate purpose is to train a learned map from HRRR synoptic state → WindNinja boundary conditions, replacing hand-tuned BCs (like Camp Fire's 35 mph NE at 700 hPa) with a systematic, generalizable method for forecasting erratic wildland fire winds.
 
+## BC DIRECTION CONVENTION -- CRITICAL (from Opus 2026-05-30)
+
+For a lee-side downslope WindNinja domain (Camp Fire, Tubbs, Thomas):
+  USE: the lee-side descending-flow direction (HRRR ~50° NE sense for Camp Fire)
+       = air flowing FROM the NE TOWARD the SW, DOWN the western slope
+  NOT: the upstream sounding 700 hPa direction at the east-side station (Reno 265°)
+       = cross-barrier flow aloft (westerly jet above the inversion)
+
+The Reno sounding 265° (FROM WSW, blowing toward ENE) and HRRR 50° (FROM NE,
+blowing toward SW) are ~175° apart. This is NOT a contradiction or convention error.
+BOTH are in FROM convention. The divergence IS the physics: cross-barrier veering
+is the defining signature of a downslope windstorm (westerly jet aloft + surface
+pressure-gradient-driven NE gap flow below the inversion). It CONFIRMS
+SYNOPTIC_TERRAIN mechanism; it does not create a BC ambiguity.
+
+Role of the upstream sounding: diagnose whether the downslope-windstorm PRECONDITIONS
+are met (crest-level inversion height/strength, cross-barrier component). Brewer &
+Clements 2020 used the Reno 12z sounding exactly this way -- to confirm the inversion
+at ~1938-2315m. The sounding does NOT supply the surface BC vector for WindNinja.
+
+Verification: check FROM/TOWARD convention on BOTH numbers before trusting any
+apparent divergence. A sign flip on either would manufacture or erase 180° of
+apparent veering. For Camp Fire: Reno 265° FROM WSW (vector toward ENE = toward
+Great Basin), HRRR 50° FROM NE (vector toward SW = toward valley). Both FROM, real.
+
 ## Why 700 hPa is the Right BC Reference Level
 700 hPa (~3000m geometric, but variable) is above HRRR's terrain-blindness (corrupted 10m field)
 but low enough to interact with western US mountains. It's the classic fire-weather level for

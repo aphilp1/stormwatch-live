@@ -149,13 +149,43 @@ informative: broader downslope peaks before ignition; narrow gap/canyon peaks af
 **Thomas archive limitation:** HRRR Dec 2017 (HRRRv2) only stores 18h forecasts from
 00z run. Used stitch of Dec 3 00z (fxx=0-18) + Dec 4 00z (fxx=0-15, from Case 8).
 
-## DATA CEILING REACHED (2026-05-30)
+## DATA CEILING REACHED (2026-05-30, reconfirmed with soundings 2026-05-30)
 
 Every remaining timing question routes through RAWS obs or more events.
 The 700 hPa domain series has been fully worked; nothing further is extractable
 without either (a) RAWS surface-vs-aloft lag data or (b) a larger event library.
 
-Thread is parked. Resume when RAWS data access comes through.
+### Oakland sounding timing -- QUARANTINED (same logic as Tubbs antisymmetry)
+
+IEM soundings pulled for Tubbs (OAK) and Kincade (OAK) showed:
+  Tubbs: Oakland 700hPa peaked 71 mph at Oct 8 12z, dropped to 20 mph by Oct 9 00z
+    (4.5 hours before ignition) -- apparent declining limb
+  Kincade: Oakland 700hPa 48 mph Oct 23 00z -> 29 mph Oct 24 00z (4.5h before ignition)
+    -- apparent declining limb
+
+These are QUARANTINED for the same reason as the Tubbs HRRR antisymmetry:
+  - Oakland is 100+ km from the fire sites, on the far side of the terrain
+  - The sounding tells you when the 700 hPa JET was strongest over Oakland
+  - Not when the fire-site SURFACE wind peaked
+  - The whole premise of this project is that surface terrain response is
+    DECOUPLED from the synoptic flow in exactly this way -- that's why WN exists
+  - A point's peak timing is informative about another point only if you've
+    ruled out translating-feature geometry. Oakland and the fire sites are far
+    apart, the synoptic feature was propagating -- no such ruling-out was done.
+
+CONCLUSION: Sounding-based declining-limb at Oakland = large-scale jet timing,
+not fire-site terrain-channeled surface Diablo timing. Same quarantine as
+HRRR antisymmetry.
+
+WHAT THE SOUNDINGS ACTUALLY PROVIDE (confirmed valuable -- different use):
+  - Camp Fire REV 12z: inversion at 1938-2315m (+1.0°C) = crest-level inversion
+    confirming the enabling condition for the downslope windstorm (Brewer &
+    Clements 2020 / Mass 2021 use case exactly)
+  - The ~175° divergence between Reno 265° aloft and HRRR 50° NE surface is
+    the cross-barrier veering that CONFIRMS SYNOPTIC_TERRAIN mechanism, not
+    a BC ambiguity to resolve
+
+Thread is parked. Resume when RAWS fire-site surface series is available.
 
 ## REMAINING REQUIREMENTS BEFORE CLAIMING A FINDING
 
