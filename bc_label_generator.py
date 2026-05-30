@@ -12,6 +12,35 @@ RAWS network, and return the BC that best reproduces the observations. That
 winning BC is the training label `y*` for the outer-loop map
     f : HRRR synoptic state  ->  WindNinja boundary condition.
 
+PRE-REGISTERED PREDICTIONS — Camp Fire Phase A sweep (set 2026-05-30, before obs)
+----------------------------------------------------------------------------------
+When Colby Mountain and Saddleback observations arrive, the two-partition sweep
+produces the first genuinely non-circular amplification result. Three outcomes,
+all pre-named so none can be rationalized away:
+
+  OUTCOME 1 — SIGNAL (the result that earns the word "finding"):
+    Held-out ridge ratios at Colby/Saddleback land near what the BC
+    (fit on Jarbo only) predicts. Non-circular, verified-coordinate
+    amplification. Terrain response generalizes within the fire domain.
+
+  OUTCOME 2 — INFORMATIVE NON-GENERALISATION:
+    Colby/Saddleback diverge from the Jarbo-fit BC prediction.
+    Jarbo's terrain response does not generalize even within the same
+    fire. Value of the method shifts toward direction and timing rather
+    than speed amplification.
+
+  OUTCOME 3 — METHOD BOUNDARY CONFIRMED:
+    Colby or Saddleback sit in modeled jump/rotor zones and are
+    structurally unfittable. The hydraulic-jump method boundary is
+    doing exactly its job. Not a failure — the protocol predicted it.
+
+  LOSS CONDITION (the one outcome that is not a win):
+    "Tune the BC until the held-out stations match." The two-partition
+    sweep design exists to prevent this. Sweep A fits BC to Jarbo only;
+    Sweep B checks Colby/Saddleback without seeing the BC.
+
+-- Opus, 2026-05-30
+
 This module is the EXPENSIVE, OFFLINE half of the two-loop design. The solver
 (WindNinja, via your `get_terrain_wind` MCP tool) is called only here. The ML
 training loop never touches it.
