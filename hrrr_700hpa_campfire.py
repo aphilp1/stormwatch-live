@@ -50,7 +50,7 @@ FXX_LIST  = [1, 2, 3, 4, 5]         # valid 13z–17z; ignition ~14:30z = fxx 2-
 
 # Station coordinates for per-point extraction (reference vs domain mean)
 STATIONS = {
-    "jarbo_gap": (39.977, -121.422),
+    "jarbo_gap": (39.735944, -121.488944),
     "fire_origin": (39.896, -121.432),
     "paradise":  (39.760, -121.620),
 }

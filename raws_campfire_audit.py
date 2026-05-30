@@ -42,7 +42,7 @@ KEY_HOURS   = list(range(12, 18))   # 12-17z (ignition ~14:30z + first hours)
 # Known approximate locations for the four BC stations
 # (used to cross-reference radius search results)
 BC_STATIONS = {
-    "jarbo_gap": (39.977, -121.422, 52.0),   # confirmed 52 mph -- observed what?
+    "jarbo_gap": (39.735944, -121.488944, 52.0),   # confirmed 52 mph -- observed what?
     "concow":    (39.600, -121.530, None),   # Concow community / Berry Creek area
     "paradise":  (39.760, -121.620, None),   # Town of Paradise
     "pulga":     (39.896, -121.432, None),   # Poe Dam / fire ignition area

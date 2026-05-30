@@ -14,7 +14,7 @@ import numpy as np, sys
 sys.stdout.reconfigure(encoding='utf-8')
 
 STATIONS = {
-    "JARBO": (39.977, -121.422, "Jarbo Gap   ~2mi from ignition"),
+    "JARBO": (39.735944, -121.488944, "Jarbo Gap   ~2mi from ignition"),
     "FIRE":  (39.896, -121.432, "Camp Creek Rd  fire origin"),
     "PARA":  (39.760, -121.620, "Paradise    6mi W"),
     "RDD":   (40.509, -122.293, "KRDD Redding  valley floor"),

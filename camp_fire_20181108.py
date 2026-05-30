@@ -23,7 +23,7 @@ Published studies:
 
 Data sources:
   Soundings:    RNO (Reno NV, upwind) -- 12z Nov 8 (pre-fire) + 00z Nov 9 (during)
-  RAWS:         JBGC1 (Jarbo Gap, ~2mi from ignition) -- Synoptic Data API
+  RAWS:         JBGC1 (Jarbo Gap, ~20km from ignition (corrected coords 2026-05-30)) -- Synoptic Data API
   ASOS:         RDD (Redding), RBL (Red Bluff) -- IEM API
   LSRs:         WFO=STO (Sacramento) -- IEM GeoJSON
   ERA5:         Open-Meteo archive -- 3 points
@@ -126,7 +126,7 @@ print()
 # 2. RAWS -- JBGC1 Jarbo Gap (closest obs to ignition, ~2mi)
 # ============================================================================
 print()
-print("-- 2. RAWS  JBGC1 Jarbo Gap  (~2 mi from ignition) --------------------")
+print("-- 2. RAWS  JBGC1 Jarbo Gap  (~20km from ignition (corrected coords 2026-05-30)) --------------------")
 print("   Window: 06z Nov 8 -> 22z Nov 8  (10 PM Nov 7 -> 2 PM Nov 8 PST)")
 print()
 
@@ -348,7 +348,7 @@ RADIUS_MI  = 12
 VEGETATION = "brush"
 
 WN_STATIONS = {
-    "JARBO": (39.977,  -121.422, "Jarbo Gap RAWS  ~2mi from ignition"),
+    "JARBO": (39.735944, -121.488944, "Jarbo Gap RAWS  ~20km from ignition (corrected coords 2026-05-30)"),
     "FIRE":  (39.896,  -121.432, "Camp Creek Rd   fire origin"),
     "PARA":  (39.760,  -121.620, "Paradise        6mi W of ignition"),
     "RDD":   (40.509,  -122.293, "KRDD Redding    valley floor"),
