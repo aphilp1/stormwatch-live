@@ -75,12 +75,18 @@ STATION_WEIGHTS: Dict[str, float] = {
 
 # Gust factor: WindNinja outputs SUSTAINED wind; RAWS reports GUSTS.
 #   predicted_gust = sustained_output * GUST_FACTOR
-# IMPORTANT: GUST_FACTOR = 1.0 reproduces a direct sustained-vs-gust comparison,
-# which is what the existing "Jarbo 49.7 vs observed 52, within 4%" result used.
-# A physical gust factor for exposed terrain is ~1.3-1.7. Setting it >1 will
-# push the optimal BC speed DOWN. Pin this consciously; it's the single biggest
-# lever on the absolute speed of the recovered BC. See note at bottom of file.
-GUST_FACTOR: float = 1.0
+#
+# RESOLVED 2026-05-30 from Brewer & Clements 2020 / IBHS 2019:
+#   Jarbo Gap 8 Nov 2018: sustained ~32 mph, gust 52 mph -> factor = 1.625
+#   This is in the physical range (1.3-1.7) for an exposed ridge site.
+#
+# The prior "Jarbo 49.7 vs 52, within 4%" comparison was WN-sustained vs
+# observed-GUST (wrong convention). On sustained-to-sustained:
+#   WN 49.7 mph vs observed 32 mph = 55% overshoot with 35 mph BC.
+# The correct convention is GUST_FACTOR = 1.625 for Jarbo Gap.
+# NOTE: WN coordinates for Jarbo were also wrong (39.977 vs correct 39.735944)
+# -- re-run WN with corrected coords before trusting any ratio.
+GUST_FACTOR: float = 1.625
 
 # HRRR 700 hPa prior (the raw aloft wind over the domain). Once herbie pulls the
 # archive, set these. The sweep is regularized toward this prior, and the
