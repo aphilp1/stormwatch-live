@@ -1,10 +1,11 @@
+from synoptic_config import SYNOPTIC_API_KEY, SYNOPTIC_TOKEN
 #!/usr/bin/env python3
 import sys, requests, math
 from datetime import datetime
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-TOKEN  = 'ad101dda8834440795ff6f4e58f9ebf9'
+TOKEN = SYNOPTIC_TOKEN  # see synoptic_config.py
 HOURS  = list(range(11, 22))
 COUP   = [18, 19, 20, 21]   # coupled window: cold pool mixed out, NW flow at surface
 

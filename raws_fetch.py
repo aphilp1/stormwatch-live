@@ -1,3 +1,4 @@
+from synoptic_config import SYNOPTIC_API_KEY, SYNOPTIC_TOKEN
 #!/usr/bin/env python3
 """
 raws_fetch.py — Synoptic Data API: RAWS wind obs for Missoula derecho July 24, 2024
@@ -6,8 +7,8 @@ Stations: MPOI (Point Six), BLMM8 (Blue Mountain), TS897 (Lolo Portable)
 """
 import requests
 
-API_KEY = 'Kun2M9j4GiyoIKzzLfqyRZa7smE8sdiC3cJA3ZR6ef'
-TOKEN   = 'ad101dda8834440795ff6f4e58f9ebf9'   # generated from API key via /v2/auth
+API_KEY = SYNOPTIC_API_KEY  # see synoptic_config.py
+TOKEN = SYNOPTIC_TOKEN  # see synoptic_config.py
 
 STATIONS = {
     'MPOI':  'Point Six',

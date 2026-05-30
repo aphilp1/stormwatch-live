@@ -1,3 +1,4 @@
+from synoptic_config import SYNOPTIC_API_KEY, SYNOPTIC_TOKEN
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys, requests
@@ -5,7 +6,7 @@ from datetime import datetime
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-TOKEN = 'ad101dda8834440795ff6f4e58f9ebf9'
+TOKEN = SYNOPTIC_TOKEN  # see synoptic_config.py
 
 LOCS = {
     'KMSO':    (46.916, -114.090),

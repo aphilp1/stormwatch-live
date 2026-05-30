@@ -1,3 +1,4 @@
+from synoptic_config import SYNOPTIC_API_KEY, SYNOPTIC_TOKEN
 #!/usr/bin/env python3
 """
 raws_campfire_audit.py
@@ -31,7 +32,7 @@ from datetime import datetime
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-TOKEN = "ad101dda8834440795ff6f4e58f9ebf9"
+TOKEN = SYNOPTIC_TOKEN  # see synoptic_config.py
 
 EVENT_DATE  = "2018-11-08"
 START_UTC   = "201811080600"    # 06z start (pre-ignition)

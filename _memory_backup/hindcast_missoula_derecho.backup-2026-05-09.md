@@ -49,7 +49,7 @@ originSessionId: c9f7fb6e-f1f7-461c-9a34-24f4e7e7eca6
 - Blue Mountain (BLMM8): 46.832°N, -114.216°W, ~3400 ft MSL
 - Lolo Portable (TS897): 46.749°N, -114.066°W, ~3200 ft MSL
 - **WRCC**: blocks data older than 30 days without access code — user emailing wrcc@dri.edu to request
-- **Synoptic Data free tier**: zero historical access (API key `Kun2M9j4GiyoIKzzLfqyRZa7smE8sdiC3cJA3ZR6ef`, token generated via `/v2/auth`)
+- **Synoptic Data free tier**: zero historical access (API key `<SYNOPTIC_API_KEY - see synoptic_config.py>`, token generated via `/v2/auth`)
 - **KMSO ASOS (IEM)**: 10-hour gap 20:50 MDT Jul 24 – 06:55 MDT Jul 25; station went offline as storm hit
 
 ## NWS Local Storm Reports — best available validation data

@@ -1,3 +1,4 @@
+from synoptic_config import SYNOPTIC_API_KEY, SYNOPTIC_TOKEN
 #!/usr/bin/env python3
 """
 camp_fire_20181108.py
@@ -36,7 +37,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 WINDNINJA_CLI = r"C:\WindNinja\WindNinja-3.12.2\bin\WindNinja_cli.exe"
 CACHE         = r"C:\temp\windninja_cache"
-TOKEN         = 'ad101dda8834440795ff6f4e58f9ebf9'   # Synoptic Data
+TOKEN = SYNOPTIC_TOKEN  # see synoptic_config.py
 
 # Fire ignition point: Camp Creek Rd / Pulga area
 FIRE_LAT, FIRE_LON = 39.896, -121.432

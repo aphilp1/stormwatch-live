@@ -107,7 +107,7 @@ Cache: `dem_46.9_-114.1_12mi_234_30_609m_vel-4326.asc`
 # Data Access
 - HRRR: conda `hrrr311` — `& "C:\Users\aphil\miniforge3\Scripts\conda.exe" run -n hrrr311 python script.py`
 - WRCC: >30-day wall without access code (user emailed wrcc@dri.edu)
-- Synoptic token: `ad101dda8834440795ff6f4e58f9ebf9` (regenerate from key `Kun2M9j4GiyoIKzzLfqyRZa7smE8sdiC3cJA3ZR6ef` if expired)
+- Synoptic token: `<SYNOPTIC_TOKEN - see synoptic_config.py>` (regenerate from key `<SYNOPTIC_API_KEY - see synoptic_config.py>` if expired)
 - lon360 fix: HRRR uses 0–360° — always `lon360 = lon_neg + 360`
 
 # Scripts (C:\Users\aphil\Documents\Stormwatch\)
