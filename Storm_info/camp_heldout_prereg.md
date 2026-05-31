@@ -107,4 +107,15 @@ No goalpost moves after the number is seen.
 
 ---
 
+---
+
+## Cross-event BC pre-registrations (appended post-Camp-test, before Stage 2 scoring)
+
+**Kincade run (27 Oct 2019):** BC = 850 hPa, 12Z. Chosen because Diablo flow reached
+850 hPa by 12Z but 700 hPa still pre-transition NNW (346°) until 18Z — a
+downward-propagating Diablo onset, NOT an inversion-driven level choice. No temperature
+inversion present at 12Z (smooth lapse rate 1000→700 hPa). Same 850 hPa outcome as
+Camp but distinct mechanism. Direction match: HRRR 850 hPa 12Z = 42° vs KNXC1 observed
+mean = 27°, Δ=16°. Confirmed before Stage 2 scoring.
+
 *Committed before run. Any result reported after this commit is the real result.*
