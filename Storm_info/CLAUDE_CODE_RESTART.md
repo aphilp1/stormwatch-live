@@ -53,39 +53,39 @@ falsified. WN+rawBC niche confirmed. Next: test WN+rawBC vs raw HRRR across othe
 
 ---
 
-## NEXT ACTION — WN+rawBC cross-event test
+## NEXT ACTION — Cross-event niche confirmation
 
-Camp held-out FAILED as pre-registered. **Do not re-run Camp to chase a pass.**
+Niche confirmed at Camp ridges (Colby/Saddleback), **promising not proven.**
+To turn promising → proven, pick up at these OPEN ITEMS in order:
 
-Single-station BC correction is **parked as falsified**. Any future correction must
-be terrain-conditioned and fit on >1 station without crossing terrain regimes.
+**(1) Fix Thomas BC** — get direction match, score a NON-Camp ridge station = first
+cross-event confirmation. Thomas BC at 81° (ESE) missed both stations (Δ=43-94°).
+Fix: try a different HRRR sample location or hour for the Santa Ana BC.
+Target stations: WTPC1 (Whitaker Peak, 4120 ft) or WMSC1 (Warm Springs, 4930 ft).
+Both excluded for BC-dir mismatch, not for HRRR-sufficient.
 
-**The new question:** Does WN+rawBC (no correction) beat raw HRRR at held-out ridge
-stations across the OTHER events? This tests the niche directly — if WN+rawBC
-consistently beats raw HRRR at terrain stations HRRR can't resolve, the core premise
-stands even without a working correction.
+**(2) Resolve KNXC1** — sheltered valley vs BC speed too high.
+KNXC1 WN=2.003 vs obs_sus_est=20.9 mph. BC was 44.7 mph @ 42°, BC dir OK (Δ=15°).
+Check: is KNXC1 in a creek valley (sheltered) despite 2200 ft elevation?
+Also try a lower BC speed (e.g. 30 mph @ 42°) — does WN come into band?
+If sheltered: reclassify KNXC1 as out-of-niche. If BC speed: note as artifact of
+850 hPa sampling point.
 
-**Events to test (in order):**
-1. **Tubbs 2017** — held-out: HWKC1 (Hawkeye, 617m, Mayacamas ridge). BC = HRRR 700 hPa
-   (ridges above inversion). RAWS obs at peak hour confirmed.
-2. **Thomas 2017** — held-out: WTPC1 (Whitaker Peak, 1256m) + WMSC1 (Warm Springs, 1503m).
-   BC = HRRR 700 hPa (above-inversion Santa Ana). Note: 700 hPa correct here per inversion.
-3. **Kincade run 2019** — held-out: HWKC1 (Hawkeye), KNXC1 (Knoxville Creek, 671m).
-   BC = HRRR 700 hPa (Oct 27 destructive run). RAWS obs confirmed.
+**(3) Define station-class filter rigorously** — what makes a station "in-niche":
+- Exposed ridge (not creek/valley terrain)
+- HRRR 10m ratio < 0.85 (HRRR undershoots — WN can add value)
+- Observed sustained wind ≥ 15 mph (avoid denominator artifacts like HMRC1 at 10.5 mph)
+- BC direction within 30° of observed
+Apply this filter prospectively before scoring any new station.
 
-**For each event:**
-- Identify the peak RAWS hour from the CSVs (already pulled)
-- Fetch HRRR f00 at that UTC hour (herbie, hrrr311 env)
-- Run WN at held-out station DEM with raw HRRR BC (same flags as Camp test)
-- Score: WN+rawBC / obs_sustained_est vs raw HRRR 10m / obs_sustained_est
-- Record ratio table — pass or fail, don't move goalposts
+**Parked permanently (do not revive):**
+- Single-station BC correction — falsified
+- Multi-station BC correction — falsified (does not generalize across terrain regimes)
+- Do not re-run Camp to chase a pass
 
-**Do not pre-register these tests** — Camp was the registered test. These are
-exploratory replication checks to characterize the WN+rawBC baseline.
-
-**Parked (do not revive without new design):**
-- Single-station BC correction — falsified at Camp
-- Kincade ERA5 fidelity check — still open, lower priority, run when convenient
+**Still queued but after point-prediction settles:**
+- HRRRCast integration / BC_SENSITIVITY confidence field
+- Kincade ERA5 fidelity check (low priority)
 
 ---
 

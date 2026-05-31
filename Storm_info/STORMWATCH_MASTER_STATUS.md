@@ -46,6 +46,16 @@ bar. Not cleared yet (needs RAWS).
 
 ### Findings ledger
 
+### Camp/cross-event WN-vs-HRRR test — RESULT (2026-05-31)
+WN+rawBC vs raw HRRR at held-out ridge stations, BC pre-registered per event (Camp 850/12Z, Kincade 850/12Z 27 Oct). No correction (falsified earlier today).
+CONFIRMED NICHE: at isolated exposed ridges >6000 ft with direction-correct BC where HRRR undershoots, WN+rawBC lands in-band with no correction:
+- CBXC1 Colby: HRRR 0.869 -> WN 1.007. SLEC1 Saddleback: HRRR 0.525 -> WN 1.128. Both held-out, never fit.
+Outside that class, WN fails for DIAGNOSABLE reasons (not downscaling failure):
+- JBGC1 Jarbo: WN improves (0.519->0.771) but under-resolved canyon + BC dir 25 deg off; below band.
+- HMRC1 Humbug: near-calm obs (10.5 mph) -> denominator artifact, not a valid scoring station at 12Z.
+- KNXC1 Kincade: WN overshoots (2.003); BC dir OK (15 deg), so EITHER 850 BC too strong OR station is sheltered valley misclassified as ridge. UNRESOLVED.
+STATUS: niche confirmed but n=2 clean ridges, both at Camp = PROMISING, NOT PROVEN. No cross-event ridge confirmation yet (Tubbs Hawkeye excluded HRRR-sufficient; Thomas excluded BC dir 43-94 off).
+
 ### Camp Fire held-out test — RESULT (2026-05-31) [FAIL, recorded as pre-registered]
 Pre-registered test (camp_heldout_prereg.md, committed before run): BC-corrected
 WindNinja vs raw HRRR at held-out CBXC1 (Colby) + SLEC1 (Saddleback), fit on JBGC1.
