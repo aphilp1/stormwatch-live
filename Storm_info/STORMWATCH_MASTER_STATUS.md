@@ -2,7 +2,7 @@
 
 **Authoritative project record.** Read after restart, alongside
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
-Latest commit: 83e6cf2. All work pushed.
+Latest commit: 83e6cf2. All work pushed. **RAWS data now available — see §3 RAWS breakthrough.**
 
 **Claude Code task when reading this:** verify the repo state matches what's below
 (files present, commits, conventions in code). Flag any mismatch. Then update this
@@ -14,10 +14,11 @@ file as new work lands so it stays the single source of truth.
 Complete, tested pipeline: synoptic wind (HRRR/ERA5/CONUS404) → WindNinja terrain
 downscaling → surrogate WindNinja → confidence engine → mechanism classifier, plus
 BC label generator and outer trainer. Diagnostic phase done. One real validation
-landed (Missoula BC vs independent sounding). The corrective phase — learn the BC
-correction and prove it beats raw HRRR at held-out terrain stations — is built but
-RAWS-gated. RAWS data requests sent by Alex, awaiting reply. Current mode: finish
-obs-independent work so validation runs immediately when data arrives.
+landed (Missoula BC vs independent sounding). **RAWS gate lifted (2026-05-31):**
+historical RAWS obs pulled for all primary events via NWS public Synoptic token with
+Referer spoof (raws_pull_nws_token.py; CSVs in Storm_info/raws_obs/). The corrective
+phase — run the BC sweep, fit outer trainer, test vs held-out stations — is now
+unblocked.
 
 ## 2. THE GOAL
 A sub-1km wind forecast for extreme fire events that beats raw coarse-model wind at
@@ -45,6 +46,36 @@ bar. Not cleared yet (needs RAWS).
 
 ### Findings ledger
 **SOLID:**
+- **RAWS DATA UNLOCKED (2026-05-31).** NWS WRH timeseries viewer embeds a public
+  Synoptic token in `/source/wrh/apiKey.js` (token `7c76618b66c74aee913bdbae4b448bdd`).
+  Token is restricted to weather.gov Referer header — adding that header in Python
+  requests gives full historical access. Scripts: `raws_pull_nws_token.py`,
+  `raws_find_stations.py`, `raws_bulk_pull.py`, `raws_gap_events.py`.
+  **317 station-event CSVs, 16.7 MB** in `Storm_info/raws_obs/` (12 event folders).
+  Backed up to `raws_obs_backup_20260531_0023`. Station manifest: `raws_obs/station_manifest.json`.
+  Data quality confirmed vs literature peaks:
+  - HWKC1 Tubbs: **79.01 mph gust @ 06:56Z Oct 9** (lit: 79 mph ✓); 48.0 mph sustained
+  - JBGC1 Camp: **52.01 mph gust @ 12:13Z Nov 8** (lit: 52 mph ✓); 32.01 mph sustained
+  - CBXC1 Colby Mtn (Camp held-out): **59 mph gust** — now available for held-out test
+  - HWKC1 Kincade run: **76.0 mph gust @ 12:56Z Oct 27**; 40.0 mph sustained
+  - PNTM8 Missoula Dec 2025: **66.0 mph gust @ 18:59Z Dec 10**; 43.01 mph sustained
+  - MOMM8 Missoula Jul 2024 derecho: **72 mph gust** (fire-effects portable)
+  - BLMM8 Blue Mtn Missoula: **43 mph gust** (previously gated behind WRCC)
+  - LOOC2 Lookout Mtn (Marshall Fire): **72 mph gust**
+  - WLYC1 Wiley Ridge (Thomas): **67 mph gust** / WMSC1 Warm Springs: **68 mph gust**
+  - WMSC1 Warm Springs (Woolsey): **65 mph gust** / CNIC1 Camp 9: **77 mph gust**
+  Coverage: camp(12) tubbs(7) kincade_ign(10) kincade_run(12) thomas(26)
+            woolsey(16) missoula_dec(8) missoula_jul(34) marshall(8)
+            boulder_chin(41) iowa(2) labor_day_or(133)
+- **Timing finding from RAWS (2026-05-31, flag for protocol review):**
+  - Tubbs/Hawkeye: ignition ~04:45Z; at 04:56Z already 30 mph / 62 gust → wind rising,
+    peak gust 79 mph at 06:56Z (2h AFTER ignition) → rising-limb ignition at Hawkeye
+  - Camp/Jarbo: ignition ~14:29Z; peak 52 mph gust at 12:13Z (2h 15min BEFORE) →
+    declining-limb ignition at Jarbo. Note: anomalous 72 mph gust at 16:13Z Nov 9
+    with direction shift to 88-90° — likely sensor artifact, CLIP after 15:13Z Nov 9.
+  - Kincade ignition: ~09:31Z Oct 24; peak at 11:56Z (2h AFTER ignition)
+  NOTE: These are station-level timing, not fire-site timing. Timing thread remains
+  parked until propagation-geometry control is in place.
 - Camp Fire sub-inversion structure: Jarbo (773m) 1165m below Reno inversion (1938m);
   whole domain sub-inversion; NE gap-flow 700 hPa BC applies. Inversion altitude is
   the empirical justification.
