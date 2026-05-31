@@ -143,4 +143,45 @@ pairs, status OK): median_gust_factor = 1.560, peak_gust_factor = 1.619 (68.0 mp
 with Camp protocol. With correct GF: obs_sustained_est = 55.01 gust / 1.560 = 35.3 mph
 (vs the wrong 55.01/2.060 = 26.7 mph — a 32% denominator error).
 
-*Committed before run. Any result reported after this commit is the real result.*
+**HGLC1 — Kincade run cross-event ridge candidate (2026-05-31):**
+Station: HGLC1 (HIGH GLADE LOOKOUT), USFS fire lookout tower, Mendocino National Forest.
+Registry: 39.208900N, -122.809990W, 4807 ft (1465.2 m), Synoptic network 2, status ACTIVE.
+Terrain class: USFS fire lookout = exposed summit/ridge by construction.
+
+Scoring window: HGLC1's observed PEAK hour per the per-event peak-window convention
+(method note: fixed-12Z structurally misses overnight-peaking events).
+
+Peak locked from RAWS CSV (kincade_run_2019/HGLC1_kincade_run_2019.csv):
+  2019-10-27T11:36Z — 24.0 mph sustained, 51.0 mph gust, direction 359° (N)
+  Concurrent GF at peak = 51.0 / 24.0 = 2.125
+  This is the single highest-sustained row in the Oct 26-28 window.
+  Runner-up: 2019-10-27T10:36Z (23.0 mph / 42.0 gust); 2019-10-27T12:36Z (17.0 / 51.0 tie gust).
+RAWS scoring prefix: '2019-10-27T11' (all rows matching that UTC-hour prefix).
+
+BC: HRRR f00 analysis, 850 hPa, 11Z 2019-10-27.
+  BC hour = HRRR analysis hour matching the peak window (11:36Z obs → 11Z analysis).
+  BC sampled at HGLC1's own HRRR grid cell: bc_center = (39.21N, -122.81W).
+  Rationale: HGLC1 is in Mendocino NF, ~40km NW of the KNXC1 bc_center (38.86N, -122.42W)
+  used for the original Kincade pre-registration. Sampling at HGLC1's cell avoids spatial
+  interpolation error and is the correct local BC for this station's terrain context.
+  Level = 850 hPa: same as KNXC1 pre-registration; Kincade has no detected temperature
+  inversion (smooth lapse rate 1000→700 hPa at 12Z Oct 27, confirmed previously).
+
+GF: HGLC1 own empirical median from raws_gust_factors.csv (kincade_run_2019):
+  n_pairs = 48, peak_gust_factor = 2.125, median_gust_factor = 1.998, status = OK.
+  Scoring uses median GF = 1.998 (consistent with Camp/Thomas protocol).
+  obs_sustained_est = 51.0 gust / 1.998 = 25.5 mph.
+
+Four gates — STOP at first failure, no goalpost moves after numbers are seen:
+  (a) DEM elevation at HGLC1 coords within ±50m of registry 4807 ft (1465m); margin ≥2km.
+  (b) DEM is UTM Zone 10N (longitude -122.81W is west of -120° → Zone 10N, EPSG:32610).
+      CRS bug note: do NOT apply Zone 11N math to this DEM.
+  (c) BC direction (850 hPa 11Z at bc_center 39.21N,-122.81W) within 30° of HGLC1
+      observed direction at 11Z peak window (obs = 359°).
+  (d) If (a)-(c) all pass: run WN+rawBC at HGLC1 coords, report ratio = WN_pred / 25.5 mph.
+      Pass band [0.80, 1.20]. Also report raw HRRR 10m ratio for comparison.
+
+Success criterion: WN+rawBC ratio in [0.80, 1.20] AND WN beats raw HRRR (closer to 1.0).
+Failure is also a result — record exactly as observed.
+
+*Committed before DEM download or any score. Any result reported after this commit is the real result.*
