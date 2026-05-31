@@ -41,10 +41,21 @@ protocol §2.4 as updated this session.
 
 ## Convention (sustained-to-sustained)
 
-- Gust factor for Camp Fire: **median GF = 2.004** (from `raws_gust_factors.csv`,
-  event window median across 13 usable Camp stations).
-  JBGC1 anchor reference: 1.625 (pre-registered 52mph gust / 32mph sustained
-  at peak 12:13Z Nov 8). All scoring is sustained-to-sustained.
+Scoring is sustained-to-sustained throughout. Each station uses its OWN empirical
+median gust factor from `raws_gust_factors.csv` (event window, camp_2018):
+
+| Station | Role | Median GF | Source | n_pairs |
+|---------|------|-----------|--------|---------|
+| JBGC1 | Fit anchor | 1.625 | Pre-registered (52 gust / 32 sustained @ 12:13Z Nov 8) | — |
+| CICC1 | Fit B | 1.760 | raws_gust_factors.csv median | 48 |
+| CBXC1 | Held-out A | **2.004** | raws_gust_factors.csv median | 48 |
+| SLEC1 | Held-out B | **1.732** | raws_gust_factors.csv median | 48 |
+
+GF is used to convert observed gust to estimated sustained for apples-to-apples
+comparison with WindNinja's sustained output: `obs_sustained_est = obs_gust / GF`.
+The JBGC1 fit anchor uses the pre-registered event-peak value 1.625 (not the
+median 1.750), because 1.625 was established before data inspection.
+
 - **Clip JBGC1 after ~06:00 PST 9 Nov 2018** (~14:00Z Nov 9) — burnover/sensor
   artifact. The anomalous 72mph gust at 16:13Z Nov 9 (direction 88–90°) is
   excluded from scoring.
