@@ -189,7 +189,7 @@ print()
 
 STATIONS = [
     ("KMSO",  "KMSO  3205ft", "kmso"),
-    ("MPOI",  "PtSix 6300ft", None),
+    ("MPOI",  "PNTM8 7897ft", None),   # NIFC-confirmed coords: 47.041N -113.986W
     ("BLMM8", "BluMt 3412ft", "blmm8"),
     ("TS897", "Lolo  3200ft", None),
 ]
