@@ -1,0 +1,84 @@
+{
+  "domain": "camp_fire",
+  "bc_input": {
+    "speed": 25.2,
+    "dir": 50.0
+  },
+  "thresholds": {
+    "bc_sensitivity_high_mph": 2.0,
+    "bc_sensitivity_mod_mph": 0.5,
+    "amp_strong": 1.3,
+    "amp_moderate": 1.1,
+    "amp_ambient_lo": 0.9,
+    "cv_low_confidence": 0.15,
+    "ood_margin_pct": 0.05,
+    "bc_invalid_clearance_m": 200.0
+  },
+  "stations": {
+    "jarbo_gap": {
+      "confidence": 0.8003940215689077,
+      "labels": [
+        "BC_SENSITIVITY:HIGH",
+        "AMPLIFICATION:MODERATE",
+        "OOD:FALSE",
+        "BC_INVALID:FALSE"
+      ],
+      "reasons": {
+        "BC_SENSITIVITY": "direction range 3.58 mph at \u00b115\u00b0 >= threshold 2.0 mph \u2014 terrain amplifies direction errors strongly",
+        "AMPLIFICATION": "WN 27.8 mph / BC 25.2 mph = 1.10x (MODERATE)",
+        "OOD": "BC within ensemble envelope [19-38mph, 25-65deg]",
+        "BC_INVALID": "700 hPa clearance 912m > threshold 200m. Whole domain sub-inversion (Brewer & Clements 2020 confirms); 700 hPa is ~912m above max terrain. BC_INVALID = False."
+      },
+      "wn_at_prior": 27.82,
+      "dir_range_mph": 3.5827364572487355,
+      "dir_cv": 0.040611593884526974,
+      "spd_cv": 0.20877305049328926,
+      "action": "BC direction correction has highest leverage. Prioritise direction accuracy over speed correction."
+    },
+    "fire_origin": {
+      "confidence": 0.8284671056239552,
+      "labels": [
+        "BC_SENSITIVITY:LOW",
+        "AMPLIFICATION:AMBIENT",
+        "OOD:FALSE",
+        "BC_INVALID:FALSE"
+      ],
+      "reasons": {
+        "BC_SENSITIVITY": "direction range 0.39 mph at \u00b115\u00b0 < threshold 0.5 mph \u2014 terrain is direction-insensitive here",
+        "AMPLIFICATION": "WN 25.2 mph / BC 25.2 mph = 1.00x (AMBIENT)",
+        "OOD": "BC within ensemble envelope [19-38mph, 25-65deg]",
+        "BC_INVALID": "700 hPa clearance 912m > threshold 200m. Whole domain sub-inversion (Brewer & Clements 2020 confirms); 700 hPa is ~912m above max terrain. BC_INVALID = False."
+      },
+      "wn_at_prior": 25.2,
+      "dir_range_mph": 0.3856898169935903,
+      "dir_cv": 0.005003029761626696,
+      "spd_cv": 0.20204549782819942,
+      "action": "Moderate confidence. Review OOD and BC_INVALID flags above."
+    },
+    "paradise": {
+      "confidence": 0.8299799011094315,
+      "labels": [
+        "BC_SENSITIVITY:LOW",
+        "AMPLIFICATION:AMBIENT",
+        "OOD:FALSE",
+        "BC_INVALID:FALSE"
+      ],
+      "reasons": {
+        "BC_SENSITIVITY": "direction range 0.21 mph at \u00b115\u00b0 < threshold 0.5 mph \u2014 terrain is direction-insensitive here",
+        "AMPLIFICATION": "WN 24.2 mph / BC 25.2 mph = 0.96x (AMBIENT)",
+        "OOD": "BC within ensemble envelope [19-38mph, 25-65deg]",
+        "BC_INVALID": "700 hPa clearance 912m > threshold 200m. Whole domain sub-inversion (Brewer & Clements 2020 confirms); 700 hPa is ~912m above max terrain. BC_INVALID = False."
+      },
+      "wn_at_prior": 24.23,
+      "dir_range_mph": 0.20882102523358625,
+      "dir_cv": 0.0027875374284510326,
+      "spd_cv": 0.20206091572481583,
+      "action": "Moderate confidence. Review OOD and BC_INVALID flags above."
+    }
+  },
+  "ranking": [
+    "paradise",
+    "fire_origin",
+    "jarbo_gap"
+  ]
+}
