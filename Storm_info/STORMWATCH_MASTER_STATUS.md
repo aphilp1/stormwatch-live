@@ -96,6 +96,42 @@ DEM/CRS-verified. NO cross-event ridge confirmation yet. Thomas did not refute t
 niche — it lacked a valid above-inversion ridge with a live 12Z signal among the two
 candidates checked.
 
+### Kincade cross-event ridge attempt — terrain-rotation pattern found, niche still n=2 (2026-05-31)
+HGLC1 (High Glade Lookout, 4807 ft USFS lookout, Mendocino NF): GATE A DEM clean
+(DEM 1459.8m vs registry 1465.2m, diff=-5.4m; station at DEM dead-center, pixel 512/512;
+99% of 1km cells below → summit confirmed; 12.9km margin — best terrain verification in
+project). GATE B steadiness excellent (circular R=0.984, circ std dev 10.3°, n=15 obs
+spd≥10mph, Oct 27 — very steady N flow all day). GATE C FAILED: 850 hPa BC NNE (39mph
+@ 45°) vs observed N (24mph @ 359°), Δ=46°. HRRR 10m also shows NNE (22mph @ 40°) —
+confirms the deflection is real terrain rotation at the summit, not a BC sampling error.
+Pre-registered exclusion (prereg 316d1bc). Step 0 also found WISC1 (County Line, 2085ft)
+had Δ=36° — same NNE→N rotation, different summit.
+
+PATTERN (new finding): TWO Kincade-run high stations deflect NNE→N at the summit —
+WISC1 (Δ=36°) and HGLC1 (Δ=46°). Same rotation direction, independent stations. The
+Kincade Diablo flow is locally terrain-rotated across the northern Coast Ranges. This
+is the same class as Jarbo Gap BC_SENSITIVITY=HIGH — consistent, diagnosable deflection,
+not noise.
+
+SHARPENED HYPOTHESIS: the clean WN-beats-HRRR niche may hold where terrain does NOT
+strongly rotate synoptic flow (Camp ridges: BC NE→station NE, near-unrotated) and
+degrade where it does (Kincade summits: BC NNE→station N, ~45° rotation; Jarbo canyon:
+high BC_SENSITIVITY). This is more falsifiable than the original niche claim — it
+predicts failure at rotation-dominated stations and success at flow-aligned ones. Record
+as the working hypothesis to test next.
+
+STATUS: ridge niche confirmed n=2 (Camp CBXC1 1.007, SLEC1 1.128). Cross-event
+confirmation still OPEN. Full candidate inventory exhausted tonight:
+  HWKC1 Tubbs   — HRRR-sufficient (ratio 0.997), WN adds no value
+  WMSC1 Thomas  — database elevation error, sub-inversion at true 3750ft
+  CUUC1 Thomas  — DEM edge + overnight peak, no 12Z signal
+  WISC1 Kincade — BC dir Δ=36° (NNE→N terrain rotation)
+  HGLC1 Kincade — BC dir Δ=46° (NNE→N terrain rotation, gate C pre-registered fail)
+
+PARKED (do NOT retrofit tonight): upstream BC sampling (sample 850 hPa over terrain
+reflecting undeflected synoptic flow, not at the deflected station). If pursued,
+pre-register fresh and apply to ALL stations — not retrofit to rescue these failures.
+
 ### METHOD NOTE — fixed-12Z scoring window is a limitation
 Two stations now excluded for near-calm at 12Z (HMRC1 Camp, CUUC1 Thomas) because
 their events peaked OUTSIDE 12Z (overnight). The fixed-12Z convention structurally

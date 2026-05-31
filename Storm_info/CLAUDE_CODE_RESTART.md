@@ -5,15 +5,15 @@
 (method). This is the rolling "where we are right now." When work lands, fold it into
 the master status and update this file.
 
-**Last updated:** 2026-05-31 (Thomas cross-event attempt session).
+**Last updated:** 2026-05-31 (Kincade cross-event + terrain-rotation finding).
 
 ---
 
 ## ONE-LINE STATE
-**Ridge niche confirmed n=2, both Camp (CBXC1 1.007, SLEC1 1.128), DEM/CRS-verified.**
-Thomas cross-event attempt exhausted (WMSC1 = db elevation error; CUUC1 = no 12Z signal).
-No cross-event confirmation yet. Both BC corrections remain FALSIFIED. Next: fresh
-pre-registration for a non-Camp ridge at its event's peak window.
+**Ridge niche n=2 (Camp CBXC1/SLEC1). Cross-event still OPEN after 5 candidates exhausted.**
+New finding: Kincade summits deflect NNE→N (~45°); terrain rotation is the pattern blocking
+cross-event confirmation. Sharpened hypothesis: niche holds where terrain doesn't rotate flow.
+Next path: Tubbs non-Hawkeye ridge (likely flow-aligned) OR upstream BC sampling (new method).
 
 ---
 
@@ -54,35 +54,38 @@ pre-registration for a non-Camp ridge at its event's peak window.
 
 ---
 
-## NEXT ACTION — Cross-event niche confirmation (updated 2026-05-31)
+## NEXT ACTION — Cross-event niche confirmation (updated 2026-05-31 end-of-session)
 
 Niche confirmed at n=2, both Camp (CBXC1 1.007, SLEC1 1.128), DEM/CRS-verified.
-**No cross-event ridge confirmation yet.** Thomas attempt exhausted (WMSC1 = database
-elevation error; CUUC1 = no 12Z signal). Neither refuted the niche.
+**Cross-event confirmation still OPEN.** All tonight's candidates exhausted cleanly
+(HWKC1 HRRR-sufficient; WMSC1 elev error; CUUC1 overnight peak; WISC1 Δ36°; HGLC1 Δ46°).
 
-To get the cross-event confirmation, the cleanest path is NOT more Thomas fishing —
-it is a properly pre-registered ridge station at a NON-Camp event scored at that
-event's PEAK window (not fixed 12Z). Candidates:
-- **Tubbs** — a non-Hawkeye ridge station (Hawkeye excluded: HRRR-sufficient). Need
-  a station above the Tubbs inversion (174m OAK) on an exposed ridge.
-- **Kincade run** — an exposed ridge (not KNXC1 valley). Kincade 27 Oct had strong
-  winds overnight; need a ridge station with a clear peak window.
-- **CUUC1 reset** — new DEM centered 34.81N,-119.01W + overnight BC (00-06Z Dec 5)
-  pre-registered fresh. Three setup steps needed before scoring.
+**Sharpened working hypothesis (new):** WN-beats-HRRR niche holds where terrain does NOT
+strongly rotate synoptic flow (Camp ridges: ~unrotated) and degrades where it does
+(Kincade summits: NNE→N ~45° terrain rotation). This is more falsifiable — predicts
+failure at rotation-dominated stations, success at flow-aligned ones. Test this next.
 
-Each requires fresh pre-registration: DEM-verified, direction-matched, own GF
-confirmed, peak-window BC (not fixed 12Z). The fixed-12Z convention is flagged as a
-structural limitation (misses overnight-peaking events) — switch to per-event peak
-windows as the new convention, pre-register before adopting.
+**Two principled next paths (pick when fresh):**
 
-**Also open:**
-- Resolve KNXC1 overshoot (WN=2.003, BC dir OK, cause unresolved — sheltered valley
-  or BC speed too high?).
+**(1) Tubbs non-Hawkeye ridge** — Hawkeye excluded (HRRR-sufficient). Find a station above
+the Tubbs inversion (174m OAK) where HRRR undershoots AND flow isn't strongly rotated.
+Diablo NNW flow at Tubbs should align well with NNW-facing ridges. Step 0 screening
+first (registry elevation, DEM, direction R), then pre-register peak window + BC.
+
+**(2) Upstream BC sampling — new method, pre-register before testing.** Sample 850 hPa at
+a grid cell UPSTREAM (over terrain reflecting undeflected synoptic flow, east of the Coast
+Ranges) rather than at the deflected station. If this closes the direction gates at WISC1
+and HGLC1, it's a method improvement. But must be pre-registered fresh and applied to ALL
+stations — NOT retrofitted to rescue existing failures.
 
 **Parked permanently (do not revive):**
 - Single-station BC correction — falsified
 - Multi-station BC correction — falsified
 - Do not re-run Camp to chase a pass
+
+**Queued after point-prediction settles:**
+- HRRRCast integration / BC_SENSITIVITY confidence field
+- Resolve KNXC1 overshoot (WN=2.003, BC dir OK, cause unresolved)
 
 **Queued after point-prediction settles:**
 - HRRRCast integration / BC_SENSITIVITY confidence field
