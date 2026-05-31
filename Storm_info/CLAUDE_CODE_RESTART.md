@@ -5,15 +5,14 @@
 (method). This is the rolling "where we are right now." When work lands, fold it into
 the master status and update this file.
 
-**Last updated:** 2026-05-31 (RAWS data unlocked session).
+**Last updated:** 2026-05-31 (Camp held-out test session).
 
 ---
 
 ## ONE-LINE STATE
-**Camp Fire held-out test RUN AND RECORDED (2026-05-31): FAIL.**
-WN+rawBC beats corrected WN at both held-out stations. Structural finding: single-station
-BC correction does not transfer across terrain regimes. WN+rawBC niche confirmed.
-Next: terrain-conditioned correction or multi-station fit before re-running the test.
+**Camp Fire held-out test RUN AND RECORDED (2026-05-31): FAIL (pre-registered).**
+WN+rawBC beats corrected WN at both held-out stations. Single-station correction
+falsified. WN+rawBC niche confirmed. Next: test WN+rawBC vs raw HRRR across other events.
 
 ---
 
@@ -54,36 +53,39 @@ Next: terrain-conditioned correction or multi-station fit before re-running the 
 
 ---
 
-## NEXT ACTION (was in progress at crash) — KINCADE
-Kincade is the LAST open fidelity check. Also: the existing `kincade_2019` file covers
-only the 23–25 Oct ignition phase; the **27 Oct 102 mph Pine Flat run is NOT yet
-pulled.** This step closes both.
+## NEXT ACTION — WN+rawBC cross-event test
 
-**Step 1 — pull the run window.**
-Add to `EVENTS` in `era5_event_pull.py` (do NOT alter existing `kincade_2019`):
-```
-"kincade_run_2019": {"year": "2019", "month": "10", "days": ["26", "27", "28"],
-                     "ignition_utc": "27 Oct 2019 Pine Flat 102 mph Diablo run"},
-```
-Run (hrrr311 env, from Storm_info folder): `python era5_event_pull.py kincade_run_2019`
-→ expect `era5_pl_kincade_run_2019.nc` + `era5_sl_kincade_run_2019.nc`. Uses S=35N box
-(OAK well inside). Leave the four existing event files untouched.
+Camp held-out FAILED as pre-registered. **Do not re-run Camp to chase a pass.**
 
-**Step 2 — OAK 27 Oct sounding.**
-Check `wyoming_soundings.json` for OAK (WMO 72493) 2019-10-27 at 00z + 12z. If missing,
-pull from Wyoming wsgi (src=FM35) and append (same schema). If it returns CWMJ
-(Canadian alias) instead of real OAK data, STOP.
+Single-station BC correction is **parked as falsified**. Any future correction must
+be terrain-conditioned and fit on >1 station without crossing terrain regimes.
 
-**Step 3 — fidelity check.**
-Add to `CHECKS` in `era5_sounding_fidelity.py`: event `kincade_run_2019`, station OAK,
-date 2019-10-27, times 00z+12z, S=35N box. Run, paste full output, write nothing to
-master status until reviewed.
+**The new question:** Does WN+rawBC (no correction) beat raw HRRR at held-out ridge
+stations across the OTHER events? This tests the niche directly — if WN+rawBC
+consistently beats raw HRRR at terrain stations HRRR can't resolve, the core premise
+stands even without a working correction.
 
-**PRE-REGISTERED EXPECTATION (set before looking):** North Bay ridges (Hawkeye, Pine
-Flat) sit ABOVE a low inversion — so unlike Camp, **700 hPa should be the RIGHT level
-here**, and ERA5 should agree with OAK the way Tubbs did. If 700 hPa agrees → coherent
-picture: inversion height decides BC level (850 sub-inversion / 700 above-inversion).
-If it diverges → that's a finding, ESCALATE with both numbers.
+**Events to test (in order):**
+1. **Tubbs 2017** — held-out: HWKC1 (Hawkeye, 617m, Mayacamas ridge). BC = HRRR 700 hPa
+   (ridges above inversion). RAWS obs at peak hour confirmed.
+2. **Thomas 2017** — held-out: WTPC1 (Whitaker Peak, 1256m) + WMSC1 (Warm Springs, 1503m).
+   BC = HRRR 700 hPa (above-inversion Santa Ana). Note: 700 hPa correct here per inversion.
+3. **Kincade run 2019** — held-out: HWKC1 (Hawkeye), KNXC1 (Knoxville Creek, 671m).
+   BC = HRRR 700 hPa (Oct 27 destructive run). RAWS obs confirmed.
+
+**For each event:**
+- Identify the peak RAWS hour from the CSVs (already pulled)
+- Fetch HRRR f00 at that UTC hour (herbie, hrrr311 env)
+- Run WN at held-out station DEM with raw HRRR BC (same flags as Camp test)
+- Score: WN+rawBC / obs_sustained_est vs raw HRRR 10m / obs_sustained_est
+- Record ratio table — pass or fail, don't move goalposts
+
+**Do not pre-register these tests** — Camp was the registered test. These are
+exploratory replication checks to characterize the WN+rawBC baseline.
+
+**Parked (do not revive without new design):**
+- Single-station BC correction — falsified at Camp
+- Kincade ERA5 fidelity check — still open, lower priority, run when convenient
 
 ---
 
