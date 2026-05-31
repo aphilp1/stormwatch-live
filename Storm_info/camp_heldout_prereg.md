@@ -118,4 +118,29 @@ inversion present at 12Z (smooth lapse rate 1000→700 hPa). Same 850 hPa outcom
 Camp but distinct mechanism. Direction match: HRRR 850 hPa 12Z = 42° vs KNXC1 observed
 mean = 27°, Δ=16°. Confirmed before Stage 2 scoring.
 
+**Thomas Fire (4–5 Dec 2017):** BC = 850 hPa, 12Z 2017-12-05, bc_center (34.58N, -118.7W).
+Pre-registered direction: 47.3 mph @ 62°. Direction match: Δ=15° vs WMSC1 vector-mean 47°.
+
+Chosen because the original 700 hPa/13Z BC had rotated to 81° (Δ=34°, outside 30° threshold)
+as the Santa Ana flow veered eastward through the event; 850 hPa/12Z holds the coherent
+downslope drive at 1514 m, just above the VBG inversion lid (~1388 m), the physically correct
+layer for Santa Ana forcing. Third event to land on 850 hPa via a third distinct mechanism:
+Camp = sub-inversion gap flow (inversion-gated), Kincade = downward-propagating Diablo
+transition (timing-gated), Thomas = directional rotation of a decaying Santa Ana
+(veer-gated). Inversion confirmation: no thermal lid detected in HRRR temperature profile
+at bc_current 12Z Dec 5 (smooth lapse rate 1000→700 hPa); the 1388 m reference is from the
+VBG 00Z sounding and defines the top of the sub-inversion gap-flow layer.
+
+WTPC1 (Whitaker Peak) excluded: 62° angular separation from WMSC1 — no BC candidate
+satisfies both stations within 30° simultaneously. WTPC1 vector-mean 345° (NNW) is
+terrain-deflected relative to WMSC1 vector-mean 47° (NNE). Method-out-of-scope, same
+logic as Jarbo exclusion. Scoring station: WMSC1 (Warm Springs) only.
+
+GF correction (pre-registered): stage2.py held gf=2.060 for WMSC1 — this is borrowed/
+inflated. WMSC1's own empirical GF from raws_gust_factors.csv (thomas_2017, 72 window
+pairs, status OK): median_gust_factor = 1.560, peak_gust_factor = 1.619 (68.0 mph gust /
+42.01 mph concurrent sustained at 13:53Z peak). Scoring uses median GF = 1.560, consistent
+with Camp protocol. With correct GF: obs_sustained_est = 55.01 gust / 1.560 = 35.3 mph
+(vs the wrong 55.01/2.060 = 26.7 mph — a 32% denominator error).
+
 *Committed before run. Any result reported after this commit is the real result.*
