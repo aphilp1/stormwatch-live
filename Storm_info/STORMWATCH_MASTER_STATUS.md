@@ -72,6 +72,16 @@ Per protocol §5, the correction is "not yet justified" — recorded as such.
 
 ---
 
+### Camp held-out test — FAIL (2026-05-31, pre-registered)
+Test: BC-corrected WN vs raw HRRR at held-out CBXC1+SLEC1, fit JBGC1. BC=HRRR f00 12Z 8 Nov, 850 hPa, per-station GF.
+- CBXC1: raw HRRR 0.869 | WN+rawBC 1.007 | WN+corrBC 0.830
+- SLEC1: raw HRRR 0.525 | WN+rawBC 1.128 | WN+corrBC 0.717
+VERDICT: FAIL — corrected WN beats neither baseline at both stations.
+Findings: (1) WN on raw BC is in-band at both held-out ridges; plain WN generalizes. (2) Single-station JBGC1 correction makes predictions worse, does not transfer across the Feather River divide — falsified, not a tuning miss. (3) Raw HRRR undershoots SLEC1 (0.525), WN captures it (1.128) — the niche holds. (4) CICC1 excluded (~1 mph at 12Z); fit collapsed to JBGC1-only.
+Per §5: delta=0 baseline (raw HRRR as BC) beats the learned correction — correction not yet justified.
+
+---
+
 **SOLID:**
 - **RAWS DATA UNLOCKED (2026-05-31).** NWS WRH timeseries viewer embeds a public
   Synoptic token in `/source/wrh/apiKey.js` (token `7c76618b66c74aee913bdbae4b448bdd`).
