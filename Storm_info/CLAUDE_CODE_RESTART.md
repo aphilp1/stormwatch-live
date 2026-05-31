@@ -10,10 +10,10 @@ the master status and update this file.
 ---
 
 ## ONE-LINE STATE
-**RAWS gate lifted.** Historical obs for all primary events now in `Storm_info/raws_obs/`
-via `raws_pull_nws_token.py`. BC sweep is the next unblocked action.
-Kincade ERA5 fidelity check (the previous NEXT ACTION) is still open but lower priority
-now that RAWS has landed — do it in parallel, not as a blocker.
+**Camp Fire held-out test RUN AND RECORDED (2026-05-31): FAIL.**
+WN+rawBC beats corrected WN at both held-out stations. Structural finding: single-station
+BC correction does not transfer across terrain regimes. WN+rawBC niche confirmed.
+Next: terrain-conditioned correction or multi-station fit before re-running the test.
 
 ---
 

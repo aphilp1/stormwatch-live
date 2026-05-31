@@ -2,7 +2,7 @@
 
 **Authoritative project record.** Read after restart, alongside
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
-Latest commit: 83e6cf2. All work pushed. **RAWS data now available — see §3 RAWS breakthrough.**
+Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
 **Claude Code task when reading this:** verify the repo state matches what's below
 (files present, commits, conventions in code). Flag any mismatch. Then update this
@@ -45,6 +45,33 @@ bar. Not cleared yet (needs RAWS).
   `conus404_pull_spec.md`, `CLAUDE_CODE_RESTART.md`.
 
 ### Findings ledger
+
+### Camp Fire held-out test — RESULT (2026-05-31) [FAIL, recorded as pre-registered]
+Pre-registered test (camp_heldout_prereg.md, committed before run): BC-corrected
+WindNinja vs raw HRRR at held-out CBXC1 (Colby) + SLEC1 (Saddleback), fit on JBGC1.
+BC = HRRR f00 12Z 8 Nov, 850 hPa. Per-station gust factor. Result table:
+- CBXC1: (a) raw HRRR 0.869 | (b) WN+rawBC 1.007 | (c) WN+corrBC 0.830
+- SLEC1: (a) raw HRRR 0.525 | (b) WN+rawBC 1.128 | (c) WN+corrBC 0.717
+VERDICT: FAIL — corrected WN does not beat both baselines at both held-out stations.
+
+FINDINGS (the fail is informative):
+1. WN on RAW BC is in/near band at both held-out ridges (1.007, 1.128). Plain
+   WindNinja generalizes; the correction does not.
+2. The single-station (JBGC1) BC correction makes predictions WORSE at both held-out
+   stations and does not transfer 53 km east across the Feather River canyon divide
+   (different terrain regime). Correction must be terrain-conditioned, or not applied
+   across regime boundaries. This is a structural method finding, not a tuning miss.
+3. PREMISE CONFIRMED: raw HRRR 10m badly undershoots SLEC1 (0.525) — blind to terrain
+   amplification — while WN+rawBC captures it (1.128). WindNinja adds real skill over
+   raw HRRR at the exact station HRRR misses. The niche holds.
+4. CICC1 (Openshaw) excluded at run: ~1 mph sustained at 12Z (near-calm), can't anchor
+   a correction. Fit collapsed to JBGC1-only — itself a reason the correction was fragile.
+
+Status: the delta=0 baseline (raw HRRR as BC) currently BEATS the learned correction.
+Per protocol §5, the correction is "not yet justified" — recorded as such.
+
+---
+
 **SOLID:**
 - **RAWS DATA UNLOCKED (2026-05-31).** NWS WRH timeseries viewer embeds a public
   Synoptic token in `/source/wrh/apiKey.js` (token `7c76618b66c74aee913bdbae4b448bdd`).
@@ -67,6 +94,22 @@ bar. Not cleared yet (needs RAWS).
   Coverage: camp(12) tubbs(7) kincade_ign(10) kincade_run(12) thomas(26)
             woolsey(16) missoula_dec(8) missoula_jul(34) marshall(8)
             boulder_chin(41) iowa(2) labor_day_or(133)
+- **RAWS INVENTORY + CLEANUP COMPLETE (2026-05-31).** All 317 CSVs inventoried,
+  metadata pulled live for 274 unique STIDs, elevation units fixed, network filter applied.
+  - SLEC1 (Saddleback) pulled: 96 rows Nov 7-10 2018, peak gust 59.01 mph @ 17:18Z Nov 8,
+    direction NE/ENE (43-54°) throughout. Ridge elev confirmed: 6,670 ft / 2,033 m. ACTIVE.
+    Record back to 2001. **Both Camp Fire held-out targets now in dataset: CBXC1 (59 mph)
+    + SLEC1 (59 mph).**
+  - Elevation units bug fixed: `elev_ft_synoptic` (Synoptic returns feet) +
+    `elev_m_derived` (× 0.3048). Verified: JBGC1 2535→772.7m ✓, PNTM8 7897→2407m ✓.
+  - Network filter: 145 files excluded (USGSHY stream gauges, COCOOR/COCOCOBO/COCOMTMS
+    CoCoRaHS precip-only, COOP no-wind-sensor). 4 caution files kept (D5789, E6204,
+    ODT50, OD159 — gapped but have wind data).
+  - **172 usable files** across 12 events. Flags in `raws_inventory.csv` (usable/caution cols).
+  - Scripts: `raws_inventory_verify.py`, `raws_cleanup.py`.
+  - Registry: `raws_obs/raws_station_registry.csv` (275 stations, elev_ft_synoptic + elev_m_derived).
+  **USABLE COUNTS:** camp=14 tubbs=8 kincade_ign=10 kincade_run=13 thomas=26
+  woolsey=16 missoula_dec=8 missoula_jul=18 marshall=8 boulder_chin=9 iowa=2 labor_day_or=36
 - **Timing finding from RAWS (2026-05-31, flag for protocol review):**
   - Tubbs/Hawkeye: ignition ~04:45Z; at 04:56Z already 30 mph / 62 gust → wind rising,
     peak gust 79 mph at 06:56Z (2h AFTER ignition) → rising-limb ignition at Hawkeye
