@@ -490,7 +490,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .mod-refresh-btn:hover{color:var(--text);background:var(--bg2)}
 
 /* ── MODEL PANEL (bottom, full-width) ──────────────────────────── */
-#model-panel{flex-shrink:0;height:0;overflow:hidden;background:var(--bg1);border-top:2px solid var(--accent);transition:height 0.35s ease;display:flex;flex-direction:column}
+#model-panel{flex-shrink:0;height:0;overflow:hidden;background:var(--bg1);border-top:2px solid var(--accent);transition:height 0.35s ease;display:flex;flex-direction:column;position:relative;z-index:800}
 #model-panel.open{height:44vh;min-height:310px}
 .mp-header{display:flex;align-items:center;gap:8px;padding:5px 14px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;flex-wrap:wrap;min-height:38px}
 .mp-loc{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
