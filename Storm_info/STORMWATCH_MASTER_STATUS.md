@@ -56,6 +56,33 @@ Outside that class, WN fails for DIAGNOSABLE reasons (not downscaling failure):
 - KNXC1 Kincade: WN overshoots (2.003); BC dir OK (15 deg), so EITHER 850 BC too strong OR station is sheltered valley misclassified as ridge. UNRESOLVED.
 STATUS: niche confirmed but n=2 clean ridges, both at Camp = PROMISING, NOT PROVEN. No cross-event ridge confirmation yet (Tubbs Hawkeye excluded HRRR-sufficient; Thomas excluded BC dir 43-94 off).
 
+### DEM/CRS integrity verification — FINDINGS (2026-05-31)
+Found and fixed a CRS bug (Zone 11N math applied to Zone 10N DEMs) that had produced
+false terrain mismatches in the edge-check code. After fix, all ridge-niche scored
+stations verify against DEM within ~20m:
+  CBXC1: DEM 1818m vs registry 1830m (−12m) ✓
+  SLEC1: DEM 2011m vs registry 2033m (−22m) ✓
+  KNXC1: DEM  653m vs registry  670m (−17m) ✓
+The two Camp held-out ridge passes (CBXC1 1.007, SLEC1 1.128) are confirmed on correct
+terrain — NOT DEM artifacts.
+
+WMSC1 EXCLUDED: two independent terrain sources (SRTM 30m + USGS 3DEP 1/3 arc-sec,
+downloaded fresh) agree terrain at its registered coords is ~3750 ft (1143m), not the
+4930 ft (1503m) in the Synoptic/registry elevation field — a database elevation error
+(or coordinates ~7km off; nearest 1503m terrain in the DEM is 6.8km north). At true
+3750 ft it sits ~800 ft BELOW the Thomas inversion lid (~4553 ft / 1388m) = sub-inversion
+drainage regime (same class as ROVC1), NOT a ridge-niche station. The 1.219 WN ratio
+was produced on wrong-class terrain and is not recorded as a result.
+
+Thomas BC fix completed and committed (b15c0f1): 700 hPa/13Z original BC had rotated
+to 81° (Δ=34° vs WMSC1, outside 30° threshold); replaced with 850 hPa/12Z at 62°
+(Δ=15° vs WMSC1 vector-mean 47°). WTPC1 excluded: 62° separation from WMSC1,
+terrain-deflected. Third distinct mechanism for 850 hPa selection: directional rotation
+of a decaying Santa Ana (Camp=inversion, Kincade=transition timing, Thomas=veer-gated).
+
+STATUS: ridge niche confirmed at n=2, both Camp (CBXC1, SLEC1), terrain-verified.
+No cross-event ridge confirmation yet.
+
 ### Camp Fire held-out test — RESULT (2026-05-31) [FAIL, recorded as pre-registered]
 Pre-registered test (camp_heldout_prereg.md, committed before run): BC-corrected
 WindNinja vs raw HRRR at held-out CBXC1 (Colby) + SLEC1 (Saddleback), fit on JBGC1.
