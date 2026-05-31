@@ -267,3 +267,110 @@ if __name__ == "__main__":
     print("  should assign a 1-sigma wind uncertainty equal to the std above.")
     print("  Stations with high std are WHERE direction accuracy matters most.")
     print("  Stations with low std are robustly predictable even with direction error.")
+
+    # ---- Direction vs Speed dominance comparison --------------------------
+    # This is the empirical test of "direction dominates over speed at Jarbo".
+    # Compare: spread from ±15 deg direction sweep vs spread from ±20% speed sweep.
+    # If dir_range > spd_range -> direction is the higher-leverage correction.
+    print()
+    print("=" * 72)
+    print("  DIRECTION vs SPEED DOMINANCE (empirical test)")
+    print("  Which BC variable causes more uncertainty at each station?")
+    print("  dir_range = spread across ±15 deg at fixed speed")
+    print("  spd_range = spread across ±20% speed at fixed direction")
+    print("=" * 72)
+    print()
+
+    SPEED_SWEEP_PCT = 0.20   # ±20% of HRRR prior speed
+    DIR_SWEEP_DEG   = 15.0   # ±15 deg
+
+    base_speed = camp_cfg["hrrr_prior"]["speed"]
+    base_dir   = camp_cfg["hrrr_prior"]["dir"]
+
+    results_dominance = {}
+    print(f"  {'Station':^22} | {'dir_range':>9} | {'spd_range':>9} | {'ratio d/s':>9} | Dominant")
+    print(f"  {'-'*22}-+-{'-'*9}-+-{'-'*9}-+-{'-'*9}-+-{'-'*10}")
+
+    for stid, meta in camp_cfg["stations"].items():
+        # Direction sweep at fixed speed
+        ds = direction_sensitivity(surrogate, base_speed, base_dir, stid,
+                                   sweep_deg=DIR_SWEEP_DEG)
+
+        # Speed sweep at fixed direction
+        spd_lo = base_speed * (1 - SPEED_SWEEP_PCT)
+        spd_hi = base_speed * (1 + SPEED_SWEEP_PCT)
+        spd_vals = []
+        for spd in np.linspace(spd_lo, spd_hi, 13):
+            v = surrogate.predict(float(spd), base_dir).get(stid)
+            if v is not None:
+                spd_vals.append(v)
+        spd_range = float(np.max(spd_vals) - np.min(spd_vals)) if spd_vals else 0.0
+
+        dir_range = ds.get("range", 0.0)
+        ratio     = dir_range / spd_range if spd_range > 0 else float("inf")
+        dominant  = "DIRECTION" if dir_range > spd_range else "speed"
+
+        results_dominance[stid] = {
+            "dir_range": dir_range, "spd_range": spd_range,
+            "ratio_d_over_s": ratio, "dominant": dominant,
+            "terrain": meta["terrain"],
+        }
+        print(f"  {stid:^22} | {dir_range:9.2f} | {spd_range:9.2f} | {ratio:9.2f} | {dominant}")
+
+    print()
+    print("  FINDING (sweep-width dependent -- read carefully):")
+    print(f"  Speed sweep ±{SPEED_SWEEP_PCT*100:.0f}% vs direction sweep ±{DIR_SWEEP_DEG:.0f}° "
+          f"are NOT equivalent uncertainties.")
+    print(f"  Speed range at Jarbo: {results_dominance['jarbo_gap']['spd_range']:.1f} mph "
+          f"(from {base_speed*(1-SPEED_SWEEP_PCT):.1f} to {base_speed*(1+SPEED_SWEEP_PCT):.1f} mph)")
+    print(f"  Dir range at Jarbo:   {results_dominance['jarbo_gap']['dir_range']:.1f} mph "
+          f"(from {base_dir-DIR_SWEEP_DEG:.0f}° to {base_dir+DIR_SWEEP_DEG:.0f}°)")
+    print()
+    print("  Speed dominates at ±20%/±15° because ±20% speed (±5 mph) is a large")
+    print("  perturbation. Speed scaling is ~linear through mass conservation --")
+    print("  it is partly BUILT INTO the physics (not terrain-specific).")
+    print()
+    print("  The terrain-geometry finding IS the 17.2x intra-direction ratio:")
+    print("  For the SAME direction error, Jarbo (narrow canyon) sees 17x more")
+    print("  wind change than Paradise (open slope). That is what sets the")
+    print("  BC_SENSITIVITY label -- not raw direction vs speed dominance.")
+    print()
+    print("  ESCALATE: 'direction is the high-leverage variable' is sweep-width")
+    print("  dependent. Valid claim: direction IS the TERRAIN-GEOMETRY-SENSITIVE")
+    print("  variable (17.2x ratio). Speed is terrain-INsensitive (linear at all")
+    print("  stations). Correct the claim in apparatus docs accordingly.")
+
+    # ---- Save results to JSON ---------------------------------------------
+    sensitivity_results = {}
+    for stid, meta in camp_cfg["stations"].items():
+        s = direction_sensitivity(surrogate, base_speed, base_dir, stid,
+                                  sweep_deg=DIR_SWEEP_DEG)
+        sensitivity_results[stid] = {
+            "terrain":    meta["terrain"],
+            "provenance": meta["provenance"],
+            "dir_sensitivity": s,
+            "dominance":  results_dominance.get(stid, {}),
+        }
+
+    output = {
+        "event":       "camp_fire_2018",
+        "bc_prior":    camp_cfg["hrrr_prior"],
+        "sweep_deg":   DIR_SWEEP_DEG,
+        "speed_sweep_pct": SPEED_SWEEP_PCT,
+        "stations":    sensitivity_results,
+        "summary": {
+            "most_sensitive":  max(sensitivity_results,
+                key=lambda k: sensitivity_results[k]["dir_sensitivity"].get("range", 0)),
+            "least_sensitive": min(sensitivity_results,
+                key=lambda k: sensitivity_results[k]["dir_sensitivity"].get("range", 0)),
+            "sensitivity_ratio_jarbo_paradise": (
+                sensitivity_results["jarbo_gap"]["dir_sensitivity"].get("range", 1) /
+                sensitivity_results["paradise"]["dir_sensitivity"].get("range", 1)
+            ),
+        },
+    }
+
+    with open("sensitivity_results.json", "w") as f:
+        import json as _json
+        _json.dump(output, f, indent=2)
+    print("  Results saved to sensitivity_results.json")

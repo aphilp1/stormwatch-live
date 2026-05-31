@@ -1,0 +1,76 @@
+{
+  "event": "camp_fire_2018",
+  "bc_prior": {
+    "speed": 25.2,
+    "dir": 50.0
+  },
+  "sweep_deg": 15.0,
+  "speed_sweep_pct": 0.2,
+  "stations": {
+    "jarbo_gap": {
+      "terrain": "narrow canyon",
+      "provenance": "NIFC-verified",
+      "dir_sensitivity": {
+        "mean": 28.831153437736994,
+        "std": 1.1298145418675405,
+        "min": 26.791031238445925,
+        "max": 30.37376769569466,
+        "range": 3.5827364572487355,
+        "cv": 0.039187282059576924,
+        "n": 13
+      },
+      "dominance": {
+        "dir_range": 3.5827364572487355,
+        "spd_range": 11.55543949889724,
+        "ratio_d_over_s": 0.31004761502932393,
+        "dominant": "speed",
+        "terrain": "narrow canyon"
+      }
+    },
+    "fire_origin": {
+      "terrain": "canyon floor",
+      "provenance": "approximate",
+      "dir_sensitivity": {
+        "mean": 26.464090876842906,
+        "std": 0.12607634999299272,
+        "min": 26.19839914075421,
+        "max": 26.5840889577478,
+        "range": 0.3856898169935903,
+        "cv": 0.004764053697507303,
+        "n": 13
+      },
+      "dominance": {
+        "dir_range": 0.3856898169935903,
+        "spd_range": 10.623120677767453,
+        "ratio_d_over_s": 0.0363066398935653,
+        "dominant": "speed",
+        "terrain": "canyon floor"
+      }
+    },
+    "paradise": {
+      "terrain": "foothill slope",
+      "provenance": "approximate",
+      "dir_sensitivity": {
+        "mean": 25.48743620619331,
+        "std": 0.06754203189136852,
+        "min": 25.42564189716906,
+        "max": 25.634462922402648,
+        "range": 0.20882102523358625,
+        "cv": 0.0026500127884559912,
+        "n": 13
+      },
+      "dominance": {
+        "dir_range": 0.20882102523358625,
+        "spd_range": 10.222688389615687,
+        "ratio_d_over_s": 0.020427212223910574,
+        "dominant": "speed",
+        "terrain": "foothill slope"
+      }
+    }
+  },
+  "summary": {
+    "most_sensitive": "jarbo_gap",
+    "least_sensitive": "paradise",
+    "sensitivity_ratio_jarbo_paradise": 17.1569718769511
+  }
+}
