@@ -83,6 +83,26 @@ of a decaying Santa Ana (Camp=inversion, Kincade=transition timing, Thomas=veer-
 STATUS: ridge niche confirmed at n=2, both Camp (CBXC1, SLEC1), terrain-verified.
 No cross-event ridge confirmation yet.
 
+### Thomas cross-event ridge attempt — exhausted, no confirmation (2026-05-31)
+Tried two candidate above-inversion ridge stations for cross-event niche confirmation;
+neither qualified:
+- WMSC1: database elevation error (registry 4930 ft, two independent terrain sources
+  agree 3750 ft) → sub-inversion, out of niche. Excluded.
+- CUUC1: DEM edge (no margin; new DEM needed) AND near-calm at 12Z (5.99 mph
+  sustained; event peaked overnight 00-09Z and was gone by 12Z). Disqualified,
+  not scored.
+STATUS (accurate): ridge niche confirmed at n=2, both Camp (CBXC1 1.007, SLEC1 1.128),
+DEM/CRS-verified. NO cross-event ridge confirmation yet. Thomas did not refute the
+niche — it lacked a valid above-inversion ridge with a live 12Z signal among the two
+candidates checked.
+
+### METHOD NOTE — fixed-12Z scoring window is a limitation
+Two stations now excluded for near-calm at 12Z (HMRC1 Camp, CUUC1 Thomas) because
+their events peaked OUTSIDE 12Z (overnight). The fixed-12Z convention structurally
+misses overnight-peaking events. FUTURE FIX: score at each event's observed peak
+window, pre-registered per event with the matching HRRR analysis hour — not a single
+global 12Z. This is a scope/convention change → pre-register before adopting.
+
 ### Camp Fire held-out test — RESULT (2026-05-31) [FAIL, recorded as pre-registered]
 Pre-registered test (camp_heldout_prereg.md, committed before run): BC-corrected
 WindNinja vs raw HRRR at held-out CBXC1 (Colby) + SLEC1 (Saddleback), fit on JBGC1.

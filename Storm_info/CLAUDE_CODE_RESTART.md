@@ -5,14 +5,15 @@
 (method). This is the rolling "where we are right now." When work lands, fold it into
 the master status and update this file.
 
-**Last updated:** 2026-05-31 (Camp held-out test session).
+**Last updated:** 2026-05-31 (Thomas cross-event attempt session).
 
 ---
 
 ## ONE-LINE STATE
-**Camp Fire held-out test RUN AND RECORDED (2026-05-31): FAIL (pre-registered).**
-WN+rawBC beats corrected WN at both held-out stations. Single-station correction
-falsified. WN+rawBC niche confirmed. Next: test WN+rawBC vs raw HRRR across other events.
+**Ridge niche confirmed n=2, both Camp (CBXC1 1.007, SLEC1 1.128), DEM/CRS-verified.**
+Thomas cross-event attempt exhausted (WMSC1 = db elevation error; CUUC1 = no 12Z signal).
+No cross-event confirmation yet. Both BC corrections remain FALSIFIED. Next: fresh
+pre-registration for a non-Camp ridge at its event's peak window.
 
 ---
 
@@ -53,39 +54,38 @@ falsified. WN+rawBC niche confirmed. Next: test WN+rawBC vs raw HRRR across othe
 
 ---
 
-## NEXT ACTION — Cross-event niche confirmation
+## NEXT ACTION — Cross-event niche confirmation (updated 2026-05-31)
 
-Niche confirmed at Camp ridges (Colby/Saddleback), **promising not proven.**
-To turn promising → proven, pick up at these OPEN ITEMS in order:
+Niche confirmed at n=2, both Camp (CBXC1 1.007, SLEC1 1.128), DEM/CRS-verified.
+**No cross-event ridge confirmation yet.** Thomas attempt exhausted (WMSC1 = database
+elevation error; CUUC1 = no 12Z signal). Neither refuted the niche.
 
-**(1) Fix Thomas BC** — get direction match, score a NON-Camp ridge station = first
-cross-event confirmation. Thomas BC at 81° (ESE) missed both stations (Δ=43-94°).
-Fix: try a different HRRR sample location or hour for the Santa Ana BC.
-Target stations: WTPC1 (Whitaker Peak, 4120 ft) or WMSC1 (Warm Springs, 4930 ft).
-Both excluded for BC-dir mismatch, not for HRRR-sufficient.
+To get the cross-event confirmation, the cleanest path is NOT more Thomas fishing —
+it is a properly pre-registered ridge station at a NON-Camp event scored at that
+event's PEAK window (not fixed 12Z). Candidates:
+- **Tubbs** — a non-Hawkeye ridge station (Hawkeye excluded: HRRR-sufficient). Need
+  a station above the Tubbs inversion (174m OAK) on an exposed ridge.
+- **Kincade run** — an exposed ridge (not KNXC1 valley). Kincade 27 Oct had strong
+  winds overnight; need a ridge station with a clear peak window.
+- **CUUC1 reset** — new DEM centered 34.81N,-119.01W + overnight BC (00-06Z Dec 5)
+  pre-registered fresh. Three setup steps needed before scoring.
 
-**(2) Resolve KNXC1** — sheltered valley vs BC speed too high.
-KNXC1 WN=2.003 vs obs_sus_est=20.9 mph. BC was 44.7 mph @ 42°, BC dir OK (Δ=15°).
-Check: is KNXC1 in a creek valley (sheltered) despite 2200 ft elevation?
-Also try a lower BC speed (e.g. 30 mph @ 42°) — does WN come into band?
-If sheltered: reclassify KNXC1 as out-of-niche. If BC speed: note as artifact of
-850 hPa sampling point.
+Each requires fresh pre-registration: DEM-verified, direction-matched, own GF
+confirmed, peak-window BC (not fixed 12Z). The fixed-12Z convention is flagged as a
+structural limitation (misses overnight-peaking events) — switch to per-event peak
+windows as the new convention, pre-register before adopting.
 
-**(3) Define station-class filter rigorously** — what makes a station "in-niche":
-- Exposed ridge (not creek/valley terrain)
-- HRRR 10m ratio < 0.85 (HRRR undershoots — WN can add value)
-- Observed sustained wind ≥ 15 mph (avoid denominator artifacts like HMRC1 at 10.5 mph)
-- BC direction within 30° of observed
-Apply this filter prospectively before scoring any new station.
+**Also open:**
+- Resolve KNXC1 overshoot (WN=2.003, BC dir OK, cause unresolved — sheltered valley
+  or BC speed too high?).
 
 **Parked permanently (do not revive):**
 - Single-station BC correction — falsified
-- Multi-station BC correction — falsified (does not generalize across terrain regimes)
+- Multi-station BC correction — falsified
 - Do not re-run Camp to chase a pass
 
-**Still queued but after point-prediction settles:**
+**Queued after point-prediction settles:**
 - HRRRCast integration / BC_SENSITIVITY confidence field
-- Kincade ERA5 fidelity check (low priority)
 
 ---
 
