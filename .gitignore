@@ -27,8 +27,11 @@ desktop.ini
 # Synoptic API credentials -- never commit
 synoptic_config.py
 
-# CDS credentials -- never commit
+# CDS / ECMWF credentials -- never commit
 .cdsapirc
+*.cdsapirc
+.ecmwfapirc
+*.ecmwfapirc
 
 # ERA5 NetCDF downloads -- large binary, reproduced by era5_event_pull.py
 era5/*.nc
