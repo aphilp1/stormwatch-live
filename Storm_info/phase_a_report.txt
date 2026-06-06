@@ -1,0 +1,106 @@
+======================================================================
+PHASE A REPORT — HRRR Departure Database
+Generated: 2026-06-05T23:16:08Z
+======================================================================
+
+Total rows in dataset: 317
+  CAUTION                            3 rows
+  DROP_NO_VALID_OBS                  1 rows
+  DROP_NO_WIND_DATA                145 rows
+  DROP_OTHER                         7 rows
+  KEEP                             161 rows
+
+ACTIVE rows (KEEP + CAUTION): 164
+  Speed channel  (speed_err complete): 164
+  Direction channel (dir_err complete): 163
+  Arrival channel: 0  (all NEEDS_HRRR_TS)
+
+Events: 12
+  boulder_chin2021          n=  9  spd_ok=  9  dir_ok=  9  chinook_frontrange  v3
+  camp_2018                 n= 13  spd_ok= 13  dir_ok= 13  diablo_offshore  v3
+  iowa_derecho2020          n=  2  spd_ok=  2  dir_ok=  2  derecho  v3
+  kincade_ign_2019          n= 10  spd_ok= 10  dir_ok= 10  diablo_offshore_NW  v3
+  kincade_run_2019          n= 12  spd_ok= 12  dir_ok= 12  diablo_offshore_NE  v3
+  labor_day_or2020          n= 35  spd_ok= 35  dir_ok= 34  downslope_oregon  v3
+  marshall_2021             n=  8  spd_ok=  8  dir_ok=  8  chinook_frontrange  v4
+  missoula_dec2025          n=  8  spd_ok=  8  dir_ok=  8  frontal_passage  v4
+  missoula_jul2024          n= 18  spd_ok= 18  dir_ok= 18  NEEDS_REGIME  v4
+  thomas_2017               n= 26  spd_ok= 26  dir_ok= 26  santa_ana  v2
+  tubbs_2017                n=  7  spd_ok=  7  dir_ok=  7  diablo_offshore  v2
+  woolsey_2018              n= 16  spd_ok= 16  dir_ok= 16  santa_ana  v3
+
+Correlation-aware counts (stations within 10 km / same event = 1 independent):
+  Speed channel:     raw=164, independent≈122
+  Direction channel: raw=163, independent≈121
+  Effective N for leave-one-regime-out ≈ 12 events
+
+Spatial clusters assigned: 128 clusters across 164 active rows
+  Isolated stations (no neighbor within 5 km): 0
+
+──────────────────────────────────────────────────────────────────────
+STRUCTURED-VS-WHITE DEPARTURE CHECK
+Variance(per-class mean departures) ÷ pooled within-class variance.
+Ratio >> 1 → terrain-structured (signal). Ratio ≈ 1 → white w.r.t. terrain.
+NOTE: terrain_class is a name/elevation heuristic — DEM verification needed.
+
+Channel: speed_err  (hrrr_10m_mph − obs_sus_mph)
+  Classes with data: ['canyon_gap', 'exposed_ridge', 'open', 'valley']  (n total=164)
+    canyon_gap           n=  12  mean=  -2.88  std=  9.25
+    exposed_ridge        n=  43  mean=  -4.20  std= 12.40
+    open                 n=  94  mean=  -1.13  std=  9.34
+    valley               n=  15  mean=  -0.10  std= 10.34
+  Between-bin variance (of class means): 2.487
+  Within-bin variance  (pooled):         106.331
+  RATIO between/within:                  0.023
+  Interpretation: Departures appear white w.r.t. terrain class — no exploitable structure.
+
+Channel: dir_err    (circular hrrr_10m_dir − obs_dir)
+  Classes with data: ['canyon_gap', 'exposed_ridge', 'open', 'valley']  (n total=163)
+    canyon_gap           n=  12  mean=  +6.51  std= 25.04
+    exposed_ridge        n=  43  mean= +18.79  std= 54.53
+    open                 n=  94  mean= +17.18  std= 63.44
+    valley               n=  14  mean=  -6.41  std= 50.91
+  Between-bin variance (of class means): 101.604
+  Within-bin variance  (pooled):         3373.974
+  RATIO between/within:                  0.030
+  Interpretation: Departures appear white w.r.t. terrain class — no exploitable structure.
+
+──────────────────────────────────────────────────────────────────────
+SPEED_ERR by synoptic regime (descriptive):
+  NEEDS_REGIME                 n=  18  mean= +0.67  std= 7.04
+  chinook_frontrange           n=  17  mean= -0.21  std=12.63
+  derecho                      n=   2  mean= -5.39  std=10.91
+  diablo_offshore              n=  20  mean= -4.30  std=10.02
+  diablo_offshore_NE           n=  12  mean= +0.11  std=11.31
+  diablo_offshore_NW           n=  10  mean= -3.79  std= 5.49
+  downslope_oregon             n=  35  mean= +1.71  std= 7.88
+  frontal_passage              n=   8  mean= -5.42  std= 8.54
+  santa_ana                    n=  42  mean= -5.11  std=11.91
+
+──────────────────────────────────────────────────────────────────────
+INVERSION COVERAGE (elev_vs_inversion):
+  NEEDS_INVERSION              98 rows
+  above                         7 rows
+  below                        48 rows
+  near                         11 rows
+
+──────────────────────────────────────────────────────────────────────
+NEEDS_xxx flag summary (data to fill in Phase B+):
+  NEEDS_BC                             1585 cells
+  NEEDS_DEM                            1268 cells
+  NEEDS_HRRR_10M                          1 cells
+  NEEDS_HRRR_TS                         164 cells
+  NEEDS_INVERSION                       248 cells
+  NEEDS_REGIME                           38 cells
+  NEEDS_WN                              634 cells
+
+──────────────────────────────────────────────────────────────────────
+PHASE A ASSESSMENT:
+  Speed channel:  164 complete rows / 122 independent / 12 events
+  Direction:      163 complete rows / 121 independent
+  Arrival:        0 complete rows (NEEDS_HRRR_TS for all)
+  Terrain class:  heuristic only — DEM verification before crediting terrain signal
+  repr_error_flag: NEEDS_DEM for all — separability pre-condition (spec rule #0)
+                   cannot be run until DEM roughness is computed per cell
+
+END OF PHASE A REPORT
