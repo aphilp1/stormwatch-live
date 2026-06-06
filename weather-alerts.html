@@ -361,6 +361,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .agent-activate-btn.active{background:#f0c040;border-color:#f0c040;color:#0d1a28}
 .agent-mode-btns{display:flex;gap:4px}
 
+/* ── COMBINED THREAT PANEL ───────────────────────────────────────── */
+#map-wrap.ct-mode,#map-wrap.ct-mode .leaflet-container,
+#map-wrap.ct-mode .leaflet-interactive{cursor:crosshair !important}
+#ct-panel{position:fixed;top:55px;left:270px;width:330px;background:#0a1420;border:1px solid rgba(80,130,190,0.3);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
+#ct-header{padding:10px 13px;border-bottom:1px solid rgba(80,130,190,0.2);display:flex;justify-content:space-between;align-items:center;background:#0a1420;gap:8px;cursor:move;user-select:none}
+#ct-body{overflow-y:auto;max-height:calc(100vh - 115px);padding:12px 13px;scrollbar-width:thin;scrollbar-color:#1a3060 transparent}
+#ct-title{font-size:10px;font-weight:700;color:#90c8ff;letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap}
+#ct-close{background:none;border:none;color:#4a6a88;cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
+.ct-loc{font-size:10px;color:#5090d0;margin-bottom:10px;font-weight:600;letter-spacing:0.3px}
+.ct-overall{border-radius:7px;padding:10px 13px;margin-bottom:12px}
+.ct-overall-EXTREME {background:rgba(140,0,0,0.5);border:1px solid #cc2020;color:#ffcccc}
+.ct-overall-HIGH    {background:rgba(130,60,0,0.5);border:1px solid #dd6600;color:#ffc880}
+.ct-overall-ELEVATED{background:rgba(80,50,0,0.5);border:1px solid #ccaa00;color:#ffee88}
+.ct-overall-GUARDED {background:rgba(20,50,20,0.5);border:1px solid #448844;color:#aaddaa}
+.ct-overall-NONE    {background:rgba(20,20,30,0.5);border:1px solid #334466;color:#8899aa}
+.ct-overall-label{font-size:12px;font-weight:700;margin-bottom:4px}
+.ct-overall-headline{font-size:11px;opacity:0.9}
+.ct-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+.ct-row:last-child{border-bottom:none}
+.ct-row-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+.ct-row-body{flex:1;min-width:0}
+.ct-row-name{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#7a8aaa;margin-bottom:2px}
+.ct-row-headline{font-size:10px;color:#c0d0e8;line-height:1.35}
+.ct-row-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;flex-shrink:0;white-space:nowrap}
+.ct-badge-EXTREME,.ct-badge-MAJOR   {background:#cc2020;color:#fff}
+.ct-badge-HIGH,.ct-badge-VERY_HIGH  {background:#dd6600;color:#fff}
+.ct-badge-ELEVATED,.ct-badge-MODERATE{background:#bb9900;color:#fff}
+.ct-badge-GUARDED                   {background:#336633;color:#fff}
+.ct-badge-LOW,.ct-badge-LOW_MODERATE,.ct-badge-NONE{background:#223344;color:#8899aa}
+.ct-hint{font-size:11px;color:#4a6a88;text-align:center;padding:22px 8px;line-height:1.8}
+.ct-loading{font-size:11px;color:#6090c0;text-align:center;padding:26px 0;letter-spacing:0.5px}
+.ct-ts{font-size:9px;color:#2a4060;text-align:center;padding-top:10px;margin-top:6px;border-top:1px solid rgba(255,255,255,0.05)}
+
 /* ── NOWCAST AGENT PANEL ─────────────────────────────────────────── */
 #map-wrap.nc-mode,#map-wrap.nc-mode .leaflet-container,
 #map-wrap.nc-mode .leaflet-interactive{cursor:crosshair !important}
@@ -1226,10 +1259,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
         <div class="agent-card-desc">Click a point or draw a box on the map to get an AI-generated severe weather briefing — threat level, active alerts, SPC outlook, storm reports, and current conditions.</div>
         <div class="agent-card-actions">
-          <div class="agent-mode-btns">
-            <button class="nc-mode-btn active" id="nc-point-btn-sidebar" onclick="setNowcastInputMode('point')">📍 Point</button>
-            <button class="nc-mode-btn" id="nc-box-btn-sidebar" onclick="setNowcastInputMode('box')">⬜ Area</button>
-          </div>
           <button class="agent-activate-btn" id="agent-nowcast-btn" onclick="toggleNowcastMode()">Activate</button>
         </div>
       </div>
@@ -1240,12 +1269,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <span class="agent-card-title">🔥 Fire Forecast</span>
           <span class="agent-card-badge live">● Live</span>
         </div>
-        <div class="agent-card-desc">Click a point or draw a box on the map for a fire weather risk briefing — fuel drought, RH/wind conditions, SPC fire outlook, red flag alerts, and a composite 0–10 risk score.</div>
+        <div class="agent-card-desc">Click a point for a local fire weather briefing, or draw a box for a <strong>regional analysis</strong> — samples 5 points across the area and returns the worst-case risk, aggregated Red Flag alerts, and area-wide conditions.</div>
         <div class="agent-card-actions">
-          <div class="agent-mode-btns">
-            <button class="nc-mode-btn active" id="fw-point-btn-sidebar" onclick="setFireInputMode('point')">📍 Point</button>
-            <button class="nc-mode-btn" id="fw-box-btn-sidebar" onclick="setFireInputMode('box')">⬜ Area</button>
-          </div>
           <button class="agent-activate-btn" id="agent-fire-btn" onclick="toggleFireMode()">Activate</button>
         </div>
       </div>
@@ -1256,13 +1281,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <span class="agent-card-title">🌊 Flood Forecast</span>
           <span class="agent-card-badge live">● Live</span>
         </div>
-        <div class="agent-card-desc">Click a point or draw a box on the map for a river flood briefing — NWS gauge network (75-mile radius), active flood warnings, 24h precipitation, and soil saturation.</div>
+        <div class="agent-card-desc">Click a point for a local flood briefing, or draw a box for a <strong>regional analysis</strong> — samples 5 points, aggregates gauges and flood alerts across the area.</div>
         <div class="agent-card-actions">
-          <div class="agent-mode-btns">
-            <button class="nc-mode-btn active" id="fl-point-btn-sidebar" onclick="setFloodInputMode('point')">📍 Point</button>
-            <button class="nc-mode-btn" id="fl-box-btn-sidebar" onclick="setFloodInputMode('box')">⬜ Area</button>
-          </div>
           <button class="agent-activate-btn" id="agent-flood-btn" onclick="toggleFloodMode()">Activate</button>
+        </div>
+      </div>
+
+      <!-- Combined Threat card -->
+      <div class="agent-card" id="agent-card-combined">
+        <div class="agent-card-hdr">
+          <span class="agent-card-title">⚠️ Combined Threat</span>
+          <span class="agent-card-badge live">● Live</span>
+        </div>
+        <div class="agent-card-desc">Runs all three agents simultaneously — severe weather, fire, and flood — and returns a single prioritized threat picture. Click a point or draw a box for a full situational-awareness summary.</div>
+        <div class="agent-card-actions">
+          <button class="agent-activate-btn" id="agent-combined-btn" onclick="toggleCombinedMode()">Activate</button>
         </div>
       </div>
 
@@ -1621,7 +1654,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button id="fire-close" onclick="closeFirePanel()">✕</button>
     </div>
     <div id="fire-body">
-      <div class="fw-hint" id="fw-hint-text">Click any spot on the map for a fire weather risk briefing.<br><br>Requires MCP server running.</div>
+      <div class="fw-hint" id="fw-hint-text">Click a point for a local briefing.<br><br>Or switch to <strong>Area</strong> mode and draw a box for a regional analysis — samples 5 points, returns worst-case risk + aggregated Red Flag alerts across the area.<br><br>Requires MCP server running.</div>
+    </div>
+  </div>
+
+  <!-- COMBINED THREAT PANEL — outside map-wrap so overflow:hidden doesn't clip it -->
+  <div id="ct-panel">
+    <div id="ct-header" onmousedown="ctPanelDragStart(event)">
+      <span id="ct-title">⚠️ Combined Threat</span>
+      <div id="ct-mode-btns">
+        <button class="nc-mode-btn active" id="ct-point-btn" onclick="setCombinedInputMode('point')">📍 Point</button>
+        <button class="nc-mode-btn" id="ct-box-btn" onclick="setCombinedInputMode('box')">⬜ Area</button>
+      </div>
+      <button id="ct-close" onclick="closeCombinedPanel()">✕</button>
+    </div>
+    <div id="ct-body">
+      <div class="ct-hint">Click a point or draw a box for a full hazard summary — severe weather, fire, and flood analyzed simultaneously.</div>
     </div>
   </div>
 
@@ -2056,9 +2104,10 @@ function initMap() {
   map.getPane('markerLayerPane').style.zIndex = 450;
 
   map.on('click', (e) => {
-    if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
-    if (fireMode  && fireInputMode  === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
-    if (floodMode && floodInputMode === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (nowcastMode    && nowcastInputMode    === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
+    if (fireMode       && fireInputMode       === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (floodMode      && floodInputMode      === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (combinedMode   && combinedInputMode   === 'point') { runCombinedAgent(e.latlng.lat, e.latlng.lng); return; }
     if (!nowcastMode && !fireMode && !floodMode) { onModMapClick(e); }
   });
   map.on('mousedown', ncOnMouseDown);
@@ -2070,6 +2119,9 @@ function initMap() {
   map.on('mousedown', flOnMouseDown);
   map.on('mousemove', flOnMouseMove);
   map.on('mouseup',   flOnMouseUp);
+  map.on('mousedown', ctOnMouseDown);
+  map.on('mousemove', ctOnMouseMove);
+  map.on('mouseup',   ctOnMouseUp);
   map.on('zoomend', () => { updateNexradVisibility(); updateZoomBadge(); if (nhdEnabled) loadNHDStreams(); });
   map.on('moveend', () => { if (nhdEnabled) loadNHDStreams(); });
   updateZoomBadge();
@@ -2232,9 +2284,10 @@ function addAlertPolygon(alert, geom, targetGroup=alertGroup) {
   lyr.on('mouseout',  () => { if(selectedId!==alert.id) lyr.setStyle({fillOpacity:s.fo,weight:s.w}); });
   lyr.on('click', e  => {
     L.DomEvent.stopPropagation(e);
-    if (nowcastMode && nowcastInputMode === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
-    if (fireMode  && fireInputMode  === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
-    if (floodMode && floodInputMode === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (nowcastMode    && nowcastInputMode    === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
+    if (fireMode       && fireInputMode       === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (floodMode      && floodInputMode      === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
+    if (combinedMode   && combinedInputMode   === 'point') { runCombinedAgent(e.latlng.lat, e.latlng.lng); return; }
     selectAlert(mostSevereAlertAt(e.latlng) ?? alert.id);
   });
   lyr._alertId = alert.id;
@@ -4744,14 +4797,14 @@ async function showUsgsGaugeCard(p) {
 // ═══════════════════════════════════════════════════════════════════
 
 function cfsStyle(cfs) {
-  if (isNaN(cfs) || cfs <= 0) return { fill:'#667788', stroke:'#445566', r:2 };
+  if (isNaN(cfs) || cfs <= 0) return { fill:'#667788', stroke:'#445566', r:5 };
   const log = Math.log10(cfs);
-  if (log < 1)  return { fill:'#aad4f5', stroke:'#6699bb', r:2 };  // <10
-  if (log < 2)  return { fill:'#55aaee', stroke:'#2277bb', r:3 };  // 10–100
-  if (log < 3)  return { fill:'#2277cc', stroke:'#1155aa', r:3 };  // 100–1k
-  if (log < 4)  return { fill:'#1155bb', stroke:'#003399', r:4 };  // 1k–10k
-  if (log < 5)  return { fill:'#0033aa', stroke:'#002288', r:5 };  // 10k–100k
-  return             { fill:'#001177', stroke:'#000055', r:6 };    // >100k
+  if (log < 1)  return { fill:'#aad4f5', stroke:'#6699bb', r:5 };  // <10
+  if (log < 2)  return { fill:'#55aaee', stroke:'#2277bb', r:5 };  // 10–100
+  if (log < 3)  return { fill:'#2277cc', stroke:'#1155aa', r:6 };  // 100–1k
+  if (log < 4)  return { fill:'#1155bb', stroke:'#003399', r:7 };  // 1k–10k
+  if (log < 5)  return { fill:'#0033aa', stroke:'#002288', r:8 };  // 10k–100k
+  return             { fill:'#001177', stroke:'#000055', r:10 };   // >100k
 }
 
 async function loadUSGSFlow() {
@@ -6042,7 +6095,7 @@ function setFireInputMode(mode) {
   ['fw-box-btn',  'fw-box-btn-sidebar'  ].forEach(id => document.getElementById(id)?.classList.toggle('active', mode === 'box'));
   const hint = document.getElementById('fw-hint-text');
   if (hint) hint.textContent = mode === 'box'
-    ? 'Draw a box on the map for a fire weather risk briefing of that area.'
+    ? 'Draw a box on the map for a regional fire weather analysis — 5 sample points across the area, worst-case risk, aggregated Red Flag alerts.'
     : 'Click any spot on the map for a fire weather risk briefing.\n\nRequires MCP server running.';
 }
 function fwClearBox() {
@@ -6067,7 +6120,7 @@ function fwOnMouseUp(e) {
   const bounds = L.latLngBounds(_fwBoxStart, e.latlng);
   const center = bounds.getCenter();
   _fwBoxStart = null;
-  runFireAgent(center.lat, center.lng);
+  runFireAgent(center.lat, center.lng, bounds);
 }
 
 // ── Flood box-draw ───────────────────────────────────────────────────
@@ -6077,7 +6130,7 @@ function setFloodInputMode(mode) {
   ['fl-box-btn',  'fl-box-btn-sidebar'  ].forEach(id => document.getElementById(id)?.classList.toggle('active', mode === 'box'));
   const hint = document.getElementById('fl-hint-text');
   if (hint) hint.textContent = mode === 'box'
-    ? 'Draw a box on the map for a river flood briefing of that area.'
+    ? 'Draw a box on the map for a regional flood analysis — samples 5 points, aggregates river gauges and flood alerts across the area.'
     : 'Click any spot on the map for a river flood briefing.\n\nRequires MCP server running.';
 }
 function flClearBox() {
@@ -6102,7 +6155,7 @@ function flOnMouseUp(e) {
   const bounds = L.latLngBounds(_flBoxStart, e.latlng);
   const center = bounds.getCenter();
   _flBoxStart = null;
-  runFloodAgent(center.lat, center.lng);
+  runFloodAgent(center.lat, center.lng, bounds);
 }
 
 function ncApplyMapAlerts(d, ma) {
@@ -6289,14 +6342,20 @@ function fwPanelDragMove(e) {
 }
 function fwPanelDragEnd() { _fwDrag = null; document.removeEventListener('mousemove', fwPanelDragMove); document.removeEventListener('mouseup', fwPanelDragEnd); }
 
-async function runFireAgent(lat, lon) {
+async function runFireAgent(lat, lon, bounds) {
   const panel = document.getElementById('fire-panel');
   panel.style.display = 'block';
   const body = document.getElementById('fire-body');
   body.scrollTop = 0;
-  body.innerHTML = '<div class="fw-loading">Analyzing fire weather environment…</div>';
+  const areaMode = bounds != null;
+  body.innerHTML = `<div class="fw-loading">${areaMode ? 'Analyzing regional fire weather — sampling area…' : 'Analyzing fire weather environment…'}</div>`;
   try {
-    const res = await fetch(`http://localhost:3456/fire-agent?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);
+    let url = `http://localhost:3456/fire-agent?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
+    if (bounds) {
+      url += `&minLat=${bounds.getSouth().toFixed(4)}&maxLat=${bounds.getNorth().toFixed(4)}` +
+             `&minLon=${bounds.getWest().toFixed(4)}&maxLon=${bounds.getEast().toFixed(4)}`;
+    }
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`Server error ${res.status}`);
     const data = await res.json();
     renderFireAgent(data);
@@ -6312,7 +6371,13 @@ function renderFireAgent(d) {
   const loc    = d.location ?? {};
 
   let html = '';
-  html += `<div class="fw-loc">${loc.name ?? ''}${loc.state ? ' · ' + loc.state : ''}</div>`;
+  if (loc.areaMode) {
+    html += `<div class="fw-loc">📍 ${loc.name}${loc.states ? ' · ' + loc.states : ''}`;
+    if (loc.worstPoint) html += `<br><span style="font-weight:400;opacity:0.75">Peak risk: ${loc.worstPoint}</span>`;
+    html += `</div>`;
+  } else {
+    html += `<div class="fw-loc">${loc.name ?? ''}${loc.state ? ' · ' + loc.state : ''}</div>`;
+  }
 
   html += `<div class="fw-risk-block fw-risk-${rating}">`;
   html += `<span class="fw-risk-score">${score}<br><span style="font-size:10px;font-weight:400;opacity:0.7">/10</span></span>`;
@@ -6365,6 +6430,16 @@ function renderFireAgent(d) {
     });
   }
 
+  // Area-mode summary note
+  if (d.areaMode) {
+    const n = d.location?.sampleCount ?? 5;
+    const ac = d.areaAlertCount ?? 0;
+    html += `<div style="font-size:9px;color:#c07040;padding:4px 2px;opacity:0.8">` +
+      `Area analysis · ${n} sample points · ` +
+      (ac > 0 ? `${ac} fire alert${ac > 1 ? 's' : ''} found across region` : 'no fire alerts in sampled points') +
+      `</div>`;
+  }
+
   // Camp Fire analog warning
   if (d.campFireAnalog) {
     html += `<div class="fw-analog">⚠️ <strong>Camp Fire analog conditions detected</strong> — extreme dry days and severe precip deficit similar to the November 2018 Camp Fire environment.</div>`;
@@ -6381,6 +6456,143 @@ function renderFireAgent(d) {
 
 let floodMode = false, floodInputMode = 'point';
 let _flDrag = null, _flBoxStart = null, _flBoxRect = null;
+
+// ── COMBINED THREAT AGENT ────────────────────────────────────────────────────
+let combinedMode = false, combinedInputMode = 'point';
+let _ctDrag = null, _ctBoxStart = null, _ctBoxRect = null;
+
+function toggleCombinedMode() {
+  combinedMode = !combinedMode;
+  document.getElementById('ct-panel').style.display = combinedMode ? 'block' : 'none';
+  document.getElementById('map-wrap').classList.toggle('ct-mode', combinedMode);
+  document.getElementById('agent-combined-btn')?.classList.toggle('active', combinedMode);
+  document.getElementById('agent-card-combined')?.classList.toggle('active', combinedMode);
+  if (!combinedMode) { ctClearBox(); map.dragging.enable(); }
+}
+
+function closeCombinedPanel() {
+  combinedMode = false;
+  document.getElementById('ct-panel').style.display = 'none';
+  document.getElementById('map-wrap').classList.remove('ct-mode');
+  document.getElementById('agent-combined-btn')?.classList.remove('active');
+  document.getElementById('agent-card-combined')?.classList.remove('active');
+  ctClearBox();
+}
+
+function setCombinedInputMode(mode) {
+  combinedInputMode = mode;
+  document.getElementById('ct-point-btn')?.classList.toggle('active', mode === 'point');
+  document.getElementById('ct-box-btn')?.classList.toggle('active', mode === 'box');
+  const hint = document.getElementById('ct-body');
+  if (hint && !hint.querySelector('.ct-loc')) {
+    hint.innerHTML = mode === 'box'
+      ? '<div class="ct-hint">Draw a box for a regional all-hazards analysis — severe weather, fire, and flood sampled across 5 points.</div>'
+      : '<div class="ct-hint">Click a point for a full situational-awareness summary — all three agents run simultaneously.</div>';
+  }
+}
+
+function ctClearBox() {
+  if (_ctBoxRect) { _ctBoxRect.remove(); _ctBoxRect = null; }
+  _ctBoxStart = null;
+}
+
+// Box-draw handlers
+function ctOnMouseDown(e) {
+  if (!combinedMode || combinedInputMode !== 'box') return;
+  map.dragging.disable();
+  _ctBoxStart = e.latlng;
+}
+function ctOnMouseMove(e) {
+  if (!_ctBoxStart) return;
+  const b = L.latLngBounds(_ctBoxStart, e.latlng);
+  if (_ctBoxRect) { _ctBoxRect.setBounds(b); }
+  else { _ctBoxRect = L.rectangle(b, { color: '#4488ff', weight: 2, fillColor: '#2255cc', fillOpacity: 0.08, dashArray: '4' }).addTo(map); }
+}
+function ctOnMouseUp(e) {
+  if (!_ctBoxStart) return;
+  map.dragging.enable();
+  const bounds = L.latLngBounds(_ctBoxStart, e.latlng);
+  const center = bounds.getCenter();
+  _ctBoxStart = null;
+  runCombinedAgent(center.lat, center.lng, bounds);
+}
+
+// Panel drag
+function ctPanelDragStart(e) {
+  const panel = document.getElementById('ct-panel');
+  _ctDrag = { startX: e.clientX - panel.offsetLeft, startY: e.clientY - panel.offsetTop };
+  const move = ev => { panel.style.left = (ev.clientX - _ctDrag.startX) + 'px'; panel.style.top = (ev.clientY - _ctDrag.startY) + 'px'; panel.style.right = 'auto'; };
+  const up   = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', up);
+}
+
+async function runCombinedAgent(lat, lon, bounds) {
+  const panel = document.getElementById('ct-panel');
+  panel.style.display = 'block';
+  const body = document.getElementById('ct-body');
+  body.scrollTop = 0;
+  const areaMode = bounds != null;
+  body.innerHTML = `<div class="ct-loading">${areaMode ? 'Running all three agents across region…' : 'Running all three agents simultaneously…'}</div>`;
+  try {
+    let url = `http://localhost:3456/combined-threat?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
+    if (bounds) {
+      url += `&minLat=${bounds.getSouth().toFixed(4)}&maxLat=${bounds.getNorth().toFixed(4)}` +
+             `&minLon=${bounds.getWest().toFixed(4)}&maxLon=${bounds.getEast().toFixed(4)}`;
+    }
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    renderCombinedAgent(await res.json());
+  } catch (err) {
+    body.innerHTML = `<div class="ct-hint">Could not get combined threat data.<br><small style="color:#4a6a88">${err.message}</small><br><small>Is the MCP server running?</small></div>`;
+  }
+}
+
+function renderCombinedAgent(d) {
+  const loc   = d.location ?? {};
+  const level = d.overallLevel ?? 'NONE';
+  let html = '';
+
+  // Location
+  html += `<div class="ct-loc">📍 ${loc.name ?? ''}${loc.areaMode ? '' : (loc.state ? ' · ' + loc.state : '')}</div>`;
+
+  // Overall threat banner
+  html += `<div class="ct-overall ct-overall-${level}">`;
+  html += `<div class="ct-overall-label">${level === 'NONE' ? '✅ All Clear' : level === 'EXTREME' ? '🚨 EXTREME THREAT' : level === 'HIGH' ? '⚠️ HIGH THREAT' : level === 'ELEVATED' ? '⚡ ELEVATED THREAT' : '🔵 GUARDED'}</div>`;
+  html += `<div class="ct-overall-headline">${d.headline ?? ''}</div>`;
+  html += `</div>`;
+
+  // Three sub-rows
+  const rows = [
+    { icon: '⚡', name: 'Severe Weather', data: d.nowcast,
+      badge: d.nowcast?.level ?? 'NONE',
+      detail: d.nowcast?.alertCount > 0 ? `${d.nowcast.alertCount} active alert${d.nowcast.alertCount > 1 ? 's' : ''}` : (d.nowcast?.headline ?? 'No active alerts') },
+    { icon: '🔥', name: 'Fire Weather', data: d.fire,
+      badge: (d.fire?.level ?? 'NONE').replace(/[- ]/g,'_').toUpperCase(),
+      detail: d.fire ? `Score ${d.fire.score?.toFixed(1) ?? '–'}/10 · ${d.fire.headline ?? ''}` : 'Unavailable' },
+    { icon: '🌊', name: 'Flood', data: d.flood,
+      badge: d.flood?.level ?? 'NONE',
+      detail: d.flood?.elevated > 0 ? `${d.flood.elevated} gauge${d.flood.elevated > 1 ? 's' : ''} elevated · ${d.flood.headline ?? ''}` : (d.flood?.headline ?? 'No active flooding') },
+  ];
+
+  html += `<div style="margin-top:4px">`;
+  rows.forEach(r => {
+    html += `<div class="ct-row">`;
+    html += `<div class="ct-row-icon">${r.icon}</div>`;
+    html += `<div class="ct-row-body"><div class="ct-row-name">${r.name}</div><div class="ct-row-headline">${r.detail}</div></div>`;
+    html += `<div class="ct-row-badge ct-badge-${r.badge}">${r.badge.replace(/_/g,' ')}</div>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  if (d.areaMode) {
+    html += `<div class="ct-ts">Regional analysis · 5 sample points per agent</div>`;
+  }
+  const ts = new Date(d.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  html += `<div class="ct-ts">Generated ${ts} · StormWatch MCP</div>`;
+
+  document.getElementById('ct-body').innerHTML = html;
+}
 
 function toggleFloodMode() {
   floodMode = !floodMode;
@@ -6419,14 +6631,20 @@ function flPanelDragMove(e) {
 }
 function flPanelDragEnd() { _flDrag = null; document.removeEventListener('mousemove', flPanelDragMove); document.removeEventListener('mouseup', flPanelDragEnd); }
 
-async function runFloodAgent(lat, lon) {
+async function runFloodAgent(lat, lon, bounds) {
   const panel = document.getElementById('flood-panel');
   panel.style.display = 'block';
   const body = document.getElementById('flood-body');
   body.scrollTop = 0;
-  body.innerHTML = '<div class="fl-loading">Gathering river and flood data…</div>';
+  const areaMode = bounds != null;
+  body.innerHTML = `<div class="fl-loading">${areaMode ? 'Analyzing regional flood picture — sampling area…' : 'Gathering river and flood data…'}</div>`;
   try {
-    const res = await fetch(`http://localhost:3456/flood-agent?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);
+    let url = `http://localhost:3456/flood-agent?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
+    if (bounds) {
+      url += `&minLat=${bounds.getSouth().toFixed(4)}&maxLat=${bounds.getNorth().toFixed(4)}` +
+             `&minLon=${bounds.getWest().toFixed(4)}&maxLon=${bounds.getEast().toFixed(4)}`;
+    }
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`Server error ${res.status}`);
     const data = await res.json();
     renderFloodAgent(data);
@@ -6438,7 +6656,13 @@ async function runFloodAgent(lat, lon) {
 function renderFloodAgent(d) {
   const loc = d.location ?? {};
   let html = '';
-  html += `<div class="fl-loc">${loc.name ?? ''}${loc.state ? ' · ' + loc.state : ''}</div>`;
+  if (loc.areaMode) {
+    html += `<div class="fl-loc">📍 ${loc.name}${loc.states ? ' · ' + loc.states : ''}`;
+    if (loc.worstPoint) html += `<br><span style="font-weight:400;opacity:0.75">Highest activity: ${loc.worstPoint}</span>`;
+    html += `</div>`;
+  } else {
+    html += `<div class="fl-loc">${loc.name ?? ''}${loc.state ? ' · ' + loc.state : ''}</div>`;
+  }
 
   const riskClass = `fl-risk-${d.floodRisk}`;
   html += `<div class="fl-risk-block ${riskClass}">`;

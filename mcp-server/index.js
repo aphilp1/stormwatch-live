@@ -3140,6 +3140,242 @@ async function runFireWeatherAgent(lat, lon) {
   };
 }
 
+// Combined Threat Agent — runs Nowcast + Fire + Flood in parallel and
+// synthesizes a single situational-awareness picture with priority ranking.
+
+const THREAT_RANK = {
+  EXTREME: 6, HIGH: 5, VERY_HIGH: 5, MAJOR: 5,
+  MODERATE: 4, ELEVATED: 3, GUARDED: 2,
+  LOW_MODERATE: 1, LOW: 1, NONE: 0,
+};
+
+async function runCombinedThreat(lat, lon, bbox) {
+  const [nowcastRes, fireRes, floodRes] = await Promise.allSettled([
+    runSevereWeatherNowcast(lat, lon, bbox ?? null),
+    bbox ? runFireWeatherAgentArea(lat, lon, bbox) : runFireWeatherAgent(lat, lon),
+    bbox ? runFloodAgentArea(lat, lon, bbox) : runFloodAgent(lat, lon),
+  ]);
+
+  const nowcast = nowcastRes.status === "fulfilled" ? nowcastRes.value : null;
+  const fire    = fireRes.status   === "fulfilled" ? fireRes.value   : null;
+  const flood   = floodRes.status  === "fulfilled" ? floodRes.value  : null;
+
+  // Build individual threat summaries
+  const swLevel    = nowcast?.threatLevel ?? "NONE";
+  const fireLevel  = fire?.riskRating?.replace(/[- ]/g, "_").toUpperCase() ?? "NONE";
+  const floodLevel = flood?.floodRisk ?? "NONE";
+
+  // Rank each; pick overall
+  const ranks = [
+    { type: "SEVERE_WEATHER", level: swLevel,    rank: THREAT_RANK[swLevel]    ?? 0 },
+    { type: "FIRE",           level: fireLevel,  rank: THREAT_RANK[fireLevel]  ?? 0 },
+    { type: "FLOOD",          level: floodLevel, rank: THREAT_RANK[floodLevel] ?? 0 },
+  ].sort((a, b) => b.rank - a.rank);
+
+  const topRank   = ranks[0].rank;
+  const overallLevel =
+    topRank >= 6 ? "EXTREME" :
+    topRank >= 5 ? "HIGH" :
+    topRank >= 4 ? "ELEVATED" :
+    topRank >= 2 ? "GUARDED" : "NONE";
+
+  const activeThreats = ranks.filter(r => r.rank > 0);
+  const primaryType   = activeThreats[0]?.type ?? null;
+
+  // Unified headline
+  const headline =
+    activeThreats.length === 0
+      ? "No significant threats detected across all hazards"
+      : activeThreats.length === 1
+        ? (nowcast?.headline ?? fire?.headline ?? flood?.headline ?? "One active hazard")
+        : `${activeThreats.length} concurrent hazards — lead: ${activeThreats[0].type.replace("_", " ").toLowerCase()}`;
+
+  // Location label
+  const locName = (bbox
+    ? (nowcast?.location?.state ?? fire?.location?.states ?? "Region")
+    : (nowcast?.location?.state ? `${nowcast.location.state}` : null)
+  ) ?? `${lat.toFixed(2)}°N`;
+
+  return {
+    location: { lat, lon, name: locName, areaMode: bbox != null },
+    overallLevel,
+    headline,
+    primaryThreat: primaryType,
+    threats: ranks,
+    nowcast: nowcast ? {
+      level:    swLevel,
+      headline: nowcast.headline ?? "",
+      alertCount: (nowcast.activeThreats ?? []).length,
+    } : null,
+    fire: fire ? {
+      level:    fire.riskRating ?? "LOW",
+      score:    fire.riskScore  ?? 0,
+      headline: fire.headline   ?? "",
+    } : null,
+    flood: flood ? {
+      level:    floodLevel,
+      headline: flood.headline ?? "",
+      elevated: (flood.gaugeCounts?.major ?? 0) + (flood.gaugeCounts?.moderate ?? 0) + (flood.gaugeCounts?.minor ?? 0),
+    } : null,
+    areaMode:  bbox != null,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Flood Agent — AREA MODE
+// Samples 5 points across the bbox in parallel, deduplicates gauges by lid,
+// returns worst-case flood risk + aggregated alerts across the region.
+
+async function runFloodAgentArea(centerLat, centerLon, bbox) {
+  const { minLat, maxLat, minLon, maxLon } = bbox;
+
+  const samplePts = [
+    [centerLat, centerLon],
+    [(minLat * 3 + maxLat) / 4, (minLon * 3 + maxLon) / 4],  // SW
+    [(minLat * 3 + maxLat) / 4, (minLon + maxLon * 3) / 4],  // SE
+    [(minLat + maxLat * 3) / 4, (minLon * 3 + maxLon) / 4],  // NW
+    [(minLat + maxLat * 3) / 4, (minLon + maxLon * 3) / 4],  // NE
+  ];
+
+  const settled = await Promise.allSettled(
+    samplePts.map(([la, lo]) => runFloodAgent(la, lo))
+  );
+  const results = settled.filter(r => r.status === "fulfilled").map(r => r.value);
+  if (!results.length) {
+    return { error: "No flood data available for area", timestamp: new Date().toISOString() };
+  }
+
+  // Worst-case result by flood risk level
+  const riskOrder = { MAJOR: 4, MODERATE: 3, ELEVATED: 2, NONE: 1 };
+  const worst = results.reduce((a, b) =>
+    (riskOrder[a.floodRisk] ?? 0) >= (riskOrder[b.floodRisk] ?? 0) ? a : b
+  );
+
+  // Deduplicate gauges across all sample points by lid
+  const gaugeMap = new Map();
+  results.forEach(r => (r.gauges ?? []).forEach(g => {
+    if (g.lid && !gaugeMap.has(g.lid)) gaugeMap.set(g.lid, g);
+    else if (!g.lid) gaugeMap.set(Math.random(), g);  // unnamed — include anyway
+  }));
+  const allGauges = Array.from(gaugeMap.values());
+
+  // Deduplicate flood alerts across all sample points
+  const alertMap = new Map();
+  results.forEach(r => (r.floodAlerts ?? []).forEach(a => {
+    const key = (a.event ?? "") + "|" + (a.expires ?? "");
+    if (!alertMap.has(key)) alertMap.set(key, a);
+  }));
+  const allAlerts = Array.from(alertMap.values());
+
+  // Aggregate gauge counts
+  const elevated = allGauges.filter(g => !/no_flooding|normal|unknown/i.test(g.status));
+  const counts = results.reduce(
+    (acc, r) => ({
+      major:    acc.major    + (r.gaugeCounts?.major    ?? 0),
+      moderate: acc.moderate + (r.gaugeCounts?.moderate ?? 0),
+      minor:    acc.minor    + (r.gaugeCounts?.minor    ?? 0),
+      action:   acc.action   + (r.gaugeCounts?.action   ?? 0),
+    }),
+    { major: 0, moderate: 0, minor: 0, action: 0 }
+  );
+
+  // Area description
+  const latMi = Math.round((maxLat - minLat) * 69);
+  const lonMi = Math.round((maxLon - minLon) * Math.cos((centerLat * Math.PI) / 180) * 69);
+  const areaDesc = `${latMi}×${lonMi} mi region`;
+  const states = [...new Set(results.map(r => r.location?.state).filter(Boolean))];
+  const stateStr = states.length <= 5 ? states.join(", ") : `${states.length} states`;
+
+  return {
+    ...worst,
+    location: {
+      ...worst.location,
+      name:        areaDesc,
+      states:      stateStr,
+      areaMode:    true,
+      worstPoint:  worst.location?.name,
+      sampleCount: results.length,
+    },
+    gauges:      allGauges.slice(0, 15),
+    floodAlerts: allAlerts,
+    gaugeCounts: counts,
+    areaMode:    true,
+    timestamp:   new Date().toISOString(),
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Fire Weather Agent — AREA MODE
+// Samples 5 points across a bounding box in parallel, returns worst-case
+// conditions + deduplicated alerts from all sample points.
+
+async function runFireWeatherAgentArea(centerLat, centerLon, bbox) {
+  const { minLat, maxLat, minLon, maxLon } = bbox;
+
+  // 5 sample points: center + 4 quadrant midpoints
+  const samplePts = [
+    [centerLat, centerLon],
+    [(minLat * 3 + maxLat) / 4, (minLon * 3 + maxLon) / 4],  // SW
+    [(minLat * 3 + maxLat) / 4, (minLon + maxLon * 3) / 4],  // SE
+    [(minLat + maxLat * 3) / 4, (minLon * 3 + maxLon) / 4],  // NW
+    [(minLat + maxLat * 3) / 4, (minLon + maxLon * 3) / 4],  // NE
+  ];
+
+  // Run all 5 point analyses in parallel
+  const settled = await Promise.allSettled(
+    samplePts.map(([la, lo]) => runFireWeatherAgent(la, lo))
+  );
+  const results = settled.filter(r => r.status === "fulfilled").map(r => r.value);
+  if (!results.length) {
+    return { error: "No data available for area", timestamp: new Date().toISOString() };
+  }
+
+  // Worst-case result drives the headline risk
+  const worst = results.reduce((a, b) => a.riskScore > b.riskScore ? a : b);
+
+  // Deduplicate alerts across all sample points
+  const alertMap = new Map();
+  results.forEach(r => (r.alerts ?? []).forEach(a => {
+    const key = (a.event ?? "") + "|" + (a.expires ?? "");
+    if (!alertMap.has(key)) alertMap.set(key, a);
+  }));
+  const allAlerts = Array.from(alertMap.values());
+  const fireAlertCount = allAlerts.filter(a => /red flag|fire weather/i.test(a.event ?? "")).length;
+
+  // Unique states sampled
+  const states = [...new Set(results.map(r => r.location?.state).filter(Boolean))];
+  const stateStr = states.length <= 5 ? states.join(", ") : `${states.length} states`;
+
+  // Area size in miles
+  const latMi = Math.round((maxLat - minLat) * 69);
+  const lonMi = Math.round((maxLon - minLon) * Math.cos((centerLat * Math.PI) / 180) * 69);
+  const areaDesc = `${latMi}×${lonMi} mi region`;
+
+  // How many sample points hit HIGH or above
+  const highCount = results.filter(r => r.riskScore >= 5).length;
+  const extraFactors = highCount > 1
+    ? [`${highCount} of ${results.length} sample points at HIGH risk or above across the region`]
+    : [];
+
+  return {
+    ...worst,
+    location: {
+      ...worst.location,
+      name:        areaDesc,
+      states:      stateStr,
+      areaMode:    true,
+      worstPoint:  worst.location?.name,
+      sampleCount: results.length,
+    },
+    alerts:         allAlerts,
+    areaAlertCount: fireAlertCount,
+    areaMode:       true,
+    factors:        [...worst.factors, ...extraFactors],
+    timestamp:      new Date().toISOString(),
+  };
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Flood Agent — called by /flood-agent HTTP endpoint
 
@@ -3184,17 +3420,35 @@ async function runFloodAgent(lat, lon) {
       .slice(0, 15);
     for (const f of features) {
       const a = f.attributes;
-      const status = (a.status ?? "unknown").toLowerCase();
+      const obs = a.observed;
+
+      // Skip reservoir/lake pool-elevation gauges: NWS riv_gauges mixes river
+      // stage gauges (typically 0–50 ft above datum) with reservoir pool gauges
+      // that report absolute elevation (hundreds of feet above sea level).
+      // River stages never legitimately exceed 100 ft; anything above that is
+      // a pool elevation and should not appear as a river stage reading.
+      if (obs != null && obs > 100) continue;
+
+      let status = (a.status ?? "unknown").toLowerCase();
+
+      // NWS occasionally returns "action" or low-stage status for gauges whose
+      // observed value is at or below datum (-0.01, 0.00). These are data
+      // artifacts — a gauge physically at 0 ft is not approaching flood stage.
+      if (obs != null && obs < 0.1 && !status.includes("major") && !status.includes("moderate")) {
+        status = "no_flooding";
+      }
+
+      const displayStatus = status === "no_flooding" ? "No Flooding" : (a.status ?? "Unknown");
       gauges.push({
         name:      a.location ?? a.gaugelid,
         waterbody: a.waterbody ?? "Unknown river",
-        status:    a.status ?? "Unknown",
-        observed:  a.observed,
+        status:    displayStatus,
+        observed:  obs,
         units:     a.units ?? "ft",
         dist:      Math.round(f.dist),
         lid:       a.gaugelid,
       });
-      if (status.includes("major"))    majorCount++;
+      if (status.includes("major"))         majorCount++;
       else if (status.includes("moderate")) moderateCount++;
       else if (status.includes("minor"))    minorCount++;
       else if (status.includes("action"))   actionCount++;
@@ -3384,11 +3638,18 @@ createServer(async (req, res) => {
   }
 
   if (url.pathname === "/fire-agent") {
-    const lat = parseFloat(url.searchParams.get("lat") ?? "NaN");
-    const lon = parseFloat(url.searchParams.get("lon") ?? "NaN");
+    const lat    = parseFloat(url.searchParams.get("lat")    ?? "NaN");
+    const lon    = parseFloat(url.searchParams.get("lon")    ?? "NaN");
+    const minLat = parseFloat(url.searchParams.get("minLat") ?? "NaN");
+    const maxLat = parseFloat(url.searchParams.get("maxLat") ?? "NaN");
+    const minLon = parseFloat(url.searchParams.get("minLon") ?? "NaN");
+    const maxLon = parseFloat(url.searchParams.get("maxLon") ?? "NaN");
     if (isNaN(lat) || isNaN(lon)) { res.writeHead(400); res.end(JSON.stringify({ error: "lat/lon required" })); return; }
+    const hasBox = !isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLon) && !isNaN(maxLon);
     try {
-      const result = await runFireWeatherAgent(lat, lon);
+      const result = hasBox
+        ? await runFireWeatherAgentArea(lat, lon, { minLat, maxLat, minLon, maxLon })
+        : await runFireWeatherAgent(lat, lon);
       res.end(JSON.stringify(result));
     } catch (err) {
       process.stderr.write(`[stormwatch] /fire-agent error: ${err.message}\n`);
@@ -3398,14 +3659,41 @@ createServer(async (req, res) => {
   }
 
   if (url.pathname === "/flood-agent") {
-    const lat = parseFloat(url.searchParams.get("lat") ?? "NaN");
-    const lon = parseFloat(url.searchParams.get("lon") ?? "NaN");
+    const lat    = parseFloat(url.searchParams.get("lat")    ?? "NaN");
+    const lon    = parseFloat(url.searchParams.get("lon")    ?? "NaN");
+    const minLat = parseFloat(url.searchParams.get("minLat") ?? "NaN");
+    const maxLat = parseFloat(url.searchParams.get("maxLat") ?? "NaN");
+    const minLon = parseFloat(url.searchParams.get("minLon") ?? "NaN");
+    const maxLon = parseFloat(url.searchParams.get("maxLon") ?? "NaN");
     if (isNaN(lat) || isNaN(lon)) { res.writeHead(400); res.end(JSON.stringify({ error: "lat/lon required" })); return; }
+    const hasBox = !isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLon) && !isNaN(maxLon);
     try {
-      const result = await runFloodAgent(lat, lon);
+      const result = hasBox
+        ? await runFloodAgentArea(lat, lon, { minLat, maxLat, minLon, maxLon })
+        : await runFloodAgent(lat, lon);
       res.end(JSON.stringify(result));
     } catch (err) {
       process.stderr.write(`[stormwatch] /flood-agent error: ${err.message}\n`);
+      res.writeHead(500); res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  if (url.pathname === "/combined-threat") {
+    const lat    = parseFloat(url.searchParams.get("lat")    ?? "NaN");
+    const lon    = parseFloat(url.searchParams.get("lon")    ?? "NaN");
+    const minLat = parseFloat(url.searchParams.get("minLat") ?? "NaN");
+    const maxLat = parseFloat(url.searchParams.get("maxLat") ?? "NaN");
+    const minLon = parseFloat(url.searchParams.get("minLon") ?? "NaN");
+    const maxLon = parseFloat(url.searchParams.get("maxLon") ?? "NaN");
+    if (isNaN(lat) || isNaN(lon)) { res.writeHead(400); res.end(JSON.stringify({ error: "lat/lon required" })); return; }
+    const bbox = (!isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLon) && !isNaN(maxLon))
+      ? { minLat, maxLat, minLon, maxLon } : null;
+    try {
+      const result = await runCombinedThreat(lat, lon, bbox);
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      process.stderr.write(`[stormwatch] /combined-threat error: ${err.message}\n`);
       res.writeHead(500); res.end(JSON.stringify({ error: err.message }));
     }
     return;
