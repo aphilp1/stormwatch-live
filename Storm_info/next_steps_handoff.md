@@ -1,4 +1,5 @@
 # StormWatch — All Next Steps Handoff
+> **RESUME COMMAND:** When the user types "resume", start Track 1 (Tubbs → Kincade → Labor Day OR), then Track 2 (RRFS), then Track 3 (do-no-harm gate). Raise the Tubbs direction-mismatch decision before building any rows.
 **Date recorded:** 2026-06-07  
 **Pipeline state:** Two-level BC correction architecture validated end-to-end (commit 3f5b0af).  
 **Database:** 166 station-events across 12 events in `hrrr_error_dataset.csv`.
