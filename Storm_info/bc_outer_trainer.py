@@ -60,25 +60,37 @@ import numpy as np
 # trim it to match what you can reliably pull.
 
 ALL_FEATURES: List[str] = [
-    "w700_speed_mph",      # 700 hPa wind speed over domain (primary driver)
-    "w700_dir_sin",        # 700 hPa wind direction, sin component
-    "w700_dir_cos",        # 700 hPa wind direction, cos component
-    "mslp_grad",           # MSLP gradient magnitude across domain (pressure forcing)
-    "z700_grad",           # 700 hPa geopotential-height gradient magnitude
-    "lapse_rate",          # low-level lapse rate (stability)
-    "froude_proxy",        # dimensionless mountain-height / Froude proxy
-    "shear_700_850",       # cross-level shear magnitude 700-850 hPa
-    "shear_700_500",       # cross-level shear magnitude 700-500 hPa
-    "temp_adv_700",        # 700 hPa temperature advection (frontal signature)
-    "bl_height",           # boundary-layer height
+    # --- TIER 1: already extracted, validated signal ---
+    "w700_speed_mph",        # 700 hPa wind speed over domain (primary driver)
+    "w700_dir_sin",          # 700 hPa wind direction, sin component
+    "w700_dir_cos",          # 700 hPa wind direction, cos component
+    "mslp_grad",             # MSLP gradient magnitude across domain (pressure forcing)
+    "hrrr_coupling_frac",    # event-mean(hrrr_10m / bc_speed): fraction of aloft wind
+                             # HRRR couples to surface. Low = decoupled BL, bc >> obs,
+                             # WN will overcorrect with raw BC. High = coupled BL, bc ≈ obs.
+                             # Source: departure database col (hrrr_10m_mph / bc_speed).
+                             # Validated: r = -0.775 vs event bc/obs across N=12 events.
+                             # Continental-downslope: mean=0.275 (cold pool). Diablo NE: 1.118.
+    # --- TIER 2: need extraction, not yet in database ---
+    "z700_grad",             # 700 hPa geopotential-height gradient magnitude
+    "lapse_rate",            # low-level lapse rate (stability) — hrrr_coupling_frac is a
+                             # better-available proxy until lapse_rate extraction is built
+    "froude_proxy",          # dimensionless mountain-height / Froude proxy
+    "shear_700_850",         # cross-level shear magnitude 700-850 hPa
+    "shear_700_500",         # cross-level shear magnitude 700-500 hPa
+    "temp_adv_700",          # 700 hPa temperature advection (frontal signature)
+    "bl_height",             # boundary-layer height
 ]
 
 # Start here. Three predictors for the speed residual is already generous at
 # small N. Expand only as events accumulate.
+# hrrr_coupling_frac replaces lapse_rate: same concept (boundary-layer decoupling),
+# already in the database, and carries stronger validated signal (r=-0.775 vs bc/obs).
+# Re-add lapse_rate when its extraction is built and signal cross-checked.
 DEFAULT_FEATURES: List[str] = [
     "w700_speed_mph",
     "mslp_grad",
-    "lapse_rate",
+    "hrrr_coupling_frac",
 ]
 
 TARGETS: List[str] = ["delta_speed_mph", "delta_dir_sin", "delta_dir_cos"]
@@ -374,16 +386,19 @@ def _make_synthetic(n_events: int = 6, hours_per_event: int = 8, seed: int = 0
         for _h in range(hours_per_event):
             w700 = prior_speed + rng.normal(0, 3)
             mslp_grad = float(rng.uniform(0, 5))
-            lapse = float(rng.uniform(4, 9))
-            # planted truth: residual grows with pressure gradient & instability
-            d_speed = 0.8 * mslp_grad + 0.5 * (lapse - 6.5) + rng.normal(0, 0.8)
-            d_dir = 4.0 * (mslp_grad - 2.5) + rng.normal(0, 3)   # small dir nudge
+            # coupling_frac range: ~0.3 (cold pool, strongly decoupled) to 1.1 (coupled)
+            cf = float(rng.uniform(0.3, 1.1))
+            # planted truth: higher pressure gradient -> larger positive residual;
+            # lower coupling_frac -> negative residual (reduce BC to avoid overcorrection).
+            # Physically: decoupled BL means aloft wind >> obs, so optimal BC < raw aloft.
+            d_speed = 0.8 * mslp_grad + 2.5 * (cf - 0.7) + rng.normal(0, 0.8)
+            d_dir = 4.0 * (mslp_grad - 2.5) + rng.normal(0, 3)
             records.append({
                 "event": f"event_{e:02d}",
                 "features": {
                     "w700_speed_mph": w700,
                     "mslp_grad": mslp_grad,
-                    "lapse_rate": lapse,
+                    "hrrr_coupling_frac": cf,
                 },
                 "delta_speed_mph": d_speed,
                 "delta_dir_sin": math.sin(math.radians(d_dir)),
@@ -407,7 +422,7 @@ def _make_noise(n_events: int = 6, hours_per_event: int = 8, seed: int = 1
                 "features": {
                     "w700_speed_mph": float(rng.uniform(20, 45)),
                     "mslp_grad": float(rng.uniform(0, 5)),
-                    "lapse_rate": float(rng.uniform(4, 9)),
+                    "hrrr_coupling_frac": float(rng.uniform(0.3, 1.1)),
                 },
                 "delta_speed_mph": float(rng.normal(0, 3)),
                 "delta_dir_sin": math.sin(math.radians(d_dir)),
@@ -426,9 +441,10 @@ if __name__ == "__main__":
 
     # demonstrate a deployable prediction
     model = BCResidualModel().fit(samples)
-    feat = {"w700_speed_mph": 35.0, "mslp_grad": 4.0, "lapse_rate": 8.0}
+    # cf=0.45 ≈ Diablo offshore event (camp_2018 mean was 0.478 — decoupled)
+    feat = {"w700_speed_mph": 35.0, "mslp_grad": 4.0, "hrrr_coupling_frac": 0.45}
     bc_s, bc_d = model.predict_bc(feat, hrrr_prior_speed=35.0, hrrr_prior_dir=45.0)
-    print(f"\nDeployed prediction for a high-gradient/unstable hour:")
+    print(f"\nDeployed prediction for high-gradient, decoupled BL (cf=0.45):")
     print(f"  HRRR prior 35.0 mph @ 45deg  ->  BC {bc_s:.1f} mph @ {bc_d:.0f}deg")
 
     print("\n\nTEST B -- pure noise (trainer SHOULD report no signal)\n")
