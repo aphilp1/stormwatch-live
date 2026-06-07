@@ -1,0 +1,101 @@
+======================================================================
+REGIME EVENT-LEVEL DEPARTURE REPORT
+Generated: 2026-06-07T14:56:12Z
+======================================================================
+
+Total active station-events: 164
+Collapsed to:                12 events (effective N = 12)
+Regimes represented:         8
+
+NOTE: This is a small-N descriptive analysis. With ~12 events across
+~5-6 regimes, no regime has enough events for a significance test.
+Single-event regimes are hypotheses, not findings.
+
+──────────────────────────────────────────────────────────────────────
+PER-EVENT SUMMARY  (sorted by mean speed_err, low → high)
+  event_id                  regime                       n    mean     med     std  dir_mean
+
+  woolsey_2018              santa_ana                   16   -6.51   -5.06   10.71   +16.3°
+  missoula_dec2025          frontal_passage              8   -5.42   -6.79    8.54    -0.8°
+  iowa_derecho2020          convective_outflow           2   -5.39   -5.39   10.91   +22.5°
+  tubbs_2017                diablo_offshore              7   -5.18   -7.08    6.55   -14.6°
+  thomas_2017               santa_ana                   26   -4.25   -4.75   12.52   +29.7°
+  camp_2018                 diablo_offshore             13   -3.82   +0.33   11.43   +27.7°
+  kincade_ign_2019          diablo_offshore_NW          10   -3.79   -4.14    5.49   +14.5°
+  boulder_chin2021          chinook_frontrange           9   -1.98   -6.53   13.58   +29.3°
+  kincade_run_2019          diablo_offshore_NE          12   +0.11   +0.30   11.31   +22.5°
+  missoula_jul2024          convective_outflow          18   +0.67   +0.64    7.04   +25.8°
+  labor_day_or2020          downslope_oregon            35   +1.71   +1.11    7.88    -1.9°
+  marshall_2021             chinook_frontrange           8   +1.79   -2.23   11.14    +0.6°
+
+──────────────────────────────────────────────────────────────────────
+PER-REGIME SUMMARY  (unit: event means)
+  regime                     n_ev   mean_of_means             range  note
+
+  frontal_passage               1           -5.42  [ -5.42, -5.42]  ** SINGLE EVENT — hypothesis only **
+  santa_ana                     2           -5.38  [ -6.51, -4.25]  
+  diablo_offshore               2           -4.50  [ -5.18, -3.82]  
+  diablo_offshore_NW            1           -3.79  [ -3.79, -3.79]  ** SINGLE EVENT — hypothesis only **
+  convective_outflow            2           -2.36  [ -5.39, +0.67]  
+  chinook_frontrange            2           -0.10  [ -1.98, +1.79]  
+  diablo_offshore_NE            1           +0.11  [ +0.11, +0.11]  ** SINGLE EVENT — hypothesis only **
+  downslope_oregon              1           +1.71  [ +1.71, +1.71]  ** SINGLE EVENT — hypothesis only **
+
+  Grand mean (excl. NEEDS_REGIME): -2.67 mph
+
+──────────────────────────────────────────────────────────────────────
+LEAVE-ONE-REGIME-OUT
+  Drop each regime in turn; report mean of remaining events.
+  Grand mean (all, excl NEEDS_REGIME): -2.67 mph  (n=12 events)
+
+  dropped regime            n_drop  n_remain   mean_remain  Δ vs grand
+
+  frontal_passage                1        11         -2.42       +0.25
+  santa_ana                      2        10         -2.13       +0.54
+  diablo_offshore                2        10         -2.31       +0.37
+  diablo_offshore_NW             1        11         -2.57       +0.10
+  convective_outflow             2        10         -2.73       -0.06
+  chinook_frontrange             2        10         -3.19       -0.52
+  diablo_offshore_NE             1        11         -2.93       -0.25
+  downslope_oregon               1        11         -3.07       -0.40
+
+  Interpretation:
+  A large |Δ| means that regime is load-bearing — the pattern changes if you drop it.
+  A small |Δ| means the pattern is robust to removing that regime.
+
+──────────────────────────────────────────────────────────────────────
+FOUR-REGIME SPLIT (event-level, per regime_definitions.md)
+  Negative speed_err = HRRR undershoots (underbias).
+
+  OFFSHORE_GRADIENT (santa_ana, diablo_offshore, diablo_offshore_NW, diablo_offshore_NE)
+    Events: 6  |  mean: -3.91 mph  ** hypothesis only (single-event regimes present) **
+
+  CONTINENTAL_DOWNSLOPE (chinook_frontrange, downslope_oregon)
+    Events: 3  |  mean: +0.51 mph  ** hypothesis only (single-event regimes present) **
+
+  FRONTAL_PASSAGE (frontal_passage)
+    Events: 1  |  mean: -5.42 mph  ** hypothesis only (single-event regimes present) **
+    Note: single event — hypothesis only; similar underbias to offshore
+
+  CONVECTIVE_OUTFLOW (convective_outflow)
+    Events: 2  |  mean: -2.36 mph
+    Note: out-of-scope contrast cases; HRRR error mechanism differs
+
+  OFFSHORE vs CONTINENTAL split: +4.41 mph (continental − offshore)
+  Offshore N=6 events mean=-3.91 mph  |  Continental N=3 events mean=+0.51 mph
+
+  Physical interpretation:
+  Negative speed_err = HRRR undershoots observed wind (underbias).
+  HRRR runs ~3.9 mph slow in offshore-gradient fire events,
+  near-zero bias in continental/downslope events.
+  This is a flow-regime property, not a terrain property (terrain gate: FAILED).
+  Finding: HRRR underbias is concentrated in offshore-gradient regimes.
+  Implication: terrain-keyed correction (WindNinja) is the wrong lever.
+  Better path: regime-conditioned bias characterization (flag-and-bound,
+  rung 1 improvement) — defensible on current N=12 event library.
+
+──────────────────────────────────────────────────────────────────────
+  Effective N: 12 events  |  Station rows (pseudoreplication if used as N): 164
+  Do not report station-level N for regime comparisons.
+
+END OF REGIME EVENT REPORT

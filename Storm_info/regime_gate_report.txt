@@ -1,0 +1,63 @@
+======================================================================
+REGIME GATE REPORT  —  Phase A follow-up
+Generated: 2026-06-07T14:44:30Z
+======================================================================
+
+Dataset: C:\Users\aphil\Documents\Stormwatch\Storm_info\hrrr_error_dataset_dem.csv
+Active rows (KEEP+CAUTION) with numeric speed_err: 164
+Rows with repr_error_flag for Rule #0:             164
+
+──────────────────────────────────────────────────────────────────────
+GATE 1: STRUCTURED-VS-WHITE on synoptic_regime  (PROVISIONAL)
+  speed_err (HRRR 10m mph − obs)  n=164
+
+  frontal_passage                n=   8  mean=  -5.42  std=  8.54
+  derecho                        n=   2  mean=  -5.39  std= 10.91
+  santa_ana                      n=  42  mean=  -5.11  std= 11.91
+  diablo_offshore                n=  20  mean=  -4.30  std= 10.02
+  diablo_offshore_NW             n=  10  mean=  -3.79  std=  5.49
+  chinook_frontrange             n=  17  mean=  -0.21  std= 12.63
+  diablo_offshore_NE             n=  12  mean=  +0.11  std= 11.31
+  NEEDS_REGIME                   n=  18  mean=  +0.67  std=  7.04
+  downslope_oregon               n=  35  mean=  +1.71  std=  7.88
+
+  Between-regime variance:  8.4000
+  Pooled within-regime:     100.0183
+  RATIO:                    0.0840  <= 1 — white
+
+──────────────────────────────────────────────────────────────────────
+GATE 2: RULE #0 SEPARABILITY  (THE green light)
+  Q: Does regime explain speed_err AFTER controlling for repr_error_flag?
+  Why: rugged-terrain regimes (e.g. santa_ana) could inflate ratio via
+       station-level representativeness mismatch, not true forecast error.
+
+  Step 1 — OLS  n=164:
+    speed_err = -1.78 + -0.0017 × repr_error_flag   R²=0.000
+
+  Step 2 — Structured-vs-white on OLS residuals  n=164:
+
+  derecho                        n=   2  mean=  -3.57  std= 10.91
+  frontal_passage                n=   8  mean=  -3.48  std=  8.53
+  santa_ana                      n=  42  mean=  -3.12  std= 11.91
+  diablo_offshore                n=  20  mean=  -2.34  std=  9.98
+  diablo_offshore_NW             n=  10  mean=  -1.78  std=  5.48
+  chinook_frontrange             n=  17  mean=  +1.76  std= 12.64
+  diablo_offshore_NE             n=  12  mean=  +2.13  std= 11.32
+  NEEDS_REGIME                   n=  18  mean=  +2.64  std=  7.06
+  downslope_oregon               n=  35  mean=  +3.65  std=  7.91
+
+  Between-regime variance:  8.3620
+  Pooled within-regime:     100.0444
+  RATIO after control:      0.0836
+
+  Ratio before repr control: 0.0840
+  Ratio after  repr control: 0.0836
+  Ratio retained:            99.5%
+
+  Rule #0: MOOT — Gate 1 already failed (ratio ≤ 1).
+
+──────────────────────────────────────────────────────────────────────
+VERDICT
+  PHASE B RED — no regime structure in speed departures (ratio ≤ 1).
+
+END OF REGIME GATE REPORT

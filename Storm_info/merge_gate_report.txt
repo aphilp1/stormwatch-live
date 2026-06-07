@@ -1,0 +1,89 @@
+======================================================================
+MERGE + GATE REPORT  —  Phase A completion
+Generated: 2026-06-07T14:40:57Z
+======================================================================
+
+── MERGE SUMMARY ─────────────────────────────────────────────────────
+  Source rows (all):       317
+  Active (KEEP+CAUTION):   164
+  Active with real DEM:    164  (terrain_class_source = dem_*)
+    of which dem_verified: 152
+    of which dem_flag:     12  (elev residual > 50 m — treat with caution)
+  Active missing DEM:      0  (labor_day_or2020 + any NODATA)
+  labor_day_or2020:        DEM complete (0 missing)
+
+  Terrain class distribution (active DEM rows, n=164):
+    canyon_gap           n=29
+    exposed_ridge        n=64
+    open                 n=42
+    valley               n=29
+
+  Heuristic→DEM class changes (104 total):
+    canyon_gap → exposed_ridge: 6
+    canyon_gap → open: 4
+    exposed_ridge → canyon_gap: 8
+    exposed_ridge → open: 7
+    exposed_ridge → valley: 3
+    open → canyon_gap: 14
+    open → exposed_ridge: 31
+    open → valley: 21
+    valley → canyon_gap: 5
+    valley → exposed_ridge: 4
+    valley → open: 1
+
+  Rows with thresholds: exposed_ridge ≥200.0m relief + ≥4.0°, canyon_gap ≥150.0m + <4.0°, valley <80.0m, else open
+
+──────────────────────────────────────────────────────────────────────
+GATE 1: STRUCTURED-VS-WHITE  (PROVISIONAL — does not clear Phase B alone)
+  Dataset: 164 active rows with DEM terrain class
+
+  speed_err (hrrr_10m_mph − obs_sus_mph)  n=164
+    canyon_gap           n=  29  mean=  -0.53  std=  8.87
+    exposed_ridge        n=  64  mean=  -2.61  std= 12.79
+    open                 n=  42  mean=  -2.26  std=  9.04
+    valley               n=  29  mean=  -1.57  std=  8.09
+  Between-class variance: 0.8442
+  Pooled within-class:    110.5348
+  RATIO:                  0.0076  ≤ 1 — white
+  Status: PROVISIONAL — see rule #0 below.
+
+──────────────────────────────────────────────────────────────────────
+GATE 2: RULE #0 SEPARABILITY  (THE green light)
+  Q: Does terrain class explain speed_err AFTER controlling for repr_error_flag?
+  Method: OLS(speed_err ~ repr_error_flag) → residuals → structured-vs-white
+  Why: repr_error_flag (elevation std in HRRR 3-km cell) is collinear with terrain
+       ruggedness by construction. A high ratio-before that collapses here was
+       measuring HRRR-grid representativeness, not forecast error.
+
+  Step 1 — OLS  n=164: speed_err = -1.78 + -0.0017 × repr_error_flag   R²=0.000
+    repr_error_flag explains little speed_err variance → collinearity risk is low.
+
+  Step 2 — Structured-vs-white on OLS residuals  n=164:
+    canyon_gap           n=  29  mean=  +1.49  std=  8.87
+    exposed_ridge        n=  64  mean=  -0.56  std= 12.77
+    open                 n=  42  mean=  -0.35  std=  9.07
+    valley               n=  29  mean=  +0.26  std=  8.10
+    Between-class variance: 0.8472
+    Pooled within-class:    110.5457
+    RATIO:                  0.0077
+
+  Ratio before repr control: 0.0076
+  Ratio after  repr control: 0.0077
+  Rule #0: INDETERMINATE
+  Ratio survives control but remains ≤ 1 (no terrain signal to protect).
+    → Regime-level analysis (synoptic_regime) shows more signal than terrain.
+
+──────────────────────────────────────────────────────────────────────
+NOTE: Synoptic-regime signal (descriptive, not gated):
+  Regime structure was stronger than terrain structure in Phase A heuristic run.
+  santa_ana / frontal_passage show ~−5 mph mean HRRR underbias.
+  chinook / downslope_oregon near zero.
+  If terrain gate fails, regime-conditioned departure analysis is the natural next step.
+
+──────────────────────────────────────────────────────────────────────
+VERDICT
+  GATE 1 FAILS: No terrain structure in speed departures (ratio ≤ 1).
+  → Terrain class does not predict HRRR bust magnitude.
+  Regime-level analysis is the recommended next path.
+
+END OF REPORT
