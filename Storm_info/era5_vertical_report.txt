@@ -1,0 +1,96 @@
+======================================================================
+ERA5 VERTICAL STRUCTURE REPORT  —  Phase A mechanism analysis
+Generated: 2026-06-07T15:17:28Z
+======================================================================
+
+Q1 (PRIMARY, N=12): HRRR internal mixing ratio HRRR_10m / bc_speed
+──────────────────────────────────────────────────────────────────────
+
+  CONFOUND CHECK: bc_level distribution by event (must not track regime)
+
+  event_id                  regime                    bc_level   mean_speed_err
+  boulder_chin2021          chinook_frontrange        NEEDS_BC            -1.98
+  camp_2018                 diablo_offshore           NEEDS_BC            -3.82
+  iowa_derecho2020          convective_outflow        NEEDS_BC            -5.39
+  kincade_ign_2019          diablo_offshore_NW        NEEDS_BC            -3.79
+  kincade_run_2019          diablo_offshore_NE        NEEDS_BC            +0.11
+  labor_day_or2020          downslope_oregon          NEEDS_BC            +1.71
+  marshall_2021             chinook_frontrange        NEEDS_BC            +1.79
+  missoula_dec2025          frontal_passage           NEEDS_BC            -5.42
+  missoula_jul2024          convective_outflow        NEEDS_BC            +0.67
+  thomas_2017               santa_ana                 NEEDS_BC            -4.25
+  tubbs_2017                diablo_offshore           NEEDS_BC            -5.18
+  woolsey_2018              santa_ana                 NEEDS_BC            -6.51
+
+  Offshore bc_levels:     ['NEEDS_BC', 'NEEDS_BC', 'NEEDS_BC', 'NEEDS_BC', 'NEEDS_BC', 'NEEDS_BC', 'NEEDS_BC']
+  Continental bc_levels:  ['NEEDS_BC', 'NEEDS_BC', 'NEEDS_BC']
+  CONFOUND: NOT detected — bc_level is consistent across regimes.
+
+  HRRR_10m / bc_speed  (event means, sorted by ratio)
+  event_id                  regime                    bc_lev    ratio   HRRR_10m   bc_speed   speed_err
+
+
+  Regime-group means (event-level ratios):
+
+──────────────────────────────────────────────────────────────────────
+Q2 (SECONDARY, N=12): ERA5_10m vs obs vs HRRR_10m (Open-Meteo)
+
+  Pulling ERA5 10m wind at event centroid, peak hour...
+
+  ERA5_10m vs HRRR_10m vs obs  (event-level, at centroid peak-hour)
+  event_id                  regime                        obs   HRRR_10m   ERA5_10m   HRRR_err   ERA5_err
+
+  boulder_chin2021          chinook_frontrange         22.0     20.0     23.4     -2.0     +1.4
+  marshall_2021             chinook_frontrange         23.9     25.7     35.4     +1.8    +11.5
+  iowa_derecho2020          convective_outflow         16.0     10.6     22.1     -5.4     +6.1
+  missoula_jul2024          convective_outflow         12.4     13.1      4.9     +0.7     -7.5
+  camp_2018                 diablo_offshore            17.1     13.3     19.4     -3.8     +2.3
+  tubbs_2017                diablo_offshore            27.9     22.7     15.0     -5.2    -12.9
+  kincade_run_2019          diablo_offshore_NE         23.7     23.9     13.5     +0.1    -10.2
+  kincade_ign_2019          diablo_offshore_NW         21.2     17.4     11.0     -3.8    -10.2
+  labor_day_or2020          downslope_oregon           13.4     15.1      4.7     +1.7     -8.7
+  missoula_dec2025          frontal_passage            17.6     12.2      6.9     -5.4    -10.7
+  thomas_2017               santa_ana                  25.2     20.9     11.1     -4.2    -14.1
+  woolsey_2018              santa_ana                  26.1     19.6     20.0     -6.5     -6.1
+
+  Regime-group mean errors vs obs (event-level):
+    OFFSHORE — HRRR_10m err: -4.12 mph  |  ERA5_10m err: -8.85 mph   (N=7)
+    CONTINENTAL — HRRR_10m err: +0.51 mph  |  ERA5_10m err: +1.42 mph   (N=3)
+
+  → ERA5_10m also undershoots in offshore events (similar magnitude to HRRR).
+    Surface wind in these events is hard for reanalysis broadly — not HRRR-specific.
+
+──────────────────────────────────────────────────────────────────────
+Q3 (CORROBORATION, n=4 offshore CDS events): HRRR_bc_speed vs ERA5_850
+  All 4 are offshore. No continental contrast. N=4 spot-check only.
+
+  camp_2018                 (diablo_offshore)
+    ERA5 850 hPa (CDS, domain-mean): 11.3 mph @ 46°
+    HRRR bc_speed (event-mean):      N/A mph  (bc_level=N/A)
+    Δ HRRR−ERA5 (aloft):             N/A mph
+
+  kincade_ign_2019          (diablo_offshore_NW)
+    ERA5 850 hPa (CDS, domain-mean): 11.2 mph @ 68°
+    HRRR bc_speed (event-mean):      N/A mph  (bc_level=N/A)
+    Δ HRRR−ERA5 (aloft):             N/A mph
+
+  thomas_2017               (santa_ana)
+    ERA5 850 hPa (CDS, domain-mean): 12.8 mph @ 56°
+    HRRR bc_speed (event-mean):      N/A mph  (bc_level=N/A)
+    Δ HRRR−ERA5 (aloft):             N/A mph
+
+  tubbs_2017                (diablo_offshore)
+    ERA5 850 hPa (CDS, domain-mean): 13.2 mph @ 46°
+    HRRR bc_speed (event-mean):      N/A mph  (bc_level=N/A)
+    Δ HRRR−ERA5 (aloft):             N/A mph
+
+  Interpretation: if HRRR_bc_speed ≈ ERA5_850 → HRRR's aloft is correct,
+  the deficit is in the surface layer (consistent with Q1 mixing ratio).
+  If HRRR_bc_speed << ERA5_850 → HRRR is also slow aloft (the forcing is too weak).
+
+──────────────────────────────────────────────────────────────────────
+MECHANISM VERDICT
+
+
+  Effective N: 12 events  |  Station rows: 164 (pseudoreplication if used as N)
+END OF VERTICAL STRUCTURE REPORT

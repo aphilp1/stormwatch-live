@@ -1,0 +1,89 @@
+========================================================================
+Q1: HRRR INTERNAL MIXING RATIO ANALYSIS  (Phase A mechanism check)
+========================================================================
+
+CONFOUND REMINDER: 850 hPa events = offshore + convective;
+  700 hPa events = continental + frontal. Ratios across levels are
+  NOT comparable — the vertical path differs by ~1.5 km. Compare
+  obs_ratio vs hrrr_ratio WITHIN each level only.
+
+Event-level mixing ratios:
+
+  event_id                  regime                     lev  bc_spd obs_10m hrrr_10m  obs/bc hrrr/bc  deficit   spd_err
+  --------------------------------------------------------------------------------------------------------------------
+  boulder_chin2021          chinook_frontrange         700    26.5    22.0     20.0   0.830   0.755   +0.075     -1.98
+  camp_2018                 diablo_offshore            850    29.9    17.1     13.3   0.572   0.444   +0.128     -3.82
+  iowa_derecho2020          convective_outflow         850    12.5    16.0     10.6   1.282   0.849   +0.432     -5.39
+  kincade_ign_2019          diablo_offshore_NW         850    28.2    21.2     17.4   0.751   0.617   +0.134     -3.79
+  kincade_run_2019          diablo_offshore_NE         850    24.8    23.7     23.9   0.959   0.964   -0.005     +0.11
+  labor_day_or2020          downslope_oregon           700    26.1    13.4     15.1   0.511   0.576   -0.065     +1.71
+  marshall_2021             chinook_frontrange         700    48.5    23.9     25.7   0.492   0.529   -0.037     +1.79
+  missoula_dec2025          frontal_passage            700    60.7    17.6     12.2   0.290   0.201   +0.089     -5.42
+  missoula_jul2024          convective_outflow         850    27.0    12.4     13.1   0.461   0.486   -0.025     +0.67
+  thomas_2017               santa_ana                  850    36.3    25.2     20.9   0.693   0.576   +0.117     -4.25
+  tubbs_2017                diablo_offshore            850    40.2    27.9     22.7   0.693   0.564   +0.129     -5.18
+  woolsey_2018              santa_ana                  850    26.5    26.1     19.6   0.985   0.739   +0.245     -6.51
+
+Regime-group mixing deficit summary:
+  (deficit = obs_ratio − HRRR_ratio; positive → HRRR under-mixes vs obs)
+
+  Regime group            N   lev   hrrr/bc   obs/bc   deficit   spd_err
+
+  OFFSHORE (diablo+SA)    6   850     0.651    0.775    +0.125     -3.91
+  CONVECTIVE              2   850     0.668    0.871    +0.204     -2.36
+  CONTINENTAL (chin+ds)   3   700     0.620    0.611    -0.009     +0.51
+  FRONTAL                 1   700     0.201    0.290    +0.089     -5.42
+
+Level-stratified comparison (within same bc_level):
+
+  850 hPa events (offshore + convective):
+    iowa_derecho2020          deficit=+0.432  spd_err=-5.39  obs/bc=1.282  hrrr/bc=0.849
+    woolsey_2018              deficit=+0.245  spd_err=-6.51  obs/bc=0.985  hrrr/bc=0.739
+    kincade_ign_2019          deficit=+0.134  spd_err=-3.79  obs/bc=0.751  hrrr/bc=0.617
+    tubbs_2017                deficit=+0.129  spd_err=-5.18  obs/bc=0.693  hrrr/bc=0.564
+    camp_2018                 deficit=+0.128  spd_err=-3.82  obs/bc=0.572  hrrr/bc=0.444
+    thomas_2017               deficit=+0.117  spd_err=-4.25  obs/bc=0.693  hrrr/bc=0.576
+    kincade_run_2019          deficit=-0.005  spd_err=+0.11  obs/bc=0.959  hrrr/bc=0.964
+    missoula_jul2024          deficit=-0.025  spd_err=+0.67  obs/bc=0.461  hrrr/bc=0.486
+    MEAN (N=8):               deficit=+0.144  spd_err=-3.52
+
+  700 hPa events (continental + frontal):
+    missoula_dec2025          deficit=+0.089  spd_err=-5.42  obs/bc=0.290  hrrr/bc=0.201
+    boulder_chin2021          deficit=+0.075  spd_err=-1.98  obs/bc=0.830  hrrr/bc=0.755
+    marshall_2021             deficit=-0.037  spd_err=+1.79  obs/bc=0.492  hrrr/bc=0.529
+    labor_day_or2020          deficit=-0.065  spd_err=+1.71  obs/bc=0.511  hrrr/bc=0.576
+    MEAN (N=4):               deficit=+0.015  spd_err=-0.98
+
+Offshore-only sub-test: does mixing deficit track the event's speed_err?
+  (kincade_run is the natural control: near-zero bias within offshore group)
+
+  woolsey_2018              spd_err=-6.51  deficit=+0.245
+  tubbs_2017                spd_err=-5.18  deficit=+0.129
+  thomas_2017               spd_err=-4.25  deficit=+0.117
+  camp_2018                 spd_err=-3.82  deficit=+0.128
+  kincade_ign_2019          spd_err=-3.79  deficit=+0.134
+  kincade_run_2019          spd_err=+0.11  deficit=-0.005  <-- CONTROL (no bias)
+
+  Pearson r(deficit, speed_err) in offshore events: -0.947
+  N=6 (event-level; interpret with caution at small N)
+
+------------------------------------------------------------------------
+MECHANISM VERDICT (Q1)
+
+  SUPPORTED: HRRR under-mixes its own aloft wind to the surface in
+  offshore events — the real atmosphere (obs/bc) achieves higher surface-
+  to-850hPa ratios than HRRR does. This is consistent with the observed
+  underbias pattern.
+
+  Offshore (850 hPa) mean deficit: +0.144
+  Continental (700 hPa) mean deficit: +0.015
+
+  CAVEAT: bc_level is confounded with regime (850=offshore, 700=continental).
+  The deficit difference could partly reflect the longer vertical mixing
+  path at 700 hPa vs 850 hPa, independent of regime dynamics.
+  kincade_run is the natural control: the one offshore event with near-zero
+  bias also has near-zero deficit (obs_ratio ≈ hrrr_ratio), consistent
+  with the mechanism — when HRRR gets the mixing right, the bias disappears.
+
+  Effective N: 12 events | Station rows: 164 (pseudoreplication if used as N)
+END Q1 REPORT

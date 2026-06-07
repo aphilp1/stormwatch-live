@@ -42,7 +42,16 @@ wyoming_raw_*.html
 # Downloaded data caches (large binary files, reproduced by scripts)
 Storm_info/_herbie_cache/
 Storm_info/_dem_cache/
+Storm_info/hrrr_bc_cache/
+
+# Script-generated backup snapshots (git is the backup)
+*.pre_bc_pull.bak
+*.pre_audit_bak
+*.bak
 
 # Build logs (ephemeral run output)
 Storm_info/phase_a_build.log
 Storm_info/dem_build.log
+Storm_info/merge_gate.log
+Storm_info/regime_gate.log
+Storm_info/regime_event_report.log
