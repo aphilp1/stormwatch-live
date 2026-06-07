@@ -258,7 +258,8 @@ else:
     w("  NOT SUPPORTED: No consistent mixing deficit in offshore events.")
 
 w()
-w(f"  Effective N: 12 events | Station rows: {len(rows)} (pseudoreplication if used as N)")
+n_events = len(by_event)
+w(f"  Effective N: {n_events} events | Station rows: {len(rows)} (pseudoreplication if used as N)")
 w("END Q1 REPORT")
 
 report_str = "\n".join(lines)
