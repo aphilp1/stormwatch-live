@@ -62,7 +62,10 @@ is exploratory there.
 
 3. **WMSC1 exception:** thomas/woolsey exposed_ridge stations with adiff=151°/134° (lee-facing)
    show extreme underbias (−35.6, −27.0) classified as INTERMEDIATE under the geometry rule.
-   These are lee/rotor candidates — not the same physical mechanism as windward enhancement.
+   WN recovers both WMSC1 events when the BC is right-sized (woolsey full recovery,
+   thomas partial), confirming WN terrain physics work there. WMSC1 is intermediate
+   by geometry (lee-facing), but it is not a rotor. The extreme errors reflect large
+   bc/obs variability across events, not a different physical mechanism.
    Do not average WMSC1 into the coupled group.
 
 4. **Canyon_gap limitation:** High-relief canyon stations (e.g., PSTM8) may be overcoupled

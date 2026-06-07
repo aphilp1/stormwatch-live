@@ -39,7 +39,9 @@ FINALIZED DECISIONS (2026-06-07):
     Rationale: lee-facing geometry is correct; those −35.6/−27.0 errors likely
     reflect lee-wave/rotor physics, NOT windward terrain enhancement. Promoting
     to coupled would contaminate the enhancement signal with a rotor outlier.
-    Tag WMSC1 as standalone lee/rotor candidate for Phase B investigation.
+    WMSC1 flagged for Phase B: WN recovers both events when BC is right-sized
+    (woolsey full recovery, thomas partial). Not a rotor — terrain physics work here.
+    Outstanding question: why is bc/obs > 1 in thomas but < 1 in woolsey?
   - CEKC2 (marshall): INTERMEDIATE at adiff=88°. Held at 90° threshold.
     Error value (-12.9) does NOT drive assignment — geometry does.
   - PSTM8 (missoula_dec2025): COUPLED (canyon_gap rule correct), se=+9.7.

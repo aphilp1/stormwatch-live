@@ -7,8 +7,8 @@ Benchmark from phase_a_finding.md: coupled offshore mean = -6.89 mph (N=20, 75% 
 
 Anchors:
   CBXC1 / camp_2018    coupled   offshore   HRRR_err=-3.62  bc=32.93@85.8°
-  WMSC1 / thomas_2017  intermediate  santa_ana  HRRR_err=-35.65  bc=51.30@64.6°  (lee/rotor contrast)
-  WMSC1 / woolsey_2018 intermediate  santa_ana  HRRR_err=-27.04  bc=39.32@63.6°  (lee/rotor contrast)
+  WMSC1 / thomas_2017  intermediate  santa_ana  HRRR_err=-35.65  bc=51.30@64.6°  (intermediate contrast)
+  WMSC1 / woolsey_2018 intermediate  santa_ana  HRRR_err=-27.04  bc=39.32@63.6°  (intermediate contrast)
 
 Run in hrrr311 env (has numpy, scipy).
 """
@@ -40,7 +40,7 @@ ANCHORS = [
         'bc_dir':   85.8,
     },
     {
-        'label':    'WMSC1 / thomas_2017 (INTERMEDIATE lee/rotor, contrast)',
+        'label':    'WMSC1 / thomas_2017 (INTERMEDIATE, bc/obs>1 contrast)',
         'stid':     'WMSC1',
         'event':    'thomas_2017',
         'coupling': 'intermediate',
@@ -56,7 +56,7 @@ ANCHORS = [
         'bc_dir':   64.6,
     },
     {
-        'label':    'WMSC1 / woolsey_2018 (INTERMEDIATE lee/rotor, contrast)',
+        'label':    'WMSC1 / woolsey_2018 (INTERMEDIATE, bc/obs<1 contrast)',
         'stid':     'WMSC1',
         'event':    'woolsey_2018',
         'coupling': 'intermediate',
@@ -242,4 +242,4 @@ for r in results:
 print()
 print('Benchmark: coupled offshore HRRR_err = -6.89 mph. WN_err target: |WN_err| < |HRRR_err|.')
 print('WMSC1 contrast: intermediate/lee. If WN recovers WMSC1 but not CBXC1, that is surprising.')
-print('If WN recovers CBXC1 but not WMSC1, that supports lee/rotor interpretation.')
+print('WMSC1 is not a rotor. WN terrain physics work there; bc/obs ratio drives outcome.')
