@@ -47,7 +47,7 @@ ANCHORS = [
         'regime':   'santa_ana',
         'lat':      34.59583,
         'lon':     -118.57861,
-        'dem':      'dem_34.60_-118.58_20mi_wmsc1.tif',
+        'dem':      'dem_34.60_-118.58_20mi_wmsc1_utm.tif',
         'obs_sus':  45.99,
         'obs_dir':  62.3,
         'hrrr_10m': 10.34,
@@ -63,7 +63,7 @@ ANCHORS = [
         'regime':   'santa_ana',
         'lat':      34.59583,
         'lon':     -118.57861,
-        'dem':      'dem_34.60_-118.58_20mi_wmsc1.tif',
+        'dem':      'dem_34.60_-118.58_20mi_wmsc1_utm.tif',
         'obs_sus':  44.98,
         'obs_dir':  68.0,
         'hrrr_10m': 17.94,
@@ -184,7 +184,8 @@ for a in ANCHORS:
     wn_dir = read_asc_at(ang_path, a['lat'], a['lon']) if ang_path else None
 
     wn_err     = (wn_spd - a['obs_sus']) if wn_spd is not None else None
-    recovery   = (a['hrrr_err'] - wn_err)          if wn_err is not None else None
+    # positive recovery = WN reduced error magnitude vs HRRR
+    recovery   = (abs(a['hrrr_err']) - abs(wn_err)) if wn_err is not None else None
     amp_ratio  = (wn_spd / a['bc_speed'])           if wn_spd else None
     hrrr_ratio = (a['hrrr_10m'] / a['obs_sus'])     if a['obs_sus'] else None
     wn_ratio   = (wn_spd / a['obs_sus'])             if (wn_spd and a['obs_sus']) else None
