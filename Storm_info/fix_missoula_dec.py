@@ -33,20 +33,23 @@ CSV_DEM = os.path.join(SINFO, "hrrr_error_dataset_dem.csv")
 CACHE   = os.path.join(SINFO, "hrrr_bc_cache")
 os.makedirs(CACHE, exist_ok=True)
 
-# Synoptic config
-sys.path.insert(0, BASE)
-import synoptic_config as sc
-TOKEN   = sc.SYNOPTIC_TOKEN
+# Use NWS WRH public token (domain-restricted but full historical access with Referer header)
+TOKEN    = "7c76618b66c74aee913bdbae4b448bdd"
+SYN_HDR  = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Referer":    "https://www.weather.gov/wrh/timeseries?site=BLMM8",
+    "Origin":     "https://www.weather.gov",
+}
 SYN_BASE = "https://api.synopticdata.com/v2/stations/timeseries"
-MS_MPH   = 2.23694
+MS_MPH = 2.23694
 
 EVENT_ID = "missoula_dec2025"
 STIDS    = ["BLMM8", "CONM8", "FINM8", "NINM8", "PNTM8", "PSTM8", "RONM8", "STVM8"]
 BC_LEVEL = 700  # frontal_passage uses 700 hPa
 
 # Dec 17 2025: use 00Z-23Z window
-WIN_START = "20251217000000"
-WIN_END   = "20251217230000"
+WIN_START = "202512170000"
+WIN_END   = "202512172300"
 WIN_START_DT = datetime.datetime(2025, 12, 17, 0,  0, tzinfo=datetime.timezone.utc)
 WIN_END_DT   = datetime.datetime(2025, 12, 17, 23, 0, tzinfo=datetime.timezone.utc)
 
@@ -65,7 +68,7 @@ params = {
     "obtimezone": "utc",
     "output":  "json",
 }
-r = requests.get(SYN_BASE, params=params, timeout=60)
+r = requests.get(SYN_BASE, params=params, headers=SYN_HDR, timeout=60)
 if r.status_code != 200:
     sys.exit(f"Synoptic HTTP {r.status_code}: {r.text[:200]}")
 
