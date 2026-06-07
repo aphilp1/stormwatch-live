@@ -40,7 +40,12 @@ ANCHORS = [
         'bc_dir':   85.8,
     },
     {
-        'label':    'WMSC1 / thomas_2017 (INTERMEDIATE, bc/obs>1 contrast)',
+        'label':    'WMSC1 / thomas_2017 (INTERMEDIATE, ALIGNED bc=30.7 @ 58deg, bc/obs<1)',
+        # bc_speed UPDATED 2026-06-07: was 51.30 (event-median Dec-05 14Z) —
+        # time-alignment (Stage 1) showed WMSC1 peaked Dec-07 02Z (+36h offset).
+        # Aligned 850 hPa at Dec-07 02Z: 30.67 mph @ 58.0 deg.
+        # bc/obs: 51.3/45.99 = 1.115 (old, WRONG) → 30.67/45.99 = 0.667 (aligned).
+        # hrrr_err / hrrr_10m are still from event-median time; for WN input only bc_speed matters.
         'stid':     'WMSC1',
         'event':    'thomas_2017',
         'coupling': 'intermediate',
@@ -52,8 +57,8 @@ ANCHORS = [
         'obs_dir':  62.3,
         'hrrr_10m': 10.34,
         'hrrr_err': -35.65,
-        'bc_speed': 51.30,
-        'bc_dir':   64.6,
+        'bc_speed': 30.67,
+        'bc_dir':   58.0,
     },
     {
         'label':    'WMSC1 / woolsey_2018 (INTERMEDIATE, bc/obs<1 contrast)',
