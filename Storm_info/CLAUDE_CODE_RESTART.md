@@ -1,121 +1,199 @@
 # CLAUDE CODE RESTART — Current Next Steps & Session Handoff
 
-**Read order on restart:** THIS file (current state + next action) →
-`STORMWATCH_MASTER_STATUS.md` (authoritative record) → `stormwatch_test_protocol.md`
-(method). This is the rolling "where we are right now." When work lands, fold it into
-the master status and update this file.
+**Read order on restart:** THIS file → `STORMWATCH_MASTER_STATUS.md` (authoritative findings
+ledger) → `stormwatch_test_protocol.md` (method). Update this file whenever work lands.
 
-**Last updated:** 2026-05-31 (Kincade cross-event + terrain-rotation finding).
+**Last updated:** 2026-06-12 (DEM complete; Phase B gate run; GitHub pushed dff0aaf)
 
 ---
 
 ## ONE-LINE STATE
-**Ridge niche n=2 (Camp CBXC1/SLEC1). Cross-event still OPEN after 5 candidates exhausted.**
-New finding: Kincade summits deflect NNE→N (~45°); terrain rotation is the pattern blocking
-cross-event confirmation. Sharpened hypothesis: niche holds where terrain doesn't rotate flow.
-Next path: Tubbs non-Hawkeye ridge (likely flow-aligned) OR upstream BC sampling (new method).
+
+**Database complete (164 rows, 12 events, all DEM+BC populated). Terrain gate FAILED
+(ratio=0.013, white noise). WN+rawBC validated at n=2 clean ridges (Camp Fire).
+Camp Fire held-out test FAILED on learned correction — raw BC is the deployable product.**
 
 ---
 
-## WHAT IS DONE THIS SESSION (do not redo)
-- **ERA5 access via Copernicus CDS WORKS.** `cdsapi` installed in conda env
-  `hrrr311`. Credentials in `~/.cdsapirc` (gitignored). The old ECMWF Web API key
-  (`api.ecmwf.int/v1`) was the WRONG key; CDS needs a Personal Access Token — resolved.
-- **`era5_event_pull.py`** pulls ERA5 over a CA box: levels 500/700/850/925/1000 hPa;
-  vars u, v, geopotential, temperature, RH + single-level MSLP; all 24h; 3-day window
-  per event. One CLI arg = one event.
-- **Pulled clean (no errors/403):** camp_2018, tubbs_2017, thomas_2017, kincade_2019.
-  Files: `era5/era5_pl_{event}.nc` + `era5/era5_sl_{event}.nc`.
-- **Thomas was RE-PULLED** with the box extended south to **S=34.0N** (to cover
-  Vandenberg). The other three use **S=35.0N**. Box = N42 / W-124 / S35(34) / E-117.
-- **`era5_sounding_fidelity.py`** compares ERA5 700 hPa (and 850 for Camp) wind to
-  Wyoming soundings at EXACT UTC launch times. Observed values are READ from
-  `wyoming_soundings.json` — never hardcoded.
-- **Fresh REV (Reno) sounding** pulled from Wyoming wsgi (src=FM35) for 2018-11-08
-  00z+12z and appended to `wyoming_soundings.json`.
-- Results written to master status and committed this session.
-  **Verify the push landed:** `git log origin/master`.
+## HOW TO RESUME
+
+When user types "resume," confirm the three paths forward and ask which to pursue:
+
+> **Where we are (2026-06-12):** The hindcast database is complete — 164 active
+> station-events across 12 events, all DEM terrain features and BC corrections populated.
+> Phase A terrain gate: FAILED (terrain class doesn't predict HRRR bust magnitude).
+> Two-level BC correction: validates on training anchors but Camp Fire held-out test FAILED.
+> Three paths forward:
+> (A) Deploy WN+rawBC for the validated clean-ridge niche (2 stations, do-no-harm gate protects them) — deployable today
+> (B) Run more WN validation at Thomas/Woolsey held-out stations — more science
+> (C) Pursue RRFS resolution ladder — blocked on NOAA HPC employee sponsor
+> Which path?
 
 ---
 
-## RESULTS THIS SESSION (SOLID — already in master status)
-- **ERA5 = trusted synoptic BC source.** Tubbs/OAK (8 Oct) and Thomas/VBG (4 Dec):
-  all four comparisons agree within ~12° direction and a few mph speed. Grid 3 km / 6 km
-  from station. Direction (the high-leverage variable) is the strong match.
-- **BC-LEVEL FINDING (Camp/REV).** 700 hPa (~3100 m) sits ABOVE the Reno inversion
-  (2307 m at 00z / 1516 m at 12z) → samples free-atmosphere flow, NOT the NE gap flow.
-  Rule (refines protocol §2.4): **sub-inversion gap-flow events need an 850 hPa /
-  sub-lid BC, not 700 hPa.** 850 hPa agreement at REV is tight (12z: 1° direction).
-- **WITHDRAWN (method catch).** Earlier "ERA5 reversed 202° at REV 12z" was a
-  HAND-TRANSCRIBED IEM value, not ERA5. Real Wyoming sounding AGREES with ERA5 (~60–63°).
-  Convention: never hand-enter obs; read from `wyoming_soundings.json`.
-- **Noted, not a finding.** Camp 12z 700 hPa speed +6.7 mph (direction agrees within
-  3°). Soft-threshold trip from a 28 km grid cell vs point sonde — not a divergence.
+## WHAT IS DONE — DO NOT REDO
+
+### Database (all complete)
+- `hrrr_error_dataset.csv`: 318 rows, 164 active (KEEP/CAUTION)
+- All BC columns: bc_speed, bc_dir, bc_level populated; 850 hPa offshore, 700 hPa continental
+- All DEM columns: slope, aspect, relief_1km, repr_error_flag, terrain_class
+  - Distribution: exposed_ridge=63, canyon_gap=29, open=43, valley=29
+  - CUUC1/woolsey synthesized from CUUC1/thomas (same coordinates)
+- All 12 events in database; all obs and HRRR columns complete
+
+### Phase B terrain gate (complete, FAILED)
+- Run on full 164-station dataset: ratio=0.0134 (white noise threshold < 1.0)
+- Rule #0 repr control: R²=0.000, ratio after=0.0135 — terrain collinearity ruled out
+- VERDICT: terrain class does NOT predict HRRR bust magnitude. Filed in STORMWATCH_MASTER_STATUS.md.
+- Report: `merge_gate_report.txt`
+
+### Regime signal (SOLID)
+- Offshore mean speed_err = −3.91 mph; Continental = +0.51 mph; Δ=4.41 mph
+- This is the validated predictor used by the outer correction layer
+
+### Two-level BC architecture (validated on 4 anchors)
+- Outer: LOO Ridge on (w700, mslp_grad, hrrr_coupling_frac) → event delta
+- Inner: UP if (relief>330m AND slope>10°) OR (coupling_ratio>1.08); else DOWN
+- Do-no-harm gate: suppress if |wn_raw_spd - obs| ≤ 5 mph
+  → fires at WMSC1/woolsey (saves 9.2 mph overcorrection)
+- WMSC1/thomas: flat −32.1 → two-level +10.5 (architecture PASS)
+
+### Camp Fire held-out test (FAILED, pre-registered)
+- Fit on JBGC1/Jarbo Gap; tested on CBXC1+SLEC1 (both held-out)
+- CBXC1: rawBC ratio 1.007, corrBC ratio 0.830 → correction DEGRADES
+- SLEC1: rawBC ratio 1.128, corrBC ratio 0.717 → correction DEGRADES
+- VERDICT: WN+rawBC IS the product. Learned correction adds risk without benefit.
+- DO NOT re-run to chase a pass.
+
+### Scripts written this session
+- `donoharm_gate.py` — do-no-harm gate function + test harness; 3/4 OK
+- `rrfs_extract.py` — Phase 3 RRFS GRIB2 harness; format-validated against HRRR cache
+- `fetch_cuuc1_dem.py` — targeted DEM fetch for CUUC1 (not needed, superseded by merge script)
+- `merge_all_remaining_dem.py` — merged all 68 remaining NEEDS_DEM rows in one pass
+
+### GitHub
+- All commits pushed: 34d48d6..dff0aaf → origin/master
+- Latest hash: dff0aaf
+- Repo: aphilp1/stormwatch-live (PUBLIC — do not commit credentials)
 
 ---
 
-## NEXT ACTION — Cross-event niche confirmation (updated 2026-05-31 end-of-session)
+## NEXT ACTIONS — THREE PATHS
 
-Niche confirmed at n=2, both Camp (CBXC1 1.007, SLEC1 1.128), DEM/CRS-verified.
-**Cross-event confirmation still OPEN.** All tonight's candidates exhausted cleanly
-(HWKC1 HRRR-sufficient; WMSC1 elev error; CUUC1 overnight peak; WISC1 Δ36°; HGLC1 Δ46°).
+### Path A — Deploy validated niche (recommended first, deployable now)
+WN+rawBC beats raw HRRR at isolated above-inversion ridges with direction-correct BC.
+Niche: n=2, CBXC1 ratio 1.007, SLEC1 ratio 1.128 (both Camp Fire, DEM/CRS verified).
 
-**Sharpened working hypothesis (new):** WN-beats-HRRR niche holds where terrain does NOT
-strongly rotate synoptic flow (Camp ridges: ~unrotated) and degrades where it does
-(Kincade summits: NNE→N ~45° terrain rotation). This is more falsifiable — predicts
-failure at rotation-dominated stations, success at flow-aligned ones. Test this next.
+To deploy in StormWatch Live:
+1. Identify integration point in `weather-alerts.html`
+2. Run WN+rawBC for a current fire weather event at ridge stations
+3. Display WN output alongside HRRR on the map
 
-**Two principled next paths (pick when fresh):**
+Claim to make: "WindNinja with unmodified HRRR boundary conditions improves over raw
+HRRR specifically at above-inversion ridge stations during offshore flow events."
 
-**(1) Tubbs non-Hawkeye ridge** — Hawkeye excluded (HRRR-sufficient). Find a station above
-the Tubbs inversion (174m OAK) where HRRR undershoots AND flow isn't strongly rotated.
-Diablo NNW flow at Tubbs should align well with NNW-facing ridges. Step 0 screening
-first (registry elevation, DEM, direction R), then pre-register peak window + BC.
+### Path B — More WN validation (the science path)
+Thomas and Woolsey: full RAWS data, aligned BCs (850 hPa Santa Ana), DEMs in place.
+Run WN+rawBC at held-out stations for those events. Confirms niche holds cross-event
+OR confirms it consistently fails — either is publishable.
 
-**(2) Upstream BC sampling — new method, pre-register before testing.** Sample 850 hPa at
-a grid cell UPSTREAM (over terrain reflecting undeflected synoptic flow, east of the Coast
-Ranges) rather than at the deflected station. If this closes the direction gates at WISC1
-and HGLC1, it's a method improvement. But must be pre-registered fresh and applied to ALL
-stations — NOT retrofitted to rescue existing failures.
+Scripts needed: WN run for Thomas (thomas_wn_run.cfg) and Woolsey. DEMs in Storm_info.
+Compare held-out stations that have obs and aren't WMSC1 (the anchor).
 
-**Parked permanently (do not revive):**
-- Single-station BC correction — falsified
-- Multi-station BC correction — falsified
-- Do not re-run Camp to chase a pass
-
-**Queued after point-prediction settles:**
-- HRRRCast integration / BC_SENSITIVITY confidence field
-- Resolve KNXC1 overshoot (WN=2.003, BC dir OK, cause unresolved)
-
-**Queued after point-prediction settles:**
-- HRRRCast integration / BC_SENSITIVITY confidence field
+### Path C — RRFS resolution ladder (HPC-blocked, human action required)
+- `rrfs_extract.py` is written; populate RRFS_FILE_MAP and run with --run
+- Blocked: need NOAA employee sponsor for RDHPCS access
+- Action: email EPIC/NSSL/WPC — cannot self-apply as external researcher
+- When unblocked: test whether 1.5km RRFS closes the offshore underbias before WN
 
 ---
 
 ## CONVENTIONS — DO NOT DRIFT
-- `vec_avg`: mean u and v THEN atan2. Never average raw degrees. Direction = met FROM.
-  Speed mph = m/s × 2.23694.
-- Observed values READ from `wyoming_soundings.json`. No hand-entered obs, EVER.
-- Box S=35N default; **Thomas uses S=34N.** Coverage-flag per event.
-- 700 hPa BC valid only ABOVE terrain AND ABOVE the inversion. Check inversion height
-  per event before trusting the level.
-- Domain-mean ≠ point. ERA5 = model INPUT, not surface truth. Domain-mean timing peaks
-  = synoptic positioning, NOT fire-site timing. Timing thread stays PARKED.
+
+- `vec_avg`: mean u/v components THEN atan2. NEVER average raw degrees.
+- Direction: meteorological FROM (0=N, 90=E, 180=S, 270=W)
+- Speed: mph = m/s × 2.23694
+- Slope: stored in DEGREES in hrrr_error_dataset.csv (NOT percent)
+- BC level: 850 hPa offshore/Santa Ana; 700 hPa continental (see §2.4)
+- Soundings: Wyoming wsgi (src=FM35) only. NEVER IEM (CWMJ alias bug — returns Canadian station)
+- Synoptic token: NWS WRH public `7c76618b66c74aee913bdbae4b448bdd` + correct Referer header
+- Security: `~/.cdsapirc` and `~/.ecmwfapirc` gitignored. Repo is PUBLIC. No credentials in code.
 
 ---
 
-## ENVIRONMENT / GOTCHAS
-- Run from `C:\Users\aphil\Documents\Stormwatch\Storm_info`; ERA5 files in `./era5/`.
-- New CDS netCDF: time coord is **`valid_time`** (not `time`). If `cdsapi` rejects
-  `"data_format"`, use `"format"`.
-- conda env `hrrr311`: cdsapi, xarray, numpy, netcdf4 installed.
-- Credentials `~/.cdsapirc` (CDS token) and `~/.ecmwfapirc` — BOTH gitignored, never
-  commit. Repo is PUBLIC.
-- Confirm pushes with `git log origin/master`, not just local HEAD.
+## ENVIRONMENT
+
+```powershell
+# hrrr311 env (primary — HRRR pulls, cfgrib, herbie, numpy, scipy, BC work):
+$CONDA_ENV = "C:\Users\aphil\miniforge3\envs\hrrr311"
+$env:PATH = "$CONDA_ENV;$CONDA_ENV\Library\bin;$CONDA_ENV\Library\mingw-w64\bin;$CONDA_ENV\Library\usr\bin;$CONDA_ENV\Scripts;$env:PATH"
+& "$CONDA_ENV\python.exe" <script.py>
+
+# dem env (py3dep, rasterio, rioxarray — DEM fetching only):
+conda run -n dem python <script.py>
+
+# WindNinja CLI:
+C:\WindNinja\WindNinja-3.12.2\bin\WindNinja_cli.exe
+
+# StormWatch Live dev server (run from Stormwatch folder, NOT Storm_info):
+python -m http.server 8080
+# then open: http://localhost:8080/weather-alerts.html
+```
 
 ---
 
-## STILL GATED (not today's work)
-- Held-out RAWS validation (BC-corrected WindNinja beats raw HRRR at not-fitted terrain
-  stations) = the bar for "workable." Still RAWS-gated.
-- Kincade amplification work needs the run window (being pulled now) before use.
+## KEY FILES
+
+| File | Purpose |
+|------|---------|
+| `hrrr_error_dataset.csv` | Main DB — 164 active rows, all columns complete |
+| `dem_features.csv` | Raw DEM metrics (pre-merge) |
+| `time_aligned_bc.csv` | Per-station BC at each station's peak hour (offshore) |
+| `two_level_wn_test.py` | WN battery — 4 anchors, inner/outer/2-level |
+| `donoharm_gate.py` | Gate function + test harness |
+| `rrfs_extract.py` | RRFS GRIB2 extraction harness |
+| `bc_outer_trainer.py` | LOO Ridge outer correction |
+| `merge_dem_and_gate.py` | Rebuilds dem CSV + runs Phase B gate |
+| `merge_gate_report.txt` | Latest gate results (ratio=0.0134, INDETERMINATE) |
+| `wyoming_soundings.json` | Canonical sounding values — READ only, never hand-enter |
+| `STORMWATCH_MASTER_STATUS.md` | Full findings ledger (authoritative) |
+| `stormwatch_test_protocol.md` | Method + pre-registration rules |
+| `hindcast_event_library.md` | All 12 events, dates, anchor stations |
+| `raws_obs/` | 317 station-event RAWS CSVs |
+| `hrrr_bc_cache/` | Herbie GRIB2 cache |
+
+---
+
+## WITHHELD / PARKED (do not cite, do not revive)
+
+- **Tubbs direction:** WISC1/KNXC1 carry 25–44° ENE structural offset. BC says ENE, obs says NNE.
+- **WMSC1 Thomas elevation:** Registry 4930 ft, DEM ~3750 ft → sub-inversion; excluded from niche.
+- **Timing thread:** Parked until fire-site RAWS propagation geometry is in place.
+- **Amplification ratios:** All withdrawn except CBXC1/SLEC1 WN ratio (not amplification).
+- **Single-station BC correction:** Falsified. Do not re-run.
+- **Multi-station BC correction:** Falsified. Do not re-run.
+
+---
+
+## DISPLAY IDEAS FOR HINDCAST SERIES (brainstormed 2026-06-12)
+
+**Option 1 — Findings map (recommended for StormWatch Live integration)**
+Interactive map: 12 fire event markers on western US. Each shows event name, date, regime,
+anchor HRRR vs WN error, terrain class. Color by regime (orange=Diablo, red=SantaAna,
+blue=continental). Simple HTML/Leaflet, no server needed beyond python -m http.server.
+
+**Option 2 — Experiment timeline table**
+Static sortable HTML table: event, date, regime, anchor stations, HRRR err, WN+rawBC err,
+WN+corrBC err, terrain gate result, status (PASS/FAIL/TBD). One row per anchor.
+Shows full experimental progression. Good for a "Methods" or "Research" tab.
+
+**Option 3 — Departure scatter plot**
+speed_err vs event on x-axis, colored by regime, shape by terrain class.
+Regression line showing offshore/continental split. Plotly or Chart.js, embeddable.
+Most visually compelling way to show the regime signal.
+
+---
+
+*Authoritative findings: STORMWATCH_MASTER_STATUS.md*
+*Method rules: stormwatch_test_protocol.md*
+*Memory index: C:\Users\aphil\.claude\projects\C--Users-aphil\memory\MEMORY.md*
