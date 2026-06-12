@@ -286,9 +286,15 @@ Per §5: delta=0 baseline (raw HRRR as BC) beats the learned correction — corr
   "3.4x amplification" NOT a finding: it divides Hawkeye gust (79 mph) by OAK aloft
   sustained (23 mph, 124 km away) — gust/sustained mismatch + 124 km spatial offset.
   Corrected for GF 1.3-1.7: ratio becomes 2.0-2.6x; still above defensible 1.1-1.6x
-  range, and OAK is still not a valid local denominator. Cannot close until: (a)
-  Hawkeye sustained obs from RAWS, (b) local 700 hPa reference (not OAK distant).
-  No circularity (BC sweep not yet run). Inversion + coordinate findings are solid.
+  range, and OAK is still not a valid local denominator.
+  **UN-WITHHELD 2026-06-11:** (a) HWKC1 sustained obs confirmed in DB (48 mph @ 35.7°
+  NNE, Oct 9 06:56Z); (b) Wyoming OAK Oct 9 00Z/12Z pulled — 850 hPa N→NNE, confirms
+  850 hPa is correct BC level (700 hPa shows NNW, wrong). bc_dir updated to time-aligned
+  values in hrrr_error_dataset.csv unconditionally. Speed underbias VALID. DIRECTION
+  CAVEAT: inland stations WISC1/KNXC1 carry a persistent 25–44° ENE bc_dir offset that
+  time alignment cannot fix — HRRR 850 hPa at inland Napa/Lake County points ENE while
+  obs and OAK sounding both show NNE. Documented in tubbs_direction_finding.md. Do not
+  cite bc_dir or dir_err at WISC1/KNXC1 as validated direction results.
 
 **RETIRED DATA (do not use — explicitly poisoned by IEM CWMJ alias):**
 The following sounding-derived values in `soundings_cache.json` (IEM source) are
