@@ -1,8 +1,8 @@
 # StormWatch — All Next Steps Handoff
-> **RESUME COMMAND:** When the user types "resume", start Track 1 (Tubbs → Kincade → Labor Day OR), then Track 2 (RRFS), then Track 3 (do-no-harm gate). Raise the Tubbs direction-mismatch decision before building any rows.
-**Date recorded:** 2026-06-07  
-**Pipeline state:** Two-level BC correction architecture validated end-to-end (commit 3f5b0af).  
-**Database:** 166 station-events across 12 events in `hrrr_error_dataset.csv`.
+> **RESUME COMMAND:** When the user types "resume", Track 1 is COMPLETE (Tubbs + kincade_run + labor_day_or all merged). Next: Track 2 (RRFS resolution ladder — Phase 0 is clone + build UFS SRW App; does not wait on data) or Track 4 (DEM work for CUUC1/woolsey to add those stations to Phase B N=68). Ask user which to start.
+**Date recorded:** 2026-06-12 (updated from 2026-06-07)
+**Pipeline state:** Two-level BC correction architecture validated end-to-end (commit 3f5b0af). Track 1 complete (commit pending).
+**Database:** 201 station-events across 12 events in `hrrr_error_dataset.csv` (35 labor_day_or2020 DEM rows merged).
 
 ---
 
@@ -24,10 +24,10 @@
 
 **Why:** The outer trainer has 3 failure folds (boulder_chin, kincade_run, woolsey) where the event delta ≈ 0 (bc ≈ obs, coupled BL). More events, especially active Santa Ana runs, give the trainer more training examples and reduce over-correction at near-zero events.
 
-**Priority order:**
-1. **Tubbs 2017 destructive run (Oct 9, 2017)** — large Diablo event, strong underbias expected. Blocked on: (a) Hawkeye (HWKC1) sustained obs from RAWS, (b) local 700 hPa sounding reference (OAK IEM returns CWMJ alias — use Wyoming wsgi). See station registry for details. **Pre-start decision required: decide whether to clear the Tubbs direction mismatch first or run with known caveat — see Track 5.**
-2. **Kincade 2019 destructive run (Oct 27, 2019)** — `era5_pl_kincade_run_2019.nc` is MISSING (not yet pulled). Same domain as kincade_2019. Downward-propagating Diablo at 850 hPa by 12Z Oct 27. Pull ERA5 then run alignment.
-3. **Labor Day Oregon 2020** — 35 active stations, Downslope_Oregon regime (mean +1.71 mph, opposite sign from CA). Validates that outer trainer generalizes across regime sign. Pull RAWS via Synoptic API (same pattern as `wrcc_synoptic_pull.py`, NWS WRH token).
+**Priority order: ALL COMPLETE (2026-06-11 to 2026-06-12)**
+1. ~~**Tubbs 2017 destructive run**~~ COMPLETE (commits 8f0759f + 34d48d6, 2026-06-11). HWKC1 obs confirmed, Wyoming OAK soundings pulled, bc_dir/bc_speed time-aligned, DEM merged. Direction caveat: WISC1/KNXC1 carry 25–44° structural ENE offset — documented in tubbs_direction_finding.md, do not cite as validated direction results.
+2. ~~**Kincade 2019 destructive run**~~ COMPLETE (commit 4283f52, 2026-06-11). ERA5 pulled, all 12 rows bc/DEM aligned. HWKC1 holds at 4.8° from obs, WISC1 direction mismatch continues (same inland-rotation pattern as Tubbs).
+3. ~~**Labor Day Oregon 2020**~~ COMPLETE (2026-06-12). 35 active stations DEM merged (was already BC-populated at event-median). Event mean speed_err = +2.00 mph, mean hrrr_coupling_frac = 0.730. Continental downslope — confirms opposite-sign regime in database. DEM breakdown: 13 valley, 10 open, 10 exposed_ridge, 2 canyon_gap.
 
 **Conventions:**
 - RAWS pulls: NWS WRH token `7c76618b66c74aee913bdbae4b448bdd` + `Referer: https://www.weather.gov/wrh/timeseries?site=STID` header

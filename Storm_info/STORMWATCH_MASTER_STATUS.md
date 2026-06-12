@@ -309,6 +309,13 @@ Per §5: delta=0 baseline (raw HRRR as BC) beats the learned correction — corr
   7 mph obs, 180° direction reversal = wind-shadow station). Gradient-orientation
   data point: HWKC1 alignment-stable confirms kincade_run as the clean NE-Diablo
   direction event. Scripts: update_kincade_run_bc.py, merge_kincade_run_dem.py.
+- **labor_day_or2020 rows COMPLETE (2026-06-12).** 35 active (KEEP/CAUTION) stations.
+  BC was already populated at event-median (700 hPa, downslope_oregon — continental events
+  excluded from time-alignment scope per time_align_bc.py). DEM merged from
+  hrrr_error_dataset_dem.csv via merge_labor_day_or_dem.py. DEM breakdown: 13 valley,
+  10 open, 10 exposed_ridge, 2 canyon_gap. Event mean speed_err = +2.00 mph, mean
+  hrrr_coupling_frac = 0.730. Confirms opposite-sign regime (HRRR overshoots in
+  downslope events) is now fully represented in the database. **Track 1 COMPLETE.**
 
 **RETIRED DATA (do not use — explicitly poisoned by IEM CWMJ alias):**
 The following sounding-derived values in `soundings_cache.json` (IEM source) are
