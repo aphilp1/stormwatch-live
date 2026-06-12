@@ -175,6 +175,8 @@ Per §5: delta=0 baseline (raw HRRR as BC) beats the learned correction — corr
 
 ---
 
+- **Phase B gate — terrain axis RULED OUT (2026-06-12, commit b3f4c68).** Structured-vs-white ratio = 0.0134 (n=163, full 164-station dataset). Terrain class (exposed_ridge/canyon_gap/valley/open) does NOT predict HRRR bust magnitude. Class means: canyon_gap=+0.29, exposed_ridge=-1.95, open=-2.27, valley=-0.58 — all within pooled noise (pooled std ~10.5 mph). Rule #0 repr control: R²=0.000 (no collinearity risk), ratio barely changes (0.0134→0.0135). Verdict: INDETERMINATE (ratio survives but ≤1 — nothing to protect). Regime-level signal (synoptic_regime: offshore underbias, continental overshoot) remains the stronger predictor and is already built into the architecture.
+
 **SOLID:**
 - **RAWS DATA UNLOCKED (2026-05-31).** NWS WRH timeseries viewer embeds a public
   Synoptic token in `/source/wrh/apiKey.js` (token `7c76618b66c74aee913bdbae4b448bdd`).
