@@ -1,6 +1,6 @@
 # StormWatch — All Next Steps Handoff
-> **RESUME COMMAND:** When the user types "resume", Track 1 is COMPLETE (Tubbs + kincade_run + labor_day_or all merged). Next: Track 2 (RRFS resolution ladder — Phase 0 is clone + build UFS SRW App; does not wait on data) or Track 4 (DEM work for CUUC1/woolsey to add those stations to Phase B N=68). Ask user which to start.
-**Date recorded:** 2026-06-12 (updated from 2026-06-07)
+> **RESUME COMMAND:** When the user types "resume", Phase 3 RRFS harness + do-no-harm gate are DONE. Next pending: (a) CUUC1/woolsey DEM fetch (`conda run -n dem python fetch_cuuc1_dem.py`), (b) RDHPCS advisory below, (c) Track 4 DEM events (camp/kincade/missoula etc).
+**Date recorded:** 2026-06-12 (updated session 2)
 **Pipeline state:** Two-level BC correction architecture validated end-to-end (commit 3f5b0af). Track 1 complete (commit pending).
 **Database:** 201 station-events across 12 events in `hrrr_error_dataset.csv` (35 labor_day_or2020 DEM rows merged).
 
@@ -105,9 +105,16 @@ WMSC1 in two events = key consistency test.
 
 User said: "I do want to do more testing, and then come back to these other suggestions from Claude Desktop."
 
-1. **Do-no-harm gate:** Suppress BC correction when raw WN is already within ±5 mph of obs. Prevents degrading stations that WN already recovers. Pre-condition before any app deployment.
+1. ~~**Do-no-harm gate:**~~ **COMPLETE (2026-06-12).** `donoharm_gate.py` written and tested. Gate fires at WMSC1/woolsey (raw_err≈0, saves 9.2 mph overcorrection). 3/4 anchors OK; CBXC1/camp is the 1 documented KNOWN_FAIL (two-level architecture limit). Gate function importable for pipeline use.
 2. **Deploy with disclosed uncertainty band:** StormWatch Live integration. Show ± band from outer trainer RMSE.
 3. **WN amplification lookup (optional):** Per-station terrain amplification factor for better UP-correction magnitude calibration. Requires full per-station WN sweep — only worthwhile after more events are in the trainer.
+
+### RDHPCS Advisory (for Phase 4 compute)
+**NOAA employee sponsor is mandatory** — external researchers cannot self-apply. Before any RDHPCS application:
+- Identify a NOAA collaborator at EPIC, NSSL, or WPC who can sponsor
+- Ask them to vouch for the project and initiate the application on your behalf
+- Alternative: NCAR Derecho (university cloud allocation, no sponsor needed)
+- UFS-SRW Phase 0 build should happen on the actual target HPC, not WSL2 (WSL2 has no NOAA HPC containers and no Level 1 support path for personal machines)
 
 ---
 

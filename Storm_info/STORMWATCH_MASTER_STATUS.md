@@ -309,6 +309,9 @@ Per §5: delta=0 baseline (raw HRRR as BC) beats the learned correction — corr
   7 mph obs, 180° direction reversal = wind-shadow station). Gradient-orientation
   data point: HWKC1 alignment-stable confirms kincade_run as the clean NE-Diablo
   direction event. Scripts: update_kincade_run_bc.py, merge_kincade_run_dem.py.
+- **Phase 3 RRFS extraction harness WRITTEN (2026-06-12).** `rrfs_extract.py` reads any GRIB2 with 10m UGRD/VGRD via cfgrib+KDTree, extracts at anchor station lat/lon, writes `rrfs_hindcast.csv`. Format-validated against HRRR cache: extracted CBXC1/camp err=-3.6, WMSC1/thomas err=-35.7, WMSC1/woolsey err=-27.0 — all match hrrr_error_dataset.csv values exactly. Ready to run with `--run` once RRFS output exists; populate `RRFS_FILE_MAP` in script header.
+- **Do-no-harm gate WRITTEN + TESTED (2026-06-12).** `donoharm_gate.py` — gate function importable. Gate fires at WMSC1/woolsey (raw_err=0.0 ≤ 5 mph → saves 9.2 mph overcorrection). 3/4 OK; CBXC1/camp is documented KNOWN_FAIL (raw WN err=+6.4 > threshold, two-level still wrong direction — architecture limit of the outer correction, not a gate failure). Threshold sensitivity: 7 mph gates camp too, but camp raw WN is wrong-direction so gating would just freeze error at +6.4.
+- **CUUC1/woolsey DEM fetch script WRITTEN (2026-06-12).** `fetch_cuuc1_dem.py` — targets CUUC1 (lat=34.80637, lon=-119.01363, elev=1609.3m). Runs via `conda run -n dem python fetch_cuuc1_dem.py`, appends to `hrrr_error_dataset_dem.csv`, then `merge_woolsey_dem.py` closes the gap.
 - **labor_day_or2020 rows COMPLETE (2026-06-12).** 35 active (KEEP/CAUTION) stations.
   BC was already populated at event-median (700 hPa, downslope_oregon — continental events
   excluded from time-alignment scope per time_align_bc.py). DEM merged from
