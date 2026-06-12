@@ -237,15 +237,18 @@ Per §5: delta=0 baseline (raw HRRR as BC) beats the learned correction — corr
   (linear through mass conservation at all stations). See sensitivity_results.json.
 - **ERA5 BC characterization (2026-05-30).** All four events pulled at reanalysis
   quality (cdsapi, Copernicus CDS). Camp/Tubbs ~27 mph NW (Diablo); Thomas 37.7 mph
-  NE (Santa Ana standout); Kincade 18.9 mph NE (ignition phase only — 27 Oct
-  destructive run needs separate 26-28 Oct pull). 700 hPa geo-height 3100-3181m >
+  NE (Santa Ana standout); Kincade 18.9 mph NE (ignition phase only). **Kincade
+  run (Oct 26-28 2019) pulled 2026-06-11** (`era5_pl_kincade_run_2019.nc`):
+  Oct 27 12Z 850 hPa 12.3 mph @ 17° NNE, 700 hPa 23.2 mph @ 346° NNW — confirms
+  850 hPa is correct BC level. 700 hPa geo-height 3100-3181m >
   domain terrain in all cases. Input side of BC pipeline is now locked.
   See `era5_bc_characterization.md`.
 - **ERA5 fidelity vs Wyoming soundings (2026-05-30).** ERA5 earns "trusted BC
   source" for NorCal Diablo + SoCal Santa Ana: Tubbs OAK Oct 8 (−2.8/3° at 00z,
   +3.0/12° at 12z); Thomas VBG Dec 4 (+1.1/5° at 00z, −3.5/11° at 12z). Direction
-  within 12° in all four comparisons. Kincade not yet run (OAK 27 Oct sounding is
-  outside the 23-25 Oct ERA5 window — pull 26-28 Oct to close).
+  within 12° in all four comparisons. Kincade run ERA5 now available (Oct 27 2019);
+  ERA5 fidelity check pending (Wyoming OAK 27 Oct has only 700 hPa recorded —
+  850 hPa level needs to be added to wyoming_soundings.json to close this).
 - **BC-level finding: 700 hPa is wrong level for sub-inversion gap flow (2026-05-30).**
   Camp REV: 700 hPa (~3100m) sits ABOVE the Reno inversion (2307m at 00z, 1516m at
   12z) → samples free-atmosphere westerly, not the NE gap flow. 850 hPa direction
@@ -295,6 +298,17 @@ Per §5: delta=0 baseline (raw HRRR as BC) beats the learned correction — corr
   time alignment cannot fix — HRRR 850 hPa at inland Napa/Lake County points ENE while
   obs and OAK sounding both show NNE. Documented in tubbs_direction_finding.md. Do not
   cite bc_dir or dir_err at WISC1/KNXC1 as validated direction results.
+- **kincade_run_2019 rows COMPLETE (2026-06-11).** 12 active stations, Oct 27 2019
+  destructive-run phase. ERA5 pulled (era5_pl_kincade_run_2019.nc, Oct 26-28). All
+  rows: bc_speed time-aligned, bc_dir time-aligned from HRRR 850 hPa cache, DEM merged
+  (0 NEEDS_DEM). hrrr_coupling_frac recomputed. Key finding: HWKC1 bc_dir holds at
+  25.5° after alignment (was 22.2° event-median), only 4.8° from obs 40° NNE — the
+  canonical NE-Diablo clean station validates cleanly. WISC1 direction mismatch
+  continues (bc 42.7° vs obs 40°, Δ=+43.7° when accounting for circular diff — same
+  inland-rotation pattern as Tubbs). TS379 excluded from direction analysis (CAUTION,
+  7 mph obs, 180° direction reversal = wind-shadow station). Gradient-orientation
+  data point: HWKC1 alignment-stable confirms kincade_run as the clean NE-Diablo
+  direction event. Scripts: update_kincade_run_bc.py, merge_kincade_run_dem.py.
 
 **RETIRED DATA (do not use — explicitly poisoned by IEM CWMJ alias):**
 The following sounding-derived values in `soundings_cache.json` (IEM source) are
