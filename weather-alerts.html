@@ -413,6 +413,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-leg-badge.pending{background:rgba(74,106,136,0.2);color:#4a6a88;border:1px solid rgba(74,106,136,0.35)}
 #expt-leg-fit{margin-top:3px;width:100%;background:rgba(80,130,190,0.15);border:1px solid rgba(80,130,190,0.3);border-radius:5px;color:#7ab0d0;font-size:10px;padding:5px;cursor:pointer;transition:all 0.15s}
 #expt-leg-fit:hover{background:rgba(80,130,190,0.3);color:#d0e8ff}
+.expt-leg-errscale{margin-top:3px}
+.expt-leg-errscale-bar{height:8px;border-radius:4px;background:linear-gradient(to right,#c0392b,#e67e22,#f39c12,#bbb,#5dade2,#1a5276);margin-bottom:3px}
+.expt-leg-errscale-labels{display:flex;justify-content:space-between;font-size:8px;color:#5a7a94}
+#expt-leg-status{font-size:9px;color:#4a8aaa;margin-top:6px;min-height:12px;font-style:italic}
+.expt-card.loading .expt-card-name::after{content:' …';color:#4a6a88;font-weight:400}
+.expt-raws-legend{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,0.3)}
 .agent-mode-btns{display:flex;gap:4px}
 
 /* ── COMBINED THREAT PANEL ───────────────────────────────────────── */
@@ -1404,7 +1410,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="expt-leg-row"><span class="expt-leg-badge hrrrok">HRRR OK</span>HRRR already accurate</div>
       <div class="expt-leg-row"><span class="expt-leg-badge pending">Pending</span>WN not yet run</div>
       <div class="expt-leg-divider"></div>
+      <div class="expt-leg-section-hdr">RAWS Station Error (HRRR − Obs)</div>
+      <div class="expt-leg-errscale">
+        <div class="expt-leg-errscale-bar"></div>
+        <div class="expt-leg-errscale-labels"><span>← Under</span><span>0</span><span>Over →</span></div>
+      </div>
+      <div class="expt-leg-divider"></div>
       <button id="expt-leg-fit" onclick="exptFitAll()">Fit all events</button>
+      <div id="expt-leg-status"></div>
     </div>
 
     <!-- NEXRAD station detail card -->
@@ -1896,6 +1909,7 @@ const MRMS_QPE_WMS = 'https://mesonet.agron.iastate.edu/cgi-bin/wms/us/mrms_nn.c
 const FEMA_WMS     = 'https://hazards.fema.gov/arcgis/services/public/NFHLWMS/MapServer/WMSServer';
 const NIFC_INCIDENTS  = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/EGP_Active_Incidents_Prod_Public_View/FeatureServer/0/query?where=1%3D1&outFields=*&returnGeometry=true&f=geojson&resultRecordCount=2000';
 const NIFC_PERIMETERS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_YearToDate/FeatureServer/0/query?where=attr_PercentContained+%3C+100+OR+attr_PercentContained+IS+NULL&outFields=poly_IncidentName,poly_GISAcres,poly_CreateDate,attr_POOState,attr_PercentContained&returnGeometry=true&f=geojson&resultRecordCount=2000';
+const NIFC_HIST_PERIMS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_AllYears/FeatureServer/0/query';
 const SPC_FWX_BASE    = 'https://mapservices.weather.noaa.gov/vector/rest/services/fire_weather/SPC_firewx/MapServer';
 const RAWS_URL        = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/PublicView_RAWS/FeatureServer/1/query?where=1%3D1&outFields=StationName,StationID,Latitude,Longitude,Elevation,State,Agency,Status,AirTempStandPlace,WindSpeedMPH,WindDirDegrees,WindSpeedPeak,RelativeHumidity,FuelMoisture,FuelTemp,ObservedDate,MesoWestURL,NOAA_URL&returnGeometry=true&f=geojson&resultRecordCount=5000';
 const KBDI_TILES      = 'https://www.ncei.noaa.gov/pub/data/nidis/tile/ncsu-meas-kbdi/{z}/{x}/{y}.png';
@@ -7289,7 +7303,27 @@ const EXPT_REGIME_COLOR = {
   continental: '#3b82f6'
 };
 
+// Historical fire perimeter WHERE clauses (plain SQL, encoded at call time)
+const EXPT_PERIM_WHERE = {
+  camp_2018:        "poly_IncidentName LIKE '%CAMP%' AND poly_GISAcres > 100000",
+  tubbs_2017:       "poly_IncidentName LIKE '%TUBBS%' AND poly_GISAcres > 10000",
+  kincade_ign_2019: "poly_IncidentName LIKE '%KINCADE%' AND poly_GISAcres > 50000",
+  kincade_run_2019: "poly_IncidentName LIKE '%KINCADE%' AND poly_GISAcres > 50000",
+  thomas_2017:      "poly_IncidentName LIKE '%THOMAS%' AND poly_GISAcres > 100000",
+  woolsey_2018:     "poly_IncidentName LIKE '%WOOLSEY%' AND poly_GISAcres > 5000",
+  labor_day_or2020: "poly_IncidentName LIKE '%BEACHIE%'",
+  marshall_2021:    "poly_IncidentName LIKE '%MARSHALL%'",
+  boulder_chin2021: null,
+  missoula_dec2025: null,
+  missoula_jul2024: null,
+  iowa_derecho2020: null
+};
+
 let exptMarkersLayer = null;
+let exptHillshadeLayer = null;
+let exptRawsGroup    = null;
+let exptPerimGroup   = null;
+let exptCsvRows      = null;   // cached parsed CSV
 let exptActive       = false;
 let exptFilter       = 'all';
 
@@ -7359,11 +7393,184 @@ function deactivateExptMode() {
   if (!exptActive) return;
   exptActive = false;
   if (exptMarkersLayer && typeof map !== 'undefined') exptMarkersLayer.remove();
+  clearExptContext();
   const leg = document.getElementById('expt-legend');
   if (leg) leg.style.display = 'none';
   const chk = document.getElementById('expt-toggle-chk');
   if (chk) chk.checked = false;
-  document.querySelectorAll('.expt-card').forEach(c => c.style.outline = 'none');
+  document.querySelectorAll('.expt-card').forEach(c => { c.style.outline = 'none'; c.classList.remove('loading'); });
+}
+
+function clearExptContext() {
+  if (exptHillshadeLayer && map.hasLayer(exptHillshadeLayer)) exptHillshadeLayer.remove();
+  if (exptRawsGroup)  { exptRawsGroup.clearLayers();  if (map.hasLayer(exptRawsGroup))  exptRawsGroup.remove(); }
+  if (exptPerimGroup) { exptPerimGroup.clearLayers(); if (map.hasLayer(exptPerimGroup)) exptPerimGroup.remove(); }
+  exptStatus('');
+}
+
+function exptStatus(msg) {
+  const el = document.getElementById('expt-leg-status');
+  if (el) el.textContent = msg;
+}
+
+// ── Error color scale ───────────────────────────────────────────────────────
+function exptErrColor(err) {
+  if (isNaN(err)) return '#666';
+  if (err < -15) return '#c0392b';
+  if (err < -10) return '#e74c3c';
+  if (err <  -5) return '#e67e22';
+  if (err <  -2) return '#f39c12';
+  if (err <=  2) return '#aaaaaa';
+  if (err <=  5) return '#5dade2';
+  if (err <= 10) return '#2e86c1';
+  return '#1a5276';
+}
+
+function exptErrLabel(err) {
+  if (isNaN(err)) return 'n/a';
+  const sign = err >= 0 ? '+' : '';
+  const abs  = Math.abs(err);
+  const dir  = err < -2 ? ' (HRRR under)' : err > 2 ? ' (HRRR over)' : ' (near-zero)';
+  return `${sign}${err.toFixed(1)} mph${dir}`;
+}
+
+// ── CSV parser ──────────────────────────────────────────────────────────────
+function parseExptCSV(text) {
+  const lines = text.split('\n');
+  if (!lines.length) return [];
+  const headers = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1)
+    .filter(l => l.trim())
+    .map(l => {
+      const vals = l.split(',');
+      const obj  = {};
+      headers.forEach((h, i) => { obj[h] = (vals[i] || '').trim(); });
+      return obj;
+    });
+}
+
+// ── Context layer loader ────────────────────────────────────────────────────
+async function loadExptContext(ev) {
+  clearExptContext();
+  exptStatus('Loading terrain & stations…');
+
+  // 1. Hillshade overlay (ESRI — same domain as satellite layer already in app)
+  if (!exptHillshadeLayer) {
+    exptHillshadeLayer = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',
+      { opacity: 0.40, attribution: '© Esri', maxZoom: 16, zIndex: 1 }
+    );
+  }
+  exptHillshadeLayer.addTo(map);
+
+  // 2. RAWS station markers from CSV
+  await loadExptRaws(ev);
+
+  // 3. Historical fire perimeter
+  await loadExptPerim(ev);
+
+  exptStatus('');
+}
+
+async function loadExptRaws(ev) {
+  // Fetch and cache the CSV
+  if (!exptCsvRows) {
+    try {
+      const resp = await fetch('Storm_info/hrrr_error_dataset.csv');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      exptCsvRows = parseExptCSV(await resp.text());
+    } catch(e) {
+      console.warn('Expt CSV load failed:', e);
+      exptStatus('Station data unavailable');
+      return;
+    }
+  }
+
+  const rows = exptCsvRows.filter(r =>
+    r.event_id === ev.id &&
+    (r.qc_flag === 'KEEP' || r.qc_flag === 'CAUTION') &&
+    r.lat && r.lon && r.lat !== 'N/A' && r.speed_err && r.speed_err !== 'N/A'
+  );
+
+  if (!exptRawsGroup) exptRawsGroup = L.layerGroup();
+  exptRawsGroup.clearLayers();
+  exptRawsGroup.addTo(map);
+
+  rows.forEach(r => {
+    const lat = parseFloat(r.lat);
+    const lon = parseFloat(r.lon);
+    const err = parseFloat(r.speed_err);
+    if (isNaN(lat) || isNaN(lon) || isNaN(err)) return;
+
+    const col    = exptErrColor(err);
+    const radius = Math.min(12, 6 + Math.abs(err) / 5);
+    const obs    = parseFloat(r.obs_sus_mph);
+    const hrrr   = parseFloat(r.hrrr_10m_mph);
+    const obsDir = r.obs_dir_deg !== 'N/A' ? `${r.obs_dir_deg}°` : '—';
+    const bc     = r.bc_speed && r.bc_speed !== 'NEEDS_BC'
+                   ? `${parseFloat(r.bc_speed).toFixed(1)} mph @ ${r.bc_dir}°` : '—';
+
+    const m = L.circleMarker([lat, lon], {
+      radius, fillColor: col, color: '#fff', weight: 1.5, fillOpacity: 0.92, zIndexOffset: 200
+    });
+
+    m.bindTooltip(`
+      <div style="font-family:-apple-system,sans-serif;min-width:180px">
+        <div style="font-size:12px;font-weight:800;margin-bottom:4px;color:#1a1d2e">${r.stid}
+          <span style="font-size:9px;font-weight:500;color:#666"> ${r.station_name || ''}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+          <div><div style="font-size:8px;color:#999;text-transform:uppercase;font-weight:700">Obs</div>
+            <div style="font-size:13px;font-weight:800">${isNaN(obs)?'—':obs.toFixed(1)}<span style="font-size:9px"> mph @ ${obsDir}</span></div></div>
+          <div><div style="font-size:8px;color:#999;text-transform:uppercase;font-weight:700">HRRR</div>
+            <div style="font-size:13px;font-weight:800">${isNaN(hrrr)?'—':hrrr.toFixed(1)}<span style="font-size:9px"> mph</span></div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:${col};margin-bottom:5px">Error: ${exptErrLabel(err)}</div>
+        <div style="font-size:9px;color:#666;line-height:1.5">
+          Terrain: <b>${r.terrain_class||'—'}</b> &nbsp;·&nbsp; Elev: ${parseFloat(r.elev_m).toFixed(0)} m<br>
+          BC: ${bc}
+        </div>
+      </div>
+    `, { sticky: true, maxWidth: 230 });
+
+    exptRawsGroup.addLayer(m);
+  });
+
+  exptStatus(rows.length ? `${rows.length} RAWS stations loaded` : 'No station data for this event');
+}
+
+async function loadExptPerim(ev) {
+  const where = EXPT_PERIM_WHERE[ev.id];
+  if (!where) return;
+
+  try {
+    const url = `${NIFC_HIST_PERIMS}?where=${encodeURIComponent(where)}&outFields=poly_IncidentName,poly_GISAcres,attr_POOState&returnGeometry=true&f=geojson&resultRecordCount=5`;
+    const data = await fetchJson(url, 12000);
+    const features = (data?.features ?? []).filter(f => f.geometry);
+    if (!features.length) return;
+
+    // Take the largest perimeter (final footprint)
+    const feat = features.sort((a, b) =>
+      (b.properties?.poly_GISAcres || 0) - (a.properties?.poly_GISAcres || 0)
+    )[0];
+
+    if (!exptPerimGroup) exptPerimGroup = L.layerGroup();
+    exptPerimGroup.clearLayers();
+    exptPerimGroup.addTo(map);
+
+    const acres = feat.properties?.poly_GISAcres
+      ? `${Math.round(feat.properties.poly_GISAcres).toLocaleString()} acres` : '';
+
+    L.geoJSON(feat, {
+      style: { color: '#ff6600', fillColor: '#ff8800', weight: 2, opacity: 0.9, fillOpacity: 0.12, dashArray: '4 3' }
+    })
+    .bindTooltip(`<b>${ev.name} perimeter</b>${acres ? '<br>' + acres : ''}`, { sticky: true })
+    .addTo(exptPerimGroup);
+
+  } catch(e) {
+    // Silently skip — historical perimeter may not be in this service
+    console.warn('Expt perimeter load failed:', e);
+  }
 }
 
 function exptFitAll() {
@@ -7425,17 +7632,31 @@ function renderExptCards() {
   }).join('');
 }
 
-function exptCardClick(id) {
+async function exptCardClick(id) {
   const ev = EXPT_EVENTS.find(e => e.id === id);
   if (!ev) return;
   if (!exptActive) activateExptMode();
+
+  // Highlight selected card
+  document.querySelectorAll('.expt-card').forEach(c => { c.style.outline = 'none'; c.classList.remove('loading'); });
+  const card = document.querySelector(`.expt-card[data-id="${id}"]`);
+  if (card) {
+    const col = EXPT_REGIME_COLOR[ev.regime] || '#4a8aaa';
+    card.style.outline = `2px solid ${col}`;
+    card.classList.add('loading');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
   if (typeof map !== 'undefined') {
-    map.setView([ev.lat, ev.lng], 9, { animate: true });
+    map.setView([ev.lat, ev.lng], 10, { animate: true });
     exptMarkersLayer.eachLayer(layer => {
       const ll = layer.getLatLng && layer.getLatLng();
       if (ll && Math.abs(ll.lat - ev.lat) < 0.01) layer.openPopup();
     });
   }
+
+  await loadExptContext(ev);
+  if (card) card.classList.remove('loading');
 }
 
 document.addEventListener('DOMContentLoaded', () => { renderExptCards(); });
