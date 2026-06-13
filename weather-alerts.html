@@ -42,11 +42,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #right-col{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;overflow:hidden}
 
 /* ── SIDEBAR ────────────────────────────────────────────────────── */
-#sidebar{width:290px;background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width 0.2s}
+#sidebar{width:320px;background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width 0.2s}
 #sidebar.collapsed{width:0;overflow:hidden}
 
-.tab-bar{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
-.tab{padding:7px 0;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center}
+.tab-bar{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{padding:8px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.2px;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center}
 .tab.active{color:var(--text);border-bottom-color:var(--accent)}
 .tab:hover:not(.active){color:var(--text2)}
 
@@ -77,10 +77,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* Layers tab */
 #layers-tab{padding:12px 14px;gap:12px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
-#layers-tab::-webkit-scrollbar,#stats-tab::-webkit-scrollbar,#tab-models::-webkit-scrollbar,#tab-maps::-webkit-scrollbar,#tab-agents::-webkit-scrollbar,#mp-table-area::-webkit-scrollbar{width:7px}
-#layers-tab::-webkit-scrollbar-track,#stats-tab::-webkit-scrollbar-track,#tab-models::-webkit-scrollbar-track,#tab-maps::-webkit-scrollbar-track,#tab-agents::-webkit-scrollbar-track,#mp-table-area::-webkit-scrollbar-track{background:transparent}
-#layers-tab::-webkit-scrollbar-thumb,#stats-tab::-webkit-scrollbar-thumb,#tab-models::-webkit-scrollbar-thumb,#tab-maps::-webkit-scrollbar-thumb,#tab-agents::-webkit-scrollbar-thumb,#mp-table-area::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
-#layers-tab::-webkit-scrollbar-thumb:hover,#stats-tab::-webkit-scrollbar-thumb:hover,#tab-models::-webkit-scrollbar-thumb:hover,#tab-maps::-webkit-scrollbar-thumb:hover,#tab-agents::-webkit-scrollbar-thumb:hover,#mp-table-area::-webkit-scrollbar-thumb:hover{background:#aab}
+#layers-tab::-webkit-scrollbar,#stats-tab::-webkit-scrollbar,#tab-models::-webkit-scrollbar,#tab-maps::-webkit-scrollbar,#tab-agents::-webkit-scrollbar,#tab-experiments::-webkit-scrollbar,#mp-table-area::-webkit-scrollbar{width:7px}
+#layers-tab::-webkit-scrollbar-track,#stats-tab::-webkit-scrollbar-track,#tab-models::-webkit-scrollbar-track,#tab-maps::-webkit-scrollbar-track,#tab-agents::-webkit-scrollbar-track,#tab-experiments::-webkit-scrollbar-track,#mp-table-area::-webkit-scrollbar-track{background:transparent}
+#layers-tab::-webkit-scrollbar-thumb,#stats-tab::-webkit-scrollbar-thumb,#tab-models::-webkit-scrollbar-thumb,#tab-maps::-webkit-scrollbar-thumb,#tab-agents::-webkit-scrollbar-thumb,#tab-experiments::-webkit-scrollbar-thumb,#mp-table-area::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
+#layers-tab::-webkit-scrollbar-thumb:hover,#stats-tab::-webkit-scrollbar-thumb:hover,#tab-models::-webkit-scrollbar-thumb:hover,#tab-maps::-webkit-scrollbar-thumb:hover,#tab-agents::-webkit-scrollbar-thumb:hover,#tab-experiments::-webkit-scrollbar-thumb:hover,#mp-table-area::-webkit-scrollbar-thumb:hover{background:#aab}
 .layer-group{margin-bottom:14px}
 .layer-group-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text);font-weight:700;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px}
 .type-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;flex-shrink:0;vertical-align:middle;margin-top:-1px}
@@ -359,6 +359,60 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .agent-activate-btn{background:#1e3a55;border:1px solid rgba(80,130,190,0.4);border-radius:5px;color:#a0c8e8;font-size:10px;font-weight:700;padding:4px 10px;cursor:pointer;transition:all 0.15s;letter-spacing:0.3px}
 .agent-activate-btn:hover{background:#2a4a6a;border-color:#5a8ab0;color:#d0e8ff}
 .agent-activate-btn.active{background:#f0c040;border-color:#f0c040;color:#0d1a28}
+
+/* ── EXPERIMENTS TAB ─────────────────────────────────────────────── */
+#tab-experiments{padding:12px 14px;overflow-y:auto;gap:0;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent;background:#080f18}
+.expt-hdr{margin-bottom:12px}
+.expt-hdr-title{font-size:11px;font-weight:700;color:#d0e8ff;letter-spacing:0.4px;margin-bottom:3px}
+.expt-hdr-sub{font-size:9.5px;color:#4a6a88;line-height:1.6}
+.expt-map-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 11px;background:#0d1b2a;border-radius:6px;border:1px solid rgba(80,130,190,0.2);cursor:pointer;transition:border-color 0.15s}
+.expt-map-toggle:hover{border-color:rgba(80,130,190,0.5)}
+.expt-map-toggle-label{font-size:11px;color:#7a9ab8;flex:1;user-select:none}
+.expt-filter-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.expt-pill{padding:3px 9px;border-radius:9px;border:1px solid;background:none;font-size:9.5px;font-weight:700;cursor:pointer;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.4px}
+.expt-pill[data-r="all"]{border-color:#4a6a88;color:#4a6a88}
+.expt-pill[data-r="all"].active{background:#1e3a55;border-color:#5a8ab0;color:#a0c8e8}
+.expt-pill[data-r="diablo"]{border-color:#f97316;color:#f97316}
+.expt-pill[data-r="diablo"].active{background:rgba(249,115,22,0.15);color:#f97316}
+.expt-pill[data-r="santa_ana"]{border-color:#ef4444;color:#ef4444}
+.expt-pill[data-r="santa_ana"].active{background:rgba(239,68,68,0.15);color:#ef4444}
+.expt-pill[data-r="continental"]{border-color:#3b82f6;color:#3b82f6}
+.expt-pill[data-r="continental"].active{background:rgba(59,130,246,0.15);color:#3b82f6}
+.expt-card{background:#0d1b2a;border:1px solid rgba(80,130,190,0.18);border-radius:8px;padding:11px 13px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;border-left:3px solid transparent}
+.expt-card:hover{background:#111d2e}
+.expt-card[data-r="diablo"]{border-left-color:#f97316}
+.expt-card[data-r="santa_ana"]{border-left-color:#ef4444}
+.expt-card[data-r="continental"]{border-left-color:#3b82f6}
+.expt-card-name{font-size:12px;font-weight:700;color:#d0e8ff;margin-bottom:2px}
+.expt-card-meta{font-size:9.5px;color:#4a6a88;margin-bottom:8px}
+.expt-card-stats{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.expt-stat{display:flex;flex-direction:column;gap:2px}
+.expt-stat-lbl{font-size:8px;text-transform:uppercase;letter-spacing:0.5px;color:#3a5a78;font-weight:700}
+.expt-stat-val{font-size:11px;font-weight:700;color:#a0c8e8}
+.expt-stat-val.pos{color:#ef8a4a}
+.expt-stat-val.neg{color:#ef4444}
+.expt-badge{font-size:8.5px;font-weight:800;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:0.4px;display:inline-block;margin-top:3px}
+.expt-badge.pass{background:rgba(68,187,102,0.2);color:#44bb66;border:1px solid rgba(68,187,102,0.35)}
+.expt-badge.pending{background:rgba(74,106,136,0.2);color:#4a6a88;border:1px solid rgba(74,106,136,0.35)}
+.expt-badge.hrrrok{background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)}
+.expt-badge.fail{background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.3)}
+.expt-summary{font-size:9.5px;color:#3a5878;line-height:1.5;padding-top:8px;border-top:1px solid rgba(80,130,190,0.1);margin-top:8px}
+
+/* Experiments map legend */
+#expt-legend{display:none;position:absolute;bottom:42px;left:10px;background:rgba(8,12,24,0.93);border:1px solid rgba(80,130,190,0.3);border-radius:9px;padding:11px 14px;z-index:700;min-width:210px;backdrop-filter:blur(6px);box-shadow:0 3px 14px rgba(0,0,0,0.6);cursor:move;user-select:none}
+#expt-legend button{cursor:pointer}
+#expt-leg-title{font-size:10px;font-weight:800;color:#d0e8ff;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px}
+#expt-leg-sub{font-size:9px;color:#4a6a88;margin-bottom:8px}
+.expt-leg-divider{border-top:1px solid rgba(80,130,190,0.18);margin:7px 0}
+.expt-leg-section-hdr{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#3a5a78;font-weight:700;margin-bottom:5px}
+.expt-leg-row{display:flex;align-items:center;gap:7px;font-size:10px;color:#8ab0cc;margin-bottom:4px}
+.expt-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.25)}
+.expt-leg-badge{font-size:8px;font-weight:800;padding:1px 5px;border-radius:3px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.3px}
+.expt-leg-badge.pass{background:rgba(68,187,102,0.25);color:#44bb66;border:1px solid rgba(68,187,102,0.4)}
+.expt-leg-badge.hrrrok{background:rgba(59,130,246,0.2);color:#3b82f6;border:1px solid rgba(59,130,246,0.35)}
+.expt-leg-badge.pending{background:rgba(74,106,136,0.2);color:#4a6a88;border:1px solid rgba(74,106,136,0.35)}
+#expt-leg-fit{margin-top:3px;width:100%;background:rgba(80,130,190,0.15);border:1px solid rgba(80,130,190,0.3);border-radius:5px;color:#7ab0d0;font-size:10px;padding:5px;cursor:pointer;transition:all 0.15s}
+#expt-leg-fit:hover{background:rgba(80,130,190,0.3);color:#d0e8ff}
 .agent-mode-btns{display:flex;gap:4px}
 
 /* ── COMBINED THREAT PANEL ───────────────────────────────────────── */
@@ -647,6 +701,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button class="tab" onclick="showTab('models')">Models</button>
       <button class="tab" onclick="showTab('maps')">Maps</button>
       <button class="tab" onclick="showTab('agents')">Agents</button>
+      <button class="tab" onclick="showTab('experiments')">Expts</button>
     </div>
 
     <!-- ALERTS TAB -->
@@ -1301,6 +1356,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
     </div>
 
+    <!-- EXPERIMENTS TAB -->
+    <div id="tab-experiments" class="tab-content">
+      <div class="expt-hdr">
+        <div class="expt-hdr-title">WindNinja Hindcast Series</div>
+        <div class="expt-hdr-sub">12 fire events · 164 station-obs · 2017–2025<br>Testing HRRR→WindNinja terrain downscaling</div>
+      </div>
+
+      <div class="expt-map-toggle" onclick="toggleExptMarkers()" id="expt-map-toggle">
+        <label class="toggle" onclick="event.stopPropagation();toggleExptMarkers()">
+          <input type="checkbox" id="expt-toggle-chk">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="expt-map-toggle-label">Show events on map</span>
+      </div>
+
+      <div class="expt-filter-row">
+        <button class="expt-pill active" data-r="all"         onclick="setExptFilter('all')">All</button>
+        <button class="expt-pill"        data-r="diablo"      onclick="setExptFilter('diablo')">Diablo</button>
+        <button class="expt-pill"        data-r="santa_ana"   onclick="setExptFilter('santa_ana')">Santa Ana</button>
+        <button class="expt-pill"        data-r="continental" onclick="setExptFilter('continental')">Contl</button>
+      </div>
+
+      <div id="expt-card-list"></div>
+    </div>
+
   </div>
 
   <div id="right-col">
@@ -1308,6 +1388,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <button id="collapse-btn" onclick="toggleSidebar()">◀</button>
     <div id="map"></div>
     <div id="zoom-badge"><span class="zb-label">Zoom</span><span class="zb-val" id="zoom-val">—</span></div>
+
+    <!-- EXPERIMENTS MAP LEGEND -->
+    <div id="expt-legend">
+      <div id="expt-leg-title">Hindcast Events</div>
+      <div id="expt-leg-sub">12 fires &nbsp;·&nbsp; 164 stations &nbsp;·&nbsp; 2017–2025</div>
+      <div class="expt-leg-divider"></div>
+      <div class="expt-leg-section-hdr">Wind Regime</div>
+      <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#f97316"></span>Diablo (offshore NorCal)</div>
+      <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#ef4444"></span>Santa Ana (offshore SoCal)</div>
+      <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#3b82f6"></span>Continental / Downslope</div>
+      <div class="expt-leg-divider"></div>
+      <div class="expt-leg-section-hdr">WindNinja Result</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge pass">WN Niche</span>WN beats HRRR at ridge</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge hrrrok">HRRR OK</span>HRRR already accurate</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge pending">Pending</span>WN not yet run</div>
+      <div class="expt-leg-divider"></div>
+      <button id="expt-leg-fit" onclick="exptFitAll()">Fit all events</button>
+    </div>
 
     <!-- NEXRAD station detail card -->
     <div id="nexrad-station-card">
@@ -3513,7 +3611,7 @@ function setBase(name) {
 function showTab(name) {
   currentTab = name;
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    const names=['alerts','stats','layers','models','maps','agents'];
+    const names=['alerts','stats','layers','models','maps','agents','experiments'];
     t.classList.toggle('active',names[i]===name);
   });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
@@ -3538,8 +3636,10 @@ function showTab(name) {
   const hideForTab = openMod || openMaps;
   const legend = document.getElementById('legend');
   const hrrrLegend = document.getElementById('hrrr-legend');
-  if (legend) legend.style.display = hideForTab ? 'none' : '';
-  if (hrrrLegend) hrrrLegend.style.display = (hideForTab || !hrrrEnabled) ? 'none' : 'block';
+  const openExpts = name === 'experiments';
+  if (legend) legend.style.display = (hideForTab || openExpts) ? 'none' : '';
+  if (hrrrLegend) hrrrLegend.style.display = (hideForTab || openExpts || !hrrrEnabled) ? 'none' : 'block';
+  if (openExpts) { activateExptMode(); } else { deactivateExptMode(); }
 
   if (openMod && modLastLat === null && map) {
     const c = map.getCenter();
@@ -6061,7 +6161,7 @@ function makeDraggable(elId) {
 // Initialise draggable legends after page loads
 window.addEventListener('load', () => {
   ['legend','spc-legend','hrrr-legend','sat-legend','radar-legend',
-   'fwx-legend','usgs-legend','usgsflow-legend','mrms-legend','fema-legend']
+   'fwx-legend','usgs-legend','usgsflow-legend','mrms-legend','fema-legend','expt-legend']
   .forEach(makeDraggable);
 });
 
@@ -6997,6 +7097,349 @@ boot();
 
   document.addEventListener('mouseup', () => { dragging = false; });
 })();
+
+// ── EXPERIMENTS ──────────────────────────────────────────────────────────────
+
+const EXPT_EVENTS = [
+  {
+    id: 'camp_2018',
+    name: 'Camp Fire',
+    date: 'Nov 8, 2018',
+    regime: 'diablo',
+    regimeLabel: 'Diablo (offshore NorCal)',
+    lat: 39.78, lng: -121.62,
+    n: 12,
+    anchor: 'CBXC1/SLEC1',
+    hrrr_err: -3.8,
+    wn_result: 'WN ratio 1.007–1.128',
+    status: 'pass',
+    statusLabel: 'WN Niche',
+    note: 'WN+rawBC beats HRRR at both held-out ridges. Corrected BC held-out test failed — rawBC is the product.'
+  },
+  {
+    id: 'tubbs_2017',
+    name: 'Tubbs Fire',
+    date: 'Oct 8, 2017',
+    regime: 'diablo',
+    regimeLabel: 'Diablo (offshore NorCal)',
+    lat: 38.44, lng: -122.71,
+    n: 7,
+    anchor: 'HWKC1',
+    hrrr_err: -0.3,
+    wn_result: 'HRRR resolves Hawkeye',
+    status: 'hrrrok',
+    statusLabel: 'HRRR OK',
+    note: 'HRRR ratio 0.997 at Hawkeye — WN not needed. BC direction finding: 25–44° ENE structural offset at WISC1/KNXC1.'
+  },
+  {
+    id: 'kincade_ign_2019',
+    name: 'Kincade (Ignition)',
+    date: 'Oct 23–24, 2019',
+    regime: 'diablo',
+    regimeLabel: 'Diablo/NW (offshore NorCal)',
+    lat: 38.72, lng: -122.89,
+    n: 10,
+    anchor: 'HWKC1',
+    hrrr_err: -2.1,
+    wn_result: 'Not yet run',
+    status: 'pending',
+    statusLabel: 'Pending',
+    note: 'Natural control: same offshore regime, near-zero deficit (bc ≈ obs). Diablo NW flow.'
+  },
+  {
+    id: 'kincade_run_2019',
+    name: 'Kincade (Run Day)',
+    date: 'Oct 27, 2019',
+    regime: 'diablo',
+    regimeLabel: 'Diablo/NE (offshore NorCal)',
+    lat: 38.72, lng: -122.85,
+    n: 12,
+    anchor: 'HWKC1',
+    hrrr_err: 0.1,
+    wn_result: 'Not yet run',
+    status: 'pending',
+    statusLabel: 'Pending',
+    note: 'Key control case: offshore regime, deficit ≈ 0. Confirms regime signal is not universal.'
+  },
+  {
+    id: 'thomas_2017',
+    name: 'Thomas Fire',
+    date: 'Dec 4–7, 2017',
+    regime: 'santa_ana',
+    regimeLabel: 'Santa Ana (offshore SoCal)',
+    lat: 34.27, lng: -119.25,
+    n: 26,
+    anchor: 'WMSC1',
+    hrrr_err: -35.7,
+    wn_result: 'Two-level: err +10.5 (vs flat −32.1)',
+    status: 'pass',
+    statusLabel: 'Arch. Pass',
+    note: 'Two-level correction flips error direction (partial recovery). Raw WN err −10.2 mph on waning Santa Ana flow.'
+  },
+  {
+    id: 'woolsey_2018',
+    name: 'Woolsey Fire',
+    date: 'Nov 9, 2018',
+    regime: 'santa_ana',
+    regimeLabel: 'Santa Ana (offshore SoCal)',
+    lat: 34.07, lng: -118.74,
+    n: 16,
+    anchor: 'WMSC1',
+    hrrr_err: -27.0,
+    wn_result: 'WN full recovery (err ≈ 0)',
+    status: 'pass',
+    statusLabel: 'Full Recov.',
+    note: 'Do-no-harm gate fires here (raw WN already near-perfect). Gate prevents overcorrection by +9.2 mph.'
+  },
+  {
+    id: 'labor_day_or2020',
+    name: 'Labor Day OR',
+    date: 'Sep 7–8, 2020',
+    regime: 'continental',
+    regimeLabel: 'Continental (downslope OR)',
+    lat: 44.0, lng: -122.8,
+    n: 35,
+    anchor: 'Multiple',
+    hrrr_err: 2.0,
+    wn_result: 'Not yet run',
+    status: 'pending',
+    statusLabel: 'Pending',
+    note: 'Largest event in database (35 stations). Continental downslope; event mean +2.0 mph (HRRR overshoots slightly).'
+  },
+  {
+    id: 'marshall_2021',
+    name: 'Marshall Fire',
+    date: 'Dec 30, 2021',
+    regime: 'continental',
+    regimeLabel: 'Continental (downslope CO)',
+    lat: 39.95, lng: -105.17,
+    n: 8,
+    anchor: 'BTAC2/SOPC2',
+    hrrr_err: 14.0,
+    wn_result: 'Not yet run',
+    status: 'pending',
+    statusLabel: 'Pending',
+    note: 'Continental downslope; large HRRR overshoot at ridge stations (BTAC2 +19.1, SOPC2 +16.7 mph).'
+  },
+  {
+    id: 'boulder_chin2021',
+    name: 'Boulder Chinook',
+    date: 'Feb 2021',
+    regime: 'continental',
+    regimeLabel: 'Continental (Chinook CO)',
+    lat: 40.01, lng: -105.27,
+    n: 9,
+    anchor: 'Front Range',
+    hrrr_err: 1.5,
+    wn_result: 'Not yet run',
+    status: 'pending',
+    statusLabel: 'Pending',
+    note: 'Front Range Chinook event. Continental downslope regime.'
+  },
+  {
+    id: 'missoula_dec2025',
+    name: 'Missoula Dec',
+    date: 'Dec 17, 2025',
+    regime: 'continental',
+    regimeLabel: 'Continental (foehn/downslope MT)',
+    lat: 46.87, lng: -113.99,
+    n: 8,
+    anchor: 'PNTM8',
+    hrrr_err: -5.8,
+    wn_result: 'Not yet run',
+    status: 'pending',
+    statusLabel: 'Pending',
+    note: 'NW foehn, cold-pool decoupled. Ridge PNTM8 at 7897 ft: HRRR undershoots (−5.8 mph). BC confirmed vs OTX 12Z sounding.'
+  },
+  {
+    id: 'missoula_jul2024',
+    name: 'Missoula Jul',
+    date: 'Jul 2024',
+    regime: 'continental',
+    regimeLabel: 'Continental (convective outflow MT)',
+    lat: 46.90, lng: -113.80,
+    n: 18,
+    anchor: 'Multiple',
+    hrrr_err: 0.8,
+    wn_result: 'Not yet run',
+    status: 'pending',
+    statusLabel: 'Pending',
+    note: 'Convective outflow event. PNTM8 anchor.'
+  },
+  {
+    id: 'iowa_derecho2020',
+    name: 'Iowa Derecho',
+    date: 'Aug 10, 2020',
+    regime: 'continental',
+    regimeLabel: 'Continental (convective outflow IA)',
+    lat: 41.98, lng: -91.66,
+    n: 2,
+    anchor: 'Iowa RAWS',
+    hrrr_err: 0.5,
+    wn_result: 'Not yet run',
+    status: 'pending',
+    statusLabel: 'Pending',
+    note: 'Smallest event (2 stations). Convective outflow; included as continental control.'
+  }
+];
+
+const EXPT_REGIME_COLOR = {
+  diablo:      '#f97316',
+  santa_ana:   '#ef4444',
+  continental: '#3b82f6'
+};
+
+let exptMarkersLayer = null;
+let exptActive       = false;
+let exptFilter       = 'all';
+
+function initExptMarkers() {
+  if (typeof map === 'undefined' || exptMarkersLayer) return;
+  exptMarkersLayer = L.layerGroup();
+  EXPT_EVENTS.forEach(ev => {
+    const col      = EXPT_REGIME_COLOR[ev.regime] || '#aaa';
+    const errSign  = ev.hrrr_err < 0 ? '' : '+';
+    const hasFail  = ev.wn_result.toLowerCase().includes('fail');
+    const wrapCol  = ev.status === 'pass' ? '#44bb66' : ev.status === 'hrrrok' ? '#3b82f6' : '#4a6a88';
+    const marker   = L.circleMarker([ev.lat, ev.lng], {
+      radius: 10,
+      fillColor: col,
+      color: '#fff',
+      weight: 2,
+      fillOpacity: 0.9
+    });
+    marker.bindPopup(`
+      <div style="font-family:-apple-system,sans-serif;min-width:230px;max-width:280px">
+        <div style="font-size:14px;font-weight:800;margin-bottom:2px;color:#1a1d2e">${ev.name}</div>
+        <div style="font-size:10px;color:#888;margin-bottom:10px">${ev.date} &nbsp;·&nbsp; ${ev.regimeLabel}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #eee">
+          <div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#999;font-weight:700">Stations</div>
+            <div style="font-size:16px;font-weight:800;color:#1a1d2e">${ev.n}</div>
+          </div>
+          <div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#999;font-weight:700">HRRR Error</div>
+            <div style="font-size:16px;font-weight:800;color:${ev.hrrr_err<0?'#d42b2b':'#2266aa'}">${errSign}${ev.hrrr_err.toFixed(1)}<span style="font-size:10px;font-weight:500"> mph</span></div>
+          </div>
+          <div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#999;font-weight:700">Anchor RAWS</div>
+            <div style="font-size:12px;font-weight:700;color:#1a1d2e;margin-top:2px">${ev.anchor}</div>
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.7px;color:#999;font-weight:700;margin-bottom:4px">WindNinja Result</div>
+          <span style="display:inline-block;background:${wrapCol}22;color:${wrapCol};border:1px solid ${wrapCol}55;border-radius:4px;font-size:9px;font-weight:800;padding:2px 8px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">${ev.statusLabel}</span>
+          <div style="font-size:11px;color:#444;line-height:1.5">${ev.wn_result}</div>
+        </div>
+        <div style="font-size:10px;color:#777;padding-top:8px;border-top:1px solid #eee;line-height:1.55">${ev.note}</div>
+      </div>
+    `, { maxWidth: 290 });
+    marker.on('click', () => {
+      document.querySelectorAll('.expt-card').forEach(c => c.style.outline = 'none');
+      const card = document.querySelector(`.expt-card[data-id="${ev.id}"]`);
+      if (card) { card.style.outline = `2px solid ${col}`; card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+    });
+    exptMarkersLayer.addLayer(marker);
+  });
+}
+
+function activateExptMode() {
+  if (exptActive || typeof map === 'undefined') return;
+  exptActive = true;
+  initExptMarkers();
+  exptMarkersLayer.addTo(map);
+  exptFitAll();
+  const leg = document.getElementById('expt-legend');
+  if (leg) leg.style.display = 'block';
+  const chk = document.getElementById('expt-toggle-chk');
+  if (chk) chk.checked = true;
+}
+
+function deactivateExptMode() {
+  if (!exptActive) return;
+  exptActive = false;
+  if (exptMarkersLayer && typeof map !== 'undefined') exptMarkersLayer.remove();
+  const leg = document.getElementById('expt-legend');
+  if (leg) leg.style.display = 'none';
+  const chk = document.getElementById('expt-toggle-chk');
+  if (chk) chk.checked = false;
+  document.querySelectorAll('.expt-card').forEach(c => c.style.outline = 'none');
+}
+
+function exptFitAll() {
+  if (typeof map === 'undefined') return;
+  // Fit to bounding box of all 12 events with padding
+  const lats = EXPT_EVENTS.map(e => e.lat);
+  const lngs = EXPT_EVENTS.map(e => e.lng);
+  map.fitBounds(
+    [[Math.min(...lats) - 1, Math.min(...lngs) - 2], [Math.max(...lats) + 1, Math.max(...lngs) + 2]],
+    { padding: [30, 30], maxZoom: 7 }
+  );
+}
+
+function toggleExptMarkers() {
+  if (exptActive) { deactivateExptMode(); } else { activateExptMode(); }
+}
+
+function setExptFilter(regime) {
+  exptFilter = regime;
+  document.querySelectorAll('.expt-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.r === regime);
+  });
+  renderExptCards();
+}
+
+function renderExptCards() {
+  const list = document.getElementById('expt-card-list');
+  if (!list) return;
+  const filtered = exptFilter === 'all' ? EXPT_EVENTS : EXPT_EVENTS.filter(e => e.regime === exptFilter);
+  list.innerHTML = filtered.map(ev => {
+    const col     = EXPT_REGIME_COLOR[ev.regime] || '#aaa';
+    const errSign = ev.hrrr_err < 0 ? '' : '+';
+    const errCls  = ev.hrrr_err < 0 ? 'neg' : 'pos';
+    const regime  = ev.regimeLabel.split('(')[0].trim();
+    return `
+      <div class="expt-card" data-id="${ev.id}" data-r="${ev.regime}" onclick="exptCardClick('${ev.id}')">
+        <div class="expt-card-name">${ev.name}</div>
+        <div class="expt-card-meta">${ev.date} &nbsp;·&nbsp; ${regime}</div>
+        <div class="expt-card-stats">
+          <div class="expt-stat">
+            <span class="expt-stat-lbl">Stations</span>
+            <span class="expt-stat-val">${ev.n}</span>
+          </div>
+          <div class="expt-stat">
+            <span class="expt-stat-lbl">HRRR Err</span>
+            <span class="expt-stat-val ${errCls}">${errSign}${ev.hrrr_err.toFixed(1)} mph</span>
+          </div>
+          <div class="expt-stat">
+            <span class="expt-stat-lbl">Anchor</span>
+            <span class="expt-stat-val">${ev.anchor}</span>
+          </div>
+          <div class="expt-stat">
+            <span class="expt-badge ${ev.status}">${ev.statusLabel}</span>
+          </div>
+        </div>
+        <div class="expt-summary">${ev.wn_result}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function exptCardClick(id) {
+  const ev = EXPT_EVENTS.find(e => e.id === id);
+  if (!ev) return;
+  if (!exptActive) activateExptMode();
+  if (typeof map !== 'undefined') {
+    map.setView([ev.lat, ev.lng], 9, { animate: true });
+    exptMarkersLayer.eachLayer(layer => {
+      const ll = layer.getLatLng && layer.getLatLng();
+      if (ll && Math.abs(ll.lat - ev.lat) < 0.01) layer.openPopup();
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => { renderExptCards(); });
+
 </script>
 </body>
 </html>
