@@ -427,22 +427,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-popup .leaflet-popup-content-wrapper{background:#0e1a2e;border:1px solid rgba(80,130,190,0.35);box-shadow:0 4px 18px rgba(0,0,0,0.7);padding:0;border-radius:8px}
 .expt-popup .leaflet-popup-content{margin:0}
 .expt-popup .leaflet-popup-tip{background:#0e1a2e}
-.expt-popup .leaflet-popup-close-button{color:#4a6a88!important;top:5px!important;right:8px!important;font-size:16px!important}
+.expt-popup .leaflet-popup-close-button{color:#7aa0c0!important;top:5px!important;right:8px!important;font-size:18px!important}
 /* Story panel */
 #expt-story-panel{background:#06101e;border:1px solid rgba(80,130,190,0.28);border-radius:9px;padding:13px;margin-top:12px;margin-bottom:6px}
 .expt-story-ename{font-size:11.5px;font-weight:800;color:#d0e8ff;margin-bottom:4px}
 .expt-story-rtag{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:9px;text-transform:uppercase;letter-spacing:0.3px}
-.expt-story-body{font-size:10.5px;color:#607a94;line-height:1.65;margin-bottom:10px}
-.expt-stn-wrap{max-height:150px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(80,130,190,0.3) transparent}
-.expt-stn-table{width:100%;border-collapse:collapse;font-size:9px}
-.expt-stn-table th{position:sticky;top:0;z-index:1;background:#06101e;color:#3a5a78;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;padding:3px 5px;border-bottom:1px solid rgba(80,130,190,0.2);text-align:right}
+.expt-story-body{font-size:10.5px;color:#90aec8;line-height:1.65;margin-bottom:10px}
+.expt-stn-wrap{max-height:160px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(80,130,190,0.3) transparent}
+.expt-stn-table{width:100%;border-collapse:collapse;font-size:9.5px}
+.expt-stn-table th{position:sticky;top:0;z-index:1;background:#06101e;color:#6a90aa;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;padding:4px 6px;border-bottom:1px solid rgba(80,130,190,0.25);text-align:right}
 .expt-stn-table th:first-child,.expt-stn-table td:first-child{text-align:left}
-.expt-stn-table td{padding:3px 5px;color:#4a6a88;border-bottom:1px solid rgba(255,255,255,0.04);text-align:right;font-variant-numeric:tabular-nums}
-.expt-stn-table td:first-child{font-weight:800;color:#b0cce8}
-.expt-err-neg{color:#e67e22;font-weight:800}
+.expt-stn-table td{padding:4px 6px;color:#9ab8cc;border-bottom:1px solid rgba(255,255,255,0.06);text-align:right;font-variant-numeric:tabular-nums}
+.expt-stn-table td:first-child{font-weight:800;color:#d0e8ff}
+.expt-err-neg{color:#f0a050;font-weight:800}
 .expt-err-pos{color:#5dade2;font-weight:800}
-.expt-err-zero{color:#555}
-.expt-cls-chip{font-size:7.5px;padding:1px 4px;border-radius:2px;background:rgba(80,130,190,0.12);color:#3a5a78;white-space:nowrap}
+.expt-err-zero{color:#7a94a8}
+.expt-cls-chip{font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(80,130,190,0.2);color:#8ab8d0;white-space:nowrap}
 .agent-mode-btns{display:flex;gap:4px}
 
 /* ── COMBINED THREAT PANEL ───────────────────────────────────────── */
@@ -7402,14 +7402,14 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col) {
   function bar(val, barCol, label, dir) {
     if (isNaN(val) || val === null) return '';
     const pct = Math.max(4, Math.round((val / maxSpd) * 100));
-    const dirStr = (dir !== null && !isNaN(dir)) ? ` &nbsp;<span style="color:#3a5a78">@ ${Math.round(dir)}°</span>` : '';
-    return `<div style="margin:6px 0">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
-        <span style="font-size:8.5px;color:#3a5878;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">${label}</span>
-        <span style="font-size:12px;font-weight:800;color:${barCol}">${val.toFixed(1)} mph${dirStr}</span>
+    const dirStr = (dir !== null && !isNaN(dir)) ? ` <span style="color:#6a90aa;font-weight:500">@ ${Math.round(dir)}°</span>` : '';
+    return `<div style="margin:7px 0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+        <span style="font-size:9px;color:#8ab0cc;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">${label}</span>
+        <span style="font-size:13px;font-weight:800;color:${barCol}">${val.toFixed(1)} mph${dirStr}</span>
       </div>
-      <div style="height:10px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${barCol};border-radius:3px"></div>
+      <div style="height:11px;background:rgba(255,255,255,0.09);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${barCol};border-radius:3px;opacity:0.9"></div>
       </div>
     </div>`;
   }
@@ -7420,14 +7420,14 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col) {
   const elev    = parseFloat(row.elev_m);
   const slope   = parseFloat(row.slope);
   const relief  = parseFloat(row.relief_1km);
-  return `<div style="font-family:-apple-system,sans-serif;background:#0e1a2e;padding:14px;border-radius:8px;min-width:240px;max-width:290px">
-    <div style="font-size:14px;font-weight:900;color:#d0e8ff;margin-bottom:1px">${row.stid}</div>
-    <div style="font-size:9px;color:#3a5a78;margin-bottom:11px">${row.station_name||''} &nbsp;·&nbsp; ${row.terrain_class||'—'} &nbsp;·&nbsp; ${isNaN(elev)?'—':Math.round(elev)+' m'}</div>
+  return `<div style="font-family:-apple-system,sans-serif;background:#0e1a2e;padding:15px;border-radius:8px;min-width:250px;max-width:300px">
+    <div style="font-size:15px;font-weight:900;color:#d8eeff;margin-bottom:2px">${row.stid}</div>
+    <div style="font-size:10px;color:#7a9ab8;margin-bottom:12px">${row.station_name||''} &nbsp;·&nbsp; ${row.terrain_class||'—'} &nbsp;·&nbsp; ${isNaN(elev)?'—':Math.round(elev)+' m'}</div>
     ${bar(obs,  '#44cc88', 'Observed RAWS', obsDir)}
     ${bar(hrrr, col,       'HRRR 10m fcst', hrrrDir)}
-    ${bc !== null ? bar(bc, '#a78bfa', 'WN BC input', bcDir) : ''}
-    <div style="margin-top:10px;padding-top:9px;border-top:1px solid rgba(80,130,190,0.15);font-size:9px;color:#3a5a78;line-height:1.7">
-      Error: <b style="color:${col}">${errSign}${isNaN(err)?'?':err.toFixed(1)} mph</b> &nbsp;—&nbsp; ${errDesc}<br>
+    ${bc !== null ? bar(bc, '#b09af8', 'WN BC input', bcDir) : ''}
+    <div style="margin-top:11px;padding-top:10px;border-top:1px solid rgba(80,130,190,0.2);font-size:10px;color:#8aaccc;line-height:1.7">
+      Error: <b style="color:${col};font-size:11px">${errSign}${isNaN(err)?'?':err.toFixed(1)} mph</b> &nbsp;—&nbsp; ${errDesc}<br>
       ${isNaN(slope)?'':'Slope '+slope.toFixed(1)+'°'} ${isNaN(relief)?'':' · Relief '+Math.round(relief)+' m'}
     </div>
   </div>`;
