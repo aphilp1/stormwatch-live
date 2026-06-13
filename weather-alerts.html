@@ -7536,41 +7536,63 @@ async function loadExptRaws(ev) {
     exptRawsGroup.addLayer(m);
   });
 
-  exptStatus(rows.length ? `${rows.length} RAWS stations loaded` : 'No station data for this event');
+  // Fit map to show all loaded stations (they may be far from the event lat/lng placeholder)
+  const coords = rows
+    .filter(r => !isNaN(parseFloat(r.lat)) && !isNaN(parseFloat(r.lon)))
+    .map(r => [parseFloat(r.lat), parseFloat(r.lon)]);
+  if (coords.length > 0) {
+    map.fitBounds(L.latLngBounds(coords), { padding: [60, 60], maxZoom: 11 });
+  }
+
+  exptStatus(rows.length ? `${rows.length} RAWS stations` : 'No station data for this event');
 }
 
 async function loadExptPerim(ev) {
   const where = EXPT_PERIM_WHERE[ev.id];
   if (!where) return;
 
-  try {
-    const url = `${NIFC_HIST_PERIMS}?where=${encodeURIComponent(where)}&outFields=poly_IncidentName,poly_GISAcres,attr_POOState&returnGeometry=true&f=geojson&resultRecordCount=5`;
-    const data = await fetchJson(url, 12000);
-    const features = (data?.features ?? []).filter(f => f.geometry);
-    if (!features.length) return;
+  // Try AllYears service first, fall back to the MTBS/archived endpoint pattern
+  const services = [
+    'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_AllYears/FeatureServer/0/query',
+    'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters/FeatureServer/0/query'
+  ];
 
-    // Take the largest perimeter (final footprint)
-    const feat = features.sort((a, b) =>
-      (b.properties?.poly_GISAcres || 0) - (a.properties?.poly_GISAcres || 0)
-    )[0];
+  const params = `?where=${encodeURIComponent(where)}&outFields=poly_IncidentName,poly_GISAcres,attr_POOState&returnGeometry=true&f=geojson&resultRecordCount=10`;
 
-    if (!exptPerimGroup) exptPerimGroup = L.layerGroup();
-    exptPerimGroup.clearLayers();
-    exptPerimGroup.addTo(map);
-
-    const acres = feat.properties?.poly_GISAcres
-      ? `${Math.round(feat.properties.poly_GISAcres).toLocaleString()} acres` : '';
-
-    L.geoJSON(feat, {
-      style: { color: '#ff6600', fillColor: '#ff8800', weight: 2, opacity: 0.9, fillOpacity: 0.12, dashArray: '4 3' }
-    })
-    .bindTooltip(`<b>${ev.name} perimeter</b>${acres ? '<br>' + acres : ''}`, { sticky: true })
-    .addTo(exptPerimGroup);
-
-  } catch(e) {
-    // Silently skip — historical perimeter may not be in this service
-    console.warn('Expt perimeter load failed:', e);
+  let features = [];
+  for (const svc of services) {
+    try {
+      const data = await fetchJson(svc + params, 12000);
+      features = (data?.features ?? []).filter(f => f.geometry);
+      if (features.length) break;
+    } catch(e) {
+      console.warn('Perimeter service failed, trying next:', svc, e.message);
+    }
   }
+
+  if (!features.length) {
+    const s = document.getElementById('expt-leg-status');
+    if (s) s.textContent += ' · No perimeter found';
+    return;
+  }
+
+  // Take the largest polygon (final fire footprint, not an early small perimeter)
+  const feat = features.sort((a, b) =>
+    (b.properties?.poly_GISAcres || 0) - (a.properties?.poly_GISAcres || 0)
+  )[0];
+
+  if (!exptPerimGroup) exptPerimGroup = L.layerGroup();
+  exptPerimGroup.clearLayers();
+  exptPerimGroup.addTo(map);
+
+  const acres = feat.properties?.poly_GISAcres
+    ? `${Math.round(feat.properties.poly_GISAcres).toLocaleString()} acres` : '';
+
+  L.geoJSON(feat, {
+    style: { color: '#ff6600', fillColor: '#ff8800', weight: 2.5, opacity: 0.95, fillOpacity: 0.15, dashArray: '6 4' }
+  })
+  .bindTooltip(`<b>${ev.name} perimeter</b>${acres ? '<br>' + acres : ''}`, { sticky: true })
+  .addTo(exptPerimGroup);
 }
 
 function exptFitAll() {
