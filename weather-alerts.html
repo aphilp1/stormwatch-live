@@ -411,8 +411,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-leg-badge.pass{background:rgba(68,187,102,0.25);color:#44bb66;border:1px solid rgba(68,187,102,0.4)}
 .expt-leg-badge.hrrrok{background:rgba(59,130,246,0.2);color:#3b82f6;border:1px solid rgba(59,130,246,0.35)}
 .expt-leg-badge.pending{background:rgba(74,106,136,0.2);color:#4a6a88;border:1px solid rgba(74,106,136,0.35)}
-#expt-leg-fit{margin-top:3px;width:100%;background:rgba(80,130,190,0.15);border:1px solid rgba(80,130,190,0.3);border-radius:5px;color:#7ab0d0;font-size:10px;padding:5px;cursor:pointer;transition:all 0.15s}
-#expt-leg-fit:hover{background:rgba(80,130,190,0.3);color:#d0e8ff}
+#expt-leg-fit,#expt-leg-fit-stn{margin-top:3px;width:100%;background:rgba(80,130,190,0.15);border:1px solid rgba(80,130,190,0.3);border-radius:5px;color:#7ab0d0;font-size:10px;padding:5px;cursor:pointer;transition:all 0.15s}
+#expt-leg-fit:hover,#expt-leg-fit-stn:hover{background:rgba(80,130,190,0.3);color:#d0e8ff}
+#expt-leg-fit-stn{display:none;background:rgba(80,160,100,0.15);border-color:rgba(80,160,100,0.3);color:#6ab880}
 .expt-leg-errscale{margin-top:3px}
 .expt-leg-errscale-bar{height:8px;border-radius:4px;background:linear-gradient(to right,#c0392b,#e67e22,#f39c12,#bbb,#5dade2,#1a5276);margin-bottom:3px}
 .expt-leg-errscale-labels{display:flex;justify-content:space-between;font-size:8px;color:#5a7a94}
@@ -1417,6 +1418,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
       <div class="expt-leg-divider"></div>
       <button id="expt-leg-fit" onclick="exptFitAll()">Fit all events</button>
+      <button id="expt-leg-fit-stn" onclick="fitExptStations()">▸ Fit to loaded stations</button>
       <div id="expt-leg-status"></div>
     </div>
 
@@ -7326,6 +7328,7 @@ let exptPerimGroup   = null;
 let exptCsvRows      = null;   // cached parsed CSV
 let exptActive       = false;
 let exptFilter       = 'all';
+let exptLastCoords   = [];     // coords of last loaded RAWS set (for fit button)
 
 function initExptMarkers() {
   if (typeof map === 'undefined' || exptMarkersLayer) return;
@@ -7405,6 +7408,9 @@ function clearExptContext() {
   if (exptHillshadeLayer && map.hasLayer(exptHillshadeLayer)) exptHillshadeLayer.remove();
   if (exptRawsGroup)  { exptRawsGroup.clearLayers();  if (map.hasLayer(exptRawsGroup))  exptRawsGroup.remove(); }
   if (exptPerimGroup) { exptPerimGroup.clearLayers(); if (map.hasLayer(exptPerimGroup)) exptPerimGroup.remove(); }
+  exptLastCoords = [];
+  const fitBtn = document.getElementById('expt-leg-fit-stn');
+  if (fitBtn) fitBtn.style.display = 'none';
   exptStatus('');
 }
 
@@ -7415,12 +7421,12 @@ function exptStatus(msg) {
 
 // ── Error color scale ───────────────────────────────────────────────────────
 function exptErrColor(err) {
-  if (isNaN(err)) return '#666';
+  if (isNaN(err)) return '#888';
   if (err < -15) return '#c0392b';
   if (err < -10) return '#e74c3c';
   if (err <  -5) return '#e67e22';
-  if (err <  -2) return '#f39c12';
-  if (err <=  2) return '#aaaaaa';
+  if (err <  -2) return '#f0a500';
+  if (err <=  2) return '#e8e8e8';  // bright white-gray — visible on hillshade
   if (err <=  5) return '#5dade2';
   if (err <= 10) return '#2e86c1';
   return '#1a5276';
@@ -7503,7 +7509,7 @@ async function loadExptRaws(ev) {
     if (isNaN(lat) || isNaN(lon) || isNaN(err)) return;
 
     const col    = exptErrColor(err);
-    const radius = Math.min(12, 6 + Math.abs(err) / 5);
+    const radius = Math.min(20, 11 + Math.abs(err) / 2.5);
     const obs    = parseFloat(r.obs_sus_mph);
     const hrrr   = parseFloat(r.hrrr_10m_mph);
     const obsDir = r.obs_dir_deg !== 'N/A' ? `${r.obs_dir_deg}°` : '—';
@@ -7511,7 +7517,7 @@ async function loadExptRaws(ev) {
                    ? `${parseFloat(r.bc_speed).toFixed(1)} mph @ ${r.bc_dir}°` : '—';
 
     const m = L.circleMarker([lat, lon], {
-      radius, fillColor: col, color: '#fff', weight: 1.5, fillOpacity: 0.92, zIndexOffset: 200
+      radius, fillColor: col, color: '#1a1d2e', weight: 2, fillOpacity: 0.92, zIndexOffset: 200
     });
 
     m.bindTooltip(`
@@ -7537,14 +7543,18 @@ async function loadExptRaws(ev) {
   });
 
   // Fit map to show all loaded stations (they may be far from the event lat/lng placeholder)
-  const coords = rows
+  exptLastCoords = rows
     .filter(r => !isNaN(parseFloat(r.lat)) && !isNaN(parseFloat(r.lon)))
     .map(r => [parseFloat(r.lat), parseFloat(r.lon)]);
-  if (coords.length > 0) {
-    map.fitBounds(L.latLngBounds(coords), { padding: [60, 60], maxZoom: 11 });
+  const fitBtn = document.getElementById('expt-leg-fit-stn');
+  if (exptLastCoords.length > 0) {
+    map.fitBounds(L.latLngBounds(exptLastCoords), { padding: [70, 70], maxZoom: 10 });
+    if (fitBtn) fitBtn.style.display = '';
+  } else {
+    if (fitBtn) fitBtn.style.display = 'none';
   }
 
-  exptStatus(rows.length ? `${rows.length} RAWS stations` : 'No station data for this event');
+  exptStatus(rows.length ? `✓ ${rows.length} RAWS stations loaded` : 'No station data for this event');
 }
 
 async function loadExptPerim(ev) {
@@ -7597,13 +7607,17 @@ async function loadExptPerim(ev) {
 
 function exptFitAll() {
   if (typeof map === 'undefined') return;
-  // Fit to bounding box of all 12 events with padding
   const lats = EXPT_EVENTS.map(e => e.lat);
   const lngs = EXPT_EVENTS.map(e => e.lng);
   map.fitBounds(
     [[Math.min(...lats) - 1, Math.min(...lngs) - 2], [Math.max(...lats) + 1, Math.max(...lngs) + 2]],
     { padding: [30, 30], maxZoom: 7 }
   );
+}
+
+function fitExptStations() {
+  if (typeof map === 'undefined' || !exptLastCoords.length) return;
+  map.fitBounds(L.latLngBounds(exptLastCoords), { padding: [70, 70], maxZoom: 10 });
 }
 
 function toggleExptMarkers() {
@@ -7669,15 +7683,12 @@ async function exptCardClick(id) {
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  if (typeof map !== 'undefined') {
-    map.setView([ev.lat, ev.lng], 10, { animate: true });
-    exptMarkersLayer.eachLayer(layer => {
-      const ll = layer.getLatLng && layer.getLatLng();
-      if (ll && Math.abs(ll.lat - ev.lat) < 0.01) layer.openPopup();
-    });
+  try {
+    await loadExptContext(ev);
+  } catch(e) {
+    exptStatus(`Error: ${e.message}`);
+    console.error('Expt load error:', e);
   }
-
-  await loadExptContext(ev);
   if (card) card.classList.remove('loading');
 }
 
