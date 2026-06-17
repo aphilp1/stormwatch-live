@@ -3,31 +3,30 @@
 **Read order on restart:** THIS file → `STORMWATCH_MASTER_STATUS.md` (authoritative findings
 ledger) → `stormwatch_test_protocol.md` (method). Update this file whenever work lands.
 
-**Last updated:** 2026-06-12 (DEM complete; Phase B gate run; GitHub pushed dff0aaf)
+**Last updated:** 2026-06-17 (EXPTS tab live; latest commit db395da)
 
 ---
 
 ## ONE-LINE STATE
 
-**Database complete (164 rows, 12 events, all DEM+BC populated). Terrain gate FAILED
-(ratio=0.013, white noise). WN+rawBC validated at n=2 clean ridges (Camp Fire).
-Camp Fire held-out test FAILED on learned correction — raw BC is the deployable product.**
+**Database complete (164 rows, 12 events, all DEM+BC populated). EXPTS tab live in
+StormWatch Live with all 12 events, regime filters, narrative panels, wind arrows,
+and WN result badges. Latest commit: db395da. Next: run WN on PENDING events.**
 
 ---
 
 ## HOW TO RESUME
 
-When user types "resume," confirm the three paths forward and ask which to pursue:
+When user types "resume," confirm current state and ask what to work on:
 
-> **Where we are (2026-06-12):** The hindcast database is complete — 164 active
-> station-events across 12 events, all DEM terrain features and BC corrections populated.
-> Phase A terrain gate: FAILED (terrain class doesn't predict HRRR bust magnitude).
-> Two-level BC correction: validates on training anchors but Camp Fire held-out test FAILED.
-> Three paths forward:
-> (A) Deploy WN+rawBC for the validated clean-ridge niche (2 stations, do-no-harm gate protects them) — deployable today
-> (B) Run more WN validation at Thomas/Woolsey held-out stations — more science
-> (C) Pursue RRFS resolution ladder — blocked on NOAA HPC employee sponsor
-> Which path?
+> **Where we are (2026-06-17):** EXPTS tab is live in StormWatch Live — 12 hindcast
+> events displayed with regime filters, narrative panels, wind arrow markers, and WN
+> result badges (WN NICHE, HRRR OK, PENDING, ARCH. PASS, FULL RECOV.).
+> Database complete: 164 active station-events, all DEM+BC populated.
+> 8 events still show PENDING (WN not yet run): Kincade Ignition, Kincade Run Day,
+> Labor Day OR, Boulder Chinook, Boulder Downslope, Missoula Dec 2025, Missoula Jul 2024,
+> Iowa Derecho.
+> What would you like to work on?
 
 ---
 
@@ -71,9 +70,22 @@ When user types "resume," confirm the three paths forward and ask which to pursu
 - `fetch_cuuc1_dem.py` — targeted DEM fetch for CUUC1 (not needed, superseded by merge script)
 - `merge_all_remaining_dem.py` — merged all 68 remaining NEEDS_DEM rows in one pass
 
+### EXPTS Tab (complete as of 2026-06-13, tweaks 2026-06-15)
+- 12-event WindNinja Hindcast Series panel in StormWatch Live (weather-alerts.html)
+- Left sidebar: event cards with HRRR err, anchor station, WN result badge, regime label
+- Regime filter pills: ALL / DIABLO / SANTA ANA / CONTL
+- Map markers: colored by wind regime (orange=Diablo, red=SantaAna, blue=Continental)
+- Wind arrow divIcon markers: colored by HRRR error, arrow shows observed wind bearing
+- Click station: dark popup with 3-bar comparison (Observed / HRRR / WN BC input)
+- Click event card: story panel expands with full meteorological narrative
+- Floating 'Hindcast Events' legend with regime + result key; close button; 'Fit all' zoom
+- Alert/weather legend hidden while EXPTS tab active
+- Badges: WN NICHE (Camp), HRRR OK (Tubbs), ARCH. PASS (Thomas), FULL RECOV. (Woolsey), PENDING (8 events not yet run)
+- Key commits: 6da2bae → db395da (9 commits total)
+
 ### GitHub
-- All commits pushed: 34d48d6..dff0aaf → origin/master
-- Latest hash: dff0aaf
+- All commits pushed through db395da → origin/master
+- Latest hash: db395da
 - Repo: aphilp1/stormwatch-live (PUBLIC — do not commit credentials)
 
 ---
