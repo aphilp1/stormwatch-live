@@ -42,7 +42,7 @@ CBXC1 is the clean case:
    SLEC1 explicitly as the bc/obs ≈ 1 boundary (BC near-right, WN amplified past target).
 3. **HINDC_REVIEW.md Finding 3** — removed the intro rule ("bc/obs ≤ ~1 → closes gap;
    >1 → overshoots") which contradicted CBXC1's actual data (CBXC1 bc/obs = 1.135 yet WN
-   matched obs). Replaced with two-station evidence leading directly to the bracket framing.
+   matched obs). Replaced with two-station evidence leading directly to the terrain-geometry finding.
 4. **HINDC_REVIEW.md Current State** — separated the two ratios: CBXC1 as clean recovery,
    SLEC1 as bc/obs ≈ 1 boundary case, not a co-equal win.
 5. **HINDC_REVIEW.md table row** — "−3 to −18 mph" relabeled as
@@ -233,10 +233,10 @@ would produce output far exceeding the 20 mph surface observation.
 
 **Finding 3:** Original intro stated "bc/obs ≤ ~1 → WN closes gap; bc/obs > 1 → overshoots."
 This rule contradicts CBXC1 (bc/obs = 1.135 > 1, yet WN matched obs). The rule was removed.
-Finding 3 now leads with the two-station evidence and the bracket framing:
-- CBXC1: recovery (WN/obs ≈ 1.0, genuine HRRR gap existed)
-- SLEC1: mild overshoot (WN/obs 1.128, BC already near obs at bc/obs 0.96)
-- Together they bracket the amplification threshold
+Finding 3 now leads with the two-station evidence and the terrain-geometry finding:
+- CBXC1: recovery (WN/obs ≈ 1.0, genuine HRRR gap existed; gentle slope 5.96°, WN decelerated)
+- SLEC1: mild overshoot (WN/obs 1.128; steeper slope 11.2°, WN amplified past near-obs BC)
+- Same near-obs BC, opposite terrain response — terrain geometry determines the outcome
 
 **Current State:** Was "WN/obs 1.007 and 1.128" as co-equal niche wins.
 Now: CBXC1 labeled clean recovery; SLEC1 labeled bc/obs ≈ 1 boundary case, not a clean win.
@@ -259,9 +259,11 @@ Now: CBXC1 labeled clean recovery; SLEC1 labeled bc/obs ≈ 1 boundary case, not
 ## Part 5 — Things for Claude Web to Check
 
 ### Check 1: Finding 3 internal consistency
-Does the rewritten Finding 3 make claims that can be verified from the two-station data?
-Specifically: does the "bracket" framing (CBXC1 = recovery, SLEC1 = overshoot) match the
-arithmetic? Check against Part 3 worked examples.
+Does the terrain-geometry finding hold against the two-station arithmetic?
+CBXC1: bc/obs=1.135 (higher), slope 5.96°, WN decelerated → WN/obs 1.007.
+SLEC1: bc/obs=0.957 (lower), slope 11.2°, WN amplified → WN/obs 1.128.
+The finding claims terrain geometry (not bc/obs) determines WN's direction of movement.
+Check this against Part 3 worked examples — the inversion of bc/obs values is the key test.
 
 ### Check 2: SLEC1 overshoot
 Is WN/obs 1.128 correctly characterized as an overshoot rather than a win?

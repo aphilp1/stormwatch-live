@@ -68,10 +68,12 @@ Camp Fire, two held-out exposed-ridge stations (never used in fitting):
   carried it to 39.5 mph, +4.5 above obs — WN/obs **1.128**, a mild overshoot. SLEC1 is the
   bc/obs ≈ 1 boundary case: BC already near-right, terrain amplification not needed.
 
-Together they bracket the amplification threshold — CBXC1 is recovery (WN/obs ≈ 1.0), SLEC1
-is mild overshoot (WN/obs 1.128). The controlling diagnostic: when the BC is already near obs
-and the station is a strong ridge amplifier, WN will overshoot. The bc/obs ratio (0.96 at
-SLEC1) is the warning sign; it is set by which model level and hour you extract from HRRR.
+What the two stations demonstrate is terrain geometry, not a bc/obs threshold. The same
+near-obs BC was decelerated at CBXC1 (slope 5.96°, relief 224m) and amplified at SLEC1
+(slope 11.2°, relief 434m) — opposite movements, same fire, same input range. bc/obs tells
+you whether the BC is in a workable range; the station's terrain amplification factor
+determines which way WN moves it. That factor is computable from the DEM and is the next
+variable needed to bound the pipeline's per-station uncertainty.
 
 ### Finding 4 (architecture): Where correction is required, direction is solved; magnitude is bounded
 
@@ -102,8 +104,8 @@ the gate correctly blocks a learned adjustment that would otherwise overshoot by
 
 - **Niche (raw BC):** at above-inversion exposed ridges where HRRR genuinely undershot the BC,
   raw-HRRR-driven WindNinja matches station observations — Camp Fire held-out CBXC1: WN/obs
-  1.007 (clean recovery). SLEC1: WN/obs 1.128 — bc/obs 0.96, BC already near obs, mild WN
-  overshoot; the bc/obs ≈ 1 boundary case, not a clean niche win.
+  1.007 (gentle slope 5.96°, WN decelerated to obs). SLEC1: WN/obs 1.128 (steeper slope
+  11.2°, WN amplified past near-obs BC — terrain geometry, not bc/obs, explains the overshoot).
 - **Correction (two-level):** direction solved across regimes, zero false positives from the
   terrain-override rule; magnitude event-calibrated, overshooting complex-terrain stations
   by ~10 mph — a bounded, documented residual.

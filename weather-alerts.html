@@ -7288,7 +7288,7 @@ const EXPT_EVENTS = [
     n: 12,
     anchor: 'CBXC1/SLEC1',
     hrrr_err: -3.8,
-    wn_result: 'WN ratio 1.007 (CBXC1 clean) · 1.128 (SLEC1 edge — bc/obs ≈ 1)',
+    wn_result: 'WN ratio 1.007 (CBXC1 — gentle slope, WN decelerated to obs) · 1.128 (SLEC1 — steeper terrain, WN amplified past obs)',
     status: 'pass',
     statusLabel: 'WN Niche',
     wn_stations: {
@@ -7296,7 +7296,7 @@ const EXPT_EVENTS = [
       SLEC1: { speed: 39.5, ratio: 1.128 }
     },
     note: 'Two stations, two stories. CBXC1: HRRR undershot by 3.6 mph; 850 hPa BC = 32.9 mph; WN output = 29.2 mph — closes the gap (WN/obs 1.007). SLEC1: HRRR 10m undershot by 18 mph, but the 850 hPa BC was already 33.5 mph (1.5 mph below obs). WN amplified to 39.5 mph, overshooting by 4.5 mph (bc/obs 0.96 — the ≈1 boundary in action).',
-    narrative: 'Two held-out ridge stations, two different stories. CBXC1 (Colby Mtn): HRRR undershot by 3.6 mph (HRRR/obs 0.875). The 850 hPa BC was 32.9 mph; WN terrain-resolved it to 29.2 mph — nearly matching obs (WN/obs 1.007). That is the clean niche: a real HRRR gap, closed by terrain physics.\n\nSLEC1 (Saddleback): HRRR 10m surface undershot by 18 mph (HRRR/obs 0.477) — but the 850 hPa BC was already 33.5 mph, just 1.5 mph below obs. WN amplified it to 39.5 mph, overshooting by 4.5 mph (WN/obs 1.128). The bc/obs ratio at SLEC1 is 0.96 — right at the ≈1 boundary where the do-no-harm logic would flag amplification as unnecessary. SLEC1 shows the mechanism\'s edge, not its success.'
+    narrative: 'Two held-out ridge stations, two different stories. CBXC1 (Colby Mtn): HRRR undershot by 3.6 mph (HRRR/obs 0.875). The 850 hPa BC was 32.9 mph; WN terrain-resolved it to 29.2 mph — nearly matching obs (WN/obs 1.007). That is the clean niche: a real HRRR gap, closed by terrain physics.\n\nSLEC1 (Saddleback): HRRR 10m surface undershot by 18 mph (HRRR/obs 0.477) — but the 850 hPa BC was already 33.5 mph, just 1.5 mph below obs. WN amplified it to 39.5 mph, overshooting by 4.5 mph (WN/obs 1.128). SLEC1\'s terrain is steeper and higher-relief than CBXC1 (slope 11.2° vs 5.96°, relief 434m vs 224m) — WN amplified where CBXC1 decelerated. Same near-obs BC, opposite terrain response. bc/obs identifies whether the input is in a workable range; terrain geometry is what tips the output past obs. SLEC1 shows the terrain-amplification limit, not a pipeline failure.'
   },
   {
     id: 'tubbs_2017',
