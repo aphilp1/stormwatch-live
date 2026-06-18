@@ -378,11 +378,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-pill[data-r="santa_ana"].active{background:rgba(239,68,68,0.15);color:#ef4444}
 .expt-pill[data-r="continental"]{border-color:#3b82f6;color:#3b82f6}
 .expt-pill[data-r="continental"].active{background:rgba(59,130,246,0.15);color:#3b82f6}
+.expt-pill[data-r="convective"]{border-color:#8b5cf6;color:#8b5cf6}
+.expt-pill[data-r="convective"].active{background:rgba(139,92,246,0.15);color:#8b5cf6}
 .expt-card{background:#0d1b2a;border:1px solid rgba(80,130,190,0.18);border-radius:8px;padding:11px 13px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;border-left:3px solid transparent}
 .expt-card:hover{background:#111d2e}
 .expt-card[data-r="diablo"]{border-left-color:#f97316}
 .expt-card[data-r="santa_ana"]{border-left-color:#ef4444}
 .expt-card[data-r="continental"]{border-left-color:#3b82f6}
+.expt-card[data-r="convective"]{border-left-color:#8b5cf6}
 .expt-card-name{font-size:12px;font-weight:700;color:#d0e8ff;margin-bottom:2px}
 .expt-card-meta{font-size:9.5px;color:#7a9ab8;margin-bottom:8px}
 .expt-card-stats{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
@@ -489,6 +492,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-chart-fill.neg{right:50%}
 .expt-chart-fill.pos{left:50%}
 .expt-chart-val{width:38px;font-size:9.5px;color:#7a9ab8;flex-shrink:0;font-variant-numeric:tabular-nums}
+.expt-chart-note{font-size:9px;color:#5a7a94;line-height:1.5;margin-bottom:8px;font-style:italic}
 /* New badge types */
 .expt-badge.improves{background:rgba(68,187,102,0.15);color:#44cc77;border:1px solid rgba(68,187,102,0.3)}
 .expt-badge.nails{background:rgba(50,200,160,0.15);color:#32d4a8;border:1px solid rgba(50,200,160,0.3)}
@@ -1462,7 +1466,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
         <div class="expt-finding signal">
           <div class="expt-finding-dot"></div>
-          <div class="expt-finding-text"><strong>1. The error is set by synoptic regime, not by station terrain</strong>Offshore-gradient events (Diablo, Santa Ana): HRRR systematically undershoots — mean −3.9 mph (N=6). Continental downslope (Front Range, Cascades, Chinook): mean +0.5 mph — essentially unbiased (N=3). Terrain class — exposed ridge, canyon, valley, open — does not predict the error (structured-vs-white ratio 0.013; all class means within the ~10 mph station noise). Which weather pattern is driving the event tells you nearly everything; where the station sits tells you little.</div>
+          <div class="expt-finding-text"><strong>1. The error is set by synoptic regime, not by station terrain</strong>Offshore-gradient events (Diablo, Santa Ana): HRRR systematically undershoots — mean −3.9 mph (N=6 events). Continental downslope (Front Range, Cascades, Chinook): mean +0.5 mph — essentially unbiased (N=3). Convective outflow (Iowa derecho, Missoula Jul): near-zero mean, high station variance — included as contrast cases, not pipeline targets. Terrain class — exposed ridge, canyon, valley, open — does not predict the error (structured-vs-white ratio 0.013; all class means within the ~10 mph station noise). Which weather pattern is driving the event tells you nearly everything; where the station sits tells you little.</div>
         </div>
 
         <div class="expt-finding causal">
@@ -1472,7 +1476,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
         <div class="expt-finding confirmed">
           <div class="expt-finding-dot"></div>
-          <div class="expt-finding-text"><strong>3. At exposed ridges, raw HRRR boundary condition is sufficient — when it is not already too strong</strong>Where upper-level offshore flow reaches an exposed ridge unimpeded, WindNinja driven by raw HRRR reproduces observed surface wind with no correction. Camp Fire, two held-out ridge stations (never used in fitting): WN/obs 1.007 (CBXC1), 1.128 (SLEC1) — where HRRR alone undershot by 3–18 mph. The condition matters: WindNinja amplifies flow over terrain, so a boundary condition that already exceeds the surface wind drives overshoot. Raw BC works only when the BC/obs ratio is ≤ ~1, which is set by which model level and hour you choose.</div>
+          <div class="expt-finding-text"><strong>3. At exposed ridges, raw HRRR boundary condition is sufficient — when bc/obs ≤ ~1</strong>The controlling variable is the bc/obs ratio — the ratio of the boundary condition wind speed to the observed station wind. Where bc/obs ≤ ~1, the BC is correctly sized and WindNinja's terrain physics closes the gap between model and station. Where bc/obs &gt; 1, the BC already exceeds the surface wind and WindNinja amplifies it into overshoot. Camp Fire, two held-out exposed-ridge stations (never used in fitting): WN/obs 1.007 (CBXC1), 1.128 (SLEC1) — where HRRR alone undershot by 3–18 mph. Those ratios hold because the BC was correctly sized at those stations and hours — not because exposed ridges are universally safe. The bc/obs ratio is set by which model level and hour you extract from HRRR.</div>
         </div>
 
         <div class="expt-finding arch">
@@ -1491,7 +1495,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
       <!-- Error chart -->
       <div class="expt-chart">
-        <div class="expt-chart-title">Mean HRRR error by event &nbsp;(negative = HRRR undershoots obs)</div>
+        <div class="expt-chart-title">Anchor-station HRRR error by event &nbsp;(negative = HRRR undershoots station obs)</div>
+        <div class="expt-chart-note">Figures are the anchor station's error, not the event mean. The two diverge sharply in composite events — ridge stations undershoot while sheltered valley stations overshoot, and the event mean averages toward zero.</div>
         <div id="expt-chart-rows"></div>
       </div>
 
@@ -1508,6 +1513,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <button class="expt-pill"        data-r="diablo"      onclick="setExptFilter('diablo')">Diablo</button>
         <button class="expt-pill"        data-r="santa_ana"   onclick="setExptFilter('santa_ana')">Santa Ana</button>
         <button class="expt-pill"        data-r="continental" onclick="setExptFilter('continental')">Contl</button>
+        <button class="expt-pill"        data-r="convective"  onclick="setExptFilter('convective')">Conv</button>
       </div>
 
       <div id="expt-card-list"></div>
@@ -1543,6 +1549,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#f97316"></span>Diablo (offshore NorCal)</div>
       <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#ef4444"></span>Santa Ana (offshore SoCal)</div>
       <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#3b82f6"></span>Continental / Downslope</div>
+      <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#8b5cf6"></span>Convective Outflow</div>
       <div class="expt-leg-divider"></div>
       <div class="expt-leg-section-hdr">WN Hindcast vs. Station Obs</div>
       <div class="expt-leg-row"><span class="expt-leg-badge pass">WN Niche</span>WN/obs ≈ 1.0 with raw HRRR BC; HRRR alone undershot</div>
@@ -7312,12 +7319,12 @@ const EXPT_EVENTS = [
     lat: 38.72, lng: -122.89,
     n: 10,
     anchor: 'HWKC1',
-    hrrr_err: -2.1,
+    hrrr_err: 4.13,
     wn_result: 'Not yet run',
     status: 'control',
     statusLabel: 'Control Case',
-    note: 'Near-zero error under NW Diablo flow. Shows that offshore regime alone does not guarantee HRRR underbias — wind direction within the regime matters.',
-    narrative: 'Near-zero HRRR error (−2.1 mph) under NW Diablo flow at ignition. Demonstrates that the offshore regime alone does not guarantee an HRRR underbias — gradient orientation within the regime matters. The NW vs. NE direction variant within the Diablo pattern produces fundamentally different terrain interactions through the Mayacamas and Knights Valley.'
+    note: 'Anchor HWKC1 shows slight HRRR overshoot (+4.13 mph); event mean across 10 stations is −3.79 mph — most stations undershooting, consistent with Diablo pattern. Shows that gradient orientation within the offshore regime determines which stations see the underbias.',
+    narrative: 'HRRR slightly overshoots anchor Hawkeye Ridge (+4.13 mph at HWKC1) under NW Diablo flow at ignition, while the event mean across 10 stations is −3.79 mph — most valley and canyon stations undershooting. Demonstrates that the offshore regime alone does not guarantee HRRR underbias at the anchor station — gradient orientation within the regime matters. The NW vs. NE direction variant within Diablo produces fundamentally different terrain interactions through the Mayacamas and Knights Valley.'
   },
   {
     id: 'kincade_run_2019',
@@ -7435,8 +7442,8 @@ const EXPT_EVENTS = [
     id: 'missoula_jul2024',
     name: 'Missoula Jul',
     date: 'Jul 2024',
-    regime: 'continental',
-    regimeLabel: 'Continental (convective outflow MT)',
+    regime: 'convective',
+    regimeLabel: 'Convective outflow (MT)',
     lat: 46.90, lng: -113.80,
     n: 18,
     anchor: 'Multiple',
@@ -7451,8 +7458,8 @@ const EXPT_EVENTS = [
     id: 'iowa_derecho2020',
     name: 'Iowa Derecho',
     date: 'Aug 10, 2020',
-    regime: 'continental',
-    regimeLabel: 'Continental (convective outflow IA)',
+    regime: 'convective',
+    regimeLabel: 'Convective outflow (IA)',
     lat: 41.98, lng: -91.66,
     n: 2,
     anchor: 'Iowa RAWS',
@@ -7468,7 +7475,8 @@ const EXPT_EVENTS = [
 const EXPT_REGIME_COLOR = {
   diablo:      '#f97316',
   santa_ana:   '#ef4444',
-  continental: '#3b82f6'
+  continental: '#3b82f6',
+  convective:  '#8b5cf6'
 };
 
 // Historical fire perimeter WHERE clauses (plain SQL, encoded at call time)
