@@ -3,15 +3,15 @@
 **Read order on restart:** THIS file → `STORMWATCH_MASTER_STATUS.md` (authoritative findings
 ledger) → `stormwatch_test_protocol.md` (method). Update this file whenever work lands.
 
-**Last updated:** 2026-06-17 evening · latest commit: e93f4ca · popup overhaul + SLEC1 reframe
+**Last updated:** 2026-06-17 evening · latest commit: 3178f1e · AUDIT-CLEAN v1.0
 
 ---
 
 ## ONE-LINE STATE
 
-**HindC tab v1.0 + popup overhaul complete (2026-06-17): SLEC1 reframed as bc/obs ≈ 1
-boundary case, 4-bar popup for Camp Fire, three popup flags added, HINDC_REVIEW.md
-audit-ready. Next: MCP bugs, then WN runs on 8 In Progress events.**
+**HindC tab v1.0 AUDIT-CLEAN (2026-06-17): all seven Claude Web checks pass. Terrain-geometry
+finding confirmed correct, bracket framing gone, popup overhaul complete. Next: MCP bugs,
+then WN runs on 8 In Progress events.**
 
 ---
 
@@ -19,13 +19,13 @@ audit-ready. Next: MCP bugs, then WN runs on 8 In Progress events.**
 
 When user types "resume," confirm current state and ask what to work on:
 
-> **Where we are (2026-06-17 end of session):** HindC tab v1.0 is live with a fully
-> overhauled popup system. Camp Fire CBXC1/SLEC1 now show a 4-bar popup (obs / HRRR /
-> BC input / WN output) with WN/obs ratios. SLEC1 is correctly framed as the bc/obs ≈ 1
-> boundary case (mild overshoot), not a clean niche win — CBXC1 is the clean case.
-> Popup flags near-calm stations (obs < 5 mph) and high bc/obs (> 3×) with visual warnings.
-> HINDC_REVIEW.md and SESSION_REVIEW_2026-06-17.md are on GitHub for Claude Web audit.
-> 8 events still In Progress (WN not yet run).
+> **Where we are (2026-06-17 end of session):** HindC tab v1.0 is audit-clean — seven
+> Claude Web checks all pass (commit 3178f1e). Camp Fire finding is: terrain geometry
+> (slope/relief) determines WN output direction, not bc/obs. CBXC1 (5.96°/224m, WN/obs 1.007)
+> is the clean niche; SLEC1 (11.2°/434m, WN/obs 1.128) is the terrain-amplification boundary.
+> 4-bar popup with WN output live for Camp Fire. Three popup flags: near-calm direction
+> suppression, bc/obs > 3 warning, calm/sheltered error label. 8 events still In Progress
+> (WN not yet run).
 > What would you like to work on?
 
 ---
