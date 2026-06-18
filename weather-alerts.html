@@ -453,7 +453,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-problem-divider{border-top:1px solid rgba(80,130,190,0.18);margin:10px 0}
 .expt-problem-goal{font-size:11.5px;color:#a8d0ec;line-height:1.65;font-style:italic}
 .expt-outcome{background:#071812;border:1px solid rgba(68,187,102,0.28);border-radius:7px;padding:13px 15px;margin-bottom:12px}
-.expt-outcome-result{font-size:12.5px;color:#55cc77;font-weight:700;margin-bottom:6px}
+.expt-outcome-result{font-size:13px;color:#55cc77;font-weight:700;margin-bottom:6px}
 .expt-outcome-body{font-size:11.5px;color:#90ccaa;line-height:1.7}
 .expt-outcome-limit{font-size:10.5px;color:#72b890;line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px solid rgba(68,187,102,0.15)}
 .expt-question{background:#0a1624;border:1px solid rgba(80,130,190,0.22);border-radius:7px;padding:10px 12px;margin-bottom:10px}
@@ -1544,13 +1544,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#ef4444"></span>Santa Ana (offshore SoCal)</div>
       <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#3b82f6"></span>Continental / Downslope</div>
       <div class="expt-leg-divider"></div>
-      <div class="expt-leg-section-hdr">WindNinja Result</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge pass">WN Niche</span>WN hindcast matches station; HRRR undershoots</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge nails">WN Nails It</span>WN achieves near-zero error</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge improves">WN Corrects</span>Correction improves WN</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge hrrrok">HRRR OK</span>HRRR already accurate</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge control">Control Case</span>Confirms theory boundary</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge inprog">In Progress</span>WN analysis underway</div>
+      <div class="expt-leg-section-hdr">WN Hindcast vs. Station Obs</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge pass">WN Niche</span>WN/obs ≈ 1.0 with raw HRRR BC; HRRR alone undershot</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge nails">WN Nails It</span>WN/obs ≈ 1.0 at anchor; do-no-harm gate blocks overcorrection</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge improves">WN Corrects</span>WN + correction is closer to station obs than raw HRRR</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge hrrrok">HRRR OK</span>HRRR/obs ≈ 1.0 at anchor; no WN needed</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge control">Control Case</span>Flat terrain or flow-direction test; establishes baseline</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge inprog">In Progress</span>WN not yet run; HRRR vs. obs only</div>
       <div class="expt-leg-divider"></div>
       <div class="expt-leg-section-hdr">RAWS Station Error (HRRR − Obs)</div>
       <div class="expt-leg-errscale">
