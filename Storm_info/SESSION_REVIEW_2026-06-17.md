@@ -66,7 +66,35 @@ not the 10m HRRR value.
 The older scripts should not be cited for the HRRR/obs ratio. This is documented in
 HINDC_REVIEW.md Known Open Issues.
 
-### 1.3 Popup logic improvements (three new flags)
+### 1.3 Terrain-geometry finding — replaces "bracket" framing (commit ad9b6fe)
+
+**Problem (caught in Claude Web six-check audit):** An earlier version of Finding 3 and the
+Camp Fire narrative used the phrase "bracket the amplification threshold" and implied that bc/obs
+predicted the direction of WN movement (bc/obs ≤ ~1 → WN closes gap; bc/obs > 1 → overshoots).
+
+This fails the arithmetic: bc/obs ordering is **inverted** between the two stations.
+- CBXC1: bc/obs = **1.135** (higher), yet WN **decelerated** → WN/obs 1.007
+- SLEC1: bc/obs = **0.957** (lower), yet WN **amplified** → WN/obs 1.128
+
+bc/obs does NOT predict which direction WN moves the output.
+
+**Fix:** All instances of "bracket the amplification threshold" removed. Finding 3 now states
+the terrain-geometry finding directly: the same near-obs BC was decelerated at CBXC1 (gentle
+slope 5.96°, relief 224m) and amplified at SLEC1 (steeper slope 11.2°, relief 434m) — opposite
+movements, same fire, same input range. bc/obs identifies whether the BC is in a workable range;
+terrain geometry (slope, relief) determines which way WN moves it.
+
+**Changed in commit ad9b6fe:**
+1. `HINDC_REVIEW.md` Finding 3 — "bracket" paragraph replaced with terrain-geometry paragraph
+2. `HINDC_REVIEW.md` Current State — SLEC1 overshoot explained by slope/relief contrast
+3. `weather-alerts.html` Camp Fire narrative — ending now states slope/relief contrast
+4. `weather-alerts.html` wn_result field — "bc/obs ≈ 1" replaced with terrain language:
+   "WN ratio 1.007 (CBXC1 — gentle slope, WN decelerated to obs) · 1.128 (SLEC1 — steeper
+   terrain, WN amplified past obs)"
+
+**Zero instances of "bracket" remain in HINDC_REVIEW.md, weather-alerts.html, or this document.**
+
+### 1.4 Popup logic improvements (three new flags)
 
 **Context:** Reviewing QYRC1 (Quincy Rd, Camp Fire) showed a near-calm station (obs = 2 mph)
 where the popup presented:
@@ -258,12 +286,20 @@ Now: CBXC1 labeled clean recovery; SLEC1 labeled bc/obs ≈ 1 boundary case, not
 
 ## Part 5 — Things for Claude Web to Check
 
-### Check 1: Finding 3 internal consistency
-Does the terrain-geometry finding hold against the two-station arithmetic?
-CBXC1: bc/obs=1.135 (higher), slope 5.96°, WN decelerated → WN/obs 1.007.
-SLEC1: bc/obs=0.957 (lower), slope 11.2°, WN amplified → WN/obs 1.128.
-The finding claims terrain geometry (not bc/obs) determines WN's direction of movement.
-Check this against Part 3 worked examples — the inversion of bc/obs values is the key test.
+### Check 1: Terrain-geometry finding (the critical check)
+The "bracket the amplification threshold" text and bc/obs prediction rule are GONE as of
+commit ad9b6fe. The finding now leads with two-station evidence and the terrain-geometry
+conclusion.
+
+Verify:
+- No "bracket" text anywhere in HINDC_REVIEW.md or this document
+- Finding 3 paragraph states: "What the two stations demonstrate is terrain geometry, not a
+  bc/obs threshold. The same near-obs BC was decelerated at CBXC1 (slope 5.96°, relief 224m)
+  and amplified at SLEC1 (slope 11.2°, relief 434m) — opposite movements, same fire, same
+  input range."
+- The inversion is explicitly noted: CBXC1 bc/obs=1.135 (higher) yet WN decelerated;
+  SLEC1 bc/obs=0.957 (lower) yet WN amplified.
+- No text implies bc/obs predicts the direction of WN movement.
 
 ### Check 2: SLEC1 overshoot
 Is WN/obs 1.128 correctly characterized as an overshoot rather than a win?
@@ -319,7 +355,7 @@ or label that implies a third comparison (e.g., BC vs. obs as a standalone metri
 
 ---
 
-*Commit: b38b83a · 2026-06-17*
+*Latest commit: ad9b6fe (terrain-geometry fix) · prior: b38b83a (popup overhaul) · 2026-06-17*
 *Review document: SESSION_REVIEW_2026-06-17.md*
 *Primary audit document: HINDC_REVIEW.md*
 *Raw URL: https://raw.githubusercontent.com/aphilp1/stormwatch-live/master/Storm_info/SESSION_REVIEW_2026-06-17.md*
