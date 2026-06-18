@@ -7544,23 +7544,35 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd) {
       </div>
     </div>`;
   }
-  const errSign = err >= 0 ? '+' : '';
-  const errDesc = err < -2 ? 'HRRR undershoots obs' : err > 2 ? 'HRRR overshoots obs' : 'near-zero error';
-  const hrrrDir = row.hrrr_10m_dir && row.hrrr_10m_dir !== 'N/A' ? parseFloat(row.hrrr_10m_dir) : null;
-  const bcDir   = row.bc_dir && row.bc_dir !== 'NEEDS_BC' ? parseFloat(row.bc_dir) : null;
-  const bcLvl   = row.bc_level && row.bc_level !== 'NEEDS_BC' ? row.bc_level + ' hPa' : '850 hPa';
-  const elev    = parseFloat(row.elev_m);
-  const slope   = parseFloat(row.slope);
-  const relief  = parseFloat(row.relief_1km);
+  const CALM_FLOOR = 5; // mph — below this, direction is noise
+  const errSign    = err >= 0 ? '+' : '';
+  const isNearCalm = obs < CALM_FLOOR;
+  const errDesc    = isNearCalm
+    ? 'calm / sheltered — do-no-harm, not a WN target'
+    : err < -2 ? 'HRRR undershoots obs' : err > 2 ? 'HRRR overshoots obs' : 'near-zero error';
+  const hrrrDir    = row.hrrr_10m_dir && row.hrrr_10m_dir !== 'N/A' ? parseFloat(row.hrrr_10m_dir) : null;
+  const bcDir      = row.bc_dir && row.bc_dir !== 'NEEDS_BC' ? parseFloat(row.bc_dir) : null;
+  const bcLvl      = row.bc_level && row.bc_level !== 'NEEDS_BC' ? row.bc_level + ' hPa' : '850 hPa';
+  const elev       = parseFloat(row.elev_m);
+  const slope      = parseFloat(row.slope);
+  const relief     = parseFloat(row.relief_1km);
+  // Suppress direction display below calm floor — it's noise at low speeds
+  const obsShowDir  = (!isNearCalm && obs  > CALM_FLOOR) ? obsDir  : null;
+  const hrrrShowDir = (!isNearCalm && hrrr > CALM_FLOOR) ? hrrrDir : null;
+  // bc/obs decoupling flag
+  const bcObsRatio  = (bc !== null && obs > 0) ? bc / obs : null;
+  const bcDecoupled = bcObsRatio !== null && bcObsRatio > 3;
   return `<div style="font-family:-apple-system,sans-serif;background:#0c1828;padding:15px;border-radius:8px;min-width:255px;max-width:305px">
     <div style="font-size:15px;font-weight:900;color:#e0f0ff;margin-bottom:2px">${row.stid}</div>
     <div style="font-size:10px;color:#90aec8;margin-bottom:13px">${row.station_name||''} &nbsp;·&nbsp; <b style="color:#b0cce0">${row.terrain_class||'—'}</b> &nbsp;·&nbsp; ${isNaN(elev)?'—':Math.round(elev)+' m elev'}</div>
-    ${bar(obs,  '#44dd88', 'RAWS Station Obs', obsDir)}
-    ${bar(hrrr, col,       'HRRR 3km Forecast', hrrrDir)}
+    ${bar(obs,  '#44dd88', 'RAWS Station Obs', obsShowDir)}
+    ${bar(hrrr, col,       'HRRR 3km Forecast', hrrrShowDir)}
+    ${isNearCalm ? `<div style="font-size:8px;color:#8a9eb8;font-style:italic;margin:-2px 0 8px 0">Direction suppressed below ${CALM_FLOOR} mph — unreliable at near-calm speeds</div>` : ''}
     ${bc !== null ? bar(bc, '#b09af8', `HRRR ${bcLvl} BC (WN input)`, bcDir) : ''}
+    ${bcDecoupled ? `<div style="font-size:8.5px;color:#f97316;font-weight:700;margin:-4px 0 8px 0;padding:3px 7px;background:rgba(249,115,22,0.1);border-radius:3px;border:1px solid rgba(249,115,22,0.3)">⚠ bc/obs ${bcObsRatio.toFixed(1)}× — BC much stronger than surface obs; do-no-harm gate required before running WN</div>` : ''}
     ${wnSpd != null ? (() => { const r = obs > 0 ? (wnSpd/obs).toFixed(3) : null; return bar(wnSpd, '#f59e0b', 'WN 30m Hindcast (output)', null, r ? `WN/obs ${r}` : ''); })() : ''}
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(80,130,190,0.2);font-size:10px;color:#a0bcd4;line-height:1.8">
-      <span style="color:${col};font-size:12px;font-weight:800">${errSign}${isNaN(err)?'?':err.toFixed(1)} mph</span> &mdash; HRRR vs. station obs: ${errDesc}<br>
+      <span style="color:${isNearCalm?'#8a9eb8':col};font-size:12px;font-weight:800">${errSign}${isNaN(err)?'?':err.toFixed(1)} mph</span> &mdash; HRRR vs. station obs: ${errDesc}<br>
       <span style="color:#7090a8">${isNaN(slope)?'':'Slope '+slope.toFixed(1)+'°'}${isNaN(relief)?'':' · Relief '+Math.round(relief)+' m'}${isNaN(elev)?'':' · '+Math.round(elev)+' m'}</span>
     </div>
   </div>`;
