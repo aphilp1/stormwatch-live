@@ -1455,15 +1455,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="expt-section-label">What we found — 12 events · 164 stations</div>
         <div class="expt-finding signal">
           <div class="expt-finding-dot"></div>
-          <div class="expt-finding-text"><strong>HRRR captures the synoptic system, misses the terrain response</strong>Offshore events (Diablo, Santa Ana) are underestimated — HRRR forecasts winds too low — by −3.9 mph on average. Continental events — Front Range downslope (Marshall Fire), east Cascades downslope (Labor Day OR), Chinook winds, and derechos (Iowa 2020) — average +0.5 mph, near-accurate. HRRR sees the large-scale synoptic pattern correctly in both cases; what it misses is the local terrain amplification layered on top of it.</div>
+          <div class="expt-finding-text"><strong>HRRR captures the synoptic system, misses the terrain response</strong>Offshore events (Diablo, Santa Ana) are systematically underforecast — HRRR runs too slow by −3.9 mph on average. Continental events — Front Range downslope (Marshall), east Cascades downslope (Labor Day OR), Chinook, and derechos (Iowa 2020) — average +0.5 mph, essentially accurate. HRRR gets the large-scale pattern right in both cases. What it misses is the terrain amplification layered on top — and only offshore flow drives that amplification hard enough to open a gap.</div>
         </div>
         <div class="expt-finding confirmed">
           <div class="expt-finding-dot"></div>
-          <div class="expt-finding-text"><strong>Raw HRRR BC is sufficient at above-inversion exposed ridges</strong>At ridge stations above the inversion layer during offshore flow, WN terrain physics closes the gap without any BC correction. Camp Fire: CBXC1 ratio 1.007, SLEC1 ratio 1.128 — both held-out, never fit.</div>
+          <div class="expt-finding-text"><strong>At above-inversion exposed ridges, raw HRRR BC is already enough</strong>Where a ridge station sits above the inversion during offshore flow, WindNinja's terrain physics closes the gap with no BC correction at all. Camp Fire: CBXC1 ratio 1.007, SLEC1 ratio 1.128 — both held out, never fit. This is the niche where the pipeline needs nothing but the raw boundary condition.</div>
         </div>
         <div class="expt-finding ruled-out">
           <div class="expt-finding-dot"></div>
-          <div class="expt-finding-text"><strong>Terrain class alone does not predict bust magnitude</strong>Whether a station is on an exposed ridge, in a canyon, or in a valley does not reliably predict how large the HRRR error will be. BC quality — level, timing, direction — is the controlling variable.</div>
+          <div class="expt-finding-text"><strong>Terrain class doesn't predict the error — BC quality does</strong>Whether a station sits on an exposed ridge, in a canyon, or in a valley does not predict how large the HRRR error will be (structured-vs-white ratio 0.013, all class means inside the ~10 mph noise). The controlling variable isn't where the station is — it's the boundary condition: which level, which hour, which direction.</div>
         </div>
       </div>
 
