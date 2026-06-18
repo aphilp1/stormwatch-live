@@ -9,9 +9,9 @@ ledger) → `stormwatch_test_protocol.md` (method). Update this file whenever wo
 
 ## ONE-LINE STATE
 
-**Database complete (164 rows, 12 events, all DEM+BC populated). EXPTS tab live in
-StormWatch Live with all 12 events, regime filters, narrative panels, wind arrows,
-and WN result badges. Latest commit: db395da. Next: run WN on PENDING events.**
+**EXPTS tab fully redesigned (2026-06-17): correct scientific framing, readable colors,
+plain-English badges, diverging error chart, user-authored challenge text. Latest commit:
+5ed97c2. Next: MCP bugs, then run WN on In Progress events.**
 
 ---
 
