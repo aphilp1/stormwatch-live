@@ -3,14 +3,15 @@
 **Read order on restart:** THIS file → `STORMWATCH_MASTER_STATUS.md` (authoritative findings
 ledger) → `stormwatch_test_protocol.md` (method). Update this file whenever work lands.
 
-**Last updated:** 2026-06-17 · HindC tab v1.0 · latest commit: see git log
+**Last updated:** 2026-06-17 evening · latest commit: e93f4ca · popup overhaul + SLEC1 reframe
 
 ---
 
 ## ONE-LINE STATE
 
-**HindC tab v1.0 shipped (2026-06-17): fully redesigned, logic-checked, four corrections
-applied from external review. Next: MCP bugs, then WN runs on 8 In Progress events.**
+**HindC tab v1.0 + popup overhaul complete (2026-06-17): SLEC1 reframed as bc/obs ≈ 1
+boundary case, 4-bar popup for Camp Fire, three popup flags added, HINDC_REVIEW.md
+audit-ready. Next: MCP bugs, then WN runs on 8 In Progress events.**
 
 ---
 
@@ -18,38 +19,44 @@ applied from external review. Next: MCP bugs, then WN runs on 8 In Progress even
 
 When user types "resume," confirm current state and ask what to work on:
 
-> **Where we are (2026-06-17):** HindC tab (formerly EXPTS) is live in StormWatch Live
-> at v1.0. 12 hindcast events, 4 regime-organized findings, correct anchor-vs-event-mean
-> labeling, bc/obs as controlling variable for the niche claim, convective outflow as its
-> own regime (Iowa + Missoula Jul), Kincade Ignition corrected to +4.13 mph.
-> 8 events still show In Progress (WN not yet run).
+> **Where we are (2026-06-17 end of session):** HindC tab v1.0 is live with a fully
+> overhauled popup system. Camp Fire CBXC1/SLEC1 now show a 4-bar popup (obs / HRRR /
+> BC input / WN output) with WN/obs ratios. SLEC1 is correctly framed as the bc/obs ≈ 1
+> boundary case (mild overshoot), not a clean niche win — CBXC1 is the clean case.
+> Popup flags near-calm stations (obs < 5 mph) and high bc/obs (> 3×) with visual warnings.
+> HINDC_REVIEW.md and SESSION_REVIEW_2026-06-17.md are on GitHub for Claude Web audit.
+> 8 events still In Progress (WN not yet run).
 > What would you like to work on?
 
 ---
 
 ## WHAT IS DONE — DO NOT REDO
 
-### HindC Tab v1.0 (complete 2026-06-17)
+### HindC Tab v1.0 + Popup Overhaul (complete 2026-06-17)
 
-**Commits this session (2026-06-17):** 439677c → 1909b35 + version/doc commit
+**Commits: 439677c → e93f4ca (latest)**
 
-- Tab renamed from EXPTS → HindC
-- 4 finding chips (signal/causal/confirmed/arch) replacing 3
-- Challenge text: user-authored, BC/obs pipeline framing, "diagnostic not prognostic"
-- All WN-vs-HRRR language removed; replaced with HRRR-vs-station + WN-hindcast-vs-station
-- Font sizes bumped (9px→11px body, 10px→12px titles); font-weight 800→700 everywhere;
-  antialiasing on #tab-experiments container
-- Blurry headlines fixed (fractional px → whole px)
-- Legend section header: "WindNinja Result" → "WN Hindcast vs. Station Obs"
+**Tab v1.0 (earlier same day):**
+- Tab renamed EXPTS → HindC; 4 finding chips; challenge text; WN framing fixed
+- Four logic fixes: chart anchor-vs-mean, Finding 3 bc/obs conditioned, convective regime,
+  Kincade Ignition +4.13 mph
 
-**Four logic fixes applied (from Claude Web external review):**
-1. Chart relabeled "Anchor-station HRRR error" + note on divergence from event mean
-2. Finding 3: bc/obs ≤ ~1 is the stated controlling variable; niche claim conditioned
-3. Iowa + Missoula Jul: moved from 'continental' to 'convective' regime (purple pill)
-4. Kincade Ignition: hrrr_err corrected from stale −2.1 to +4.13 (HWKC1, verified in DB)
+**Evening session popup overhaul:**
+- **SLEC1 reframe:** bc/obs=0.96, WN/obs=1.128 (+4.5 overshoot) — boundary case NOT a win.
+  CBXC1 (bc/obs=1.135, WN/obs=1.007) is the clean niche. Finding 3 rewritten accordingly.
+- **4-bar popup:** Camp Fire CBXC1/SLEC1 now show obs/HRRR/BC input/WN output (amber).
+  WN output stored in `wn_stations` object in EXPT_EVENTS. All other events: 3-bar.
+- **Three popup flags:**
+  1. obs < 5 mph → suppress direction + "calm/sheltered — do-no-harm" error label (grey)
+  2. bc/obs > 3 → orange ⚠ banner "BC much stronger; do-no-harm gate required"
+  3. Near-calm: error value color grey, not directional
+- **SLEC1 HRRR ratio:** 0.525 (stale) → 0.477 everywhere (CSV authoritative: 16.7/34.99)
+- **Documents:** HINDC_REVIEW.md fully updated + SESSION_REVIEW_2026-06-17.md created
 
-**Review document for Claude Web:** `Storm_info/HINDC_REVIEW.md`
-**GitHub raw URL:** https://raw.githubusercontent.com/aphilp1/stormwatch-live/master/Storm_info/HINDC_REVIEW.md
+**Review documents for Claude Web:**
+- `Storm_info/HINDC_REVIEW.md` — findings + narratives
+- `Storm_info/SESSION_REVIEW_2026-06-17.md` — session changes + 6 audit check items
+  URL: https://raw.githubusercontent.com/aphilp1/stormwatch-live/master/Storm_info/SESSION_REVIEW_2026-06-17.md
 
 ### Database (all complete)
 - `hrrr_error_dataset.csv`: 318 rows, 164 active (KEEP/CAUTION)
