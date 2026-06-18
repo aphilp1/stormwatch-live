@@ -437,7 +437,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #expt-story-panel{background:#06101e;border:1px solid rgba(80,130,190,0.28);border-radius:9px;padding:13px;margin-top:12px;margin-bottom:6px}
 .expt-story-ename{font-size:11.5px;font-weight:700;color:#d0e8ff;margin-bottom:4px}
 .expt-story-rtag{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:9px;text-transform:uppercase;letter-spacing:0.3px}
-.expt-story-body{font-size:10.5px;color:#90aec8;line-height:1.65;margin-bottom:10px}
+.expt-story-body{font-size:10.5px;color:#90aec8;line-height:1.65;margin-bottom:10px;white-space:pre-line}
 .expt-stn-wrap{max-height:160px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(80,130,190,0.3) transparent}
 .expt-stn-table{width:100%;border-collapse:collapse;font-size:9.5px}
 .expt-stn-table th{position:sticky;top:0;z-index:1;background:#06101e;color:#6a90aa;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;padding:4px 6px;border-bottom:1px solid rgba(80,130,190,0.25);text-align:right}
@@ -7288,11 +7288,15 @@ const EXPT_EVENTS = [
     n: 12,
     anchor: 'CBXC1/SLEC1',
     hrrr_err: -3.8,
-    wn_result: 'WN ratio 1.007–1.128',
+    wn_result: 'WN ratio 1.007 (CBXC1 clean) · 1.128 (SLEC1 edge — bc/obs ≈ 1)',
     status: 'pass',
     statusLabel: 'WN Niche',
-    note: 'WN hindcast closely matches station obs at both held-out ridge stations (WN/obs: CBXC1 1.007, SLEC1 1.128) where HRRR undershot by 3–18 mph. Raw HRRR boundary condition only — no correction needed.',
-    narrative: 'The defining niche case. At two held-out exposed-ridge stations, WindNinja driven by raw HRRR 850 hPa reproduces the observed wind (WN/obs 1.007, 1.128) where HRRR alone undershot by 3–18 mph across 12 sites. No correction, no fitting. CBXC1: WN/obs 1.007 vs. HRRR/obs 0.875. SLEC1: WN/obs 1.128 vs. HRRR/obs 0.525.'
+    wn_stations: {
+      CBXC1: { speed: 29.2, ratio: 1.007 },
+      SLEC1: { speed: 39.5, ratio: 1.128 }
+    },
+    note: 'Two stations, two stories. CBXC1: HRRR undershot by 3.6 mph; 850 hPa BC = 32.9 mph; WN output = 29.2 mph — closes the gap (WN/obs 1.007). SLEC1: HRRR 10m undershot by 18 mph, but the 850 hPa BC was already 33.5 mph (1.5 mph below obs). WN amplified to 39.5 mph, overshooting by 4.5 mph (bc/obs 0.96 — the ≈1 boundary in action).',
+    narrative: 'Two held-out ridge stations, two different stories. CBXC1 (Colby Mtn): HRRR undershot by 3.6 mph (HRRR/obs 0.875). The 850 hPa BC was 32.9 mph; WN terrain-resolved it to 29.2 mph — nearly matching obs (WN/obs 1.007). That is the clean niche: a real HRRR gap, closed by terrain physics.\n\nSLEC1 (Saddleback): HRRR 10m surface undershot by 18 mph (HRRR/obs 0.477) — but the 850 hPa BC was already 33.5 mph, just 1.5 mph below obs. WN amplified it to 39.5 mph, overshooting by 4.5 mph (WN/obs 1.128). The bc/obs ratio at SLEC1 is 0.96 — right at the ≈1 boundary where the do-no-harm logic would flag amplification as unnecessary. SLEC1 shows the mechanism\'s edge, not its success.'
   },
   {
     id: 'tubbs_2017',
@@ -7523,8 +7527,8 @@ function makeWindSVG(col, dir, sz) {
 }
 
 // ── Three-way speed comparison popup ────────────────────────────────────────
-function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col) {
-  const maxSpd = Math.max(obs || 0, hrrr || 0, bc || 0, 1);
+function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd) {
+  const maxSpd = Math.max(obs || 0, hrrr || 0, bc || 0, wnSpd || 0, 1);
   function bar(val, barCol, label, dir, note) {
     if (isNaN(val) || val === null) return '';
     const pct = Math.max(4, Math.round((val / maxSpd) * 100));
@@ -7551,11 +7555,12 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col) {
   return `<div style="font-family:-apple-system,sans-serif;background:#0c1828;padding:15px;border-radius:8px;min-width:255px;max-width:305px">
     <div style="font-size:15px;font-weight:900;color:#e0f0ff;margin-bottom:2px">${row.stid}</div>
     <div style="font-size:10px;color:#90aec8;margin-bottom:13px">${row.station_name||''} &nbsp;·&nbsp; <b style="color:#b0cce0">${row.terrain_class||'—'}</b> &nbsp;·&nbsp; ${isNaN(elev)?'—':Math.round(elev)+' m elev'}</div>
-    ${bar(obs,  '#44dd88', 'RAWS Observed', obsDir)}
+    ${bar(obs,  '#44dd88', 'RAWS Station Obs', obsDir)}
     ${bar(hrrr, col,       'HRRR 3km Forecast', hrrrDir)}
-    ${bc !== null ? bar(bc, '#b09af8', `${bcLvl} BC → WN 30m input`, bcDir) : ''}
+    ${bc !== null ? bar(bc, '#b09af8', `HRRR ${bcLvl} BC (WN input)`, bcDir) : ''}
+    ${wnSpd != null ? (() => { const r = obs > 0 ? (wnSpd/obs).toFixed(3) : null; return bar(wnSpd, '#f59e0b', 'WN 30m Hindcast (output)', null, r ? `WN/obs ${r}` : ''); })() : ''}
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(80,130,190,0.2);font-size:10px;color:#a0bcd4;line-height:1.8">
-      <span style="color:${col};font-size:12px;font-weight:800">${errSign}${isNaN(err)?'?':err.toFixed(1)} mph</span> &mdash; ${errDesc}<br>
+      <span style="color:${col};font-size:12px;font-weight:800">${errSign}${isNaN(err)?'?':err.toFixed(1)} mph</span> &mdash; HRRR vs. station obs: ${errDesc}<br>
       <span style="color:#7090a8">${isNaN(slope)?'':'Slope '+slope.toFixed(1)+'°'}${isNaN(relief)?'':' · Relief '+Math.round(relief)+' m'}${isNaN(elev)?'':' · '+Math.round(elev)+' m'}</span>
     </div>
   </div>`;
@@ -7804,8 +7809,9 @@ async function loadExptRaws(ev) {
     m.bindTooltip(`<b>${row.stid}</b> &nbsp; ${isNaN(obs)?'—':obs.toFixed(1)} mph obs &nbsp;|&nbsp; <span style="color:${col}">${(err>=0?'+':'')+err.toFixed(1)} mph err</span>`,
       { sticky: false, direction: 'top', offset: [0, -(sz+12)] });
 
-    // Click popup — three-way comparison
-    m.bindPopup(makeStationPopup(row, err, obs, hrrr, bc, obsDirNum, col), {
+    // Click popup — three-way + WN output comparison
+    const wnSpd = (ev.wn_stations && ev.wn_stations[row.stid]) ? ev.wn_stations[row.stid].speed : null;
+    m.bindPopup(makeStationPopup(row, err, obs, hrrr, bc, obsDirNum, col, wnSpd), {
       maxWidth: 290, className: 'expt-popup'
     });
 

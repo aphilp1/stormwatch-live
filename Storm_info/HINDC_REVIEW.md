@@ -53,21 +53,25 @@ the same events more than HRRR at 3 km (−8.9 vs −4.1 mph) — coarser grid, 
 The synoptic wind is real; the terrain that channels and accelerates it to the surface lives
 below the model grid. This is exactly the gap a 30 m terrain solver is built to close.
 
-### Finding 3 (confirmed): At exposed ridges, raw HRRR BC is sufficient — when bc/obs ≤ ~1
+### Finding 3 (confirmed): At exposed ridges, WN closes the gap when HRRR genuinely undershot the BC
 
-The controlling variable is the **bc/obs ratio** — the ratio of the boundary condition wind
-speed to the observed station wind. Where bc/obs ≤ ~1, the BC is correctly sized and
-WindNinja's terrain physics closes the gap between model and station. Where bc/obs > 1,
-the BC already exceeds the surface wind and WindNinja amplifies it into overshoot.
+The key test: does routing the raw 850 hPa HRRR boundary condition through WindNinja's terrain
+solver recover the speed error at exposed-ridge stations? Camp Fire provides the answer with
+two held-out stations that tell opposite sides of the same story.
 
 Camp Fire, two held-out exposed-ridge stations (never used in fitting):
-- CBXC1: WN/obs **1.007** (where HRRR/obs was 0.875)
-- SLEC1: WN/obs **1.128** (where HRRR/obs was 0.525)
-- HRRR alone undershot both stations by 3–18 mph
+- **CBXC1** (Colby Mtn): HRRR undershot obs by 3.6 mph (HRRR/obs 0.875); 850 hPa BC was
+  32.9 mph; WN terrain-resolved to 29.2 mph — WN/obs **1.007**. The clean recovery: a real
+  synoptic gap, closed by terrain physics. No correction, no fitting.
+- **SLEC1** (Saddleback): HRRR 10m undershot obs by 18 mph (HRRR/obs 0.477) — but the 850 hPa
+  BC was already 33.5 mph, just 1.5 mph below obs (bc/obs 0.96). WN's ridge amplification
+  carried it to 39.5 mph, +4.5 above obs — WN/obs **1.128**, a mild overshoot. SLEC1 is the
+  bc/obs ≈ 1 boundary case: BC already near-right, terrain amplification not needed.
 
-Those ratios hold because the BC was correctly sized at those stations and hours — not
-because exposed ridges are universally safe. The bc/obs ratio is set by which model level
-and hour you extract from HRRR.
+Together they bracket the amplification threshold — CBXC1 is recovery (WN/obs ≈ 1.0), SLEC1
+is mild overshoot (WN/obs 1.128). The controlling diagnostic: when the BC is already near obs
+and the station is a strong ridge amplifier, WN will overshoot. The bc/obs ratio (0.96 at
+SLEC1) is the warning sign; it is set by which model level and hour you extract from HRRR.
 
 ### Finding 4 (architecture): Where correction is required, direction is solved; magnitude is bounded
 
@@ -96,9 +100,10 @@ the gate correctly blocks a learned adjustment that would otherwise overshoot by
 
 **Validated as a direction-correcting mechanism and at the exposed-ridge niche.**
 
-- **Niche (raw BC):** at above-inversion exposed ridges during offshore flow with BC/obs ≤ ~1,
-  raw-HRRR-driven WindNinja matches station observations — Camp Fire held-out: WN/obs 1.007
-  and 1.128.
+- **Niche (raw BC):** at above-inversion exposed ridges where HRRR genuinely undershot the BC,
+  raw-HRRR-driven WindNinja matches station observations — Camp Fire held-out CBXC1: WN/obs
+  1.007 (clean recovery). SLEC1: WN/obs 1.128 — bc/obs 0.96, BC already near obs, mild WN
+  overshoot; the bc/obs ≈ 1 boundary case, not a clean niche win.
 - **Correction (two-level):** direction solved across regimes, zero false positives from the
   terrain-override rule; magnitude event-calibrated, overshooting complex-terrain stations
   by ~10 mph — a bounded, documented residual.
@@ -129,7 +134,7 @@ valley stations overshoot, and the event mean averages toward zero.
 
 | Event | Date | Regime | Stations | Anchor | Anchor HRRR err | Status |
 |-------|------|--------|----------|--------|-----------------|--------|
-| Camp Fire | Nov 8, 2018 | Diablo | 12 | CBXC1/SLEC1 | −3 to −18 mph | WN Niche |
+| Camp Fire | Nov 8, 2018 | Diablo | 12 | CBXC1/SLEC1 | −3.6 (CBXC1) · −18.3 (SLEC1) — range across 2 anchors | WN Niche |
 | Tubbs Fire | Oct 8, 2017 | Diablo | 7 | HWKC1 | −0.3 mph | HRRR OK |
 | Kincade (Ignition) | Oct 23–24, 2019 | Diablo/NW | 10 | HWKC1 | +4.13 mph | Control Case |
 | Kincade (Run Day) | Oct 27, 2019 | Diablo/NE | 12 | HWKC1 | +0.1 mph | Control Case |
@@ -152,10 +157,20 @@ the underbias appears.
 ## Per-Event Detail (Card Narratives)
 
 **Camp Fire** — Nov 8, 2018 · Diablo · 12 stations · CBXC1/SLEC1
-The defining niche case. At two held-out exposed-ridge stations, WindNinja driven by raw
-HRRR 850 hPa reproduces the observed wind (WN/obs 1.007, 1.128) where HRRR alone undershot
-by 3–18 mph across 12 sites. No correction, no fitting. CBXC1: WN/obs 1.007 vs. HRRR/obs
-0.875. SLEC1: WN/obs 1.128 vs. HRRR/obs 0.525.
+Two held-out ridge stations, two different stories.
+
+CBXC1 (Colby Mtn): HRRR undershot by 3.6 mph (HRRR/obs 0.875). The 850 hPa BC was 32.9 mph;
+WN terrain-resolved it to 29.2 mph — nearly matching obs (WN/obs 1.007). That is the clean
+niche: a real HRRR gap, closed by terrain physics.
+
+SLEC1 (Saddleback): HRRR 10m surface undershot by 18 mph (HRRR/obs 0.477) — but the 850 hPa
+BC was already 33.5 mph, just 1.5 mph below obs. WN amplified it to 39.5 mph, overshooting
+by 4.5 mph (WN/obs 1.128). bc/obs at SLEC1 = 0.96 — right at the ≈1 boundary where the
+do-no-harm logic would flag amplification as unnecessary. SLEC1 shows the mechanism's edge,
+not its success.
+
+Numbers: CBXC1 obs 29.0 · HRRR 25.4 · BC 32.9 · WN 29.2 · HRRR err −3.6
+         SLEC1 obs 35.0 · HRRR 16.7 · BC 33.5 · WN 39.5 · HRRR err −18.3
 
 **Tubbs Fire** — Oct 8, 2017 · Diablo · 7 stations · HWKC1
 HRRR resolves Hawkeye Ridge accurately (HRRR/obs ratio 0.997) — no WindNinja correction
@@ -229,6 +244,10 @@ warranted.
 - **8 events In Progress:** Kincade Ign/Run, Labor Day OR, Marshall, Boulder Chinook,
   Missoula Dec/Jul still awaiting WN runs.
 - **RRFS resolution ladder:** blocked pending NOAA RDHPCS access.
+- **SLEC1 HRRR ratio reconciliation:** earlier analyses (STORMWATCH_MASTER_STATUS.md, hglc1_stage2.py)
+  report SLEC1 HRRR/obs = 0.525; the current authoritative CSV gives hrrr_10m_mph=16.7 /
+  obs_sus_mph=34.99 = **0.477**. This document uses 0.477. The older scripts predate the
+  current peak-hour extraction and should not be cited without reconciliation.
 
 ---
 
