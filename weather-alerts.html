@@ -445,7 +445,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-err-pos{color:#5dade2;font-weight:800}
 .expt-err-zero{color:#7a94a8}
 .expt-cls-chip{font-size:8px;padding:2px 5px;border-radius:2px;background:rgba(80,130,190,0.2);color:#8ab8d0;white-space:nowrap}
-/* Experiment redesign — question, findings, chart */
+/* Experiment redesign — problem, findings, outcome, chart */
+.expt-section-label{font-size:7.5px;text-transform:uppercase;letter-spacing:1.2px;color:#5a8aaa;font-weight:800;margin-bottom:5px}
+.expt-problem{background:#0a1624;border:1px solid rgba(80,130,190,0.25);border-radius:7px;padding:11px 13px;margin-bottom:10px}
+.expt-problem-lead{font-size:10px;color:#c0d8f0;font-weight:700;line-height:1.5;margin-bottom:6px}
+.expt-problem-body{font-size:9.5px;color:#8ab0cc;line-height:1.65}
+.expt-problem-divider{border-top:1px solid rgba(80,130,190,0.18);margin:8px 0}
+.expt-problem-goal{font-size:9.5px;color:#a0c8e8;line-height:1.6;font-style:italic}
+.expt-outcome{background:#071812;border:1px solid rgba(68,187,102,0.28);border-radius:7px;padding:11px 13px;margin-bottom:12px}
+.expt-outcome-result{font-size:10px;color:#55cc77;font-weight:700;margin-bottom:5px}
+.expt-outcome-body{font-size:9.5px;color:#90ccaa;line-height:1.65}
+.expt-outcome-limit{font-size:9px;color:#6aaa88;line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid rgba(68,187,102,0.15)}
 .expt-question{background:#0a1624;border:1px solid rgba(80,130,190,0.22);border-radius:7px;padding:10px 12px;margin-bottom:10px}
 .expt-question-q{font-size:10px;color:#c0d8f0;font-weight:600;line-height:1.5;margin-bottom:3px}
 .expt-question-ctx{font-size:9px;color:#8ab0cc;line-height:1.4}
@@ -1432,26 +1442,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="expt-hdr-sub">12 fire events · 164 RAWS station-obs · 2017–2025 · Western US</div>
       </div>
 
-      <!-- Question -->
-      <div class="expt-question">
-        <div class="expt-question-q">Does sub-km terrain downscaling improve HRRR 3km wind forecasts at fire-weather stations?</div>
-        <div class="expt-question-ctx">We ran WindNinja (30m terrain solver) on historical fire events and compared its output against both HRRR and independent RAWS observations at held-out stations.</div>
+      <!-- The Challenge -->
+      <div class="expt-problem">
+        <div class="expt-section-label">The Challenge</div>
+        <div class="expt-problem-lead">HRRR is driven by synoptic systems — not local terrain.</div>
+        <div class="expt-problem-body">HRRR's 3km grid resolves large-scale wind patterns accurately but cannot see sub-km terrain features — canyon channeling, ridge amplification, gap flow. At fire-weather stations in complex terrain, this creates systematic speed errors that matter most when conditions are most dangerous.<br><br>WindNinja runs terrain-following physics at 30m and can resolve those features — but it is only as good as the boundary conditions fed to it. Wrong BC in, wrong-but-terrain-shaped output.</div>
+        <div class="expt-problem-divider"></div>
+        <div class="expt-problem-goal">Goal: design and validate a reliable HRRR → WindNinja pipeline — identifying which level, timing, and correction produces BC that lets WN terrain physics recover the errors HRRR misses.</div>
       </div>
 
-      <!-- Key findings -->
+      <!-- Findings -->
       <div class="expt-findings">
+        <div class="expt-section-label">What we found — 12 events · 164 stations</div>
         <div class="expt-finding signal">
           <div class="expt-finding-dot"></div>
-          <div class="expt-finding-text"><strong>Regime bias confirmed — Δ 4.4 mph</strong>HRRR undershoots offshore wind events (Diablo, Santa Ana) by −3.9 mph on average. Continental events are near-accurate (+0.5 mph). Wind regime is the primary predictor of HRRR error.</div>
+          <div class="expt-finding-text"><strong>HRRR captures the synoptic system, misses the terrain response</strong>Offshore events (Diablo, Santa Ana) are undershoots by −3.9 mph on average. Continental events are near-accurate (+0.5 mph). HRRR sees the large-scale pattern correctly — what it misses is the local terrain amplification on top of it.</div>
         </div>
         <div class="expt-finding confirmed">
           <div class="expt-finding-dot"></div>
-          <div class="expt-finding-text"><strong>WN niche validated — above-inversion ridge stations</strong>WindNinja with unmodified HRRR boundary conditions beats raw HRRR at Camp Fire ridge stations (CBXC1, SLEC1). No correction needed — terrain physics does the work.</div>
+          <div class="expt-finding-text"><strong>Raw HRRR BC is sufficient at above-inversion exposed ridges</strong>At ridge stations above the inversion layer during offshore flow, WN terrain physics closes the gap without any BC correction. Camp Fire: CBXC1 ratio 1.007, SLEC1 ratio 1.128 — both held-out, never fit.</div>
         </div>
         <div class="expt-finding ruled-out">
           <div class="expt-finding-dot"></div>
-          <div class="expt-finding-text"><strong>Terrain class alone: not predictive</strong>Exposed ridge, canyon-gap, valley, and open terrain classes do not reliably predict HRRR bust magnitude across regimes (structured-vs-white ratio = 0.013).</div>
+          <div class="expt-finding-text"><strong>Terrain class alone does not predict bust magnitude</strong>Whether a station is on an exposed ridge, in a canyon, or in a valley does not reliably predict how large the HRRR error will be. BC quality — level, timing, direction — is the controlling variable.</div>
         </div>
+      </div>
+
+      <!-- Current result -->
+      <div class="expt-outcome">
+        <div class="expt-section-label">Current result</div>
+        <div class="expt-outcome-result">The pipeline works at the niche.</div>
+        <div class="expt-outcome-body">HRRR 850 hPa → WindNinja 30m → terrain-resolved wind beats raw HRRR at above-inversion exposed ridge stations during offshore flow. Validated at Camp Fire (n=2 held-out ridges, no correction, no fitting).</div>
+        <div class="expt-outcome-limit">Bottleneck everywhere else: BC quality. The 8 remaining events are testing whether the same pipeline holds as terrain complexity, BC level, and flow regime vary.</div>
       </div>
 
       <!-- Error chart -->
