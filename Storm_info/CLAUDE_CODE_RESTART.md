@@ -3,29 +3,45 @@
 **Read order on restart:** THIS file → `STORMWATCH_MASTER_STATUS.md` (authoritative findings
 ledger) → `stormwatch_test_protocol.md` (method). Update this file whenever work lands.
 
-**Last updated:** 2026-06-17 evening · latest commit: 3178f1e · AUDIT-CLEAN v1.0
+**Last updated:** 2026-06-19 · latest commit: (see below)
 
 ---
 
 ## ONE-LINE STATE
 
-**HindC tab v1.0 AUDIT-CLEAN (2026-06-17): all seven Claude Web checks pass. Terrain-geometry
-finding confirmed correct, bracket framing gone, popup overhaul complete. Next: MCP bugs,
-then WN runs on 8 In Progress events.**
+**StormWatch Live — working toward v1.0. NSSL Verification Overlays now built.
+Remaining major areas: Chat Panel, Forecasting Agents, MCP bug fixes, HindC WN runs.**
 
 ---
 
 ## HOW TO RESUME
 
-When user types "resume," confirm current state and ask what to work on:
+When user types "resume," present the full StormWatch Live v1.0 picture:
 
-> **Where we are (2026-06-17 end of session):** HindC tab v1.0 is audit-clean — seven
-> Claude Web checks all pass (commit 3178f1e). Camp Fire finding is: terrain geometry
-> (slope/relief) determines WN output direction, not bc/obs. CBXC1 (5.96°/224m, WN/obs 1.007)
-> is the clean niche; SLEC1 (11.2°/434m, WN/obs 1.128) is the terrain-amplification boundary.
-> 4-bar popup with WN output live for Camp Fire. Three popup flags: near-calm direction
-> suppression, bc/obs > 3 warning, calm/sheltered error label. 8 events still In Progress
-> (WN not yet run).
+> **StormWatch Live — where we are (as of 2026-06-19):**
+>
+> **BUILT AND STABLE**
+> - Core weather map (alerts, layers, USGS Topo + 30m Hillshade, radar, NSSL CAMs viewer)
+> - Alert polygon click → dark detail popup (fromMap flag, no tab hijack)
+> - NSSL Verification Overlays — LSR Reports + NWS Warnings mini-map on Maps tab, time-filtered ±3 h
+> - MCP server — 19 tools, live (known bugs, lower priority)
+> - HindC tab — WindNinja hindcast series, 12 events, audit-clean (Claude Web 7/7 checks pass)
+> - GitHub — public repo, version history, Claude Web access
+>
+> **NOT YET BUILT (v1.0 remaining major pieces)**
+> - Chat Panel — in-app MCP chat so you can ask weather questions without leaving StormWatch
+> - Forecasting Agents — click a point on the map → Claude synthesizes a full briefing
+>
+> **BUILT THIS SESSION (2026-06-19)**
+> - Alert polygon click → dark detail popup (no sidebar tab hijack)
+> - USGS Topo (3DEP) + 30m Hillshade as base map options
+> - NSSL Verification Overlays — LSR Reports + NWS Warnings mini-map on Maps tab, time-filtered ±3 h
+>
+> **LOWER PRIORITY (can do anytime)**
+> - MCP bug fixes: BUG-007, 012, 013, 016, 021 + cosmetics
+> - HindC WN runs: 8 events still In Progress (Kincade, Labor Day OR, Marshall, etc.)
+> - Tubbs direction mismatch decision
+>
 > What would you like to work on?
 
 ---

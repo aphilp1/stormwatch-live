@@ -165,44 +165,49 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #map-wrap{flex:1;position:relative;overflow:hidden}
 #map{width:100%;height:100%}
 
+/* Hillshade base map — darken the pale USGS tiles */
+.hillshade-tiles{filter:brightness(0.72) contrast(2.2)}
+
 /* Pulsing outlines for extreme alerts */
 @keyframes alertPulse{0%,100%{opacity:1}50%{opacity:0.35}}
 .alert-pulse path{animation:alertPulse 1.4s ease-in-out infinite}
 
 /* ── DETAIL PANEL ────────────────────────────────────────────────── */
-#detail{position:absolute;top:10px;right:10px;width:320px;max-height:calc(100% - 20px);background:rgba(255,255,255,0.97);border:1px solid var(--border);border-radius:10px;z-index:700;display:none;flex-direction:column;overflow:hidden;backdrop-filter:blur(6px)}
-#det-head{padding:12px 13px 10px;border-bottom:1px solid var(--border);flex-shrink:0;cursor:move;user-select:none}
+@keyframes detailPopIn{0%{opacity:0;transform:scale(0.94) translateY(-6px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+#detail{position:absolute;top:10px;right:10px;width:320px;max-height:calc(100% - 20px);background:#101c2c;border:1px solid #243248;border-radius:10px;z-index:700;display:none;flex-direction:column;overflow:hidden;backdrop-filter:blur(8px);box-shadow:0 6px 28px rgba(0,0,0,0.65)}
+#detail.pop-in{animation:detailPopIn 0.18s ease-out both}
+#det-head{padding:12px 13px 10px;border-bottom:1px solid #243248;flex-shrink:0;cursor:move;user-select:none}
 #det-event{font-size:14px;font-weight:800;margin-bottom:5px;padding-right:22px;line-height:1.3}
 #det-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
 .det-chip{padding:5px 10px;border-radius:6px;display:flex;flex-direction:column;gap:2px;border:1px solid}
-.chip-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.65}
+.chip-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.75}
 .chip-val{font-size:12px;font-weight:700;line-height:1.2}
-#det-close{position:absolute;top:9px;right:9px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:3px 6px;border-radius:4px;transition:color 0.15s}
-#det-close:hover{color:var(--text)}
-#det-body{overflow-y:auto;padding:11px 13px 11px 13px;flex:1;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+#det-close{position:absolute;top:9px;right:9px;background:none;border:none;color:#4a5a72;cursor:pointer;font-size:16px;line-height:1;padding:3px 6px;border-radius:4px;transition:color 0.15s}
+#det-close:hover{color:#c0d0e8}
+#det-body{overflow-y:auto;padding:11px 13px 11px 13px;flex:1;scrollbar-width:thin;scrollbar-color:#243248 transparent}
 #det-body::-webkit-scrollbar{width:7px}
 #det-body::-webkit-scrollbar-track{background:transparent}
-#det-body::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
-#det-body::-webkit-scrollbar-thumb:hover{background:#aab}
+#det-body::-webkit-scrollbar-thumb{background:#243248;border-radius:4px}
+#det-body::-webkit-scrollbar-thumb:hover{background:#3a4d68}
 .df{margin-bottom:10px}
-.dl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-weight:700;margin-bottom:3px}
-.dv{font-size:13px;color:#778;line-height:1.5}
-#det-desc{white-space:pre-wrap;font-size:11.5px;color:#99a;line-height:1.65}
-.instr-box{background:rgba(255,100,0,0.07);border-left:2px solid #ff6600;padding:7px 9px;border-radius:0 5px 5px 0;font-size:11.5px;color:#aab;white-space:pre-wrap;line-height:1.65}
+.dl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#4e6080;font-weight:700;margin-bottom:3px}
+.dv{font-size:13px;color:#b0c2da;line-height:1.5}
+#det-desc{white-space:pre-wrap;font-size:11.5px;color:#8898b4;line-height:1.65}
+.instr-box{background:rgba(255,140,0,0.13);border-left:2px solid #ff8c00;padding:7px 9px;border-radius:0 5px 5px 0;font-size:11.5px;color:#b8c8de;white-space:pre-wrap;line-height:1.65}
 /* Waterway feature card */
 .wc-body{margin:0}
-.wc-desc{font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:12px}
-.wc-wiki-btn{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:5px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;margin-bottom:12px;transition:background 0.15s}
-.wc-wiki-btn:hover{background:#2a3060;color:#fff}
-.wc-divider{border-top:1px solid var(--border);margin:8px 0 6px}
-.wc-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
+.wc-desc{font-size:12px;color:#b0c2da;line-height:1.65;margin-bottom:12px}
+.wc-wiki-btn{display:inline-flex;align-items:center;gap:5px;background:#182538;border:1px solid #2e4260;color:#7a90aa;border-radius:5px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;margin-bottom:12px;transition:background 0.15s}
+.wc-wiki-btn:hover{background:#243450;color:#c0d4ee}
+.wc-divider{border-top:1px solid #243248;margin:8px 0 6px}
+.wc-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
 .wc-row:last-of-type{border-bottom:none}
-.wc-k{font-size:11px;color:var(--text3)}
-.wc-v{font-size:12px;color:var(--text);font-weight:600;text-align:right;max-width:65%}
-.wc-loading{font-size:11px;color:var(--text3);padding:8px 0}
-.wc-src{font-size:10px;color:var(--text3);margin-top:14px;padding-top:8px;border-top:1px solid var(--border);line-height:1.5}
-#det-zoom{display:block;margin:10px 0 4px;width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:5px;border-radius:5px;cursor:pointer;font-size:11px;text-align:center;transition:all 0.15s}
-#det-zoom:hover{background:#2a2a55;color:var(--text)}
+.wc-k{font-size:11px;color:#4e6080}
+.wc-v{font-size:12px;color:#c0d0e8;font-weight:600;text-align:right;max-width:65%}
+.wc-loading{font-size:11px;color:#4e6080;padding:8px 0}
+.wc-src{font-size:10px;color:#4e6080;margin-top:14px;padding-top:8px;border-top:1px solid #243248;line-height:1.5}
+#det-zoom{display:block;margin:10px 0 4px;width:100%;background:#182538;border:1px solid #2e4260;color:#7a90aa;padding:5px;border-radius:5px;cursor:pointer;font-size:11px;text-align:center;transition:all 0.15s}
+#det-zoom:hover{background:#243450;color:#c0d4ee}
 
 /* ── LEGEND ─────────────────────────────────────────────────────── */
 #legend,#spc-legend,#hrrr-legend,#sat-legend,#radar-legend,#fwx-legend,.hyd-legend{cursor:move;user-select:none}
@@ -221,7 +226,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .leg-sev-body{display:flex;flex-direction:column;gap:1px}
 .leg-sev-name{font-size:11px;font-weight:700;line-height:1.2}
 .leg-sev-desc{font-size:9px;color:var(--text3);font-style:italic;line-height:1.4}
-#det-sev-desc{font-size:10px;color:#556;font-style:italic;margin-top:6px;line-height:1.4}
+#det-sev-desc{font-size:10px;color:#6a7e94;font-style:italic;margin-top:6px;line-height:1.4}
 
 /* ── SPC LEGEND ─────────────────────────────────────────────────── */
 #spc-legend{position:absolute;bottom:34px;left:175px;background:rgba(255,255,255,0.96);border:1px solid var(--border);border-radius:8px;padding:10px 13px;z-index:700;min-width:130px;display:none;backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
@@ -768,6 +773,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .maps-tag{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.03em;border-radius:3px;padding:1px 5px;margin:0 2px 3px 0;white-space:nowrap}
 .maps-tag-model{background:rgba(37,99,168,0.25);color:#74b3f5;border:1px solid rgba(37,99,168,0.4)}
 .maps-tag-obs{background:rgba(78,203,132,0.2);color:#4ecb84;border:1px solid rgba(78,203,132,0.35)}
+/* ── VERIFICATION OVERLAYS ────────────────────────────────────── */
+.maps-voverlay-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px}
+.maps-voverlay-desc{font-size:9px;color:var(--text3);line-height:1.5;margin-top:2px}
+#verif-status{font-size:9px;color:var(--text3);line-height:1.55;margin-top:4px;margin-bottom:6px;min-height:13px}
+#verif-minimap{height:175px;border-radius:5px;border:1px solid var(--border);overflow:hidden;margin-top:2px}
+.verif-tt{background:#101c2c!important;border:1px solid #243248!important;color:#b0c2da!important;font-size:10px!important;padding:2px 6px!important;border-radius:3px!important;box-shadow:0 2px 8px rgba(0,0,0,0.5)!important}
 
 </style>
 </head>
@@ -1290,6 +1301,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <label class="toggle"><input type="radio" name="base" value="topo" onchange="setBase('topo')"><span class="toggle-slider"></span></label>
             <span class="layer-label">Topographic</span>
           </div>
+          <div class="layer-row">
+            <label class="toggle"><input type="radio" name="base" value="dem" onchange="setBase('dem')"><span class="toggle-slider"></span></label>
+            <span class="layer-label">USGS Topo (3DEP)</span>
+          </div>
+          <div class="layer-row">
+            <label class="toggle"><input type="radio" name="base" value="hillshade" onchange="setBase('hillshade')"><span class="toggle-slider"></span></label>
+            <span class="layer-label">USGS 30m Hillshade</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1384,6 +1403,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </div>
 
       <hr class="maps-divider">
+
+      <hr class="maps-divider">
+
+      <div class="maps-sect">
+        <div class="maps-sect-hdr">Verification Overlays</div>
+        <div style="font-size:9px;color:var(--text2);line-height:1.55;margin-bottom:10px">Compare what models predicted against what happened — matched to the CAM date you're viewing.</div>
+
+        <div class="maps-voverlay-row">
+          <label class="toggle" style="flex-shrink:0;margin-top:2px"><input type="checkbox" id="lsr-toggle" onchange="toggleVerifOverlay('lsr',this.checked)"><span class="toggle-slider"></span></label>
+          <div>
+            <div class="layer-label">LSR Reports</div>
+            <div class="maps-voverlay-desc">SPC Local Storm Reports for the CAM date. Filtered to ±3 h of the current time step.</div>
+          </div>
+        </div>
+
+        <div class="maps-voverlay-row">
+          <label class="toggle" style="flex-shrink:0;margin-top:2px"><input type="checkbox" id="nws-warnings-toggle" onchange="toggleVerifOverlay('warnings',this.checked)"><span class="toggle-slider"></span></label>
+          <div>
+            <div class="layer-label">NWS Warnings</div>
+            <div class="maps-voverlay-desc">Currently active NWS alert polygons (from live alerts tab).</div>
+          </div>
+        </div>
+
+        <div id="verif-status"></div>
+        <div id="verif-minimap" style="display:none"></div>
+      </div>
 
       <div class="cam-source-note">
         Source: <a id="maps-nssl-link" href="https://cams.nssl.noaa.gov" target="_blank" rel="noopener">NSSL CAMs Viewer</a> — NOAA/NSSL, Norman OK. Images &copy; NOAA.
@@ -2336,6 +2381,16 @@ function initMap() {
     {attribution:'© OpenTopoMap',subdomains:'abc',maxZoom:17}
   );
 
+  baseLayers.dem = L.tileLayer(
+    'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
+    {attribution:'USGS The National Map · 3DEP Elevation',maxZoom:16}
+  );
+
+  baseLayers.hillshade = L.tileLayer(
+    'https://basemap.nationalmap.gov/arcgis/rest/services/USGSShadedReliefOnly/MapServer/tile/{z}/{y}/{x}',
+    {attribution:'USGS The National Map · 3DEP 30m Hillshade',maxZoom:16,className:'hillshade-tiles'}
+  );
+
   spc1Group       = L.layerGroup();
   spc2Group       = L.layerGroup();
   inundationGroup = L.layerGroup();         // FIM polygons (below alerts, loaded on demand)
@@ -2560,7 +2615,7 @@ function addAlertPolygon(alert, geom, targetGroup=alertGroup) {
     if (fireMode       && fireInputMode       === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
     if (floodMode      && floodInputMode      === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
     if (combinedMode   && combinedInputMode   === 'point') { runCombinedAgent(e.latlng.lat, e.latlng.lng); return; }
-    selectAlert(mostSevereAlertAt(e.latlng) ?? alert.id);
+    selectAlert(mostSevereAlertAt(e.latlng) ?? alert.id, false, true);
   });
   lyr._alertId = alert.id;
   targetGroup.addLayer(lyr);
@@ -2626,19 +2681,22 @@ function setFilter(f) {
 // SELECTION & DETAIL
 // ═══════════════════════════════════════════════════════════════════
 
-function selectAlert(id, panTo=false) {
+function selectAlert(id, panTo=false, fromMap=false) {
   selectedId = id;
   document.querySelectorAll('.acard').forEach(c=>c.classList.remove('sel'));
   const card = document.querySelector(`.acard[data-id="${cssAttr(id)}"]`);
   if (card) { card.classList.add('sel'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
   const a = alerts.find(x=>x.id===id);
-  if (a) { showDetail(a); if(panTo) panTo_(id); }
-  // Switch to alerts tab if not already
-  if (currentTab !== 'alerts') showTab('alerts');
+  if (a) { showDetail(a, fromMap); if(panTo) panTo_(id); }
+  // Don't switch the sidebar tab when triggered by a map polygon click
+  if (!fromMap && currentTab !== 'alerts') showTab('alerts');
 }
 
-function showDetail(alert) {
+function showDetail(alert, animate=false) {
   ensureDetStandard();
+  const det = document.getElementById('detail');
+  det.classList.remove('pop-in');
+  if (animate) { void det.offsetWidth; det.classList.add('pop-in'); }
   const p = alert.properties;
   const s = getStyle(p.event, p.severity);
   const sev = p.severity || 'Unknown';
@@ -2648,14 +2706,14 @@ function showDetail(alert) {
   detHead.style.borderLeft = `4px solid ${s.c}`;
   detHead.style.paddingLeft = '10px';
   document.getElementById('det-event').textContent = p.event;
-  document.getElementById('det-event').style.color = readableOnWhite(s.f);
+  document.getElementById('det-event').style.color = s.f;
 
   const chips = document.getElementById('det-chips');
   chips.innerHTML = '';
   [['Severity',sev,sevCfg.f],['Certainty',p.certainty,'#1a70bb'],['Urgency',p.urgency,'#6633aa']].forEach(([field,lbl,clr])=>{
     if (!lbl || lbl==='Unknown') return;
     const c=document.createElement('div'); c.className='det-chip';
-    c.style.cssText=`background:${clr}14;border-color:${clr}44;color:${clr}`;
+    c.style.cssText=`background:${clr}28;border-color:${clr}66;color:${clr}`;
     c.innerHTML=`<span class="chip-lbl">${field}</span><span class="chip-val">${esc(lbl)}</span>`;
     chips.appendChild(c);
   });
@@ -4556,6 +4614,7 @@ function camUpdateImages() {
     img.src = url;
   });
   camSyncTimebar();
+  if (verifState.lsrOn) verifDrawLSRs();
 }
 
 function camRenderTimebar() {
@@ -4729,6 +4788,165 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') { e.preventDefault(); camStepTime(1); }
   if (e.key === 'p' || e.key === 'P') camTogglePlay();
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// NSSL VERIFICATION OVERLAYS
+// ═══════════════════════════════════════════════════════════════════
+const verifState = {
+  lsrOn: false, warningsOn: false,
+  map: null, lsrLayer: null, warnLayer: null,
+  lsrData: null, lsrFetchDate: null
+};
+
+const LSR_COLORS = {
+  'TORNADO':           '#ff2222',
+  'FUNNEL CLOUD':      '#ff7700',
+  'LARGE HAIL':        '#00cc44',
+  'NON-TSTM WND DMG':  '#ccaa00',
+  'TSTM WND GST':      '#ffdd00',
+  'TSTM WND DMG':      '#ff8800',
+  'FLASH FLOOD':       '#0088ff',
+  'FLOOD':             '#0044cc',
+  'HEAVY RAIN':        '#44aaff',
+  'RAIN':              '#44aaff',
+  'MARINE TSTM WIND':  '#9900cc',
+  'HIGH WIND':         '#cc6600',
+  'SNOW':              '#aaddff',
+  'BLIZZARD':          '#88bbff',
+  'FREEZING RAIN':     '#88ccff',
+  'ICE STORM':         '#66aadd',
+  'HAIL':              '#00cc44',
+};
+function lsrColor(type) { return LSR_COLORS[(type||'').toUpperCase()] || '#dd88ff'; }
+
+function toggleVerifOverlay(type, on) {
+  if (type === 'lsr')      verifState.lsrOn = on;
+  if (type === 'warnings') verifState.warningsOn = on;
+  const anyOn = verifState.lsrOn || verifState.warningsOn;
+  const mapDiv = document.getElementById('verif-minimap');
+  if (!mapDiv) return;
+  mapDiv.style.display = anyOn ? 'block' : 'none';
+  if (anyOn) {
+    if (!verifState.map) {
+      // Allow the div to become visible before init so Leaflet gets a real size
+      requestAnimationFrame(() => { verifInitMap(); verifRefreshLayers(); });
+    } else {
+      verifState.map.invalidateSize();
+      verifRefreshLayers();
+    }
+  } else {
+    verifSetStatus('');
+  }
+}
+
+function verifInitMap() {
+  const mapDiv = document.getElementById('verif-minimap');
+  if (!mapDiv || verifState.map) return;
+  verifState.map = L.map(mapDiv, {
+    center: [38, -97], zoom: 3,
+    zoomControl: false, attributionControl: false,
+    scrollWheelZoom: true
+  });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 10, crossOrigin: true
+  }).addTo(verifState.map);
+  verifState.lsrLayer  = L.layerGroup().addTo(verifState.map);
+  verifState.warnLayer = L.layerGroup().addTo(verifState.map);
+}
+
+async function verifLoadLSRs() {
+  const date = camState.date;
+  if (!date || date.length < 8) { verifSetStatus('Select a CAM date first.'); return; }
+  if (verifState.lsrFetchDate === date && verifState.lsrData !== null) {
+    verifDrawLSRs(); return;
+  }
+  verifSetStatus('Loading LSR reports…');
+  const y = date.slice(0,4), m = date.slice(4,6), d = date.slice(6,8);
+  const sts = `${y}-${m}-${d}T00:00Z`;
+  const ets = `${y}-${m}-${d}T23:59Z`;
+  try {
+    const r = await fetch(`https://mesonet.agron.iastate.edu/geojson/lsr.php?wfo=all&sts=${sts}&ets=${ets}`);
+    if (!r.ok) throw new Error(r.status);
+    verifState.lsrData = await r.json();
+    verifState.lsrFetchDate = date;
+    verifDrawLSRs();
+  } catch(e) {
+    verifSetStatus('LSR fetch failed — check connection or try a different date.');
+  }
+}
+
+function verifDrawLSRs() {
+  if (!verifState.lsrLayer) return;
+  verifState.lsrLayer.clearLayers();
+  if (!verifState.lsrOn || !verifState.lsrData) return;
+  const features = verifState.lsrData.features || [];
+  // Filter to ±3 h of the current cam time step
+  const t = camState.times[camState.timeIdx];
+  let filtered = features;
+  if (t) {
+    const vd = t.validDate;
+    const hh = parseInt(t.hhmm.slice(0,2));
+    const camMs = Date.UTC(parseInt(vd.slice(0,4)), parseInt(vd.slice(4,6))-1, parseInt(vd.slice(6,8)), hh);
+    const win = 3 * 3600000;
+    filtered = features.filter(f => {
+      const valid = f.properties?.valid;
+      if (!valid) return true;
+      const ms = new Date(valid).getTime();
+      return Math.abs(ms - camMs) <= win;
+    });
+  }
+  const counts = {};
+  filtered.forEach(f => {
+    const type  = f.properties?.typetext || 'Unknown';
+    const color = lsrColor(type);
+    counts[type] = (counts[type] || 0) + 1;
+    const coords = f.geometry?.coordinates;
+    if (!coords) return;
+    const mag    = f.properties?.magnitude;
+    const magStr = mag != null ? ` (${mag})` : '';
+    L.circleMarker([coords[1], coords[0]], {
+      radius: 5, color, fillColor: color, fillOpacity: 0.85, weight: 1.5
+    }).bindTooltip(`${type}${magStr}`, { direction:'top', className:'verif-tt' })
+      .addTo(verifState.lsrLayer);
+  });
+  const total = filtered.length;
+  const all   = features.length;
+  const topTypes = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${v} ${k}`).join(' · ');
+  verifSetStatus(
+    total
+      ? `${total} report${total>1?'s':''} near this time step${t?' (±3 h)':''}: ${topTypes}${all>total?' ('+all+' total today)':''}`
+      : `No reports in ±3 h window${all?' ('+all+' found for full day)':' — none on record for this date'}.`
+  );
+}
+
+function verifDrawWarnings() {
+  if (!verifState.warnLayer) return;
+  verifState.warnLayer.clearLayers();
+  if (!verifState.warningsOn) return;
+  if (!alerts || !alerts.length) { verifSetStatus('No active NWS alerts loaded.'); return; }
+  let count = 0;
+  alerts.forEach(a => {
+    if (!a.geometry) return;
+    const p = a.properties || {};
+    const s = getStyle(p.event || '', p.severity || '');
+    L.geoJSON(a.geometry, {
+      style: { color: s.f, fillColor: s.f, fillOpacity: 0.22, weight: 1.5, dashArray: '5,3' }
+    }).bindTooltip(p.event || 'Alert', { direction:'center', className:'verif-tt' })
+      .addTo(verifState.warnLayer);
+    count++;
+  });
+  if (!verifState.lsrOn) verifSetStatus(`${count} active NWS polygon${count!==1?'s':''} shown.`);
+}
+
+function verifRefreshLayers() {
+  if (verifState.lsrOn) verifLoadLSRs(); else verifState.lsrLayer?.clearLayers();
+  if (verifState.warningsOn) verifDrawWarnings(); else verifState.warnLayer?.clearLayers();
+}
+
+function verifSetStatus(msg) {
+  const el = document.getElementById('verif-status');
+  if (el) el.textContent = msg;
+}
 
 function toggleLegend() {
   legendOpen = !legendOpen;
@@ -5580,7 +5798,7 @@ function showFireCard(p, lat, lon) {
   [[type, '#ff4400'], [state, '#886633']].forEach(([lbl, clr]) => {
     if (!lbl) return;
     const c = document.createElement('div'); c.className = 'det-chip';
-    c.style.cssText = `background:${clr}14;border-color:${clr}44;color:${clr}`;
+    c.style.cssText = `background:${clr}28;border-color:${clr}66;color:${clr}`;
     c.innerHTML = `<span class="chip-val">${esc(lbl)}</span>`;
     chips.appendChild(c);
   });
@@ -6067,7 +6285,7 @@ function showRawsCard(p, lat, lon) {
   [[p.Agency,'#cc5500'],[p.State,'#446688']].forEach(([lbl,clr])=>{
     if (!lbl) return;
     const c=document.createElement('div'); c.className='det-chip';
-    c.style.cssText=`background:${clr}14;border-color:${clr}44;color:${clr}`;
+    c.style.cssText=`background:${clr}28;border-color:${clr}66;color:${clr}`;
     c.innerHTML=`<span class="chip-val">${esc(lbl)}</span>`;
     chips.appendChild(c);
   });
