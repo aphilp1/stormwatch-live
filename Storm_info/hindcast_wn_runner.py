@@ -71,8 +71,14 @@ REALITY_B_BC = {
 EVENT_DOMAINS = {
     'camp_2018': [
         {'lat': 40.0, 'lon': -121.3, 'radius_mi': 20},
-        {'lat': 39.6, 'lon': -120.9, 'radius_mi': 14,
-         'dem_name': 'dem_39.6_-120.9_14mi_proj.tif'},
+        # SLEC1 eastern domain re-placed 2026-06-21: center moved S/W so SLEC1
+        # sits ~13km from center (was 5km OK_LOW_OFFSET artifact = inflated 49.3).
+        {'lat': 39.55, 'lon': -120.95, 'radius_mi': 15},
+        # Added 2026-06-21: cover the 6 previously-uncovered stations, each
+        # placed >=10km from its domain center per the offset policy.
+        {'lat': 39.5, 'lon': -121.4, 'radius_mi': 20},   # southern: BNGC1, PKCC1, CICC1
+        {'lat': 40.0, 'lon': -121.8, 'radius_mi': 20},   # northwest: CSTC1, PSWC1
+        {'lat': 40.2, 'lon': -121.3, 'radius_mi': 15},   # northeast: CESC1
     ],
     'thomas_2017': [
         {'lat': 34.6, 'lon': -118.58, 'radius_mi': 20,
@@ -86,15 +92,8 @@ EVENT_DOMAINS = {
 
 # Stations that require domain DEMs not yet fetched.
 # fetch_dem.exe --point <lon> <lat> <buf> <buf> --buf_units miles --src srtm <out.tif>
-NEEDS_DOMAIN = {
-    'camp_2018': {
-        'BNGC1': 'southern_cluster ~(39.5,-121.4) r=20mi — fetch and add to EVENT_DOMAINS',
-        'CICC1': 'southern_cluster ~(39.5,-121.4) r=20mi — same fetch',
-        'CSTC1': 'northwestern ~(40.0,-121.8) r=15mi — fetch and add to EVENT_DOMAINS',
-        'PKCC1': 'southern_cluster ~(39.5,-121.4) r=20mi — same fetch',
-        'PSWC1': 'northwestern ~(40.0,-121.8) r=15mi — same fetch',
-    },
-}
+# All camp_2018 stations now have domains configured in EVENT_DOMAINS (2026-06-21).
+NEEDS_DOMAIN = {}
 
 # Run order for --all (tubbs_2017 excluded — direction mismatch pending)
 ALL_EVENTS = [

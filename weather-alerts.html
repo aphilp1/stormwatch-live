@@ -387,8 +387,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-card-meta{font-size:10px;color:#6a8aaa;margin-bottom:10px}
 .expt-card-errs{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
 .expt-card-err-row{display:flex;justify-content:space-between;align-items:baseline}
-.expt-card-err-lbl{font-size:10px;color:#7090a8}
-.expt-card-err-val{font-size:11px;font-weight:700;color:#a8c4dc}
+.expt-card-err-lbl{font-size:10px;color:#9fb8d2}
+.expt-card-err-val{font-size:11px;font-weight:700;color:#cadcf0}
 .expt-summary{font-size:10px;color:#7a9ab8;line-height:1.55;padding-top:8px;border-top:1px solid rgba(80,120,160,0.15);margin-top:4px}
 .expt-bc-box{background:#071020;border:1px solid rgba(80,200,140,0.22);border-radius:7px;padding:11px 14px;margin-bottom:10px}
 .expt-bc-lbl{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#60aa80;font-weight:700;margin-bottom:5px}
@@ -430,7 +430,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-mode-btn{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#5a7a9a;font-size:10px;font-weight:600;padding:6px 0;cursor:pointer;transition:all 0.15s;text-align:center}
 .expt-mode-btn:hover{background:rgba(255,255,255,0.07);color:#90b8d8;border-color:rgba(255,255,255,0.18)}
 .expt-mode-btn.active{background:rgba(255,255,255,0.09);border-color:rgba(180,210,240,0.4);color:#d0e8ff;font-weight:700}
-.expt-run-context{font-size:10.5px;color:#7090a8;line-height:1.6;padding:7px 10px;background:rgba(255,255,255,0.03);border-radius:4px;border-left:2px solid rgba(80,120,170,0.3);margin-bottom:8px}
+.expt-run-context{font-size:10.5px;color:#cadcf0;line-height:1.6;padding:7px 10px;background:rgba(255,255,255,0.05);border-radius:4px;border-left:2px solid rgba(110,160,210,0.55);margin-bottom:8px}
 #expt-leg-fit,#expt-leg-fit-stn{margin-top:3px;width:100%;background:rgba(80,130,190,0.15);border:1px solid rgba(80,130,190,0.3);border-radius:5px;color:#7ab0d0;font-size:10px;padding:5px;cursor:pointer;transition:all 0.15s}
 #expt-leg-fit:hover,#expt-leg-fit-stn:hover{background:rgba(80,130,190,0.3);color:#d0e8ff}
 #expt-leg-fit-stn{display:none;background:rgba(80,160,100,0.15);border-color:rgba(80,160,100,0.3);color:#6ab880}
@@ -452,7 +452,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #expt-story-panel{background:#06101e;border:1px solid rgba(80,130,190,0.28);border-radius:9px;padding:13px;margin-top:12px;margin-bottom:6px}
 .expt-story-ename{font-size:11.5px;font-weight:700;color:#d0e8ff;margin-bottom:4px}
 .expt-story-rtag{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:9px;text-transform:uppercase;letter-spacing:0.3px}
-.expt-story-body{font-size:10.5px;color:#90aec8;line-height:1.65;margin-bottom:10px;white-space:pre-line}
+.expt-story-body{font-size:10.5px;color:#cadcf0;line-height:1.65;margin-bottom:10px;white-space:pre-line}
 .expt-arrow-tip{background:#0a1828!important;border:1px solid rgba(80,130,190,0.5)!important;color:#c8e0f4!important;font-size:11px!important;padding:5px 9px!important;border-radius:5px!important;box-shadow:0 2px 8px rgba(0,0,0,0.5)!important}
 .expt-arrow-tip::before{display:none!important}
 /* Experiment redesign — problem, findings, outcome, chart */
@@ -1527,7 +1527,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           WindNinja is a mass-consistent, terrain-following wind solver. Feed it an atmospheric boundary condition and a digital elevation model — it computes a physically consistent wind field at the resolution of the DEM (30 m here; can go finer).
         </div>
         <!-- Pipeline -->
-        <div style="font-size:10.5px;color:#7090a8;margin-bottom:4px;font-family:monospace;letter-spacing:0.2px">
+        <div style="font-size:10.5px;color:#a8c4e0;margin-bottom:4px;font-family:monospace;letter-spacing:0.2px">
           HRRR BC &nbsp;→&nbsp; WindNinja &nbsp;→&nbsp; terrain wind field &nbsp;→&nbsp; vs. RAWS obs
         </div>
       </div>
@@ -1537,7 +1537,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:#5a7a98;font-weight:700;margin-bottom:8px">The Two-Run Comparison</div>
         <div style="background:rgba(80,130,190,0.1);border-left:3px solid #5090c0;border-radius:0 5px 5px 0;padding:9px 11px;margin-bottom:7px">
           <div style="font-size:11px;font-weight:700;color:#80b8e0;margin-bottom:3px">Run 1 — Hindcast</div>
-          <div style="font-size:11px;color:#90a8c0;line-height:1.6">HRRR's actual atmospheric analysis from the fire event + 30m terrain. WindNinja computes the wind field. Result compared to what RAWS stations recorded.</div>
+          <div style="font-size:11px;color:#cadcf0;line-height:1.6">HRRR's actual atmospheric analysis from the fire event + 30m terrain. WindNinja computes the wind field. Result compared to what RAWS stations recorded.</div>
         </div>
         <div style="background:rgba(60,180,100,0.08);border-left:3px solid #40aa70;border-radius:0 5px 5px 0;padding:9px 11px">
           <div style="font-size:11px;font-weight:700;color:#50cc88;margin-bottom:3px">Run 2 — Enhanced BC</div>
@@ -1625,7 +1625,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="expt-leg-section-hdr">Station Markers</div>
       <div class="expt-leg-row" style="align-items:flex-start;gap:9px">
         <svg width="22" height="22" viewBox="0 0 22 22" style="flex-shrink:0;margin-top:1px"><circle cx="11" cy="11" r="9" fill="#e74c3c" stroke="#0a0f1c" stroke-width="1.5"/><g transform="translate(11,11) rotate(225)"><path d="M0,-5.5 L1.5,-1.8 L-1.5,-1.8 Z" fill="rgba(0,0,0,0.75)"/></g></svg>
-        <span style="font-size:9.5px;color:#8ab0cc;line-height:1.45"><b style="color:#c0d8f0">Circle</b> = RAWS weather station. <b style="color:#c0d8f0">Color</b> = HRRR forecast error vs. what that station recorded. <b style="color:#c0d8f0">Arrow</b> = the wind direction the station observed.</span>
+        <span style="font-size:9.5px;color:#b8d0ea;line-height:1.45"><b style="color:#dcecff">Circle</b> = RAWS weather station. <b style="color:#dcecff">Color</b> = how far the model wind sits above or below what the station recorded. <b style="color:#dcecff">Arrow</b> = the wind direction the station observed.</span>
       </div>
       <div class="expt-leg-divider"></div>
       <div class="expt-leg-section-hdr">Compare vs. Station Truth</div>
@@ -1633,10 +1633,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <button class="expt-mode-btn run1 active" id="expt-mode-hrrr" onclick="setExptMapMode('hrrr')">Run 1 — Hindcast</button>
         <button class="expt-mode-btn run2" id="expt-mode-wn" onclick="setExptMapMode('wn')">Run 2 — Enhanced BC</button>
       </div>
-      <div id="expt-leg-err-lbl" class="expt-leg-section-hdr" style="margin-top:4px">Station Error: HRRR→WN vs. Obs</div>
+      <div id="expt-leg-err-lbl" class="expt-leg-section-hdr" style="margin-top:4px">Model wind vs. station observation</div>
       <div class="expt-leg-errscale">
         <div class="expt-leg-errscale-bar"></div>
-        <div class="expt-leg-errscale-labels"><span>← Under</span><span>0</span><span>Over →</span></div>
+        <div class="expt-leg-errscale-labels"><span>← below station</span><span>match</span><span>above station →</span></div>
       </div>
       <div class="expt-leg-divider"></div>
       <button id="expt-leg-fit" onclick="exptFitAll()">Fit all events</button>
@@ -7542,6 +7542,18 @@ boot();
 
 // ── EXPERIMENTS ──────────────────────────────────────────────────────────────
 
+// Representative valid time per event = peak-wind hour of the strongest-observed
+// station (winds are time-aligned to each station's own peak; this is the anchor).
+// Source: Storm_info/time_aligned_bc.csv (peak_dt_utc). UTC, 'YYYY-MM-DD HH:MM'.
+const EXPT_VALID_UTC = {
+  camp_2018:        '2018-11-08 12:18',
+  kincade_ign_2019: '2019-10-24 11:56',
+  kincade_run_2019: '2019-10-27 11:56',
+  thomas_2017:      '2017-12-05 12:49',
+  tubbs_2017:       '2017-10-09 06:56',
+  woolsey_2018:     '2018-11-09 04:53'
+};
+
 const EXPT_EVENTS = [
   {
     id: 'camp_2018',
@@ -7558,7 +7570,18 @@ const EXPT_EVENTS = [
     status: 'pass',
     statusLabel: 'WN Niche',
     wn_stations: {
-      CBXC1: { speed: 35.3, ratio: 1.219, wn_err: +6.4 }
+      SLEC1: { speed: 49.1, ratio: 1.402, wn_err: +14.1 },
+      JBGC1: { speed: 34.7, ratio: 1.083, wn_err: +2.6 },
+      CBXC1: { speed: 35.4, ratio: 1.219, wn_err: +6.4 },
+      PKCC1: { speed: 54.5, ratio: 2.272, wn_err: +30.5 },
+      CICC1: { speed: 30.0, ratio: 1.878, wn_err: +14.0 },
+      CDEC1: { speed: 38.5, ratio: 2.57, wn_err: +23.5 },
+      HMRC1: { speed: 27.1, ratio: 2.082, wn_err: +14.1 },
+      CESC1: { speed: 14.9, ratio: 1.358, wn_err: +3.9 },
+      CSTC1: { speed: 27.5, ratio: 3.062, wn_err: +18.5 },
+      BNGC1: { speed: 32.7, ratio: 5.459, wn_err: +26.7 },
+      PSWC1: { speed: 38.3, ratio: 9.58, wn_err: +34.3 },
+      QYRC1: { speed: 15.9, ratio: 7.91, wn_err: +13.9 }
     },
     note: 'Camp Fire, November 8, 2018. HRRR underestimated ridge station winds by 3–18 mph across 12 stations. Hindcast: WindNinja computed 35.3 mph at Colby Mountain (CBXC1) — station recorded 28.9 mph.',
     narrative: 'Camp Fire ignited on the morning of November 8, 2018 under a Diablo offshore wind event, northeast flow funneling through the Sierra Nevada foothills.\n\nThe hindcast uses HRRR\'s actual atmospheric analysis from that morning, combined with 30m terrain data, to compute the WindNinja wind field across the fire area. At Colby Mountain (CBXC1), WindNinja computed 35.3 mph; the station recorded 28.9 mph. At Saddleback Ridge (SLEC1), WindNinja computed 39.5 mph; the station recorded 35.0 mph.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition sized closer to what was actually occurring aloft. At CBXC1, the enhanced BC run computes 18.1 mph against the observed 28.9 mph. The Run 2 boundary condition is smaller than Run 1 — it is sized for the actual upper-atmosphere wind, not HRRR\'s 3km estimate — so WindNinja computes a lower surface wind through the terrain.'
@@ -7889,6 +7912,13 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd
   }
   function errSign(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + ' mph'; }
   function pct(v) { return Math.max(3, Math.round(v / maxSpd * 100)); }
+  // Plain-language comparison of a modeled speed against the station observation.
+  function vsObs(model, o) {
+    if (o == null || o <= 0 || model == null || isNaN(model)) return '';
+    const d = model - o;
+    if (Math.abs(d) < 0.5) return 'matches the station';
+    return Math.abs(d).toFixed(1) + ' mph ' + (d < 0 ? 'below' : 'above') + ' the station';
+  }
 
   // Pre-build sections
   const evHtml   = ev ? '<div style="font-size:9.5px;color:' + DIM + ';margin-top:2px">' + ev.name + ' · ' + ev.date + '</div>' : '';
@@ -7897,7 +7927,7 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd
 
   const obsValStr  = (obs  || 0).toFixed(1) + ' mph' + (calm ? '' : dirStr(obsDir));
   const hrrrValStr = (hrrr || 0).toFixed(1) + ' mph' + dirStr(calm ? null : hrrrDir);
-  const hrrrErrTxt = !isNaN(err) ? sign + err.toFixed(1) + ' mph vs. observed' : '';
+  const hrrrErrTxt = !isNaN(err) ? vsObs(hrrr, obs) : '';
 
   const obsHtml  = row2('Station Observed', obsValStr,  '',         pct(obs||0),  '#60c080');
   const hrrrHtml = row2('HRRR Model (3km)', hrrrValStr, hrrrErrTxt, pct(hrrr||0), '#5080c0');
@@ -7912,8 +7942,7 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd
     wnHtml += row2('Atmospheric driver', bcValStr, '', pct(bc), '#7060b0');
 
     if (wnSpd != null) {
-      const r1err = errSign(wnSpd - obs);
-      wnHtml += row2('WN Hindcast', wnSpd.toFixed(1) + ' mph', r1err + ' vs. observed', pct(wnSpd), '#a080e0');
+      wnHtml += row2('WN Hindcast', wnSpd.toFixed(1) + ' mph', vsObs(wnSpd, obs), pct(wnSpd), '#a080e0');
     } else {
       wnHtml += '<div style="margin:6px 0;font-size:10px;color:' + LBL + ';font-style:italic">WindNinja output not yet available for this station</div>';
     }
@@ -7949,12 +7978,29 @@ function buildSpeedPanel(ev, rows) {
   const panel = document.getElementById('expt-speed-panel');
   if (!panel || !rows || !rows.length) return;
   const hasWN1 = rows.some(r => ev.wn_stations && ev.wn_stations[r.stid]);
-  const hasWN2 = hasWN1 && ev._run2Scale != null;
+  // Run 2 (Enhanced BC) intentionally removed from this panel for now.
+
+  // ── Header: event, date, and representative valid time (hindcast moment) ──
+  const titleEl = document.getElementById('expt-spd-title');
+  if (titleEl) {
+    const vt = EXPT_VALID_UTC[ev.id];
+    const timeStr = vt
+      ? ` &middot; <span style="color:#cfe2f2">${vt.slice(11)} UTC</span>`
+      : '';
+    titleEl.innerHTML =
+      '<div style="font-size:12px;font-weight:800;letter-spacing:0.4px">WIND SPEED COMPARISON</div>'
+      + `<div style="font-size:10.5px;font-weight:600;color:#8fb4d4;margin-top:2px">`
+      +   `${ev.name} &middot; ${ev.date}${timeStr}</div>`
+      + (vt
+          ? `<div style="font-size:9px;color:#6a8aa6;margin-top:1px">Hindcast — winds time-aligned to each station's peak-wind hour</div>`
+          : '');
+  }
+
   const thead = document.getElementById('expt-spd-thead');
   if (thead) {
-    thead.innerHTML = '<th>Station</th><th>Observed</th><th>HRRR</th>'
-      + (hasWN1 ? '<th>Run 1 — Hindcast</th>' : '')
-      + (hasWN2 ? '<th>Run 2 — Enhanced BC</th>' : '');
+    thead.innerHTML = '<th>Station</th><th>Observed</th>'
+      + '<th title="HRRR 0-hour analysis: the model\'s best estimate of the wind at this valid time — not a lead-time forecast. Same atmospheric input WindNinja receives.">HRRR f00</th>'
+      + (hasWN1 ? '<th>Run 1 — WN Hindcast</th>' : '');
   }
   const sorted = [...rows].sort((a,b) => (parseFloat(b.obs_sus_mph)||0) - (parseFloat(a.obs_sus_mph)||0));
   const tbody = document.getElementById('expt-spd-tbody');
@@ -7964,11 +8010,9 @@ function buildSpeedPanel(ev, rows) {
       const hrrr = parseFloat(row.hrrr_10m_mph) || 0;
       const wnD  = ev.wn_stations && ev.wn_stations[row.stid];
       const wn1  = wnD ? wnD.speed : null;
-      const wn2  = (wn1 != null && ev._run2Scale != null) ? wn1 * ev._run2Scale : null;
       const fmt  = v => v != null ? v.toFixed(1) + ' mph' : '—';
       const wn1td = hasWN1 ? `<td class="${wn1!=null?'expt-spd-wn1':'expt-spd-na'}">${fmt(wn1)}</td>` : '';
-      const wn2td = hasWN2 ? `<td class="${wn2!=null?'expt-spd-wn2':'expt-spd-na'}">${fmt(wn2)}</td>` : '';
-      return `<tr><td>${row.stid}</td><td class="expt-spd-obs">${obs.toFixed(1)} mph</td><td class="expt-spd-hrrr">${hrrr.toFixed(1)} mph</td>${wn1td}${wn2td}</tr>`;
+      return `<tr><td>${row.stid}</td><td class="expt-spd-obs">${obs.toFixed(1)} mph</td><td class="expt-spd-hrrr">${hrrr.toFixed(1)} mph</td>${wn1td}</tr>`;
     }).join('');
   }
   const bodyEl = document.getElementById('expt-spd-body');
@@ -8045,8 +8089,8 @@ function initExptMarkers() {
             <div style="font-size:16px;font-weight:800;color:#1a1d2e">${ev.n}</div>
           </div>
           <div>
-            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#999;font-weight:700">HRRR Error</div>
-            <div style="font-size:16px;font-weight:800;color:${ev.hrrr_err<0?'#d42b2b':'#2266aa'}">${errSign}${ev.hrrr_err.toFixed(1)}<span style="font-size:10px;font-weight:500"> mph</span></div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#999;font-weight:700">HRRR vs. Stations</div>
+            <div style="font-size:16px;font-weight:800;color:${ev.hrrr_err<0?'#d42b2b':'#2266aa'}">${Math.abs(ev.hrrr_err).toFixed(1)}<span style="font-size:9px;font-weight:600"> mph ${ev.hrrr_err<0?'below':'above'}</span></div>
           </div>
           <div>
             <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#999;font-weight:700">Anchor RAWS</div>
@@ -8313,11 +8357,12 @@ function renderExptRawMarkers(rows, ev) {
     });
     const m = L.marker([lat, lon], { icon });
 
-    const modeLabel = useWn ? 'WN err' : 'HRRR err';
+    const modeName = useWn ? 'WindNinja' : 'HRRR';
+    const phrase = v => Math.abs(v) < 0.5 ? 'matches station' : (Math.abs(v).toFixed(1) + ' mph ' + (v < 0 ? 'below station' : 'above station'));
     m.bindTooltip(
-      `<b>${row.stid}</b> &nbsp; ${isNaN(obs)?'—':obs.toFixed(1)} mph obs &nbsp;|&nbsp; ` +
-      `<span style="color:${col}">${(dispErr>=0?'+':'')+dispErr.toFixed(1)} mph ${modeLabel}</span>` +
-      (useWn ? '' : (wnErr != null ? ` &nbsp;|&nbsp; <span style="color:#44bb66">WN: ${(wnErr>=0?'+':'')+wnErr.toFixed(1)}</span>` : '')),
+      `<b>${row.stid}</b> &nbsp; observed ${isNaN(obs)?'—':obs.toFixed(1)+' mph'} &nbsp;|&nbsp; ` +
+      `<span style="color:${col}">${modeName} ${phrase(dispErr)}</span>` +
+      (useWn ? '' : (wnErr != null ? ` &nbsp;|&nbsp; <span style="color:#44bb66">WindNinja ${phrase(wnErr)}</span>` : '')),
       { sticky: false, direction: 'top', offset: [0, -(sz+12)] }
     );
 
@@ -8452,11 +8497,11 @@ function renderExptCards() {
   const filtered = exptFilter === 'all' ? EXPT_EVENTS : EXPT_EVENTS.filter(e => e.regime === exptFilter);
   list.innerHTML = filtered.map(ev => {
     const regime = ev.regimeLabel.split('(')[0].trim();
-    const hSign  = ev.hrrr_err >= 0 ? '+' : '';
+    const relSpd = v => Math.abs(v) < 0.5 ? 'matches stations' : (Math.abs(v).toFixed(1) + ' mph ' + (v < 0 ? 'below' : 'above'));
     const wnARow = ev.wn_a_err != null
       ? '<div class="expt-card-err-row">'
         + '<span class="expt-card-err-lbl">WN hindcast · ' + ev.anchor + ' (anchor)</span>'
-        + '<span class="expt-card-err-val">' + (ev.wn_a_err >= 0 ? '+' : '') + ev.wn_a_err.toFixed(1) + ' mph vs. obs</span>'
+        + '<span class="expt-card-err-val">' + relSpd(ev.wn_a_err) + '</span>'
         + '</div>'
       : '';
     return '<div class="expt-card" data-id="' + ev.id + '" data-r="' + ev.regime + '" onclick="exptCardClick(\'' + ev.id + '\')">'
@@ -8464,8 +8509,8 @@ function renderExptCards() {
       + '<div class="expt-card-meta">' + ev.date + ' &nbsp;·&nbsp; ' + regime + ' &nbsp;·&nbsp; ' + ev.n + ' stations</div>'
       + '<div class="expt-card-errs">'
       +   '<div class="expt-card-err-row">'
-      +     '<span class="expt-card-err-lbl">HRRR avg error · all ' + ev.n + ' stations</span>'
-      +     '<span class="expt-card-err-val">' + hSign + ev.hrrr_err.toFixed(1) + ' mph</span>'
+      +     '<span class="expt-card-err-lbl">HRRR vs. stations · ' + ev.n + '-station avg</span>'
+      +     '<span class="expt-card-err-val">' + relSpd(ev.hrrr_err) + '</span>'
       +   '</div>'
       +   wnARow
       + '</div>'
