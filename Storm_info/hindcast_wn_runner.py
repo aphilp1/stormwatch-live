@@ -88,6 +88,13 @@ EVENT_DOMAINS = {
         {'lat': 34.6, 'lon': -118.58, 'radius_mi': 20,
          'dem_name': 'dem_34.60_-118.58_20mi_wmsc1_utm.tif'},
     ],
+    # 2020 Labor Day OR fires span ~200 mi (3 complexes) — one domain can't cover.
+    # Three lat-band cluster domains; runner appends the bbox catch-all too.
+    'labor_day_or2020': [
+        {'lat': 42.33, 'lon': -122.89, 'radius_mi': 18},   # south cluster
+        {'lat': 43.48, 'lon': -122.26, 'radius_mi': 45},   # central cluster
+        {'lat': 44.94, 'lon': -122.48, 'radius_mi': 30},   # north cluster
+    ],
 }
 
 # Stations that require domain DEMs not yet fetched.
@@ -156,6 +163,11 @@ def get_event_domains(event_id, stations):
     if configs is None:
         # No hand-tuned domains: one auto-sized domain covering all stations.
         configs = [bbox_domain(stations)]
+    else:
+        # Hand-tuned tight domains take priority (listed first → matched first);
+        # append the auto bbox domain as a catch-all so stations not covered by a
+        # tight domain still get a value instead of OUT_OF_DOMAIN.
+        configs = list(configs) + [bbox_domain(stations)]
     result = []
     for c in configs:
         d = dict(c)
