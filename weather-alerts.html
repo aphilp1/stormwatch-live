@@ -1619,7 +1619,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#8b5cf6"></span>Convective Outflow</div>
       <div class="expt-leg-divider"></div>
       <div class="expt-leg-section-hdr">WN Hindcast vs. Station Obs</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge pass">WN Niche</span>WN/obs ≈ 1.0 with raw HRRR BC; HRRR alone undershot</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge pass">WN Niche</span>WN within 25% of obs at the anchor ridge (often overcorrects); a clean win (WN/obs ≈ 1.0) is unconfirmed on the production domain</div>
       <div class="expt-leg-row"><span class="expt-leg-badge nails">WN Nails It</span>WN/obs ≈ 1.0 at anchor; do-no-harm gate blocks overcorrection</div>
       <div class="expt-leg-row"><span class="expt-leg-badge improves">WN Corrects</span>WN + correction is closer to station obs than raw HRRR</div>
       <div class="expt-leg-row"><span class="expt-leg-badge hrrrok">HRRR OK</span>HRRR/obs ≈ 1.0 at anchor; no WN needed</div>
@@ -7571,8 +7571,8 @@ const EXPT_EVENTS = [
     hrrr_err: -3.6,
     wn_a_err: +6.4,
     wn_b_err: -10.8,
-    status: 'pass',
-    statusLabel: 'WN Niche',
+    status: 'improves',
+    statusLabel: 'WN overcorrects',
     wn_stations: {
       SLEC1: { speed: 49.1, ratio: 1.402, wn_err: +14.1 },
       JBGC1: { speed: 34.7, ratio: 1.083, wn_err: +2.6 },
@@ -7588,7 +7588,7 @@ const EXPT_EVENTS = [
       QYRC1: { speed: 15.9, ratio: 7.91, wn_err: +13.9 }
     },
     note: 'Camp Fire, November 8, 2018. HRRR underestimated ridge station winds by 3–18 mph across 12 stations. Hindcast: WindNinja computed 35.3 mph at Colby Mountain (CBXC1) — station recorded 28.9 mph.',
-    narrative: 'Camp Fire ignited on the morning of November 8, 2018 under a Diablo offshore wind event, northeast flow funneling through the Sierra Nevada foothills.\n\nThe hindcast uses HRRR\'s actual atmospheric analysis from that morning, combined with 30m terrain data, to compute the WindNinja wind field across the fire area. At Colby Mountain (CBXC1), WindNinja computed 35.3 mph; the station recorded 28.9 mph. At Saddleback Ridge (SLEC1), WindNinja computed 39.5 mph; the station recorded 35.0 mph.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition sized closer to what was actually occurring aloft. At CBXC1, the enhanced BC run computes 18.1 mph against the observed 28.9 mph. The Run 2 boundary condition is smaller than Run 1 — it is sized for the actual upper-atmosphere wind, not HRRR\'s 3km estimate — so WindNinja computes a lower surface wind through the terrain.'
+    narrative: 'Camp Fire ignited on the morning of November 8, 2018 under a Diablo offshore wind event, northeast flow funneling through the Sierra Nevada foothills.\n\nThe hindcast feeds WindNinja HRRR\'s 850 hPa aloft wind (~1.5 km up, roughly ridgetop height) plus 30m terrain, and lets the terrain solver compute the surface wind. At Colby Mountain (CBXC1), WindNinja computed 35.4 mph against an observed 29.0 — an overshoot of +6.4 (ratio 1.22), the closest of the 12 stations. At Saddleback Ridge (SLEC1), WindNinja computed 49.1 vs observed 35.0 (+14).\n\nHonest read: WindNinja overcorrects at the ridges here. Feeding the aloft wind assumes it reaches the surface — true on an exposed peak, but WindNinja has no coupling physics, so it overshoots wherever the surface was decoupled. On this production domain there is no clean coupling win (WN ≈ obs); CBXC1 is the only station within 25% of observed (n=1 by tolerance). The earlier "n=2 niche" (CBXC1 1.007, SLEC1 1.128) came from bespoke DEMs the pipeline does not reproduce — SLEC1\'s recorded DEM is geographic and WindNinja will not run it. The fix is a coupling-aware input, not a uniform BC scale.'
   },
   {
     id: 'tubbs_2017',
