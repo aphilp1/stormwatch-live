@@ -527,6 +527,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-spd-wn1{color:#f0b43c !important;font-weight:700}
 .expt-spd-wn2{color:#44bb88 !important}
 .expt-spd-na{color:#46596e !important}
+.expt-spd-couple{color:#5ad68f !important;font-weight:700}
+.expt-spd-over{color:#f0a83c !important;font-weight:700}
+.expt-spd-tag{text-align:left !important;font-size:8.5px;white-space:nowrap;letter-spacing:0.2px}
+#expt-spd-table tr.calm td{opacity:0.45}
 .agent-mode-btns{display:flex;gap:4px}
 
 /* ── COMBINED THREAT PANEL ───────────────────────────────────────── */
@@ -8008,14 +8012,19 @@ function buildSpeedPanel(ev, rows) {
       +   `${ev.name} &middot; ${ev.date}${timeStr}</div>`
       + (vt
           ? `<div style="font-size:9px;color:#6a8aa6;margin-top:1px">Hindcast — winds time-aligned to each station's peak-wind hour</div>`
-          : '');
+          : '')
+      + `<div style="font-size:9px;color:#aebfd0;margin-top:5px;line-height:1.5;max-width:470px">`
+      +   `Run 1 (WN) carries the <b>aloft</b> HRRR wind down to the surface. It matches observed only where that wind `
+      +   `<b style="color:#5ad68f">coupled</b> down (BC/obs &asymp; 1, exposed ridges). Where the surface `
+      +   `<b style="color:#f0a83c">decoupled</b> (BC/obs &gt;&gt; 1) or went <b style="color:#9fb0c0">near-calm</b>, raw-BC WN overshoots — that gap is why the BC must be corrected.</div>`;
   }
 
   const thead = document.getElementById('expt-spd-thead');
   if (thead) {
-    thead.innerHTML = '<th>Station</th><th>Observed</th>'
+    thead.innerHTML = '<th>Station</th><th>Obs<span style="font-weight:400;opacity:0.6"> mph</span></th>'
       + '<th title="HRRR 0-hour analysis: the model\'s best estimate of the wind at this valid time — not a lead-time forecast. Same atmospheric input WindNinja receives.">HRRR f00</th>'
-      + (hasWN1 ? '<th>Run 1 — WN Hindcast</th>' : '');
+      + (hasWN1 ? '<th>Run 1 — WN</th>' : '')
+      + '<th class="expt-spd-tag" title="Aloft (850 hPa) wind vs the surface observation, and terrain. BC/obs ≈ 1 = the wind coupled to the surface and WN is valid; BC/obs ≫ 1 = the surface decoupled and WN overshoots.">Aloft vs surface</th>';
   }
   const sorted = [...rows].sort((a,b) => (parseFloat(b.obs_sus_mph)||0) - (parseFloat(a.obs_sus_mph)||0));
   const tbody = document.getElementById('expt-spd-tbody');
@@ -8023,11 +8032,30 @@ function buildSpeedPanel(ev, rows) {
     tbody.innerHTML = sorted.map(row => {
       const obs  = parseFloat(row.obs_sus_mph)  || 0;
       const hrrr = parseFloat(row.hrrr_10m_mph) || 0;
+      const bc   = parseFloat(row.bc_speed)     || 0;
+      const ratio = obs > 0 ? bc / obs : null;
       const wnD  = ev.wn_stations && ev.wn_stations[row.stid];
       const wn1  = wnD ? wnD.speed : null;
-      const fmt  = v => v != null ? v.toFixed(1) + ' mph' : '—';
-      const wn1td = hasWN1 ? `<td class="${wn1!=null?'expt-spd-wn1':'expt-spd-na'}">${fmt(wn1)}</td>` : '';
-      return `<tr><td>${row.stid}</td><td class="expt-spd-obs">${obs.toFixed(1)} mph</td><td class="expt-spd-hrrr">${hrrr.toFixed(1)} mph</td>${wn1td}</tr>`;
+      const tc   = (row.terrain_class || '').toLowerCase();
+      const terr = tc.includes('ridge') || tc.includes('exposed') ? 'ridge'
+                 : tc.includes('canyon') || tc.includes('gap')    ? 'canyon'
+                 : tc.includes('valley')                          ? 'valley'
+                 : tc.includes('flat')  || tc.includes('plain')   ? 'flat' : 'open';
+      // Coupling category — the focus of this table.
+      let rowCls = '', wnCls = 'expt-spd-wn1', tag = '', tagCol = '#9fb0c0';
+      if (obs < 5) {
+        rowCls = 'calm'; wnCls = 'expt-spd-na';
+        tag = 'near-calm — sheltered'; tagCol = '#9fb0c0';
+      } else if (ratio != null && ratio <= 1.35) {
+        wnCls = 'expt-spd-couple';
+        tag = `${terr} &middot; coupled ✓`; tagCol = '#5ad68f';
+      } else {
+        wnCls = 'expt-spd-over';
+        tag = `${terr} &middot; BC ${ratio ? ratio.toFixed(1) : '?'}&times; obs`; tagCol = '#f0a83c';
+      }
+      const wn1td = hasWN1 ? `<td class="${wn1!=null?wnCls:'expt-spd-na'}">${wn1!=null?wn1.toFixed(1):'—'}</td>` : '';
+      const tagTd = `<td class="expt-spd-tag" style="color:${tagCol}">${tag}</td>`;
+      return `<tr class="${rowCls}"><td>${row.stid}</td><td class="expt-spd-obs">${obs.toFixed(1)}</td><td class="expt-spd-hrrr">${hrrr.toFixed(1)}</td>${wn1td}${tagTd}</tr>`;
     }).join('');
   }
   const bodyEl = document.getElementById('expt-spd-body');
