@@ -7811,16 +7811,18 @@ const EXPT_REGIME_COLOR = {
   convective:  '#8b5cf6'
 };
 
-// Historical fire perimeter WHERE clauses (plain SQL, encoded at call time)
+// Historical fire perimeter WHERE clauses for NIFC InterAgencyFirePerimeterHistory
+// (schema: INCIDENT, FIRE_YEAR, GIS_ACRES). Camp verified to return the 153,335-acre
+// final footprint; the loader takes the largest matching polygon.
 const EXPT_PERIM_WHERE = {
-  camp_2018:        "poly_IncidentName LIKE '%CAMP%' AND poly_GISAcres > 100000",
-  tubbs_2017:       "poly_IncidentName LIKE '%TUBBS%' AND poly_GISAcres > 10000",
-  kincade_ign_2019: "poly_IncidentName LIKE '%KINCADE%' AND poly_GISAcres > 50000",
-  kincade_run_2019: "poly_IncidentName LIKE '%KINCADE%' AND poly_GISAcres > 50000",
-  thomas_2017:      "poly_IncidentName LIKE '%THOMAS%' AND poly_GISAcres > 100000",
-  woolsey_2018:     "poly_IncidentName LIKE '%WOOLSEY%' AND poly_GISAcres > 5000",
-  labor_day_or2020: "poly_IncidentName LIKE '%BEACHIE%'",
-  marshall_2021:    "poly_IncidentName LIKE '%MARSHALL%'",
+  camp_2018:        "FIRE_YEAR=2018 AND INCIDENT='CAMP'",
+  tubbs_2017:       "FIRE_YEAR=2017 AND INCIDENT LIKE '%TUBBS%'",
+  kincade_ign_2019: "FIRE_YEAR=2019 AND INCIDENT LIKE '%KINCADE%'",
+  kincade_run_2019: "FIRE_YEAR=2019 AND INCIDENT LIKE '%KINCADE%'",
+  thomas_2017:      "FIRE_YEAR=2017 AND INCIDENT LIKE '%THOMAS%'",
+  woolsey_2018:     "FIRE_YEAR=2018 AND INCIDENT LIKE '%WOOLSEY%'",
+  labor_day_or2020: "FIRE_YEAR=2020 AND INCIDENT LIKE '%BEACHIE%'",
+  marshall_2021:    "FIRE_YEAR=2021 AND INCIDENT LIKE '%MARSHALL%'",
   boulder_chin2021: null,
   missoula_dec2025: null,
   missoula_jul2024: null,
@@ -8212,7 +8214,9 @@ async function loadExptWindVectors(ev, mode) {
   exptVectorGroup.clearLayers();
 
   const reality = (mode === 'wn') ? 'b' : 'a';
-  const url = `Storm_info/hindcast_grids/${ev.id}_reality_${reality}_domain.json`;
+  // cache-bust so a reload always gets the freshly-regenerated field, not a
+  // stale browser-cached copy.
+  const url = `Storm_info/hindcast_grids/${ev.id}_reality_${reality}_domain.json?t=${Date.now()}`;
   let data;
   try {
     const resp = await fetch(url);
@@ -8433,13 +8437,13 @@ async function loadExptPerim(ev) {
   const where = EXPT_PERIM_WHERE[ev.id];
   if (!where) return;
 
-  // Try AllYears service first, fall back to the MTBS/archived endpoint pattern
+  // NIFC InterAgencyFirePerimeterHistory has the older fires (incl. 2018 Camp);
+  // WFIGS only covers recent years. Schema: INCIDENT, FIRE_YEAR, GIS_ACRES.
   const services = [
-    'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_AllYears/FeatureServer/0/query',
-    'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters/FeatureServer/0/query'
+    'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/InterAgencyFirePerimeterHistory_All_Years_View/FeatureServer/0/query'
   ];
 
-  const params = `?where=${encodeURIComponent(where)}&outFields=poly_IncidentName,poly_GISAcres,attr_POOState&returnGeometry=true&f=geojson&resultRecordCount=10`;
+  const params = `?where=${encodeURIComponent(where)}&outFields=INCIDENT,FIRE_YEAR,GIS_ACRES&returnGeometry=true&f=geojson&resultRecordCount=20`;
 
   let features = [];
   for (const svc of services) {
@@ -8460,15 +8464,15 @@ async function loadExptPerim(ev) {
 
   // Take the largest polygon (final fire footprint, not an early small perimeter)
   const feat = features.sort((a, b) =>
-    (b.properties?.poly_GISAcres || 0) - (a.properties?.poly_GISAcres || 0)
+    (b.properties?.GIS_ACRES || 0) - (a.properties?.GIS_ACRES || 0)
   )[0];
 
   if (!exptPerimGroup) exptPerimGroup = L.layerGroup();
   exptPerimGroup.clearLayers();
   exptPerimGroup.addTo(map);
 
-  const acres = feat.properties?.poly_GISAcres
-    ? `${Math.round(feat.properties.poly_GISAcres).toLocaleString()} acres` : '';
+  const acres = feat.properties?.GIS_ACRES
+    ? `${Math.round(feat.properties.GIS_ACRES).toLocaleString()} acres` : '';
 
   L.geoJSON(feat, {
     style: { color: '#ff6600', fillColor: '#ff8800', weight: 2.5, opacity: 0.95, fillOpacity: 0.15, dashArray: '6 4' }
