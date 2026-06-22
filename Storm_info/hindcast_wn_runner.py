@@ -210,10 +210,22 @@ def run_wn(dem_path, speed, direction, veg='trees'):
     cached_vel = glob_mod.glob(
         os.path.join(WN_CACHE, f'{dem_stem}_{dir_int}_{spd_int}_*_vel-4326.asc'))
     if cached_vel:
+        # The filename encodes the mesh CELL SIZE (e.g. ..._762m_vel-4326.asc).
+        # This runner always runs coarse mesh = the LARGEST cell size. If a manual
+        # fine/medium-mesh experiment left extra ASCs in the shared cache, the old
+        # glob()[0] could silently return the fine one (this caused SLEC1=57 vs the
+        # coarse 49.1 — see POSTMORTEM_2026-06-22). Pick the coarsest match
+        # deterministically, and match the ang ASC to the SAME cell tag.
+        def _cell_m(p):
+            tok = os.path.basename(p).split('_')[-2]
+            try: return int(tok.rstrip('m'))
+            except ValueError: return 0
+        vel = max(cached_vel, key=_cell_m)
+        cell_tag = os.path.basename(vel).split('_')[-2]
         cached_ang = glob_mod.glob(
-            os.path.join(WN_CACHE, f'{dem_stem}_{dir_int}_{spd_int}_*_ang-4326.asc'))
-        print(f"  [cached] {os.path.basename(cached_vel[0])}")
-        return cached_vel[0], (cached_ang[0] if cached_ang else None)
+            os.path.join(WN_CACHE, f'{dem_stem}_{dir_int}_{spd_int}_{cell_tag}_ang-4326.asc'))
+        print(f"  [cached] {os.path.basename(vel)}")
+        return vel, (cached_ang[0] if cached_ang else None)
 
     args = [
         WN_CLI, '--num_threads', '6',
@@ -654,9 +666,13 @@ def run_event(event_id, reality_b=False, veg='trees'):
                 h_str   = f"HRRR={r['hrrr_err']:+.1f}" if r.get('hrrr_err') is not None else "HRRR=N/A"
                 ratio   = r['wn_speed_a'] / r['obs_sus'] if r.get('obs_sus') else None
                 r_str   = f"ratio={ratio:.3f}" if ratio is not None else ""
-                imp     = (r.get('hrrr_err') is not None and
+                # A "win" means WN actually lands near obs (within 25%), NOT merely
+                # that |wn_err| < |hrrr_err| — the old test flagged SLEC1 (ratio 1.40,
+                # a +40% overshoot) as a win. See POSTMORTEM_2026-06-22.
+                within  = ratio is not None and abs(ratio - 1) <= 0.25
+                closer  = (r.get('hrrr_err') is not None and
                            abs(r['wn_err_a']) < abs(r['hrrr_err']))
-                flag    = " NICHE WIN" if imp else ""
+                flag    = " NICHE WIN" if within else (" (closer, not in band)" if closer else "")
                 print(f"      {r['stid']:<8} WN_err={r['wn_err_a']:+.1f}  {h_str}  {r_str}"
                       f"  off={r.get('domain_offset_km','?')}km{flag}")
         if others:
