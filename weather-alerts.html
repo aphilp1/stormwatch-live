@@ -8474,10 +8474,12 @@ async function loadExptPerim(ev) {
   const acres = feat.properties?.GIS_ACRES
     ? `${Math.round(feat.properties.GIS_ACRES).toLocaleString()} acres` : '';
 
+  // interactive:false — the perimeter is a visual boundary only; it must NOT
+  // intercept clicks/hovers meant for the wind arrows beneath it.
   L.geoJSON(feat, {
-    style: { color: '#ff6600', fillColor: '#ff8800', weight: 2.5, opacity: 0.95, fillOpacity: 0.15, dashArray: '6 4' }
+    interactive: false,
+    style: { color: '#ff6600', fillColor: '#ff8800', weight: 2.5, opacity: 0.95, fillOpacity: 0.12, dashArray: '6 4' }
   })
-  .bindTooltip(`<b>${ev.name} perimeter</b>${acres ? '<br>' + acres : ''}`, { sticky: true })
   .addTo(exptPerimGroup);
 }
 
