@@ -154,11 +154,8 @@ def get_event_domains(event_id, stations):
     """Return list of domain dicts with resolved 'dem_path' key."""
     configs = EVENT_DOMAINS.get(event_id)
     if configs is None:
-        lat = sum(s['lat'] for s in stations) / len(stations)
-        lon = sum(s['lon'] for s in stations) / len(stations)
-        lat_r = round(round(lat * 10) / 10, 1)
-        lon_r = round(round(lon * 10) / 10, 1)
-        configs = [{'lat': lat_r, 'lon': lon_r, 'radius_mi': 20}]
+        # No hand-tuned domains: one auto-sized domain covering all stations.
+        configs = [bbox_domain(stations)]
     result = []
     for c in configs:
         d = dict(c)
@@ -166,6 +163,20 @@ def get_event_domains(event_id, stations):
                                      c.get('dem_name'))
         result.append(d)
     return result
+
+
+# ── Auto domain sizing ────────────────────────────────────────────────────────
+
+def bbox_domain(stations, margin_mi=8, cap_mi=45):
+    """Single domain (bbox center + radius in miles) covering all stations.
+    Used as the auto display domain and the auto fallback when an event has no
+    hand-tuned EVENT_DOMAINS. Radius is capped so a few far-flung stations don't
+    force an enormous DEM (those land OUT_OF_DOMAIN and are reported as such)."""
+    lat = (min(s['lat'] for s in stations) + max(s['lat'] for s in stations)) / 2
+    lon = (min(s['lon'] for s in stations) + max(s['lon'] for s in stations)) / 2
+    maxd_km = max(offset_km(lat, lon, s['lat'], s['lon']) for s in stations)
+    radius_mi = min(cap_mi, int(maxd_km / 1.60934) + margin_mi)
+    return {'lat': round(lat, 2), 'lon': round(lon, 2), 'radius_mi': radius_mi}
 
 
 # ── WindNinja CLI ─────────────────────────────────────────────────────────────
@@ -460,7 +471,9 @@ def run_event(event_id, reality_b=False, veg='trees'):
     # Prefer a single large DISPLAY domain so the arrow field is one continuous
     # grid over the whole area (no inter-domain gaps). Fall back to merging the
     # per-station EVENT_DOMAINS (deduped on a ~0.02deg grid) if none is configured.
-    disp = DISPLAY_DOMAINS.get(event_id)
+    # Always drive the field from a single large domain (hand-tuned if given,
+    # else auto-sized to the station bbox) so the arrows form one continuous grid.
+    disp = DISPLAY_DOMAINS.get(event_id) or bbox_domain(stations)
     field_vectors = []
     field_source = None
     if disp:

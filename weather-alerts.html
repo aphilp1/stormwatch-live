@@ -8288,6 +8288,10 @@ async function loadExptContext(ev) {
   }
   exptHillshadeLayer.addTo(map);
 
+  // 1b. Per-station WN results → ev.wn_stations (auto-populates every event
+  //     from the pipeline output, no per-event hardcoding needed)
+  await loadExptStationResults(ev);
+
   // 2. RAWS station markers from CSV
   await loadExptRaws(ev);
 
@@ -8312,6 +8316,28 @@ async function loadExptContext(ev) {
   await loadExptPerim(ev);
 
   exptStatus('');
+}
+
+// Build ev.wn_stations from the freshly-generated station_results.json so every
+// event auto-populates from the pipeline output (no per-event hardcoding). Falls
+// back to whatever is hardcoded on the event if the file is missing.
+async function loadExptStationResults(ev) {
+  try {
+    const resp = await fetch(`Storm_info/hindcast_grids/${ev.id}_station_results.json?t=${Date.now()}`);
+    if (!resp.ok) return;
+    const d = await resp.json();
+    const map = {};
+    (d.stations || []).forEach(s => {
+      if (s.wn_speed_a == null) return;
+      const obs = s.obs_sus || 0;
+      map[s.stid] = {
+        speed:  Math.round(s.wn_speed_a * 10) / 10,
+        ratio:  obs > 0 ? Math.round(s.wn_speed_a / obs * 1000) / 1000 : 0,
+        wn_err: s.wn_err_a != null ? Math.round(s.wn_err_a * 10) / 10 : null
+      };
+    });
+    if (Object.keys(map).length) ev.wn_stations = map;
+  } catch(e) { /* keep hardcoded fallback */ }
 }
 
 function setExptMapMode(mode) {
