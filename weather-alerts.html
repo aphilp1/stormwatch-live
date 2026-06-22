@@ -8013,10 +8013,10 @@ function buildSpeedPanel(ev, rows) {
       + (vt
           ? `<div style="font-size:9px;color:#6a8aa6;margin-top:1px">Hindcast — winds time-aligned to each station's peak-wind hour</div>`
           : '')
-      + `<div style="font-size:9px;color:#aebfd0;margin-top:5px;line-height:1.5;max-width:470px">`
-      +   `Run 1 (WN) carries the <b>aloft</b> HRRR wind down to the surface. It matches observed only where that wind `
-      +   `<b style="color:#5ad68f">coupled</b> down (BC/obs &asymp; 1, exposed ridges). Where the surface `
-      +   `<b style="color:#f0a83c">decoupled</b> (BC/obs &gt;&gt; 1) or went <b style="color:#9fb0c0">near-calm</b>, raw-BC WN overshoots — that gap is why the BC must be corrected.</div>`;
+      + `<div style="font-size:9px;color:#aebfd0;margin-top:5px;line-height:1.5;max-width:480px">`
+      +   `Run 1 (WN) applies a <b>terrain transfer</b> to the aloft HRRR wind — amplifying at exposed ridges, decelerating at gentler terrain (geometry governs the transform, not a uniform BC scale). `
+      +   `<b style="color:#5ad68f">Green</b> = WN within 25% of the station; <b style="color:#f0a83c">amber</b> = overshoot. `
+      +   `<b style="color:#9fb0c0">Greyed</b> = near-calm or extreme BC-vs-obs — denominator-sensitive, not scored.</div>`;
   }
 
   const thead = document.getElementById('expt-spd-thead');
@@ -8024,7 +8024,7 @@ function buildSpeedPanel(ev, rows) {
     thead.innerHTML = '<th>Station</th><th>Obs<span style="font-weight:400;opacity:0.6"> mph</span></th>'
       + '<th title="HRRR 0-hour analysis: the model\'s best estimate of the wind at this valid time — not a lead-time forecast. Same atmospheric input WindNinja receives.">HRRR f00</th>'
       + (hasWN1 ? '<th>Run 1 — WN</th>' : '')
-      + '<th class="expt-spd-tag" title="Aloft (850 hPa) wind vs the surface observation, and terrain. BC/obs ≈ 1 = the wind coupled to the surface and WN is valid; BC/obs ≫ 1 = the surface decoupled and WN overshoots.">Aloft vs surface</th>';
+      + '<th class="expt-spd-tag" title="Terrain class governs the WindNinja transfer (ridges amplify, gentler terrain decelerates). Result = how the WN surface wind compares to the station. Near-calm / extreme BC-vs-obs sites are not scored.">Terrain · result</th>';
   }
   const sorted = [...rows].sort((a,b) => (parseFloat(b.obs_sus_mph)||0) - (parseFloat(a.obs_sus_mph)||0));
   const tbody = document.getElementById('expt-spd-tbody');
@@ -8033,29 +8033,31 @@ function buildSpeedPanel(ev, rows) {
       const obs  = parseFloat(row.obs_sus_mph)  || 0;
       const hrrr = parseFloat(row.hrrr_10m_mph) || 0;
       const bc   = parseFloat(row.bc_speed)     || 0;
-      const ratio = obs > 0 ? bc / obs : null;
+      const ratioBO = obs > 0 ? bc / obs : 99;  // used only to exclude denominator artifacts
       const wnD  = ev.wn_stations && ev.wn_stations[row.stid];
       const wn1  = wnD ? wnD.speed : null;
       const tc   = (row.terrain_class || '').toLowerCase();
-      const terr = tc.includes('ridge') || tc.includes('exposed') ? 'ridge'
-                 : tc.includes('canyon') || tc.includes('gap')    ? 'canyon'
-                 : tc.includes('valley')                          ? 'valley'
-                 : tc.includes('flat')  || tc.includes('plain')   ? 'flat' : 'open';
-      // Coupling category — the focus of this table.
-      let rowCls = '', wnCls = 'expt-spd-wn1', tag = '', tagCol = '#9fb0c0';
-      if (obs < 5) {
+      const terrLabel = tc.includes('ridge') || tc.includes('exposed') ? 'Exposed ridge'
+                      : tc.includes('canyon') || tc.includes('gap')    ? 'Canyon / gap'
+                      : tc.includes('valley')                          ? 'Valley'
+                      : tc.includes('flat')  || tc.includes('plain')   ? 'Flat' : 'Open';
+      // Near-calm (obs<5) or extreme BC/obs (>3) are denominator-sensitive: shown
+      // but greyed and NOT scored. This is exclusion, not a "decoupled" claim.
+      const excluded = obs < 5 || ratioBO > 3;
+      let rowCls = '', wnCls = 'expt-spd-wn1', result = '', resCol = '#9fb0c0';
+      if (excluded) {
         rowCls = 'calm'; wnCls = 'expt-spd-na';
-        tag = 'near-calm — sheltered'; tagCol = '#9fb0c0';
-      } else if (ratio != null && ratio <= 1.35) {
-        wnCls = 'expt-spd-couple';
-        tag = `${terr} &middot; coupled ✓`; tagCol = '#5ad68f';
-      } else {
-        wnCls = 'expt-spd-over';
-        tag = `${terr} &middot; BC ${ratio ? ratio.toFixed(1) : '?'}&times; obs`; tagCol = '#f0a83c';
+        result = 'near-calm · not scored';
+      } else if (wn1 != null && obs > 0) {
+        const wr = wn1 / obs;
+        if (Math.abs(wr - 1) <= 0.25) { wnCls = 'expt-spd-couple'; result = 'matches obs'; resCol = '#5ad68f'; }
+        else if (wr > 1)              { wnCls = 'expt-spd-over';   result = `over +${(wn1-obs).toFixed(0)}`; resCol = '#f0a83c'; }
+        else                          { wnCls = 'expt-spd-over';   result = `under ${(wn1-obs).toFixed(0)}`; resCol = '#7aa8e0'; }
       }
       const wn1td = hasWN1 ? `<td class="${wn1!=null?wnCls:'expt-spd-na'}">${wn1!=null?wn1.toFixed(1):'—'}</td>` : '';
-      const tagTd = `<td class="expt-spd-tag" style="color:${tagCol}">${tag}</td>`;
-      return `<tr class="${rowCls}"><td>${row.stid}</td><td class="expt-spd-obs">${obs.toFixed(1)}</td><td class="expt-spd-hrrr">${hrrr.toFixed(1)}</td>${wn1td}${tagTd}</tr>`;
+      const ctxTd = `<td class="expt-spd-tag"><span style="color:#9fb0c0">${terrLabel}</span>`
+        + (result ? ` &middot; <span style="color:${resCol}">${result}</span>` : '') + '</td>';
+      return `<tr class="${rowCls}"><td>${row.stid}</td><td class="expt-spd-obs">${obs.toFixed(1)}</td><td class="expt-spd-hrrr">${hrrr.toFixed(1)}</td>${wn1td}${ctxTd}</tr>`;
     }).join('');
   }
   const bodyEl = document.getElementById('expt-spd-body');
