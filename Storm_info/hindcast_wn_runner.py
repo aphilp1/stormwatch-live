@@ -447,25 +447,42 @@ def run_event(event_id, reality_b=False, veg='trees'):
         d['vel_path'] = vel
         d['ang_path'] = ang
 
-    # ── Domain display vectors from primary ──────────────────────────────────
-    primary = domains[0]
-    if primary.get('vel_path'):
-        vectors = asc_to_vectors(primary['vel_path'], primary.get('ang_path'))
-        speeds  = [v['speed'] for v in vectors]
-        step_used = max(1, min(
-            int(primary['vel_path'].split('_')[-2].replace('m','') if False else 0), 1))
-        print(f"\n[Domain display]  {len(vectors)} vectors  "
+    # ── Domain display vectors — MERGED across ALL domains ───────────────────
+    # Previously only the primary domain's field was written, leaving the
+    # southern/eastern stations in blank space. Merge every domain's vectors so
+    # the arrow field covers the whole event area. Dedupe overlapping samples on
+    # a ~0.02deg grid (first domain wins) so overlapping domains don't clutter.
+    merged, seen_cells = [], set()
+    per_domain_counts = []
+    for d in domains:
+        if not d.get('vel_path'):
+            continue
+        vs = asc_to_vectors(d['vel_path'], d.get('ang_path'), target_per_axis=16)
+        kept = 0
+        for v in vs:
+            cell = (round(v['lat'] / 0.02), round(v['lon'] / 0.02))
+            if cell in seen_cells:
+                continue
+            seen_cells.add(cell)
+            merged.append(v)
+            kept += 1
+        per_domain_counts.append((os.path.basename(d['dem_path']), kept))
+    if merged:
+        speeds = [v['speed'] for v in merged]
+        print(f"\n[Domain display]  {len(merged)} vectors merged from {len(per_domain_counts)} domains  "
               f"mean={sum(speeds)/len(speeds):.1f} min={min(speeds):.1f} max={max(speeds):.1f} mph")
+        for name, k in per_domain_counts:
+            print(f"    {name}: {k} vectors")
         domain_out = {
             'event_id':   event_id,
             'reality':    'A',
             'bc':         {'speed': round(median_spd, 1), 'dir': round(median_dir, 1)},
-            'domain_dem': os.path.basename(primary['dem_path']),
+            'domain_dem': [os.path.basename(d['dem_path']) for d in domains if d.get('vel_path')],
             'stats':      {'mean': round(sum(speeds)/len(speeds), 2),
                            'min':  round(min(speeds), 2),
                            'max':  round(max(speeds), 2),
-                           'n':    len(vectors)},
-            'vectors':    vectors,
+                           'n':    len(merged)},
+            'vectors':    merged,
         }
         out_path = os.path.join(OUTPUT_DIR, f"{event_id}_reality_a_domain.json")
         with open(out_path, 'w') as fh:

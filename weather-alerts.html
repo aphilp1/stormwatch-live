@@ -7877,7 +7877,7 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd
       ? '<div style="height:5px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:4px;overflow:hidden">'
         + '<div style="height:100%;width:' + barPct + '%;background:' + barCol + ';border-radius:2px"></div></div>'
       : '';
-    return '<div style="margin:10px 0">'
+    return '<div style="margin:7px 0">'
       + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
       +   '<span style="font-size:10px;font-weight:700;color:' + LBL + ';text-transform:uppercase;letter-spacing:0.6px">' + label + '</span>'
       +   '<span style="font-size:15px;font-weight:800;color:' + VAL + '">' + valStr
@@ -7942,15 +7942,19 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd
   let wnHtml = '';
   if (bc != null) {
     const bcValStr = bc.toFixed(1) + ' mph' + dirStr(bcDir);
-    wnHtml += '<div style="margin:14px 0 6px;padding-top:11px;border-top:1px solid ' + SEP + '">'
-      + '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#cbb8f0;font-weight:800;margin-bottom:3px">WindNinja Hindcast &middot; Run 1</div>'
-      + '<div style="font-size:10.5px;color:' + LBL + ';line-height:1.5">Takes HRRR\'s wind from ' + bcLvl + ' (above the surface) and runs it through 30 m terrain to estimate the surface wind.</div>'
+    const bcLvlNum = parseInt(bcLvl) || 850;
+    const bcHeight = bcLvlNum >= 840 ? '~1.5 km / 5,000 ft up'
+                   : bcLvlNum >= 690 ? '~3 km / 10,000 ft up'
+                   : 'above the surface';
+    wnHtml += '<div style="margin:11px 0 5px;padding-top:9px;border-top:1px solid ' + SEP + '">'
+      + '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:#f0c24a;font-weight:800;margin-bottom:3px">WindNinja Hindcast &middot; Run 1</div>'
+      + '<div style="font-size:10px;color:' + LBL + ';line-height:1.45">Takes HRRR\'s wind at ' + bcLvl + ' (' + bcHeight + ') and runs it through 30 m terrain to compute the surface wind.</div>'
       + '</div>';
-    // Input = the HRRR upper-air wind that drives WindNinja (NOT the same as the
-    // 3 km surface row above). Output = WindNinja's terrain-resolved surface wind.
-    wnHtml += row2('Input &middot; HRRR ' + bcLvl, bcValStr, '', pct(bc), '#8a6fd0');
+    // Input = the HRRR upper-air wind that drives WindNinja (NOT the 3 km surface
+    // row above). Output = WindNinja's terrain-resolved surface wind.
+    wnHtml += row2('Input &middot; HRRR ' + bcLvl, bcValStr, '', pct(bc), '#6c8ebf');
     if (wnSpd != null) {
-      wnHtml += row2('Output &middot; WindNinja surface', wnSpd.toFixed(1) + ' mph', calm ? '' : vsObs(wnSpd, obs), pct(wnSpd), '#b89bf0');
+      wnHtml += row2('Output &middot; WindNinja surface', wnSpd.toFixed(1) + ' mph', calm ? '' : vsObs(wnSpd, obs), pct(wnSpd), '#f0b43c');
     } else {
       wnHtml += '<div style="margin:8px 0;font-size:10.5px;color:' + LBL + ';font-style:italic">WindNinja not yet run for this station.</div>';
     }
@@ -7962,8 +7966,8 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd
     + (!isNaN(relief) ? 'Relief ' + Math.round(relief) + ' m' : '');
 
   return '<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:' + BG + ';'
-    + 'padding:14px 16px;border-radius:8px;min-width:340px;max-width:430px;box-shadow:0 4px 24px rgba(0,0,0,0.7)">'
-    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
+    + 'padding:11px 14px;border-radius:8px;min-width:330px;max-width:410px;box-shadow:0 4px 24px rgba(0,0,0,0.7)">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
     +   '<div>'
     +     '<div style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:0.2px;line-height:1.1">' + row.stid + '</div>'
     +     '<div style="font-size:11px;color:' + DIM + ';margin-top:2px">' + (row.station_name || '') + '</div>'
