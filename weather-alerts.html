@@ -529,8 +529,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-spd-na{color:#46596e !important}
 .expt-spd-couple{color:#5ad68f !important;font-weight:700}
 .expt-spd-over{color:#f0a83c !important;font-weight:700}
-.expt-spd-tag{text-align:left !important;font-size:8.5px;white-space:nowrap;letter-spacing:0.2px}
-#expt-spd-table tr.calm td{opacity:0.45}
+.expt-spd-under{color:#6fb0e0 !important;font-weight:700}
+.expt-spd-tag{text-align:left !important;font-size:8.5px;white-space:nowrap;letter-spacing:0.2px;text-transform:none}
 .agent-mode-btns{display:flex;gap:4px}
 
 /* ── COMBINED THREAT PANEL ───────────────────────────────────────── */
@@ -8013,10 +8013,9 @@ function buildSpeedPanel(ev, rows) {
       + (vt
           ? `<div style="font-size:9px;color:#6a8aa6;margin-top:1px">Hindcast — winds time-aligned to each station's peak-wind hour</div>`
           : '')
-      + `<div style="font-size:9px;color:#aebfd0;margin-top:5px;line-height:1.5;max-width:480px">`
-      +   `Run 1 (WN) applies a <b>terrain transfer</b> to the aloft HRRR wind — amplifying at exposed ridges, decelerating at gentler terrain (geometry governs the transform, not a uniform BC scale). `
-      +   `<b style="color:#5ad68f">Green</b> = WN within 25% of the station; <b style="color:#f0a83c">amber</b> = overshoot. `
-      +   `<b style="color:#9fb0c0">Greyed</b> = near-calm or extreme BC-vs-obs — denominator-sensitive, not scored.</div>`;
+      + `<div style="font-size:9.5px;color:#cdddf0;margin-top:5px;line-height:1.5;max-width:480px;text-transform:none;font-weight:400">`
+      +   `WindNinja reshapes the aloft HRRR wind through terrain — amplifying on ridges, easing in valleys. `
+      +   `Run 1 vs station: <b style="color:#5ad68f">green</b> within 25%, <b style="color:#f0a83c">amber</b> over, <b style="color:#6fb0e0">blue</b> under.</div>`;
   }
 
   const thead = document.getElementById('expt-spd-thead');
@@ -8033,7 +8032,6 @@ function buildSpeedPanel(ev, rows) {
       const obs  = parseFloat(row.obs_sus_mph)  || 0;
       const hrrr = parseFloat(row.hrrr_10m_mph) || 0;
       const bc   = parseFloat(row.bc_speed)     || 0;
-      const ratioBO = obs > 0 ? bc / obs : 99;  // used only to exclude denominator artifacts
       const wnD  = ev.wn_stations && ev.wn_stations[row.stid];
       const wn1  = wnD ? wnD.speed : null;
       const tc   = (row.terrain_class || '').toLowerCase();
@@ -8041,23 +8039,20 @@ function buildSpeedPanel(ev, rows) {
                       : tc.includes('canyon') || tc.includes('gap')    ? 'Canyon / gap'
                       : tc.includes('valley')                          ? 'Valley'
                       : tc.includes('flat')  || tc.includes('plain')   ? 'Flat' : 'Open';
-      // Near-calm (obs<5) or extreme BC/obs (>3) are denominator-sensitive: shown
-      // but greyed and NOT scored. This is exclusion, not a "decoupled" claim.
-      const excluded = obs < 5 || ratioBO > 3;
-      let rowCls = '', wnCls = 'expt-spd-wn1', result = '', resCol = '#9fb0c0';
-      if (excluded) {
-        rowCls = 'calm'; wnCls = 'expt-spd-na';
-        result = 'near-calm · not scored';
-      } else if (wn1 != null && obs > 0) {
+      // Color Run 1 by the actual WN-vs-station result. Every station shown at
+      // full strength; near-calm sites just get a plain factual note.
+      let wnCls = 'expt-spd-wn1', result = '', resCol = '#cfe0f2';
+      if (wn1 != null && obs > 0) {
         const wr = wn1 / obs;
         if (Math.abs(wr - 1) <= 0.25) { wnCls = 'expt-spd-couple'; result = 'matches obs'; resCol = '#5ad68f'; }
         else if (wr > 1)              { wnCls = 'expt-spd-over';   result = `over +${(wn1-obs).toFixed(0)}`; resCol = '#f0a83c'; }
-        else                          { wnCls = 'expt-spd-over';   result = `under ${(wn1-obs).toFixed(0)}`; resCol = '#7aa8e0'; }
+        else                          { wnCls = 'expt-spd-under'; result = `under ${(wn1-obs).toFixed(0)}`; resCol = '#6fb0e0'; }
       }
+      const calmNote = obs < 5 ? ` <span style="color:#d0a878">&middot; near-calm obs</span>` : '';
       const wn1td = hasWN1 ? `<td class="${wn1!=null?wnCls:'expt-spd-na'}">${wn1!=null?wn1.toFixed(1):'—'}</td>` : '';
-      const ctxTd = `<td class="expt-spd-tag"><span style="color:#9fb0c0">${terrLabel}</span>`
-        + (result ? ` &middot; <span style="color:${resCol}">${result}</span>` : '') + '</td>';
-      return `<tr class="${rowCls}"><td>${row.stid}</td><td class="expt-spd-obs">${obs.toFixed(1)}</td><td class="expt-spd-hrrr">${hrrr.toFixed(1)}</td>${wn1td}${ctxTd}</tr>`;
+      const ctxTd = `<td class="expt-spd-tag"><span style="color:#b8cade">${terrLabel}</span>`
+        + (result ? ` &middot; <span style="color:${resCol}">${result}</span>` : '') + calmNote + '</td>';
+      return `<tr><td>${row.stid}</td><td class="expt-spd-obs">${obs.toFixed(1)}</td><td class="expt-spd-hrrr">${hrrr.toFixed(1)}</td>${wn1td}${ctxTd}</tr>`;
     }).join('');
   }
   const bodyEl = document.getElementById('expt-spd-body');
