@@ -7861,9 +7861,9 @@ function makeWindSVG(col, dir, sz) {
 function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd, ev) {
   const maxSpd = Math.max(obs || 0, hrrr || 0, bc || 0, wnSpd || 0, wnRun2Spd || 0, 1);
   const BG = '#0e1a28';
-  const LBL = '#7a9ab8';   // readable label gray-blue
-  const VAL = '#ddeeff';   // bright value text
-  const DIM = '#9ab0c8';   // secondary text
+  const LBL = '#aac2da';   // readable label gray-blue (brightened)
+  const VAL = '#eaf4ff';   // bright value text
+  const DIM = '#b2c6dc';   // secondary text
   const SEP = 'rgba(120,160,200,0.15)';
 
   function compass(d) {
@@ -7929,22 +7929,30 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd
   const hrrrValStr = (hrrr || 0).toFixed(1) + ' mph' + dirStr(calm ? null : hrrrDir);
   const hrrrErrTxt = !isNaN(err) ? vsObs(hrrr, obs) : '';
 
-  const obsHtml  = row2('Station Observed', obsValStr,  '',         pct(obs||0),  '#60c080');
-  const hrrrHtml = row2('HRRR Model (3km)', hrrrValStr, hrrrErrTxt, pct(hrrr||0), '#5080c0');
+  // Near-calm stations sat in sheltered / decoupled air — models reading much
+  // higher is expected, so the "vs station" comparison is not meaningful.
+  const calmNote = calm
+    ? '<div style="margin:10px 0 2px;padding:9px 11px;background:rgba(255,200,90,0.10);border:1px solid rgba(255,200,90,0.32);border-radius:6px;font-size:10.5px;color:#ffd98a;line-height:1.5">'
+      + '<b>Near-calm station (' + (obs||0).toFixed(1) + ' mph).</b> Sheltered / decoupled air — the models reading higher is expected here, not a model error. Treat the comparisons below as not meaningful at this site.</div>'
+    : '';
+
+  const obsHtml  = row2('Station observed', obsValStr, '', pct(obs||0), '#46c882');
+  const hrrrHtml = row2('HRRR surface (3 km)', hrrrValStr, calm ? '' : hrrrErrTxt, pct(hrrr||0), '#4f93d6');
 
   let wnHtml = '';
   if (bc != null) {
     const bcValStr = bc.toFixed(1) + ' mph' + dirStr(bcDir);
-    wnHtml += '<div style="margin:12px 0 4px;padding-top:10px;border-top:1px solid ' + SEP + '">'
-      + '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:' + DIM + ';font-weight:700;margin-bottom:2px">WindNinja</div>'
-      + '<div style="font-size:10px;color:' + LBL + ';margin-bottom:6px">Uses the HRRR wind from ' + bcLvl + ' altitude, then applies terrain physics to estimate what reaches the surface.</div>'
+    wnHtml += '<div style="margin:14px 0 6px;padding-top:11px;border-top:1px solid ' + SEP + '">'
+      + '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#cbb8f0;font-weight:800;margin-bottom:3px">WindNinja Hindcast &middot; Run 1</div>'
+      + '<div style="font-size:10.5px;color:' + LBL + ';line-height:1.5">Takes HRRR\'s wind from ' + bcLvl + ' (above the surface) and runs it through 30 m terrain to estimate the surface wind.</div>'
       + '</div>';
-    wnHtml += row2('Atmospheric driver', bcValStr, '', pct(bc), '#7060b0');
-
+    // Input = the HRRR upper-air wind that drives WindNinja (NOT the same as the
+    // 3 km surface row above). Output = WindNinja's terrain-resolved surface wind.
+    wnHtml += row2('Input &middot; HRRR ' + bcLvl, bcValStr, '', pct(bc), '#8a6fd0');
     if (wnSpd != null) {
-      wnHtml += row2('WN Hindcast', wnSpd.toFixed(1) + ' mph', vsObs(wnSpd, obs), pct(wnSpd), '#a080e0');
+      wnHtml += row2('Output &middot; WindNinja surface', wnSpd.toFixed(1) + ' mph', calm ? '' : vsObs(wnSpd, obs), pct(wnSpd), '#b89bf0');
     } else {
-      wnHtml += '<div style="margin:6px 0;font-size:10px;color:' + LBL + ';font-style:italic">WindNinja output not yet available for this station</div>';
+      wnHtml += '<div style="margin:8px 0;font-size:10.5px;color:' + LBL + ';font-style:italic">WindNinja not yet run for this station.</div>';
     }
   }
 
@@ -7967,6 +7975,7 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd
     +   '</div>'
     + '</div>'
     + obsHtml
+    + calmNote
     + hrrrHtml
     + wnHtml
     + (slopeStr ? footerHtml(slopeStr) : '')
