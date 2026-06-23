@@ -8198,54 +8198,59 @@ async function loadExptWindVectors(ev, mode) {
   } catch(e) { return; }
 
   const vectors = data.vectors || [];
+  if (vectors.length) {
+    // Build an evenly-spaced flow field: snap vectors to a fixed grid (one arrow
+    // per cell) and make each arrow 60% of the cell size — so arrows are uniform,
+    // clean, and physically cannot overlap regardless of field density or speed.
+    let latMin = Infinity, latMax = -Infinity, lonMin = Infinity, lonMax = -Infinity;
+    for (const v of vectors) {
+      if (v.lat < latMin) latMin = v.lat; if (v.lat > latMax) latMax = v.lat;
+      if (v.lon < lonMin) lonMin = v.lon; if (v.lon > lonMax) lonMax = v.lon;
+    }
+    const span     = Math.max(latMax - latMin, lonMax - lonMin) || 0.3;
+    const ACROSS   = 24;                       // ~24 arrows across the wider axis
+    const cell     = span / ACROSS;            // grid spacing (degrees)
+    const arrowLen = cell * 0.6;               // < cell -> never overlaps
+    const COMPASS  = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 
-  let vi = 0;
-  vectors.forEach(v => {
-    vi++;
-    if (vi % 3 !== 1) return;  // draw ~1 in 3 for readable density
-    const spd = parseFloat(v.speed);
-    const dir = parseFloat(v.dir);
-    const lat = v.lat;
-    const lon = v.lon;
-    if (!spd || spd < 2 || isNaN(dir) || isNaN(lat) || isNaN(lon)) return;
+    const picked = new Map();                  // one vector per grid cell
+    for (const v of vectors) {
+      const spd = parseFloat(v.speed), dir = parseFloat(v.dir);
+      if (!spd || spd < 2 || isNaN(dir) || isNaN(v.lat) || isNaN(v.lon)) continue;
+      const key = Math.round((v.lat - latMin) / cell) + '_' + Math.round((v.lon - lonMin) / cell);
+      if (!picked.has(key)) picked.set(key, v);
+    }
 
-    // Met dir = FROM; arrow points TOWARD (dir + 180)
-    const arrowRad = ((dir + 180) % 360) * Math.PI / 180;
-    // Near-uniform, clearly visible arrow length (a clean flow field) — colour
-    // carries the speed, not the length. Mild scaling + a floor so low-wind fields
-    // aren't stubby and high-wind fields don't overlap into a sawtooth.
-    const len = 0.016 + 0.008 * Math.min(spd, 45) / 45;
-    const cosLat = Math.cos(lat * Math.PI / 180);
+    picked.forEach(v => {
+      const spd = parseFloat(v.speed), dir = parseFloat(v.dir);
+      const lat = v.lat, lon = v.lon;
+      const cosLat = Math.cos(lat * Math.PI / 180);
+      const arrowRad = ((dir + 180) % 360) * Math.PI / 180;   // FROM -> TOWARD
+      const endLat = lat + Math.cos(arrowRad) * arrowLen;
+      const endLon = lon + Math.sin(arrowRad) * arrowLen / cosLat;
+      const col = wndSpeedColor(spd);
+      const cardDir = Math.round(dir);
+      const compass = COMPASS[Math.round(cardDir / 22.5) % 16];
 
-    const dlat = Math.cos(arrowRad) * len;
-    const dlon = Math.sin(arrowRad) * len / cosLat;
-    const endLat = lat + dlat;
-    const endLon = lon + dlon;
-    const col = wndSpeedColor(spd);
+      const shaft = L.polyline([[lat, lon], [endLat, endLon]], {
+        color: col, weight: 2.4, opacity: 1, interactive: true
+      }).bindTooltip(
+        `<b style="color:${col}">${spd.toFixed(0)} mph</b> from ${compass} (${cardDir}°)<br><span style="color:#888;font-size:10px">Hindcast · WindNinja</span>`,
+        { sticky: true, className: 'expt-arrow-tip', direction: 'top' }
+      );
+      exptVectorGroup.addLayer(shaft);
 
-    // Shaft — interactive, shows popup on click
-    const runLbl  = 'Hindcast';
-    const cardDir = Math.round(dir);
-    const compass = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(cardDir/22.5)%16];
-    const shaft = L.polyline([[lat, lon], [endLat, endLon]], {
-      color: col, weight: 2.8, opacity: 1, interactive: true
-    }).bindTooltip(
-      `<b style="color:${col}">${spd.toFixed(0)} mph</b> from ${compass} (${cardDir}°)<br><span style="color:#888;font-size:10px">${runLbl} · WindNinja</span>`,
-      { sticky: true, className: 'expt-arrow-tip', direction: 'top' }
-    );
-    exptVectorGroup.addLayer(shaft);
-
-    // Arrowhead barbs (non-interactive)
-    const headLen = len * 0.42;
-    [145, -145].forEach(offset => {
-      const br = ((dir + 180 + offset) % 360) * Math.PI / 180;
-      const bLat = endLat + Math.cos(br) * headLen;
-      const bLon = endLon + Math.sin(br) * headLen / cosLat;
-      exptVectorGroup.addLayer(L.polyline([[endLat, endLon], [bLat, bLon]], {
-        color: col, weight: 2.8, opacity: 1, interactive: false
-      }));
+      const headLen = arrowLen * 0.38;
+      [148, -148].forEach(offset => {
+        const br = ((dir + 180 + offset) % 360) * Math.PI / 180;
+        const bLat = endLat + Math.cos(br) * headLen;
+        const bLon = endLon + Math.sin(br) * headLen / cosLat;
+        exptVectorGroup.addLayer(L.polyline([[endLat, endLon], [bLat, bLon]], {
+          color: col, weight: 2.4, opacity: 1, interactive: false
+        }));
+      });
     });
-  });
+  }
 
   exptVectorGroup.addTo(map);
 }
