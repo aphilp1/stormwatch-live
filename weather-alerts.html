@@ -1536,16 +1536,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
       </div>
 
-      <!-- Two Runs -->
+      <!-- Method -->
       <div style="margin-bottom:12px">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:#5a7a98;font-weight:700;margin-bottom:8px">The Two-Run Comparison</div>
-        <div style="background:rgba(80,130,190,0.1);border-left:3px solid #5090c0;border-radius:0 5px 5px 0;padding:9px 11px;margin-bottom:7px">
-          <div style="font-size:11px;font-weight:700;color:#80b8e0;margin-bottom:3px">Run 1 — Hindcast</div>
-          <div style="font-size:11px;color:#cadcf0;line-height:1.6">HRRR's actual atmospheric analysis from the fire event + 30m terrain. WindNinja computes the wind field. Result compared to what RAWS stations recorded.</div>
-        </div>
-        <div style="background:rgba(60,180,100,0.08);border-left:3px solid #40aa70;border-radius:0 5px 5px 0;padding:9px 11px">
-          <div style="font-size:11px;font-weight:700;color:#50cc88;margin-bottom:3px">Run 2 — Enhanced BC</div>
-          <div style="font-size:11px;color:#70a888;line-height:1.6">Same WindNinja solver and terrain, but with an enhanced atmospheric boundary condition — closer to what was actually occurring aloft. Shows how much of the error comes from the boundary condition itself.</div>
+        <div style="background:rgba(80,130,190,0.1);border-left:3px solid #5090c0;border-radius:0 5px 5px 0;padding:9px 11px">
+          <div style="font-size:11px;color:#cadcf0;line-height:1.6">HRRR's actual atmospheric analysis from the fire event + 30 m terrain. WindNinja computes the wind field; the result is scored against what each RAWS station recorded.</div>
         </div>
       </div>
 
@@ -1572,11 +1566,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div id="expt-story-panel" style="display:none">
         <div class="expt-story-ename" id="expt-story-ename"></div>
         <span class="expt-story-rtag" id="expt-story-rtag"></span>
-        <div class="expt-mode-btns" style="margin:10px 0 0">
-          <button class="expt-mode-btn run1 active" id="expt-mode-hrrr" onclick="setExptMapMode('hrrr')">Run 1 — Hindcast</button>
-          <button class="expt-mode-btn run2" id="expt-mode-wn" onclick="setExptMapMode('wn')">Run 2 — Enhanced BC → WN</button>
-        </div>
-        <div class="expt-run-context" id="expt-run-context">
+        <div class="expt-run-context" id="expt-run-context" style="margin-top:10px">
           WindNinja hindcast driven by HRRR's actual atmospheric analysis from the fire event and 30m terrain data. Station markers show what each RAWS station recorded versus what HRRR and WindNinja computed.
         </div>
         <div style="margin:8px 0 10px">
@@ -1632,12 +1622,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <span style="font-size:9.5px;color:#b8d0ea;line-height:1.45"><b style="color:#dcecff">Circle</b> = RAWS weather station. <b style="color:#dcecff">Color</b> = how far the model wind sits above or below what the station recorded. <b style="color:#dcecff">Arrow</b> = the wind direction the station observed.</span>
       </div>
       <div class="expt-leg-divider"></div>
-      <div class="expt-leg-section-hdr">Compare vs. Station Truth</div>
-      <div class="expt-mode-btns">
-        <button class="expt-mode-btn run1 active" id="expt-mode-hrrr" onclick="setExptMapMode('hrrr')">Run 1 — Hindcast</button>
-        <button class="expt-mode-btn run2" id="expt-mode-wn" onclick="setExptMapMode('wn')">Run 2 — Enhanced BC</button>
-      </div>
-      <div id="expt-leg-err-lbl" class="expt-leg-section-hdr" style="margin-top:4px">Model wind vs. station observation</div>
+      <div id="expt-leg-err-lbl" class="expt-leg-section-hdr">Model wind vs. station observation</div>
       <div class="expt-leg-errscale">
         <div class="expt-leg-errscale-bar"></div>
         <div class="expt-leg-errscale-labels"><span>← below station</span><span>match</span><span>above station →</span></div>
@@ -8026,10 +8011,10 @@ function toggleExptSpeedPanel() {
 }
 
 // ── Sidebar story panel ──────────────────────────────────────────────────────
-function narrativeForMode(ev, mode) {
+function narrativeForMode(ev) {
+  // Run 2 removed — always show the hindcast narrative, dropping any "Run 2:" tail.
   const text = ev.narrative || ev.note || '';
   const r2idx = text.indexOf('\n\nRun 2:');
-  if (mode === 'wn') return r2idx >= 0 ? text.slice(r2idx + 2) : text;
   return r2idx >= 0 ? text.slice(0, r2idx) : text;
 }
 
@@ -8045,7 +8030,7 @@ function showExptStory(ev, rows) {
     const c = EXPT_REGIME_COLOR[ev.regime] || '#4a6a88';
     rTag.style.cssText = `background:${c}18;color:${c};border:1px solid ${c}44`;
   }
-  if (body) body.textContent = narrativeForMode(ev, exptMapMode);
+  if (body) body.textContent = narrativeForMode(ev);
   buildSpeedPanel(ev, rows);
   panel.style.display = 'block';
   setTimeout(() => panel.scrollIntoView({ behavior:'smooth', block:'nearest' }), 150);
@@ -8192,10 +8177,9 @@ async function loadExptWindVectors(ev, mode) {
   if (!exptVectorGroup) exptVectorGroup = L.layerGroup();
   exptVectorGroup.clearLayers();
 
-  const reality = (mode === 'wn') ? 'b' : 'a';
-  // cache-bust so a reload always gets the freshly-regenerated field, not a
-  // stale browser-cached copy.
-  const url = `Storm_info/hindcast_grids/${ev.id}_reality_${reality}_domain.json?t=${Date.now()}`;
+  // Run 2 removed — always the hindcast (reality A) field. Cache-bust so a reload
+  // always gets the freshly-regenerated field, not a stale browser-cached copy.
+  const url = `Storm_info/hindcast_grids/${ev.id}_reality_a_domain.json?t=${Date.now()}`;
   let data;
   try {
     const resp = await fetch(url);
@@ -8227,7 +8211,7 @@ async function loadExptWindVectors(ev, mode) {
     const col = wndSpeedColor(spd);
 
     // Shaft — interactive, shows popup on click
-    const runLbl  = (reality === 'b') ? 'Run 2 (Enhanced BC)' : 'Hindcast';
+    const runLbl  = 'Hindcast';
     const cardDir = Math.round(dir);
     const compass = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(cardDir/22.5)%16];
     const shaft = L.polyline([[lat, lon], [endLat, endLon]], {
@@ -8274,22 +8258,8 @@ async function loadExptContext(ev) {
   // 2. RAWS station markers from CSV
   await loadExptRaws(ev);
 
-  // 3. WN wind field arrows (Run 1) + load Run2 scale factor for popup
-  await loadExptWindVectors(ev, exptMapMode);
-  // Pre-fetch Run 2 BC to get scale factor for per-station popup estimates
-  try {
-    const r2 = await fetch(`Storm_info/hindcast_grids/${ev.id}_reality_b_domain.json`);
-    if (r2.ok) {
-      const r2d = await r2.json();
-      const r1 = await fetch(`Storm_info/hindcast_grids/${ev.id}_reality_a_domain.json`);
-      if (r1.ok) {
-        const r1d = await r1.json();
-        ev._run2Scale = r1d.bc.speed > 0 ? r2d.bc.speed / r1d.bc.speed : null;
-        ev._run2BC    = r2d.bc;
-        ev._run1BC    = r1d.bc;
-      }
-    }
-  } catch(e) { ev._run2Scale = null; }
+  // 3. WN hindcast wind field arrows
+  await loadExptWindVectors(ev);
 
   // 4. Historical fire perimeter
   await loadExptPerim(ev);
@@ -8318,30 +8288,6 @@ async function loadExptStationResults(ev) {
     });
     if (Object.keys(map).length) ev.wn_stations = map;
   } catch(e) { /* keep hardcoded fallback */ }
-}
-
-function setExptMapMode(mode) {
-  exptMapMode = mode;
-  document.querySelectorAll('.expt-mode-btn').forEach(b => {
-    const isMatch = (mode === 'hrrr' && b.classList.contains('run1')) ||
-                    (mode === 'wn'   && b.classList.contains('run2'));
-    b.classList.toggle('active', isMatch);
-  });
-  const ctx = document.getElementById('expt-run-context');
-  if (ctx) {
-    if (mode === 'wn') {
-      ctx.textContent = 'Same WindNinja solver and 30m terrain as Run 1. '
-        + 'The atmospheric boundary condition is enhanced, a wind input sized closer to what was actually occurring aloft during the fire event. '
-        + 'This is what WindNinja computes given that input. Terrain physics are unchanged; only the boundary condition differs.';
-    } else {
-      ctx.textContent = 'WindNinja hindcast driven by HRRR\'s actual atmospheric analysis from the fire event and 30m terrain data. '
-        + 'Station markers show what each RAWS station recorded versus what HRRR and WindNinja computed.';
-    }
-  }
-  if (exptLastRows.length > 0 && exptCurrentEv) renderExptRawMarkers(exptLastRows, exptCurrentEv);
-  if (exptCurrentEv) loadExptWindVectors(exptCurrentEv, mode);
-  const storyBody = document.getElementById('expt-story-body');
-  if (storyBody && exptCurrentEv) storyBody.textContent = narrativeForMode(exptCurrentEv, mode);
 }
 
 function renderExptRawMarkers(rows, ev) {
