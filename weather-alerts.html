@@ -2724,10 +2724,16 @@ function highlightSelectedAlert(id) {
   if (selAlertLyr) { try { selAlertLyr.remove(); } catch(_){} selAlertLyr = null; }
   const g = geomCache[id];
   if (!g || typeof map === 'undefined') return;
-  selAlertLyr = L.geoJSON({ type:'Feature', geometry:g }, {
-    interactive: false,
-    style: { color:'#ffffff', weight:3.5, opacity:1, fillColor:'#ffffff', fillOpacity:0.10, dashArray:'7 4' }
-  }).addTo(map);
+  const a = alerts.find(x => x.id === id);
+  const s = a ? getStyle(a.properties.event, a.properties.severity) : { c:'#ff3b30', f:'#ff3b30' };
+  const col = s.c || s.f || '#ff3b30';
+  // Two-pass: a dark casing + the alert's colour on top, with a filled interior,
+  // so the selected alert is clearly visible even on a pale basemap with the
+  // alert layer toggled off.
+  selAlertLyr = L.layerGroup([
+    L.geoJSON({ type:'Feature', geometry:g }, { interactive:false, style:{ color:'#0a0f1c', weight:6, opacity:0.9, fill:false } }),
+    L.geoJSON({ type:'Feature', geometry:g }, { interactive:false, style:{ color:col, weight:3, opacity:1, fillColor:col, fillOpacity:0.28 } })
+  ]).addTo(map);
 }
 
 function selectAlert(id, panTo=false, fromMap=false) {
@@ -2806,10 +2812,11 @@ function zoomToSelected() {
 }
 
 function panTo_(id) {
-  const g = geomCache[id]; if(!g) return;
+  const g = geomCache[id];
+  if (!g) { if (typeof toast === 'function') toast('No map area for this alert'); return; }
   try {
     const b = L.geoJSON({type:'Feature',geometry:g}).getBounds();
-    map.fitBounds(b,{padding:[50,50],maxZoom:10});
+    if (b && b.isValid()) map.fitBounds(b, {padding:[60,60], maxZoom:12});
   } catch(_){}
 }
 
