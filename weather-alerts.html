@@ -7919,7 +7919,9 @@ function buildSpeedPanel(ev, rows) {
   const panel = document.getElementById('expt-speed-panel');
   if (!panel || !rows || !rows.length) return;
   const hasWN1 = rows.some(r => ev.wn_stations && ev.wn_stations[r.stid]);
-  // Run 2 (Enhanced BC) intentionally removed from this panel for now.
+  // The event's actual BC pressure level (850 offshore / 700 continental) — used
+  // consistently in the header, the column labels, and the subtitle.
+  const lvl = (rows.find(r => r.bc_level && r.bc_level !== 'NEEDS_BC') || {}).bc_level || '850';
 
   // ── Header: event, date, and representative valid time (hindcast moment) ──
   const titleEl = document.getElementById('expt-spd-title');
@@ -7930,7 +7932,6 @@ function buildSpeedPanel(ev, rows) {
       : '';
     // Real HGT of the BC pressure level (from HRRR, persisted per station).
     const hgts = rows.map(r => parseFloat(r.bc_level_height_m)).filter(v => !isNaN(v));
-    const lvl  = (rows[0] && rows[0].bc_level) ? rows[0].bc_level : '';
     const hgtMean = hgts.length ? Math.round(hgts.reduce((a, b) => a + b, 0) / hgts.length) : null;
     const nAbove = rows.filter(r => {
       const el = parseFloat(r.dem_elev_m), h = parseFloat(r.bc_level_height_m);
@@ -7960,9 +7961,9 @@ function buildSpeedPanel(ev, rows) {
   if (thead) {
     thead.innerHTML = '<th>Station</th><th>Obs<span style="font-weight:400;opacity:0.6"> mph</span></th>'
       + '<th title="HRRR 10m surface wind (3km analysis) — raw, no downscaling.">HRRR 10m</th>'
-      + '<th title="HRRR 850 hPa aloft wind (~1.5km up) — raw, the WindNinja input level.">HRRR 850</th>'
+      + `<th title="HRRR ${lvl} hPa aloft wind — raw, the WindNinja input level.">HRRR ${lvl}</th>`
       + '<th title="WindNinja initialized from the HRRR 10m surface wind.">WN(10m)</th>'
-      + '<th title="WindNinja initialized from the HRRR 850 aloft wind (the original Run 1).">WN(850)</th>';
+      + `<th title="WindNinja initialized from the HRRR ${lvl} aloft wind.">WN(${lvl})</th>`;
   }
   const sorted = [...rows].sort((a,b) => (parseFloat(b.obs_sus_mph)||0) - (parseFloat(a.obs_sus_mph)||0));
   const tbody = document.getElementById('expt-spd-tbody');
@@ -8201,7 +8202,9 @@ async function loadExptWindVectors(ev, mode) {
 
     // Met dir = FROM; arrow points TOWARD (dir + 180)
     const arrowRad = ((dir + 180) % 360) * Math.PI / 180;
-    const len = (spd / 10) * 0.007;
+    // Cap arrow length so high-wind fields (e.g. 700 mb events ~80-120 mph) don't
+    // overlap into an unreadable sawtooth. Colour still carries the true speed.
+    const len = (Math.min(spd, 28) / 10) * 0.007;
     const cosLat = Math.cos(lat * Math.PI / 180);
 
     const dlat = Math.cos(arrowRad) * len;
