@@ -408,6 +408,7 @@ def load_event_stations(event_id):
                     'obs_sus':         float(r['obs_sus_mph']),
                     'obs_dir':         float(r['obs_dir_deg']) if r.get('obs_dir_deg', '') not in ('', 'N/A') else None,
                     'hrrr_10m':        float(r['hrrr_10m_mph']) if r.get('hrrr_10m_mph', '') not in ('', 'N/A') else None,
+                    'hrrr_10m_dir':    float(r['hrrr_10m_dir']) if r.get('hrrr_10m_dir', '') not in ('', 'N/A') else None,
                     'hrrr_err':        float(r['speed_err'])    if r.get('speed_err', '')    not in ('', 'N/A') else None,
                     'terrain_class':   r.get('terrain_class', ''),
                     'synoptic_regime': r.get('synoptic_regime', ''),
@@ -595,10 +596,23 @@ def run_event(event_id, reality_b=False, veg='trees'):
 
         wn_err  = round(wn_spd - s['obs_sus'], 2)
         wn_note = 'OK_LOW_OFFSET' if d_offset < MIN_OFFSET_KM else 'OK'
+
+        # WN initialized from HRRR 10m wind — SAME domain / mesh / extraction as
+        # the 850 run; only the input wind differs (one-variable change for the
+        # 2x2). run_wn's cache key is (dem,dir,spd,cell): 10m vs 850 differ in
+        # dir/spd so they get distinct ASCs; identical (dir,spd) legitimately
+        # share the same WN field (output is fully determined by dem+dir+spd+mesh).
+        wn10_spd = None
+        if s.get('hrrr_10m') and s.get('hrrr_10m_dir') is not None:
+            vel10, _ = run_wn(assigned['dem_path'], s['hrrr_10m'], s['hrrr_10m_dir'], veg)
+            wn10_spd = read_asc_at(vel10, s['lat'], s['lon']) if vel10 else None
+
         result = {**s,
                   'wn_speed_a':       round(wn_spd, 2),
                   'wn_dir_a':         round(wn_dir, 1) if wn_dir is not None else None,
                   'wn_err_a':         wn_err,
+                  'wn_speed_b_10m':   round(wn10_spd, 2) if wn10_spd is not None else None,
+                  'wn_err_b_10m':     round(wn10_spd - s['obs_sus'], 2) if wn10_spd is not None else None,
                   'wn_note':          wn_note,
                   'domain':           dem_label,
                   'domain_center':    d_center,
@@ -710,11 +724,41 @@ def run_event(event_id, reality_b=False, veg='trees'):
         for reason, stids in sorted(by_reason.items()):
             print(f"    {reason}: {', '.join(stids)}")
 
+    # ── Four-way scoring: HRRR 10m | HRRR 850 | WN(10m) | WN(850) vs obs ──────
+    # Scored only at non-near-calm stations (obs>=5 AND bc/obs<=3). obs is the
+    # scoring truth, NOT a fit target. Separates "is 850 the wrong level?" from
+    # "does WN downscaling help?".
+    names = ['HRRR10m', 'HRRR850', 'WN10m', 'WN850']
+    scored = [r for r in station_results
+              if r.get('wn_speed_a') is not None and r.get('wn_speed_b_10m') is not None
+              and r.get('hrrr_10m') is not None and (r.get('obs_sus') or 0) >= 5
+              and r.get('bc_speed') and (r['bc_speed'] / r['obs_sus']) <= 3]
+    scoring = {'n_scored': len(scored), 'closest_of_four': {n: 0 for n in names},
+               'wn10_beats_hrrr10m': 0, 'wn10_beats_wn850': 0, 'rows': []}
+    if scored:
+        print(f"\n  FOUR-WAY SCORING ({len(scored)} scorable stations) — |error vs obs|, mph:")
+        print(f"    {'STID':<8}{'HRRR10m':>9}{'HRRR850':>9}{'WN10m':>8}{'WN850':>8}  closest")
+        for r in scored:
+            o = r['obs_sus']
+            e = [abs(r['hrrr_10m'] - o), abs(r['bc_speed'] - o),
+                 abs(r['wn_speed_b_10m'] - o), abs(r['wn_speed_a'] - o)]
+            ci = e.index(min(e))
+            scoring['closest_of_four'][names[ci]] += 1
+            if e[2] < e[0]: scoring['wn10_beats_hrrr10m'] += 1
+            if e[2] < e[3]: scoring['wn10_beats_wn850'] += 1
+            scoring['rows'].append({'stid': r['stid'],
+                                    'err': {names[i]: round(e[i], 2) for i in range(4)},
+                                    'closest': names[ci]})
+            print(f"    {r['stid']:<8}{e[0]:>9.1f}{e[1]:>9.1f}{e[2]:>8.1f}{e[3]:>8.1f}  {names[ci]}")
+        print(f"    closest-of-four: " + "  ".join(f"{n}={scoring['closest_of_four'][n]}" for n in names))
+        print(f"    WN(10m) beats raw HRRR 10m at {scoring['wn10_beats_hrrr10m']}/{len(scored)} stations")
+        print(f"    WN(10m) beats WN(850)      at {scoring['wn10_beats_wn850']}/{len(scored)} stations")
+
     # ── Save station results ─────────────────────────────────────────────────
     out_path = os.path.join(OUTPUT_DIR, f"{event_id}_station_results.json")
     with open(out_path, 'w') as fh:
-        json.dump({'event_id': event_id, 'stations': station_results}, fh,
-                  indent=2, default=str)
+        json.dump({'event_id': event_id, 'four_way_scoring': scoring,
+                   'stations': station_results}, fh, indent=2, default=str)
     print(f"\nStation results: {out_path}")
     return station_results
 

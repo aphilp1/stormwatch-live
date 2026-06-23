@@ -1,5 +1,88 @@
 {
   "event_id": "boulder_chin2021",
+  "four_way_scoring": {
+    "n_scored": 7,
+    "closest_of_four": {
+      "HRRR10m": 4,
+      "HRRR850": 0,
+      "WN10m": 1,
+      "WN850": 2
+    },
+    "wn10_beats_hrrr10m": 2,
+    "wn10_beats_wn850": 5,
+    "rows": [
+      {
+        "stid": "ATC01",
+        "err": {
+          "HRRR10m": 3.5,
+          "HRRR850": 7.18,
+          "WN10m": 0.0,
+          "WN850": 5.65
+        },
+        "closest": "WN10m"
+      },
+      {
+        "stid": "C7944",
+        "err": {
+          "HRRR10m": 24.14,
+          "HRRR850": 15.56,
+          "WN10m": 16.82,
+          "WN850": 15.22
+        },
+        "closest": "WN850"
+      },
+      {
+        "stid": "CO109",
+        "err": {
+          "HRRR10m": 11.95,
+          "HRRR850": 26.01,
+          "WN10m": 15.09,
+          "WN850": 26.04
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "E3608",
+        "err": {
+          "HRRR10m": 11.58,
+          "HRRR850": 14.84,
+          "WN10m": 12.04,
+          "WN850": 13.77
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "E9688",
+        "err": {
+          "HRRR10m": 1.56,
+          "HRRR850": 7.61,
+          "WN10m": 2.36,
+          "WN850": 8.0
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "RFN",
+        "err": {
+          "HRRR10m": 18.87,
+          "HRRR850": 27.66,
+          "WN10m": 20.15,
+          "WN850": 28.04
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "UP736",
+        "err": {
+          "HRRR10m": 11.81,
+          "HRRR850": 10.56,
+          "WN10m": 12.01,
+          "WN850": 7.93
+        },
+        "closest": "WN850"
+      }
+    ]
+  },
   "stations": [
     {
       "stid": "ATC01",
@@ -11,6 +94,7 @@
       "obs_sus": 21.0,
       "obs_dir": 290.7,
       "hrrr_10m": 24.5,
+      "hrrr_10m_dir": 262.4,
       "hrrr_err": 3.5,
       "terrain_class": "open",
       "synoptic_regime": "chinook_frontrange",
@@ -18,6 +102,8 @@
       "wn_speed_a": 26.65,
       "wn_dir_a": 330.9,
       "wn_err_a": 5.65,
+      "wn_speed_b_10m": 21.0,
+      "wn_err_b_10m": 0.0,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_39.9_-105.2_13mi.tif",
       "domain_center": [
@@ -36,6 +122,7 @@
       "obs_sus": 8.0,
       "obs_dir": 206.3,
       "hrrr_10m": 1.47,
+      "hrrr_10m_dir": 161.8,
       "hrrr_err": -6.53,
       "terrain_class": "exposed_ridge",
       "synoptic_regime": "chinook_frontrange",
@@ -43,6 +130,8 @@
       "wn_speed_a": 27.76,
       "wn_dir_a": 319.1,
       "wn_err_a": 19.76,
+      "wn_speed_b_10m": 1.0,
+      "wn_err_b_10m": -7.0,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_39.9_-105.2_13mi.tif",
       "domain_center": [
@@ -61,6 +150,7 @@
       "obs_sus": 12.0,
       "obs_dir": 293.2,
       "hrrr_10m": 36.14,
+      "hrrr_10m_dir": 270.3,
       "hrrr_err": 24.14,
       "terrain_class": "open",
       "synoptic_regime": "chinook_frontrange",
@@ -68,6 +158,8 @@
       "wn_speed_a": 27.22,
       "wn_dir_a": 334.9,
       "wn_err_a": 15.22,
+      "wn_speed_b_10m": 28.82,
+      "wn_err_b_10m": 16.82,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_39.9_-105.2_13mi.tif",
       "domain_center": [
@@ -86,6 +178,7 @@
       "obs_sus": 51.0,
       "obs_dir": 252.8,
       "hrrr_10m": 39.05,
+      "hrrr_10m_dir": 286.0,
       "hrrr_err": -11.95,
       "terrain_class": "open",
       "synoptic_regime": "chinook_frontrange",
@@ -93,6 +186,8 @@
       "wn_speed_a": 24.96,
       "wn_dir_a": 331.9,
       "wn_err_a": -26.04,
+      "wn_speed_b_10m": 35.91,
+      "wn_err_b_10m": -15.09,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_39.9_-105.2_13mi.tif",
       "domain_center": [
@@ -111,6 +206,7 @@
       "obs_sus": 13.0,
       "obs_dir": 267.9,
       "hrrr_10m": 1.42,
+      "hrrr_10m_dir": 18.2,
       "hrrr_err": -11.58,
       "terrain_class": "valley",
       "synoptic_regime": "chinook_frontrange",
@@ -118,6 +214,8 @@
       "wn_speed_a": 26.77,
       "wn_dir_a": 336.9,
       "wn_err_a": 13.77,
+      "wn_speed_b_10m": 0.96,
+      "wn_err_b_10m": -12.04,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_39.9_-105.2_13mi.tif",
       "domain_center": [
@@ -136,6 +234,7 @@
       "obs_sus": 7.0,
       "obs_dir": 225.9,
       "hrrr_10m": 23.8,
+      "hrrr_10m_dir": 326.2,
       "hrrr_err": 16.8,
       "terrain_class": "valley",
       "synoptic_regime": "chinook_frontrange",
@@ -143,6 +242,8 @@
       "wn_speed_a": 24.36,
       "wn_dir_a": 338.0,
       "wn_err_a": 17.36,
+      "wn_speed_b_10m": 22.69,
+      "wn_err_b_10m": 15.69,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_39.9_-105.2_13mi.tif",
       "domain_center": [
@@ -161,6 +262,7 @@
       "obs_sus": 16.0,
       "obs_dir": 296.7,
       "hrrr_10m": 14.44,
+      "hrrr_10m_dir": 309.1,
       "hrrr_err": -1.56,
       "terrain_class": "open",
       "synoptic_regime": "chinook_frontrange",
@@ -168,6 +270,8 @@
       "wn_speed_a": 24.0,
       "wn_dir_a": 336.1,
       "wn_err_a": 8.0,
+      "wn_speed_b_10m": 13.64,
+      "wn_err_b_10m": -2.36,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_39.9_-105.2_13mi.tif",
       "domain_center": [
@@ -186,6 +290,7 @@
       "obs_sus": 52.99,
       "obs_dir": 286.7,
       "hrrr_10m": 34.12,
+      "hrrr_10m_dir": 273.7,
       "hrrr_err": -18.87,
       "terrain_class": "open",
       "synoptic_regime": "chinook_frontrange",
@@ -193,6 +298,8 @@
       "wn_speed_a": 24.95,
       "wn_dir_a": 338.3,
       "wn_err_a": -28.04,
+      "wn_speed_b_10m": 32.84,
+      "wn_err_b_10m": -20.15,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_39.9_-105.2_13mi.tif",
       "domain_center": [
@@ -211,6 +318,7 @@
       "obs_sus": 17.03,
       "obs_dir": 319.5,
       "hrrr_10m": 5.22,
+      "hrrr_10m_dir": 75.9,
       "hrrr_err": -11.81,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "chinook_frontrange",
@@ -218,6 +326,8 @@
       "wn_speed_a": 24.96,
       "wn_dir_a": 325.3,
       "wn_err_a": 7.93,
+      "wn_speed_b_10m": 5.02,
+      "wn_err_b_10m": -12.01,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_39.9_-105.2_13mi.tif",
       "domain_center": [

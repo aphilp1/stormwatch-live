@@ -1,5 +1,108 @@
 {
   "event_id": "camp_2018",
+  "four_way_scoring": {
+    "n_scored": 9,
+    "closest_of_four": {
+      "HRRR10m": 3,
+      "HRRR850": 1,
+      "WN10m": 4,
+      "WN850": 1
+    },
+    "wn10_beats_hrrr10m": 5,
+    "wn10_beats_wn850": 7,
+    "rows": [
+      {
+        "stid": "CBXC1",
+        "err": {
+          "HRRR10m": 3.62,
+          "HRRR850": 3.94,
+          "WN10m": 0.47,
+          "WN850": 6.36
+        },
+        "closest": "WN10m"
+      },
+      {
+        "stid": "CDEC1",
+        "err": {
+          "HRRR10m": 3.42,
+          "HRRR850": 22.74,
+          "WN10m": 2.41,
+          "WN850": 23.54
+        },
+        "closest": "WN10m"
+      },
+      {
+        "stid": "CESC1",
+        "err": {
+          "HRRR10m": 1.13,
+          "HRRR850": 4.88,
+          "WN10m": 0.21,
+          "WN850": 3.94
+        },
+        "closest": "WN10m"
+      },
+      {
+        "stid": "CICC1",
+        "err": {
+          "HRRR10m": 8.62,
+          "HRRR850": 16.8,
+          "WN10m": 9.23,
+          "WN850": 14.04
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "CSTC1",
+        "err": {
+          "HRRR10m": 1.1,
+          "HRRR850": 17.43,
+          "WN10m": 1.8,
+          "WN850": 18.54
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "HMRC1",
+        "err": {
+          "HRRR10m": 10.62,
+          "HRRR850": 10.99,
+          "WN10m": 14.06,
+          "WN850": 14.06
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "JBGC1",
+        "err": {
+          "HRRR10m": 15.43,
+          "HRRR850": 6.38,
+          "WN10m": 16.22,
+          "WN850": 2.65
+        },
+        "closest": "WN850"
+      },
+      {
+        "stid": "PKCC1",
+        "err": {
+          "HRRR10m": 14.28,
+          "HRRR850": 19.79,
+          "WN10m": 11.95,
+          "WN850": 30.53
+        },
+        "closest": "WN10m"
+      },
+      {
+        "stid": "SLEC1",
+        "err": {
+          "HRRR10m": 18.29,
+          "HRRR850": 1.48,
+          "WN10m": 11.99,
+          "WN850": 14.08
+        },
+        "closest": "HRRR850"
+      }
+    ]
+  },
   "stations": [
     {
       "stid": "BNGC1",
@@ -11,6 +114,7 @@
       "obs_sus": 5.99,
       "obs_dir": 320.4,
       "hrrr_10m": 6.32,
+      "hrrr_10m_dir": 334.9,
       "hrrr_err": 0.33,
       "terrain_class": "open",
       "synoptic_regime": "diablo_offshore",
@@ -18,6 +122,8 @@
       "wn_speed_a": 32.7,
       "wn_dir_a": 89.4,
       "wn_err_a": 26.71,
+      "wn_speed_b_10m": 5.91,
+      "wn_err_b_10m": -0.08,
       "wn_note": "OK",
       "domain": "dem_39.5_-121.4_20mi.tif",
       "domain_center": [
@@ -36,6 +142,7 @@
       "obs_sus": 28.99,
       "obs_dir": 69.3,
       "hrrr_10m": 25.37,
+      "hrrr_10m_dir": 98.0,
       "hrrr_err": -3.62,
       "terrain_class": "exposed_ridge",
       "synoptic_regime": "diablo_offshore",
@@ -43,6 +150,8 @@
       "wn_speed_a": 35.35,
       "wn_dir_a": 94.6,
       "wn_err_a": 6.36,
+      "wn_speed_b_10m": 28.52,
+      "wn_err_b_10m": -0.47,
       "wn_note": "OK",
       "domain": "dem_40.0_-121.3_20mi.tif",
       "domain_center": [
@@ -61,6 +170,7 @@
       "obs_sus": 14.99,
       "obs_dir": 119.7,
       "hrrr_10m": 18.41,
+      "hrrr_10m_dir": 108.3,
       "hrrr_err": 3.42,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "diablo_offshore",
@@ -68,6 +178,8 @@
       "wn_speed_a": 38.53,
       "wn_dir_a": 81.7,
       "wn_err_a": 23.54,
+      "wn_speed_b_10m": 17.4,
+      "wn_err_b_10m": 2.41,
       "wn_note": "OK",
       "domain": "dem_40.0_-121.3_20mi.tif",
       "domain_center": [
@@ -86,6 +198,7 @@
       "obs_sus": 11.01,
       "obs_dir": 55.7,
       "hrrr_10m": 12.14,
+      "hrrr_10m_dir": 89.4,
       "hrrr_err": 1.13,
       "terrain_class": "valley",
       "synoptic_regime": "diablo_offshore",
@@ -93,6 +206,8 @@
       "wn_speed_a": 14.95,
       "wn_dir_a": 83.0,
       "wn_err_a": 3.94,
+      "wn_speed_b_10m": 11.22,
+      "wn_err_b_10m": 0.21,
       "wn_note": "OK",
       "domain": "dem_40.2_-121.3_15mi.tif",
       "domain_center": [
@@ -111,6 +226,7 @@
       "obs_sus": 15.99,
       "obs_dir": 38.3,
       "hrrr_10m": 7.37,
+      "hrrr_10m_dir": 332.9,
       "hrrr_err": -8.62,
       "terrain_class": "valley",
       "synoptic_regime": "diablo_offshore",
@@ -118,6 +234,8 @@
       "wn_speed_a": 30.03,
       "wn_dir_a": 78.1,
       "wn_err_a": 14.04,
+      "wn_speed_b_10m": 6.76,
+      "wn_err_b_10m": -9.23,
       "wn_note": "OK",
       "domain": "dem_39.5_-121.4_20mi.tif",
       "domain_center": [
@@ -136,6 +254,7 @@
       "obs_sus": 8.99,
       "obs_dir": 293.0,
       "hrrr_10m": 10.09,
+      "hrrr_10m_dir": 327.0,
       "hrrr_err": 1.1,
       "terrain_class": "open",
       "synoptic_regime": "diablo_offshore",
@@ -143,6 +262,8 @@
       "wn_speed_a": 27.53,
       "wn_dir_a": 90.5,
       "wn_err_a": 18.54,
+      "wn_speed_b_10m": 10.79,
+      "wn_err_b_10m": 1.8,
       "wn_note": "OK",
       "domain": "dem_40.0_-121.8_20mi.tif",
       "domain_center": [
@@ -161,6 +282,7 @@
       "obs_sus": 13.0,
       "obs_dir": 60.3,
       "hrrr_10m": 23.62,
+      "hrrr_10m_dir": 80.2,
       "hrrr_err": 10.62,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "diablo_offshore",
@@ -168,6 +290,8 @@
       "wn_speed_a": 27.06,
       "wn_dir_a": 76.5,
       "wn_err_a": 14.06,
+      "wn_speed_b_10m": 27.06,
+      "wn_err_b_10m": 14.06,
       "wn_note": "OK",
       "domain": "dem_40.0_-121.3_20mi.tif",
       "domain_center": [
@@ -186,6 +310,7 @@
       "obs_sus": 32.01,
       "obs_dir": 39.0,
       "hrrr_10m": 16.58,
+      "hrrr_10m_dir": 50.1,
       "hrrr_err": -15.43,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "diablo_offshore",
@@ -193,6 +318,8 @@
       "wn_speed_a": 34.66,
       "wn_dir_a": 69.9,
       "wn_err_a": 2.65,
+      "wn_speed_b_10m": 15.79,
+      "wn_err_b_10m": -16.22,
       "wn_note": "OK",
       "domain": "dem_40.0_-121.3_20mi.tif",
       "domain_center": [
@@ -211,6 +338,7 @@
       "obs_sus": 24.0,
       "obs_dir": 54.3,
       "hrrr_10m": 9.72,
+      "hrrr_10m_dir": 108.4,
       "hrrr_err": -14.28,
       "terrain_class": "exposed_ridge",
       "synoptic_regime": "diablo_offshore",
@@ -218,6 +346,8 @@
       "wn_speed_a": 54.53,
       "wn_dir_a": 86.9,
       "wn_err_a": 30.53,
+      "wn_speed_b_10m": 12.05,
+      "wn_err_b_10m": -11.95,
       "wn_note": "OK",
       "domain": "dem_39.6_-121.0_15mi.tif",
       "domain_center": [
@@ -236,6 +366,7 @@
       "obs_sus": 4.0,
       "obs_dir": 98.0,
       "hrrr_10m": 21.06,
+      "hrrr_10m_dir": 100.7,
       "hrrr_err": 17.06,
       "terrain_class": "exposed_ridge",
       "synoptic_regime": "diablo_offshore",
@@ -243,6 +374,8 @@
       "wn_speed_a": 38.32,
       "wn_dir_a": 86.5,
       "wn_err_a": 34.32,
+      "wn_speed_b_10m": 21.25,
+      "wn_err_b_10m": 17.25,
       "wn_note": "OK",
       "domain": "dem_40.0_-121.8_20mi.tif",
       "domain_center": [
@@ -261,6 +394,7 @@
       "obs_sus": 2.01,
       "obs_dir": 59.3,
       "hrrr_10m": 3.53,
+      "hrrr_10m_dir": 231.3,
       "hrrr_err": 1.52,
       "terrain_class": "open",
       "synoptic_regime": "diablo_offshore",
@@ -268,6 +402,8 @@
       "wn_speed_a": 15.9,
       "wn_dir_a": 97.5,
       "wn_err_a": 13.89,
+      "wn_speed_b_10m": 3.61,
+      "wn_err_b_10m": 1.6,
       "wn_note": "OK",
       "domain": "dem_40.0_-121.3_20mi.tif",
       "domain_center": [
@@ -286,6 +422,7 @@
       "obs_sus": 34.99,
       "obs_dir": 52.0,
       "hrrr_10m": 16.7,
+      "hrrr_10m_dir": 64.7,
       "hrrr_err": -18.29,
       "terrain_class": "exposed_ridge",
       "synoptic_regime": "diablo_offshore",
@@ -293,6 +430,8 @@
       "wn_speed_a": 49.07,
       "wn_dir_a": 85.7,
       "wn_err_a": 14.08,
+      "wn_speed_b_10m": 23.0,
+      "wn_err_b_10m": -11.99,
       "wn_note": "OK",
       "domain": "dem_39.6_-121.0_15mi.tif",
       "domain_center": [

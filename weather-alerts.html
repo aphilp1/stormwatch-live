@@ -510,7 +510,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expt-leg-badge.control{background:rgba(120,150,200,0.12);color:#8090c0;border:1px solid rgba(120,150,200,0.28)}
 .expt-leg-badge.inprog{background:rgba(160,130,50,0.15);color:#c4a050;border:1px solid rgba(160,130,50,0.35)}
 /* ── SPEED COMPARISON PANEL ──────────────────────────────────────── */
-#expt-speed-panel{display:none;position:absolute;top:70px;right:10px;z-index:750;background:rgba(8,12,24,0.93);border:1px solid rgba(80,130,190,0.3);border-radius:9px;min-width:360px;max-width:520px;box-shadow:0 4px 16px rgba(0,0,0,0.6);backdrop-filter:blur(6px);user-select:none}
+#expt-speed-panel{display:none;position:absolute;top:70px;right:10px;z-index:750;background:rgba(8,12,24,0.93);border:1px solid rgba(80,130,190,0.3);border-radius:9px;min-width:440px;max-width:600px;box-shadow:0 4px 16px rgba(0,0,0,0.6);backdrop-filter:blur(6px);user-select:none}
 #expt-spd-hdr{padding:9px 12px;cursor:move;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(80,130,190,0.2)}
 #expt-spd-title{font-size:10px;font-weight:700;color:#d0e8ff;letter-spacing:0.5px;text-transform:uppercase}
 .expt-spd-ctrl{background:none;border:none;color:#7a9ab8;font-size:13px;line-height:1;padding:0 3px;cursor:pointer}
@@ -8013,46 +8013,47 @@ function buildSpeedPanel(ev, rows) {
       + (vt
           ? `<div style="font-size:9px;color:#6a8aa6;margin-top:1px">Hindcast — winds time-aligned to each station's peak-wind hour</div>`
           : '')
-      + `<div style="font-size:9.5px;color:#cdddf0;margin-top:5px;line-height:1.5;max-width:480px;text-transform:none;font-weight:400">`
-      +   `WindNinja reshapes the aloft HRRR wind through terrain — amplifying on ridges, easing in valleys. `
-      +   `Run 1 vs station: <b style="color:#5ad68f">green</b> within 25%, <b style="color:#f0a83c">amber</b> over, <b style="color:#6fb0e0">blue</b> under.</div>`;
+      + `<div style="font-size:9.5px;color:#cdddf0;margin-top:5px;line-height:1.5;max-width:560px;text-transform:none;font-weight:400">`
+      +   `Four inputs scored against the station: HRRR's <b>10m</b> surface wind and <b>850</b> aloft wind, each raw and run through <b>WindNinja</b>. `
+      +   `The one closest to observed is marked <b style="color:#5ad68f">✓ green</b>. Near-calm sites (·nc) aren't scored.</div>`;
   }
 
   const thead = document.getElementById('expt-spd-thead');
   if (thead) {
     thead.innerHTML = '<th>Station</th><th>Obs<span style="font-weight:400;opacity:0.6"> mph</span></th>'
-      + '<th title="HRRR 0-hour analysis: the model\'s best estimate of the wind at this valid time — not a lead-time forecast. Same atmospheric input WindNinja receives.">HRRR f00</th>'
-      + (hasWN1 ? '<th>Run 1 — WN</th>' : '')
-      + '<th class="expt-spd-tag" title="Terrain class governs the WindNinja transfer (ridges amplify, gentler terrain decelerates). Result = how the WN surface wind compares to the station. Near-calm / extreme BC-vs-obs sites are not scored.">Terrain · result</th>';
+      + '<th title="HRRR 10m surface wind (3km analysis) — raw, no downscaling.">HRRR 10m</th>'
+      + '<th title="HRRR 850 hPa aloft wind (~1.5km up) — raw, the WindNinja input level.">HRRR 850</th>'
+      + '<th title="WindNinja initialized from the HRRR 10m surface wind.">WN(10m)</th>'
+      + '<th title="WindNinja initialized from the HRRR 850 aloft wind (the original Run 1).">WN(850)</th>';
   }
   const sorted = [...rows].sort((a,b) => (parseFloat(b.obs_sus_mph)||0) - (parseFloat(a.obs_sus_mph)||0));
   const tbody = document.getElementById('expt-spd-tbody');
   if (tbody) {
     tbody.innerHTML = sorted.map(row => {
       const obs  = parseFloat(row.obs_sus_mph)  || 0;
-      const hrrr = parseFloat(row.hrrr_10m_mph) || 0;
-      const bc   = parseFloat(row.bc_speed)     || 0;
+      const h10  = parseFloat(row.hrrr_10m_mph);
+      const h850 = parseFloat(row.bc_speed);
       const wnD  = ev.wn_stations && ev.wn_stations[row.stid];
-      const wn1  = wnD ? wnD.speed : null;
-      const tc   = (row.terrain_class || '').toLowerCase();
-      const terrLabel = tc.includes('ridge') || tc.includes('exposed') ? 'Exposed ridge'
-                      : tc.includes('canyon') || tc.includes('gap')    ? 'Canyon / gap'
-                      : tc.includes('valley')                          ? 'Valley'
-                      : tc.includes('flat')  || tc.includes('plain')   ? 'Flat' : 'Open';
-      // Color Run 1 by the actual WN-vs-station result. Every station shown at
-      // full strength; near-calm sites just get a plain factual note.
-      let wnCls = 'expt-spd-wn1', result = '', resCol = '#cfe0f2';
-      if (wn1 != null && obs > 0) {
-        const wr = wn1 / obs;
-        if (Math.abs(wr - 1) <= 0.25) { wnCls = 'expt-spd-couple'; result = 'matches obs'; resCol = '#5ad68f'; }
-        else if (wr > 1)              { wnCls = 'expt-spd-over';   result = `over +${(wn1-obs).toFixed(0)}`; resCol = '#f0a83c'; }
-        else                          { wnCls = 'expt-spd-under'; result = `under ${(wn1-obs).toFixed(0)}`; resCol = '#6fb0e0'; }
-      }
-      const calmNote = obs < 5 ? ` <span style="color:#d0a878">&middot; near-calm obs</span>` : '';
-      const wn1td = hasWN1 ? `<td class="${wn1!=null?wnCls:'expt-spd-na'}">${wn1!=null?wn1.toFixed(1):'—'}</td>` : '';
-      const ctxTd = `<td class="expt-spd-tag"><span style="color:#b8cade">${terrLabel}</span>`
-        + (result ? ` &middot; <span style="color:${resCol}">${result}</span>` : '') + calmNote + '</td>';
-      return `<tr><td>${row.stid}</td><td class="expt-spd-obs">${obs.toFixed(1)}</td><td class="expt-spd-hrrr">${hrrr.toFixed(1)}</td>${wn1td}${ctxTd}</tr>`;
+      const w850 = wnD && wnD.speed != null ? wnD.speed : null;
+      const w10  = wnD && wnD.wn10  != null ? wnD.wn10  : null;
+      // Scorable = not near-calm and not extreme aloft/obs (obs>=5 AND bc/obs<=3).
+      const scorable = obs >= 5 && !isNaN(h850) && h850 / obs <= 3;
+      // Closest-of-four to obs (only among present values, only if scorable).
+      const four = { h10, h850, w10, w850 };
+      let bestKey = null, bestErr = Infinity;
+      if (scorable) Object.keys(four).forEach(k => {
+        const v = four[k];
+        if (v != null && !isNaN(v)) { const e = Math.abs(v - obs); if (e < bestErr) { bestErr = e; bestKey = k; } }
+      });
+      const cell = (k) => {
+        const v = four[k];
+        if (v == null || isNaN(v)) return '<td class="expt-spd-na">—</td>';
+        const best = k === bestKey;
+        return `<td style="color:${best ? '#5ad68f' : '#cfe0f2'};font-weight:${best ? '700' : '400'}">${v.toFixed(1)}${best ? ' ✓' : ''}</td>`;
+      };
+      const nc = scorable ? '' : ` <span style="color:#d0a878;font-size:9px">·nc</span>`;
+      return `<tr><td>${row.stid}${nc}</td><td class="expt-spd-obs">${obs.toFixed(1)}</td>`
+        + cell('h10') + cell('h850') + cell('w10') + cell('w850') + '</tr>';
     }).join('');
   }
   const bodyEl = document.getElementById('expt-spd-body');
@@ -8358,7 +8359,8 @@ async function loadExptStationResults(ev) {
       map[s.stid] = {
         speed:  Math.round(s.wn_speed_a * 10) / 10,
         ratio:  obs > 0 ? Math.round(s.wn_speed_a / obs * 1000) / 1000 : 0,
-        wn_err: s.wn_err_a != null ? Math.round(s.wn_err_a * 10) / 10 : null
+        wn_err: s.wn_err_a != null ? Math.round(s.wn_err_a * 10) / 10 : null,
+        wn10:   s.wn_speed_b_10m != null ? Math.round(s.wn_speed_b_10m * 10) / 10 : null
       };
     });
     if (Object.keys(map).length) ev.wn_stations = map;

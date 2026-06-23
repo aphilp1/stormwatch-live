@@ -1,5 +1,138 @@
 {
   "event_id": "missoula_jul2024",
+  "four_way_scoring": {
+    "n_scored": 12,
+    "closest_of_four": {
+      "HRRR10m": 5,
+      "HRRR850": 0,
+      "WN10m": 4,
+      "WN850": 3
+    },
+    "wn10_beats_hrrr10m": 5,
+    "wn10_beats_wn850": 9,
+    "rows": [
+      {
+        "stid": "BLMM8",
+        "err": {
+          "HRRR10m": 9.49,
+          "HRRR850": 19.73,
+          "WN10m": 4.23,
+          "WN850": 12.69
+        },
+        "closest": "WN10m"
+      },
+      {
+        "stid": "E0591",
+        "err": {
+          "HRRR10m": 17.58,
+          "HRRR850": 7.22,
+          "WN10m": 18.82,
+          "WN850": 0.08
+        },
+        "closest": "WN850"
+      },
+      {
+        "stid": "E8564",
+        "err": {
+          "HRRR10m": 0.38,
+          "HRRR850": 5.49,
+          "WN10m": 0.26,
+          "WN850": 1.67
+        },
+        "closest": "WN10m"
+      },
+      {
+        "stid": "FINM8",
+        "err": {
+          "HRRR10m": 7.88,
+          "HRRR850": 17.16,
+          "WN10m": 5.69,
+          "WN850": 13.33
+        },
+        "closest": "WN10m"
+      },
+      {
+        "stid": "G0378",
+        "err": {
+          "HRRR10m": 2.48,
+          "HRRR850": 13.81,
+          "WN10m": 2.76,
+          "WN850": 12.37
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "G2298",
+        "err": {
+          "HRRR10m": 0.68,
+          "HRRR850": 17.48,
+          "WN10m": 1.9,
+          "WN850": 12.97
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "KMSO",
+        "err": {
+          "HRRR10m": 7.75,
+          "HRRR850": 8.96,
+          "WN10m": 8.86,
+          "WN850": 6.75
+        },
+        "closest": "WN850"
+      },
+      {
+        "stid": "MOMM8",
+        "err": {
+          "HRRR10m": 1.65,
+          "HRRR850": 16.31,
+          "WN10m": 1.86,
+          "WN850": 14.48
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "MTGRN",
+        "err": {
+          "HRRR10m": 0.89,
+          "HRRR850": 8.7,
+          "WN10m": 0.92,
+          "WN850": 6.13
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "MTNNM",
+        "err": {
+          "HRRR10m": 1.64,
+          "HRRR850": 16.74,
+          "WN10m": 2.83,
+          "WN850": 14.39
+        },
+        "closest": "HRRR10m"
+      },
+      {
+        "stid": "PNTM8",
+        "err": {
+          "HRRR10m": 7.82,
+          "HRRR850": 7.04,
+          "WN10m": 4.58,
+          "WN850": 3.6
+        },
+        "closest": "WN850"
+      },
+      {
+        "stid": "SYN72773",
+        "err": {
+          "HRRR10m": 1.91,
+          "HRRR850": 11.66,
+          "WN10m": 1.73,
+          "WN850": 9.6
+        },
+        "closest": "WN10m"
+      }
+    ]
+  },
   "stations": [
     {
       "stid": "A3674",
@@ -11,6 +144,7 @@
       "obs_sus": 6.71,
       "obs_dir": 123.5,
       "hrrr_10m": 8.56,
+      "hrrr_10m_dir": 35.5,
       "hrrr_err": 1.85,
       "terrain_class": "valley",
       "synoptic_regime": "convective_outflow",
@@ -18,6 +152,8 @@
       "wn_speed_a": 25.15,
       "wn_dir_a": 267.1,
       "wn_err_a": 18.44,
+      "wn_speed_b_10m": 8.04,
+      "wn_err_b_10m": 1.33,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -36,6 +172,7 @@
       "obs_sus": 12.0,
       "obs_dir": 29.0,
       "hrrr_10m": 21.49,
+      "hrrr_10m_dir": 269.3,
       "hrrr_err": 9.49,
       "terrain_class": "exposed_ridge",
       "synoptic_regime": "convective_outflow",
@@ -43,6 +180,8 @@
       "wn_speed_a": 24.69,
       "wn_dir_a": 272.4,
       "wn_err_a": 12.69,
+      "wn_speed_b_10m": 16.23,
+      "wn_err_b_10m": 4.23,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -61,6 +200,7 @@
       "obs_sus": 5.0,
       "obs_dir": 120.5,
       "hrrr_10m": 2.2,
+      "hrrr_10m_dir": 235.3,
       "hrrr_err": -2.8,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "convective_outflow",
@@ -68,6 +208,8 @@
       "wn_speed_a": 21.85,
       "wn_dir_a": 269.2,
       "wn_err_a": 16.85,
+      "wn_speed_b_10m": 1.74,
+      "wn_err_b_10m": -3.26,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -86,6 +228,7 @@
       "obs_sus": 22.0,
       "obs_dir": 242.2,
       "hrrr_10m": 4.42,
+      "hrrr_10m_dir": 270.0,
       "hrrr_err": -17.58,
       "terrain_class": "open",
       "synoptic_regime": "convective_outflow",
@@ -93,6 +236,8 @@
       "wn_speed_a": 21.92,
       "wn_dir_a": 264.9,
       "wn_err_a": -0.08,
+      "wn_speed_b_10m": 3.18,
+      "wn_err_b_10m": -18.82,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -111,6 +256,7 @@
       "obs_sus": 16.0,
       "obs_dir": 312.7,
       "hrrr_10m": 16.38,
+      "hrrr_10m_dir": 310.2,
       "hrrr_err": 0.38,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "convective_outflow",
@@ -118,6 +264,8 @@
       "wn_speed_a": 14.33,
       "wn_dir_a": 251.1,
       "wn_err_a": -1.67,
+      "wn_speed_b_10m": 16.26,
+      "wn_err_b_10m": 0.26,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -136,6 +284,7 @@
       "obs_sus": 9.0,
       "obs_dir": 262.5,
       "hrrr_10m": 16.88,
+      "hrrr_10m_dir": 271.0,
       "hrrr_err": 7.88,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "convective_outflow",
@@ -143,6 +292,8 @@
       "wn_speed_a": 22.33,
       "wn_dir_a": 264.7,
       "wn_err_a": 13.33,
+      "wn_speed_b_10m": 14.69,
+      "wn_err_b_10m": 5.69,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -161,6 +312,7 @@
       "obs_sus": 14.99,
       "obs_dir": 247.4,
       "hrrr_10m": 12.51,
+      "hrrr_10m_dir": 264.8,
       "hrrr_err": -2.48,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "convective_outflow",
@@ -168,6 +320,8 @@
       "wn_speed_a": 27.36,
       "wn_dir_a": 269.8,
       "wn_err_a": 12.37,
+      "wn_speed_b_10m": 12.23,
+      "wn_err_b_10m": -2.76,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -186,6 +340,7 @@
       "obs_sus": 13.0,
       "obs_dir": 312.0,
       "hrrr_10m": 12.32,
+      "hrrr_10m_dir": 288.9,
       "hrrr_err": -0.68,
       "terrain_class": "valley",
       "synoptic_regime": "convective_outflow",
@@ -193,6 +348,8 @@
       "wn_speed_a": 25.97,
       "wn_dir_a": 277.0,
       "wn_err_a": 12.97,
+      "wn_speed_b_10m": 11.1,
+      "wn_err_b_10m": -1.9,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -211,6 +368,7 @@
       "obs_sus": 8.0,
       "obs_dir": 174.4,
       "hrrr_10m": 13.14,
+      "hrrr_10m_dir": 290.4,
       "hrrr_err": 5.14,
       "terrain_class": "valley",
       "synoptic_regime": "convective_outflow",
@@ -218,6 +376,8 @@
       "wn_speed_a": 31.2,
       "wn_dir_a": 277.9,
       "wn_err_a": 23.2,
+      "wn_speed_b_10m": 12.35,
+      "wn_err_b_10m": 4.35,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -236,6 +396,7 @@
       "obs_sus": 23.02,
       "obs_dir": 269.1,
       "hrrr_10m": 15.27,
+      "hrrr_10m_dir": 283.7,
       "hrrr_err": -7.75,
       "terrain_class": "valley",
       "synoptic_regime": "convective_outflow",
@@ -243,6 +404,8 @@
       "wn_speed_a": 29.77,
       "wn_dir_a": 277.9,
       "wn_err_a": 6.75,
+      "wn_speed_b_10m": 14.16,
+      "wn_err_b_10m": -8.86,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -261,6 +424,7 @@
       "obs_sus": 11.0,
       "obs_dir": 217.0,
       "hrrr_10m": 9.35,
+      "hrrr_10m_dir": 291.8,
       "hrrr_err": -1.65,
       "terrain_class": "exposed_ridge",
       "synoptic_regime": "convective_outflow",
@@ -268,6 +432,8 @@
       "wn_speed_a": 25.48,
       "wn_dir_a": 273.5,
       "wn_err_a": 14.48,
+      "wn_speed_b_10m": 9.14,
+      "wn_err_b_10m": -1.86,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -286,6 +452,7 @@
       "obs_sus": 4.0,
       "obs_dir": 169.0,
       "hrrr_10m": 12.18,
+      "hrrr_10m_dir": 291.6,
       "hrrr_err": 8.18,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "convective_outflow",
@@ -293,6 +460,8 @@
       "wn_speed_a": 18.66,
       "wn_dir_a": 224.1,
       "wn_err_a": 14.66,
+      "wn_speed_b_10m": 10.02,
+      "wn_err_b_10m": 6.02,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -311,6 +480,7 @@
       "obs_sus": 11.0,
       "obs_dir": 294.7,
       "hrrr_10m": 11.89,
+      "hrrr_10m_dir": 254.6,
       "hrrr_err": 0.89,
       "terrain_class": "open",
       "synoptic_regime": "convective_outflow",
@@ -318,6 +488,8 @@
       "wn_speed_a": 17.13,
       "wn_dir_a": 209.3,
       "wn_err_a": 6.13,
+      "wn_speed_b_10m": 10.08,
+      "wn_err_b_10m": -0.92,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -336,6 +508,7 @@
       "obs_sus": 5.55,
       "obs_dir": 165.4,
       "hrrr_10m": 18.21,
+      "hrrr_10m_dir": 298.9,
       "hrrr_err": 12.66,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "convective_outflow",
@@ -343,6 +516,8 @@
       "wn_speed_a": 28.04,
       "wn_dir_a": 269.9,
       "wn_err_a": 22.49,
+      "wn_speed_b_10m": 16.46,
+      "wn_err_b_10m": 10.91,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -361,6 +536,7 @@
       "obs_sus": 12.0,
       "obs_dir": 266.3,
       "hrrr_10m": 10.36,
+      "hrrr_10m_dir": 272.0,
       "hrrr_err": -1.64,
       "terrain_class": "open",
       "synoptic_regime": "convective_outflow",
@@ -368,6 +544,8 @@
       "wn_speed_a": 26.39,
       "wn_dir_a": 266.1,
       "wn_err_a": 14.39,
+      "wn_speed_b_10m": 9.17,
+      "wn_err_b_10m": -2.83,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -386,6 +564,7 @@
       "obs_sus": 25.0,
       "obs_dir": 278.7,
       "hrrr_10m": 17.18,
+      "hrrr_10m_dir": 278.7,
       "hrrr_err": -7.82,
       "terrain_class": "canyon_gap",
       "synoptic_regime": "convective_outflow",
@@ -393,6 +572,8 @@
       "wn_speed_a": 21.4,
       "wn_dir_a": 279.5,
       "wn_err_a": -3.6,
+      "wn_speed_b_10m": 20.42,
+      "wn_err_b_10m": -4.58,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -411,6 +592,7 @@
       "obs_sus": 20.71,
       "obs_dir": 320.0,
       "hrrr_10m": 22.62,
+      "hrrr_10m_dir": 325.3,
       "hrrr_err": 1.91,
       "terrain_class": "valley",
       "synoptic_regime": "convective_outflow",
@@ -418,6 +600,8 @@
       "wn_speed_a": 30.31,
       "wn_dir_a": 277.0,
       "wn_err_a": 9.6,
+      "wn_speed_b_10m": 22.44,
+      "wn_err_b_10m": 1.73,
       "wn_note": "OK",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
@@ -436,6 +620,7 @@
       "obs_sus": 5.0,
       "obs_dir": 142.0,
       "hrrr_10m": 10.99,
+      "hrrr_10m_dir": 239.5,
       "hrrr_err": 5.99,
       "terrain_class": "exposed_ridge",
       "synoptic_regime": "convective_outflow",
@@ -443,6 +628,8 @@
       "wn_speed_a": 20.73,
       "wn_dir_a": 263.0,
       "wn_err_a": 15.73,
+      "wn_speed_b_10m": 10.64,
+      "wn_err_b_10m": 5.64,
       "wn_note": "OK_LOW_OFFSET",
       "domain": "dem_46.9_-113.9_32mi.tif",
       "domain_center": [
