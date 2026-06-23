@@ -8006,6 +8006,21 @@ function buildSpeedPanel(ev, rows) {
     const timeStr = vt
       ? ` &middot; <span style="color:#cfe2f2">${vt.slice(11)} UTC</span>`
       : '';
+    // Real HGT of the BC pressure level (from HRRR, persisted per station).
+    const hgts = rows.map(r => parseFloat(r.bc_level_height_m)).filter(v => !isNaN(v));
+    const lvl  = (rows[0] && rows[0].bc_level) ? rows[0].bc_level : '';
+    const hgtMean = hgts.length ? Math.round(hgts.reduce((a, b) => a + b, 0) / hgts.length) : null;
+    const nAbove = rows.filter(r => {
+      const el = parseFloat(r.dem_elev_m), h = parseFloat(r.bc_level_height_m);
+      return !isNaN(el) && !isNaN(h) && el > h;
+    }).length;
+    const lvlNum = parseInt(lvl) || 850;
+    const hgtLine = (lvl && hgtMean != null)
+      ? `<div style="font-size:9px;color:#d6b88a;margin-top:4px;text-transform:none;line-height:1.45">`
+        + `HRRR ${lvl} mb sits at &asymp; <b>${hgtMean.toLocaleString()} m</b> MSL here (real HGT:${lvl} domain mean)`
+        + (nAbove ? ` — ${nAbove} station${nAbove > 1 ? 's' : ''} sit above it, so the ${lvl} mb "wind" there is at/below-ground air.` : '.')
+        + `</div>`
+      : '';
     titleEl.innerHTML =
       '<div style="font-size:12px;font-weight:800;letter-spacing:0.4px">WIND SPEED COMPARISON</div>'
       + `<div style="font-size:10.5px;font-weight:600;color:#8fb4d4;margin-top:2px">`
@@ -8013,8 +8028,9 @@ function buildSpeedPanel(ev, rows) {
       + (vt
           ? `<div style="font-size:9px;color:#6a8aa6;margin-top:1px">Hindcast — winds time-aligned to each station's peak-wind hour</div>`
           : '')
+      + hgtLine
       + `<div style="font-size:9.5px;color:#cdddf0;margin-top:5px;line-height:1.5;max-width:560px;text-transform:none;font-weight:400">`
-      +   `Four inputs scored against the station: HRRR's <b>10m</b> surface wind and <b>850</b> aloft wind, each raw and run through <b>WindNinja</b>. `
+      +   `Four inputs scored against the station: HRRR's <b>10m</b> surface wind and <b>${lvl || '850'}</b> aloft wind, each raw and run through <b>WindNinja</b>. `
       +   `The one closest to observed is marked <b style="color:#5ad68f">✓ green</b>. Near-calm sites (·nc) aren't scored.</div>`;
   }
 
@@ -8453,7 +8469,7 @@ async function loadExptRaws(ev) {
   // Fetch and cache the CSV
   if (!exptCsvRows) {
     try {
-      const resp = await fetch('Storm_info/hrrr_error_dataset.csv');
+      const resp = await fetch('Storm_info/hrrr_error_dataset.csv?t=' + Date.now());
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       exptCsvRows = parseExptCSV(await resp.text());
     } catch(e) {
