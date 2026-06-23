@@ -2717,6 +2717,19 @@ function setFilter(f) {
 // SELECTION & DETAIL
 // ═══════════════════════════════════════════════════════════════════
 
+// Bright outline of the currently-selected alert, drawn on its OWN layer so it is
+// always visible on the map even if the full alert layer is toggled off.
+let selAlertLyr = null;
+function highlightSelectedAlert(id) {
+  if (selAlertLyr) { try { selAlertLyr.remove(); } catch(_){} selAlertLyr = null; }
+  const g = geomCache[id];
+  if (!g || typeof map === 'undefined') return;
+  selAlertLyr = L.geoJSON({ type:'Feature', geometry:g }, {
+    interactive: false,
+    style: { color:'#ffffff', weight:3.5, opacity:1, fillColor:'#ffffff', fillOpacity:0.10, dashArray:'7 4' }
+  }).addTo(map);
+}
+
 function selectAlert(id, panTo=false, fromMap=false) {
   selectedId = id;
   document.querySelectorAll('.acard').forEach(c=>c.classList.remove('sel'));
@@ -2724,6 +2737,7 @@ function selectAlert(id, panTo=false, fromMap=false) {
   if (card) { card.classList.add('sel'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
   const a = alerts.find(x=>x.id===id);
   if (a) { showDetail(a, fromMap); if(panTo) panTo_(id); }
+  highlightSelectedAlert(id);   // always paint the selected alert on the map
   // Don't switch the sidebar tab when triggered by a map polygon click
   if (!fromMap && currentTab !== 'alerts') showTab('alerts');
 }
@@ -2782,6 +2796,7 @@ function closeDetail() {
   document.querySelectorAll('.acard').forEach(c=>c.classList.remove('sel'));
   selectedId = null;
   selectedGaugeId = null;
+  if (selAlertLyr) { try { selAlertLyr.remove(); } catch(_){} selAlertLyr = null; }
   inundationGroup.clearLayers();
   closeUsgsCard();
 }
