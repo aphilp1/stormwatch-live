@@ -111,7 +111,10 @@ DISPLAY_DOMAINS = {
                   'dem_name': 'dem_39.8_-121.3_35mi.tif'},
 }
 
-# Run order for --all (tubbs_2017 excluded — direction mismatch pending)
+# Run order for --all. tubbs_2017 is INCLUDED as of 2026-06-23 (run-with-caveat
+# decision): WN run is valid for speed; the BC/obs direction mismatch at 4
+# valley/open stations (NVHC1, WISC1, KELC1, KNXC1, 25-66° more northerly) is a
+# documented, direction-only caveat — speed scoring is direction-independent.
 ALL_EVENTS = [
     'camp_2018',
     'kincade_run_2019', 'kincade_ign_2019',
@@ -119,6 +122,7 @@ ALL_EVENTS = [
     'missoula_dec2025', 'labor_day_or2020',
     'boulder_chin2021', 'marshall_2021',
     'iowa_derecho2020', 'missoula_jul2024',
+    'tubbs_2017',
 ]
 
 
@@ -789,7 +793,7 @@ if __name__ == '__main__':
                         choices=['grass', 'brush', 'trees'],
                         help='WindNinja vegetation type (default: trees)')
     parser.add_argument('--all',       action='store_true',
-                        help='Run all 11 events (excludes tubbs_2017 — direction flag)')
+                        help='Run all 12 events (tubbs_2017 included — direction caveat)')
     args = parser.parse_args()
 
     if args.all:

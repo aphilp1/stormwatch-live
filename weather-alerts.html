@@ -7607,13 +7607,13 @@ const EXPT_EVENTS = [
     n: 7,
     anchor: 'HWKC1',
     hrrr_err: -0.3,
-    wn_a_err: null,
+    wn_a_err: -18.6,
     wn_b_err: null,
     status: 'hrrrok',
     statusLabel: 'HRRR OK',
     wn_stations: {},
-    note: 'Tubbs Fire, October 8, 2017. HRRR avg error near-zero (−0.3 mph) across 7 stations. Anchor station Hawkeye Ridge (HWKC1): HRRR within 1 mph of observed. Hindcast on hold — direction offset at valley stations under investigation.',
-    narrative: 'Tubbs Fire ignited during a Diablo wind event, offshore flow from the northeast across Sonoma County. At the exposed Hawkeye Ridge station (HWKC1), HRRR produced a wind speed within 1 mph of what the station recorded. The mean HRRR error across 7 stations was −0.3 mph.\n\nWindNinja has not been run for this event. A complication was identified: inland valley stations recorded surface winds 25 to 44 degrees more northerly than the synoptic flow direction. The cause of that direction offset is under investigation before the hindcast is run.\n\nRun 2: Planned after the direction investigation is complete.'
+    note: 'Tubbs Fire, October 8, 2017. WindNinja hindcast now run (7 stations). Across the event, raw HRRR is closest to observed at 5 of 7 stations; WindNinja does not improve on HRRR here. Direction caveat: 4 valley/open stations recorded surface winds 25–66° more northerly than the synoptic flow.',
+    narrative: 'Tubbs Fire ignited during a Diablo wind event, offshore flow from the northeast across Sonoma County. The mean HRRR error across 7 stations was −0.3 mph (a near-cancellation of station over- and under-estimates, not a per-station match).\n\nWindNinja has now been run. At the exposed Hawkeye Ridge anchor (HWKC1), WindNinja computed 29.4 mph against an observed 48 — an undershoot of −18.6. The reason: the 850 hPa BC fed in (28 mph) is itself well below the observed surface wind, and WindNinja amplifies terrain but cannot manufacture a 20 mph deficit that is not in its input. HRRR\'s own 10 m wind (~37 mph) is the closer estimate there.\n\nFour-way scoring across the 7 stations: raw HRRR (10 m or 850 hPa) is closest at 5, WindNinja at 2; WN(10 m) ties raw HRRR(10 m) at 4/7. WindNinja does not beat HRRR for this event — consistent with the HRRR-OK read.\n\nDirection caveat (open): at four valley/open stations (NVHC1, WISC1, KELC1, KNXC1) the observed surface direction is 25–66° more northerly than the synoptic BC, so the per-station arrows there carry a known direction offset. Speed comparison is direction-independent and unaffected. The cause of the direction offset remains under investigation.'
   },
   {
     id: 'kincade_ign_2019',
