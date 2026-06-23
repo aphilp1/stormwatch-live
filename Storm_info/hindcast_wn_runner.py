@@ -484,17 +484,20 @@ def run_event(event_id, reality_b=False, veg='trees'):
     # the aloft BC: the 700 mb aloft wind (~80 mph) makes WindNinja overshoot the
     # whole grid to 80-120 mph (an all-red, unreadable field) when the surface was
     # 5-46 mph. The 10m-driven field matches observations and the WN(10m) analysis.
+    # SPEED from the HRRR 10m wind (realistic surface magnitude, no aloft overshoot).
     h10s = sorted(s['hrrr_10m'] for s in stations if s.get('hrrr_10m'))
-    h10d = [s['hrrr_10m_dir'] for s in stations if s.get('hrrr_10m_dir') is not None]
-    if h10s and h10d:
+    if h10s:
         median_spd = h10s[len(h10s) // 2]
-        median_dir = circ_mean_deg(h10d)
         field_label = '10m'
     else:
         bc_speeds = sorted(s['bc_speed'] for s in stations)
         median_spd = bc_speeds[len(bc_speeds) // 2]
-        median_dir = circ_mean_deg([s['bc_dir'] for s in stations])
         field_label = 'BC'
+    # DIRECTION from the aloft (BC) wind — the synoptic flow, robust. The 10m
+    # surface dirs scatter and circular-average to nonsense with few stations
+    # (Iowa derecho: 2 stations S + NNE -> a meaningless E mean; the 850 dirs are
+    # W + WNW = the real westerly flow).
+    median_dir = circ_mean_deg([s['bc_dir'] for s in stations])
 
     # ── Run WN once per domain with the median display wind ─────────────────
     print(f"\n[WN domain runs]  median {field_label}={median_spd:.0f} mph @ {median_dir:.0f}°")

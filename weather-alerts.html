@@ -8208,12 +8208,12 @@ async function loadExptWindVectors(ev, mode) {
       if (v.lon < lonMin) lonMin = v.lon; if (v.lon > lonMax) lonMax = v.lon;
     }
     const span     = Math.max(latMax - latMin, lonMax - lonMin) || 0.3;
-    const ACROSS   = 24;                       // ~24 arrows across the wider axis
-    const cell     = span / ACROSS;            // grid spacing (degrees)
-    const arrowLen = cell * 0.6;               // < cell -> never overlaps
+    const ACROSS   = 22;                        // ~22 arrows across the wider axis
+    const cell     = span / ACROSS;             // grid spacing (degrees)
+    const arrowLen = cell * 0.5;                // half the cell -> always a clear gap
     const COMPASS  = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 
-    const picked = new Map();                  // one vector per grid cell
+    const picked = new Map();                   // one vector per grid cell
     for (const v of vectors) {
       const spd = parseFloat(v.speed), dir = parseFloat(v.dir);
       if (!spd || spd < 2 || isNaN(dir) || isNaN(v.lat) || isNaN(v.lon)) continue;
@@ -8221,9 +8221,12 @@ async function loadExptWindVectors(ev, mode) {
       if (!picked.has(key)) picked.set(key, v);
     }
 
-    picked.forEach(v => {
+    picked.forEach((v, key) => {
       const spd = parseFloat(v.speed), dir = parseFloat(v.dir);
-      const lat = v.lat, lon = v.lon;
+      // Draw from the exact grid NODE (not the vector's position) so arrows are
+      // perfectly evenly spaced and the arrow (half a cell) can never overlap.
+      const gi = +key.split('_')[0], gj = +key.split('_')[1];
+      const lat = latMin + gi * cell, lon = lonMin + gj * cell;
       const cosLat = Math.cos(lat * Math.PI / 180);
       const arrowRad = ((dir + 180) % 360) * Math.PI / 180;   // FROM -> TOWARD
       const endLat = lat + Math.cos(arrowRad) * arrowLen;
