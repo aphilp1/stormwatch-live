@@ -7926,10 +7926,19 @@ function buildSpeedPanel(ev, rows) {
   // ── Header: event, date, and representative valid time (hindcast moment) ──
   const titleEl = document.getElementById('expt-spd-title');
   if (titleEl) {
-    const vt = EXPT_VALID_UTC[ev.id];
-    const timeStr = vt
-      ? ` &middot; <span style="color:#cfe2f2">${vt.slice(11)} UTC</span>`
-      : '';
+    // Representative valid date+time = peak-wind hour of the strongest-observed
+    // station (peak_dt_utc, in the data). Computed for EVERY event — no hardcoded map.
+    let vtIso = null, maxObs = -1;
+    rows.forEach(r => {
+      const o = parseFloat(r.obs_sus_mph), p = r.peak_dt_utc;
+      if (!isNaN(o) && o > maxObs && p && p.length >= 16) { maxObs = o; vtIso = p; }
+    });
+    const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const vtm = vtIso && vtIso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    const vtDateTime = vtm
+      ? `${MON[+vtm[2]-1]} ${+vtm[3]}, ${vtm[1]} &middot; <span style="color:#cfe2f2">${vtm[4]}:${vtm[5]} UTC</span>`
+      : ev.date;
+    const vt = vtm;  // truthy when we have a real timestamp
     // Real HGT of the BC pressure level (from HRRR, persisted per station).
     const hgts = rows.map(r => parseFloat(r.bc_level_height_m)).filter(v => !isNaN(v));
     const hgtMean = hgts.length ? Math.round(hgts.reduce((a, b) => a + b, 0) / hgts.length) : null;
@@ -7947,7 +7956,7 @@ function buildSpeedPanel(ev, rows) {
     titleEl.innerHTML =
       '<div style="font-size:12px;font-weight:800;letter-spacing:0.4px">WIND SPEED COMPARISON</div>'
       + `<div style="font-size:10.5px;font-weight:600;color:#8fb4d4;margin-top:2px">`
-      +   `${ev.name} &middot; ${ev.date}${timeStr}</div>`
+      +   `${ev.name} &middot; ${vtDateTime}</div>`
       + (vt
           ? `<div style="font-size:9px;color:#6a8aa6;margin-top:1px">Hindcast — winds time-aligned to each station's peak-wind hour</div>`
           : '')
@@ -8202,9 +8211,10 @@ async function loadExptWindVectors(ev, mode) {
 
     // Met dir = FROM; arrow points TOWARD (dir + 180)
     const arrowRad = ((dir + 180) % 360) * Math.PI / 180;
-    // Cap arrow length so high-wind fields (e.g. 700 mb events ~80-120 mph) don't
-    // overlap into an unreadable sawtooth. Colour still carries the true speed.
-    const len = (Math.min(spd, 28) / 10) * 0.007;
+    // Near-uniform, clearly visible arrow length (a clean flow field) — colour
+    // carries the speed, not the length. Mild scaling + a floor so low-wind fields
+    // aren't stubby and high-wind fields don't overlap into a sawtooth.
+    const len = 0.016 + 0.008 * Math.min(spd, 45) / 45;
     const cosLat = Math.cos(lat * Math.PI / 180);
 
     const dlat = Math.cos(arrowRad) * len;
