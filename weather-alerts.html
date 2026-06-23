@@ -7863,133 +7863,70 @@ function makeWindSVG(col, dir, sz) {
   </svg>`;
 }
 
-// ── Station comparison popup ──────────────────────────────────────────────────
-function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wnSpd, wnRun2Spd, ev) {
-  const maxSpd = Math.max(obs || 0, hrrr || 0, bc || 0, wnSpd || 0, wnRun2Spd || 0, 1);
-  const BG = '#0e1a28';
-  const LBL = '#aac2da';   // readable label gray-blue (brightened)
-  const VAL = '#eaf4ff';   // bright value text
-  const DIM = '#b2c6dc';   // secondary text
-  const SEP = 'rgba(120,160,200,0.15)';
+// ── Station comparison popup (compact: obs + the four model winds) ────────────
+function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wn850, wn10, ev) {
+  const BG = '#0e1a28', LBL = '#9fb8d2', VAL = '#eaf4ff', DIM = '#b2c6dc', SEP = 'rgba(120,160,200,0.16)';
+  const compass = d => (d == null || isNaN(d)) ? '' :
+    ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d / 22.5) % 16];
 
-  function compass(d) {
-    if (d == null || isNaN(d)) return '';
-    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-    return dirs[Math.round(d / 22.5) % 16];
-  }
+  const calm   = (obs || 0) < 5;
+  const lvl    = (row.bc_level && row.bc_level !== 'NEEDS_BC') ? row.bc_level : '850';
+  const elev   = parseFloat(row.elev_m);
+  const slope  = parseFloat(row.slope), relief = parseFloat(row.relief_1km);
+  const tc     = (row.terrain_class || '').toLowerCase();
+  const tcLabel = tc.includes('ridge') || tc.includes('exposed') ? 'Exposed ridge'
+                : tc.includes('canyon') || tc.includes('gap')    ? 'Canyon / gap'
+                : tc.includes('valley')                          ? 'Valley'
+                : tc.includes('flat')  || tc.includes('plain')   ? 'Flat' : 'Open';
 
-  function row2(label, valStr, errStr, barPct, barCol) {
-    const bar = barPct != null
-      ? '<div style="height:5px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:4px;overflow:hidden">'
-        + '<div style="height:100%;width:' + barPct + '%;background:' + barCol + ';border-radius:2px"></div></div>'
-      : '';
-    return '<div style="margin:7px 0">'
-      + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
-      +   '<span style="font-size:10px;font-weight:700;color:' + LBL + ';text-transform:uppercase;letter-spacing:0.6px">' + label + '</span>'
-      +   '<span style="font-size:15px;font-weight:800;color:' + VAL + '">' + valStr
-      +     (errStr ? '<span style="font-size:11px;font-weight:600;color:' + LBL + ';margin-left:6px">' + errStr + '</span>' : '')
-      +   '</span>'
-      + '</div>'
-      + bar
-      + '</div>';
-  }
+  // The four model inputs (same as the table).
+  const four = [
+    { k: 'HRRR 10m',           v: hrrr },
+    { k: 'HRRR ' + lvl,        v: bc },
+    { k: 'WN(10m)',            v: wn10 },
+    { k: 'WN(' + lvl + ')',    v: wn850 },
+  ];
+  // Closest-to-obs, only if scorable (not near-calm, not extreme bc/obs).
+  const scorable = !calm && bc != null && obs > 0 && bc / obs <= 3;
+  let bestI = -1, bestE = Infinity;
+  if (scorable) four.forEach((f, i) => {
+    if (f.v != null && !isNaN(f.v)) { const e = Math.abs(f.v - obs); if (e < bestE) { bestE = e; bestI = i; } }
+  });
 
-  const calm    = (obs || 0) < 5;
-  const sign    = err >= 0 ? '+' : '';
-  const hrrrDir = row.hrrr_10m_dir && row.hrrr_10m_dir !== 'N/A' ? parseFloat(row.hrrr_10m_dir) : null;
-  const bcDir   = row.bc_dir && row.bc_dir !== 'NEEDS_BC' ? parseFloat(row.bc_dir) : null;
-  const bcLvl   = row.bc_level && row.bc_level !== 'NEEDS_BC' ? row.bc_level + ' hPa' : '850 hPa';
-  const elev    = parseFloat(row.elev_m);
-  const slope   = parseFloat(row.slope);
-  const relief  = parseFloat(row.relief_1km);
-  const wnErrVal  = wnSpd     != null && obs > 0 ? wnSpd     - obs : null;
-  const wn2ErrVal = wnRun2Spd != null && obs > 0 ? wnRun2Spd - obs : null;
+  const modelRow = (f, i) => {
+    if (f.v == null || isNaN(f.v)) return '';
+    const best = i === bestI;
+    const diff = (obs > 0 && !calm) ? (f.v - obs) : null;
+    const diffStr = diff == null ? '' :
+      `<span style="font-size:10px;color:${LBL};margin-left:7px">${diff >= 0 ? '+' : '−'}${Math.abs(diff).toFixed(0)}</span>`;
+    return `<div style="display:flex;justify-content:space-between;align-items:baseline;margin:4px 0">`
+      + `<span style="font-size:11px;color:${best ? '#5ad68f' : LBL};font-weight:${best ? '700' : '500'}">${best ? '✓ ' : ''}${f.k}</span>`
+      + `<span><span style="font-size:14px;font-weight:800;color:${best ? '#5ad68f' : VAL}">${f.v.toFixed(1)}</span>${diffStr}</span>`
+      + `</div>`;
+  };
 
-  // Terrain label (no colors, just text)
-  const tc = (row.terrain_class || '').toLowerCase();
-  const tcLabel = tc.includes('ridge') || tc.includes('exposed') ? 'Exposed Ridge'
-                : tc.includes('canyon') || tc.includes('gap')    ? 'Canyon / Gap'
-                : tc.includes('valley')                          ? 'Valley Floor'
-                : tc.includes('flat')  || tc.includes('plain')  ? 'Flat Terrain'
-                : row.terrain_class || '—';
-
-  function dirStr(d) {
-    return (d != null && !isNaN(d)) ? ' from ' + compass(d) + ' (' + Math.round(d) + '°)' : '';
-  }
-  function errSign(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + ' mph'; }
-  function pct(v) { return Math.max(3, Math.round(v / maxSpd * 100)); }
-  // Plain-language comparison of a modeled speed against the station observation.
-  function vsObs(model, o) {
-    if (o == null || o <= 0 || model == null || isNaN(model)) return '';
-    const d = model - o;
-    if (Math.abs(d) < 0.5) return 'matches the station';
-    return Math.abs(d).toFixed(1) + ' mph ' + (d < 0 ? 'below' : 'above') + ' the station';
-  }
-
-  // Pre-build sections
-  const evHtml   = ev ? '<div style="font-size:9.5px;color:' + DIM + ';margin-top:2px">' + ev.name + ' · ' + ev.date + '</div>' : '';
-  const elevHtml = !isNaN(elev) ? '<div style="font-size:10px;color:' + DIM + '">' + Math.round(elev).toLocaleString() + ' m elev</div>' : '';
-  const tcHtml   = '<div style="font-size:10px;color:' + DIM + ';font-weight:600">' + tcLabel + '</div>';
-
-  const obsValStr  = (obs  || 0).toFixed(1) + ' mph' + (calm ? '' : dirStr(obsDir));
-  const hrrrValStr = (hrrr || 0).toFixed(1) + ' mph' + dirStr(calm ? null : hrrrDir);
-  const hrrrErrTxt = !isNaN(err) ? vsObs(hrrr, obs) : '';
-
-  // Near-calm stations sat in sheltered / decoupled air — models reading much
-  // higher is expected, so the "vs station" comparison is not meaningful.
   const calmNote = calm
-    ? '<div style="margin:10px 0 2px;padding:9px 11px;background:rgba(255,200,90,0.10);border:1px solid rgba(255,200,90,0.32);border-radius:6px;font-size:10.5px;color:#ffd98a;line-height:1.5">'
-      + '<b>Near-calm station (' + (obs||0).toFixed(1) + ' mph).</b> Sheltered / decoupled air — the models reading higher is expected here, not a model error. Treat the comparisons below as not meaningful at this site.</div>'
+    ? `<div style="margin:8px 0 2px;font-size:10px;color:#d6b88a;line-height:1.4">Near-calm / sheltered — the models reading higher is expected, not scored here.</div>`
     : '';
-
-  const obsHtml  = row2('Station observed', obsValStr, '', pct(obs||0), '#46c882');
-  const hrrrHtml = row2('HRRR surface (3 km)', hrrrValStr, calm ? '' : hrrrErrTxt, pct(hrrr||0), '#4f93d6');
-
-  let wnHtml = '';
-  if (bc != null) {
-    const bcValStr = bc.toFixed(1) + ' mph' + dirStr(bcDir);
-    const bcLvlNum = parseInt(bcLvl) || 850;
-    const bcHeight = bcLvlNum >= 840 ? '~1.5 km / 5,000 ft up'
-                   : bcLvlNum >= 690 ? '~3 km / 10,000 ft up'
-                   : 'above the surface';
-    wnHtml += '<div style="margin:11px 0 5px;padding-top:9px;border-top:1px solid ' + SEP + '">'
-      + '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:#f0c24a;font-weight:800;margin-bottom:3px">WindNinja Hindcast &middot; Run 1</div>'
-      + '<div style="font-size:10px;color:' + LBL + ';line-height:1.45">Takes HRRR\'s wind at ' + bcLvl + ' (' + bcHeight + ') and runs it through 30 m terrain to compute the surface wind.</div>'
-      + '</div>';
-    // Input = the HRRR upper-air wind that drives WindNinja (NOT the 3 km surface
-    // row above). Output = WindNinja's terrain-resolved surface wind.
-    wnHtml += row2('Input &middot; HRRR ' + bcLvl, bcValStr, '', pct(bc), '#6c8ebf');
-    if (wnSpd != null) {
-      wnHtml += row2('Output &middot; WindNinja surface', wnSpd.toFixed(1) + ' mph', calm ? '' : vsObs(wnSpd, obs), pct(wnSpd), '#f0b43c');
-    } else {
-      wnHtml += '<div style="margin:8px 0;font-size:10.5px;color:' + LBL + ';font-style:italic">WindNinja not yet run for this station.</div>';
-    }
-  }
-
-  const footerHtml = slopeStr => '<div style="margin-top:10px;padding-top:8px;border-top:1px solid ' + SEP + ';font-size:9.5px;color:' + LBL + '">' + slopeStr + '</div>';
-  const slopeStr = (!isNaN(slope) ? 'Slope ' + slope.toFixed(1) + '°' : '')
+  const obsDirS = (obsDir != null && !isNaN(obsDir) && !calm) ? ' from ' + compass(obsDir) : '';
+  const footer = ((!isNaN(slope) ? 'Slope ' + slope.toFixed(1) + '°' : '')
     + (!isNaN(slope) && !isNaN(relief) ? '  ·  ' : '')
-    + (!isNaN(relief) ? 'Relief ' + Math.round(relief) + ' m' : '');
+    + (!isNaN(relief) ? 'Relief ' + Math.round(relief) + ' m' : ''));
 
-  return '<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:' + BG + ';'
-    + 'padding:11px 14px;border-radius:8px;min-width:330px;max-width:410px;box-shadow:0 4px 24px rgba(0,0,0,0.7)">'
-    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
-    +   '<div>'
-    +     '<div style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:0.2px;line-height:1.1">' + row.stid + '</div>'
-    +     '<div style="font-size:11px;color:' + DIM + ';margin-top:2px">' + (row.station_name || '') + '</div>'
-    +     evHtml
-    +   '</div>'
-    +   '<div style="text-align:right">'
-    +     tcHtml
-    +     elevHtml
-    +   '</div>'
-    + '</div>'
-    + obsHtml
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:${BG};padding:11px 13px;border-radius:8px;min-width:240px;max-width:300px;box-shadow:0 4px 24px rgba(0,0,0,0.7)">`
+    + `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px">`
+    +   `<div><div style="font-size:16px;font-weight:900;color:#fff;line-height:1.1">${row.stid}</div>`
+    +     `<div style="font-size:10px;color:${DIM};margin-top:2px">${(row.station_name || '')}${ev ? ' · ' + ev.date : ''}</div></div>`
+    +   `<div style="text-align:right"><div style="font-size:10px;color:${DIM};font-weight:600">${tcLabel}</div>`
+    +     (!isNaN(elev) ? `<div style="font-size:10px;color:${DIM}">${Math.round(elev).toLocaleString()} m</div>` : '') + `</div>`
+    + `</div>`
+    + `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-top:1px solid ${SEP};border-bottom:1px solid ${SEP}">`
+    +   `<span style="font-size:11px;font-weight:700;color:#46c882">Observed${obsDirS}</span>`
+    +   `<span style="font-size:16px;font-weight:800;color:#46c882">${(obs || 0).toFixed(1)} mph</span></div>`
     + calmNote
-    + hrrrHtml
-    + wnHtml
-    + (slopeStr ? footerHtml(slopeStr) : '')
-    + '</div>';
+    + `<div style="margin-top:6px">${four.map(modelRow).join('')}</div>`
+    + (footer ? `<div style="margin-top:8px;padding-top:7px;border-top:1px solid ${SEP};font-size:9.5px;color:${LBL}">${footer}</div>` : '')
+    + `</div>`;
 }
 
 // ── Run 1 vs Run 2 comparison chart ─────────────────────────────────────────
@@ -8452,12 +8389,10 @@ function renderExptRawMarkers(rows, ev) {
       { sticky: false, direction: 'top', offset: [0, -(sz+12)] }
     );
 
-    const wnSpd     = wnData ? wnData.speed : null;
-    // Estimate Run 2 WN speed: scale Run 1 by event-level BC ratio if available
-    const run2Scale = ev._run2Scale || null;
-    const wnRun2Spd = (wnSpd != null && run2Scale != null) ? wnSpd * run2Scale : null;
-    m.bindPopup(makeStationPopup(row, hrrrErr, obs, hrrr, bc, obsDirNum, col, wnSpd, wnRun2Spd, ev), {
-      maxWidth: 430, className: 'expt-popup'
+    const wnSpd = wnData ? wnData.speed : null;   // WN(850)
+    const wn10  = wnData ? wnData.wn10  : null;    // WN(10m)
+    m.bindPopup(makeStationPopup(row, hrrrErr, obs, hrrr, bc, obsDirNum, col, wnSpd, wn10, ev), {
+      maxWidth: 320, className: 'expt-popup'
     });
 
     exptRawsGroup.addLayer(m);
