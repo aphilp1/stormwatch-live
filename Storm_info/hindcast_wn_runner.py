@@ -480,13 +480,24 @@ def run_event(event_id, reality_b=False, veg='trees'):
             print(f"  [ERROR] DEM unavailable and auto-fetch failed: {d['dem_path']}")
             return None
 
-    # Event-median BC for domain display vectors
-    bc_speeds = sorted(s['bc_speed'] for s in stations)
-    median_spd = bc_speeds[len(bc_speeds) // 2]
-    median_dir = circ_mean_deg([s['bc_dir'] for s in stations])
+    # Event-median wind that drives the DISPLAY field. Use the HRRR 10m wind, NOT
+    # the aloft BC: the 700 mb aloft wind (~80 mph) makes WindNinja overshoot the
+    # whole grid to 80-120 mph (an all-red, unreadable field) when the surface was
+    # 5-46 mph. The 10m-driven field matches observations and the WN(10m) analysis.
+    h10s = sorted(s['hrrr_10m'] for s in stations if s.get('hrrr_10m'))
+    h10d = [s['hrrr_10m_dir'] for s in stations if s.get('hrrr_10m_dir') is not None]
+    if h10s and h10d:
+        median_spd = h10s[len(h10s) // 2]
+        median_dir = circ_mean_deg(h10d)
+        field_label = '10m'
+    else:
+        bc_speeds = sorted(s['bc_speed'] for s in stations)
+        median_spd = bc_speeds[len(bc_speeds) // 2]
+        median_dir = circ_mean_deg([s['bc_dir'] for s in stations])
+        field_label = 'BC'
 
-    # ── Run WN once per domain with median BC (for display) ─────────────────
-    print(f"\n[WN domain runs]  median BC={median_spd:.0f} mph @ {median_dir:.0f}°")
+    # ── Run WN once per domain with the median display wind ─────────────────
+    print(f"\n[WN domain runs]  median {field_label}={median_spd:.0f} mph @ {median_dir:.0f}°")
     for d in domains:
         vel, ang = run_wn(d['dem_path'], median_spd, median_dir, veg)
         d['vel_path'] = vel
