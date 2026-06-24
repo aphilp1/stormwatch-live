@@ -7858,10 +7858,22 @@ function makeWindSVG(col, dir, sz) {
   const r = sz, c = r + 2, total = (r + 2) * 2;
   let arrow = '';
   if (dir !== null && !isNaN(dir)) {
-    const aLen = r * 0.62, aW = r * 0.26;
-    arrow = `<g transform="translate(${c},${c}) rotate(${dir})">
-      <rect x="${-aW*0.32}" y="${-aLen*0.82}" width="${aW*0.64}" height="${aLen*0.52}" fill="rgba(0,0,0,0.65)" rx="1"/>
-      <path d="M0,${-aLen} L${aW},${-aLen*0.32} L${-aW},${-aLen*0.32} Z" fill="rgba(0,0,0,0.75)"/>
+    // A bold shaft+arrowhead spanning the circle, pointing toward `dir` (0=up=N,
+    // clockwise). Drawn twice: a dark casing then a white core, so it reads on any
+    // circle fill colour (white near-zero circles through dark-blue/red ones).
+    const tip  = r * 0.80;            // arrowhead point
+    const tail = r * 0.74;            // opposite (fletch) end
+    const hL   = r * 0.50;            // arrowhead length
+    const hW   = r * 0.46;            // arrowhead half-width
+    const base = -tip + hL;           // shaft/head join
+    const cas  = Math.max(3.4, r * 0.34);  // dark casing stroke
+    const core = Math.max(1.7, r * 0.18);  // white core stroke
+    const head = `M0,${-tip} L${hW},${base} L${-hW},${base} Z`;
+    arrow = `<g transform="translate(${c},${c}) rotate(${dir})" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="0" y1="${tail}" x2="0" y2="${base}" stroke="#0a0f1c" stroke-width="${cas}"/>
+      <path d="${head}" fill="#0a0f1c" stroke="#0a0f1c" stroke-width="${cas*0.55}"/>
+      <line x1="0" y1="${tail}" x2="0" y2="${base}" stroke="#ffffff" stroke-width="${core}"/>
+      <path d="${head}" fill="#ffffff"/>
     </g>`;
   }
   return `<svg width="${total}" height="${total}" viewBox="0 0 ${total} ${total}" xmlns="http://www.w3.org/2000/svg">
