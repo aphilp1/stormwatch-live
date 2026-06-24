@@ -7,7 +7,47 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
-## Latest session — 2026-06-23 (read first; this is what changed since you last saw it)
+## Latest session — 2026-06-24 (read first; TRAJECTORY SCORING added — Camp Fire only)
+Committed + pushed to origin/master as commit `ac8279a`.
+
+**What it is:** a new hourly-curve layer that grades *timing*, added ALONGSIDE the peak-hour
+pipeline (four_way_scoring + peak values are byte-identical — additive only). Per station, per
+model, two metrics vs the obs curve over a window bracketing each station's obs peak (±6 h,
+clipped to obs coverage):
+- **curve RMSE** = sqrt(mean((model-obs)^2)) over hours where both exist (pairwise drop nulls) — shape fit.
+- **peak_offset_h** = argmax(model) − argmax(obs) on the 1-hour grid — timing (+late / −early / 0).
+
+Five sources, all hourly: `obs`, `hrrr_10m`, `hrrr_bc` (850/700 aloft), `wn10m` (WN from 10m),
+`wn850` (WN from aloft). HRRR = f00 analysis at EACH window hour (sfc 10m + prs 850/700), not a
+forecast lead. Obs floored to its analysis hour (RAWS report at HH:27).
+
+**Files (Storm_info/):**
+- `trajectory_pull.py` (run in the `dem` conda env — hrrr311 is broken) → `<event>_hourly_hrrr.json`
+  (per-station window + obs/hrrr_10m/hrrr_bc hourly curves).
+- `hindcast_wn_runner.py` `--trajectory` flag → runs WN at each window hour for both inputs
+  (integer cache collapses repeats), computes the two metrics, writes the additive `trajectory`
+  block into `<event>_station_results.json`.
+- `verify_trajectory.py` → the §8 independent recompute.
+
+**YOUR §8 VERIFICATION TASK (Camp):** From the committed `camp_2018_station_results.json`,
+independently recompute `rmse` and `peak_offset_h` for each station straight from the raw
+`trajectory.curves` arrays, and confirm they match the persisted `trajectory.rmse` /
+`trajectory.peak_offset_h`. Same contract as the four-way recompute — committed files, never a
+summary. Claude Code ran `verify_trajectory.py` locally: **96 checks (12 stations × 4 models ×
+2 metrics) ALL MATCH.** Confirm independently and flag any mismatch.
+
+**Camp finding to sanity-check:** WindNinja INHERITS its input's peak timing — `wn10m`
+peak_offset == `hrrr_10m`, and `wn850` == `hrrr_bc`, at every station (lone exception CDEC1,
+where terrain amplification nudged the aloft peak by 1 h). I.e. downscaling sets magnitude, not
+*when* the peak lands; timing is a property of the BC level choice, not the solver — the
+trajectory analog of "the level was the big lever, not the downscaling." 10m level both times
+and shapes better than aloft 850 at most stations. CAVEAT: ±6 h offsets (e.g. PSWC1, CICC1) are
+window-width-limited / near-calm edge cases, not necessarily true offsets.
+
+**STILL OPEN:** the other 11 events (rollout pending — Camp is the validated template). Tab
+wiring (showing trajectory in Fire Winds) is a separate later step; the live app is untouched.
+
+## Latest session — 2026-06-23 (what changed before the trajectory work)
 All four items below are committed + pushed to origin/master.
 1. **Tubbs WN run DONE** (commit `741bf9d`) — was on HOLD, now run *with-caveat*. 7 stations.
    WN does NOT beat HRRR here (closest-of-four HRRR10m=3/HRRR850=2/WN10m=1/WN850=1; anchor

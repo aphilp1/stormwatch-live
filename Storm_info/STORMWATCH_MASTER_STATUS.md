@@ -4,11 +4,24 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
-> **2026-06-23 update (HEAD `93b874f`):** Tubbs WN run (with direction caveat) — all 12 events
+> **2026-06-24 update (HEAD `ac8279a`, pushed):** TRAJECTORY SCORING added (Camp Fire only).
+> New hourly-curve layer scores timing, alongside (never replacing) the peak-hour pipeline.
+> Two metrics per station per model: curve RMSE (shape) + peak_offset_h (timing, +late/-early).
+> Files: `trajectory_pull.py` (dem env — hourly obs/HRRR pull), `hindcast_wn_runner.py`
+> `--trajectory` flag (runs WN per window hour, writes additive `trajectory` block),
+> `verify_trajectory.py` (§8 recompute — Camp **96/96 ALL MATCH**). Camp finding: **WindNinja
+> inherits its input's peak timing** (wn10==h10, wn850==hbc offsets) — downscaling sets
+> magnitude, not when the peak lands; 10m level times+shapes better than aloft 850.
+> **Live app UNTOUCHED** (weather-alerts.html, mcp-server, arrow-field domain JSON all unchanged;
+> only a `trajectory` block was added to camp_2018_station_results.json, which the tab ignores).
+> **OPEN: 11-event rollout** (each needs trajectory_pull.py + --trajectory; revert the
+> regenerated _reality_a_domain.json each time to avoid display drift). Tab wiring is a later,
+> separate step. **See `REVIEW_HANDOFF.md` "Latest session" for the full handoff.**
+>
+> **2026-06-23 update (`93b874f`):** Tubbs WN run (with direction caveat) — all 12 events
 > now have a WN run; four-way recomputed to **126 scorable** (WN10m 40 / HRRR10m 36 / WN850 27 /
 > HRRR850 23). Station obs arrows fixed to TOWARD convention + bold redesign. labor_day display
 > field now covers the full ~320 km extent (3 stitched tiles); 5 per-station outliers still open.
-> **See `REVIEW_HANDOFF.md` "Latest session" for the full, current handoff.**
 
 **Claude Code task when reading this:** verify the repo state matches what's below
 (files present, commits, conventions in code). Flag any mismatch. Then update this
