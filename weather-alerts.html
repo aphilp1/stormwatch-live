@@ -8360,9 +8360,15 @@ function renderExptRawMarkers(rows, ev) {
     const hrrr = parseFloat(row.hrrr_10m_mph);
     const bc   = row.bc_speed && row.bc_speed !== 'NEEDS_BC' ? parseFloat(row.bc_speed) : null;
     const obsDirNum = row.obs_dir_deg && row.obs_dir_deg !== 'N/A' ? parseFloat(row.obs_dir_deg) : null;
+    // obs_dir_deg is the meteorological FROM direction. The green WindNinja field
+    // arrows are drawn TOWARD (dir+180, see loadExptWindVectors). Convert the
+    // station arrow to the SAME toward convention so a well-modeled station's
+    // arrow runs parallel to the field instead of pointing ~180° opposite.
+    // (obsDirNum itself stays FROM — the popup label "from <compass>" needs it.)
+    const obsToward = obsDirNum != null ? (obsDirNum + 180) % 360 : null;
 
     const icon = L.divIcon({
-      html: `<div class="expt-wind-icon">${makeWindSVG(col, obsDirNum, sz)}<div class="expt-wind-stid">${row.stid}</div></div>`,
+      html: `<div class="expt-wind-icon">${makeWindSVG(col, obsToward, sz)}<div class="expt-wind-stid">${row.stid}</div></div>`,
       className: '',
       iconSize:   [(sz+2)*2, (sz+2)*2+18],
       iconAnchor: [sz+2, sz+2]
