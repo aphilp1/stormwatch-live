@@ -106,9 +106,21 @@ NEEDS_DOMAIN = {}
 # vectors form one continuous grid over the whole event area (no inter-domain
 # gaps). Per-station extraction still uses the precise EVENT_DOMAINS above.
 # Fetch: fetch_dem.exe --point <lon> <lat> <buf> <buf> --buf_units miles --src srtm <out.tif>
+# A DISPLAY_DOMAINS value may be a single dict OR a list of dicts. A list is
+# stitched (vectors merged on a shared grid) so a very tall/wide event gets one
+# continuous arrow field instead of a single 45mi-capped patch in the middle.
 DISPLAY_DOMAINS = {
     'camp_2018': {'lat': 39.83, 'lon': -121.32, 'radius_mi': 35,
                   'dem_name': 'dem_39.8_-121.3_35mi.tif'},
+    # 2020 Labor Day OR spans ~320 km N-S. Three overlapping 45mi tiles along
+    # lon -122.3 cover the whole range (41.85-45.25 lat) continuously so the field
+    # reaches the northern (Salem/Albany) and southern station clusters, not just
+    # the central band. (Per-station extraction still uses EVENT_DOMAINS above.)
+    'labor_day_or2020': [
+        {'lat': 42.5, 'lon': -122.3, 'radius_mi': 45},
+        {'lat': 43.6, 'lon': -122.3, 'radius_mi': 45},
+        {'lat': 44.6, 'lon': -122.3, 'radius_mi': 45},
+    ],
 }
 
 # Run order for --all. tubbs_2017 is INCLUDED as of 2026-06-23 (run-with-caveat
@@ -517,15 +529,25 @@ def run_event(event_id, reality_b=False, veg='trees'):
     # Always drive the field from a single large domain (hand-tuned if given,
     # else auto-sized to the station bbox) so the arrows form one continuous grid.
     disp = DISPLAY_DOMAINS.get(event_id) or bbox_domain(stations)
+    disp_list = disp if isinstance(disp, list) else [disp]
     field_vectors = []
-    field_source = None
-    if disp:
-        disp_dem = get_dem_path(disp['lat'], disp['lon'], disp['radius_mi'], disp.get('dem_name'))
-        if ensure_dem(disp_dem, disp['lat'], disp['lon'], disp['radius_mi']):
-            dvel, dang = run_wn(disp_dem, median_spd, median_dir, veg)
-            if dvel:
-                field_vectors = asc_to_vectors(dvel, dang, target_per_axis=34)
-                field_source = os.path.basename(disp_dem)
+    field_source = []
+    field_cells = set()
+    for dd in disp_list:
+        disp_dem = get_dem_path(dd['lat'], dd['lon'], dd['radius_mi'], dd.get('dem_name'))
+        if not ensure_dem(disp_dem, dd['lat'], dd['lon'], dd['radius_mi']):
+            continue
+        dvel, dang = run_wn(disp_dem, median_spd, median_dir, veg)
+        if not dvel:
+            continue
+        field_source.append(os.path.basename(disp_dem))
+        # Merge tiles on a shared ~0.02deg grid so overlapping tiles don't
+        # double-draw and the stitched field reads as one continuous grid.
+        for v in asc_to_vectors(dvel, dang, target_per_axis=34):
+            cell = (round(v['lat'] / 0.02), round(v['lon'] / 0.02))
+            if cell in field_cells:
+                continue
+            field_cells.add(cell); field_vectors.append(v)
     if not field_vectors:
         seen_cells = set()
         counts = []
