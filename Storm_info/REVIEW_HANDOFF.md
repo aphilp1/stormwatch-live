@@ -1,8 +1,11 @@
 # Fire Winds — full review handoff (for Claude Web / Opus)
 
-**HEAD to review:** `origin/master` @ `93b874f`. Verify against the **committed** files,
-never a local cache. Claude Code (on the Windows machine) can run WindNinja and pull HRRR;
-this sandbox cannot — flag re-runs back to Claude Code.
+**HEAD to review:** the latest `origin/master` — run `git log -1` (or read the newest commit
+on GitHub). This handoff is always committed as the repo tip, so reviewing the newest commit
+guarantees you see the state described here. (Pinning an exact hash here is self-invalidating:
+committing this doc creates a newer HEAD than any hash written in it.) Verify against the
+**committed** files, never a local cache. Claude Code (on the Windows machine) can run
+WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
 ## Latest session — 2026-06-23 (read first; this is what changed since you last saw it)
 All four items below are committed + pushed to origin/master.
