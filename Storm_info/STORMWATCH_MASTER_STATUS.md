@@ -4,6 +4,12 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-06-23 update (HEAD `93b874f`):** Tubbs WN run (with direction caveat) — all 12 events
+> now have a WN run; four-way recomputed to **126 scorable** (WN10m 40 / HRRR10m 36 / WN850 27 /
+> HRRR850 23). Station obs arrows fixed to TOWARD convention + bold redesign. labor_day display
+> field now covers the full ~320 km extent (3 stitched tiles); 5 per-station outliers still open.
+> **See `REVIEW_HANDOFF.md` "Latest session" for the full, current handoff.**
+
 **Claude Code task when reading this:** verify the repo state matches what's below
 (files present, commits, conventions in code). Flag any mismatch. Then update this
 file as new work lands so it stays the single source of truth.
