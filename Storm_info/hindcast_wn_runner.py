@@ -477,9 +477,104 @@ def extraction_reason(vel, lat, lon):
     return 'OUTSIDE_ASC_GRID'
 
 
+# ── Trajectory Scoring (Stage B) ──────────────────────────────────────────────
+# Stage A (trajectory_pull.py, `dem` env) writes <event>_hourly_hrrr.json with
+# the obs / hrrr_10m / hrrr_bc hourly curves over each station's window. Here we
+# add the two WindNinja curves (wn10m, wn850) by running WN at each hour for both
+# inputs (run_wn's integer cache collapses repeated rounded spd/dir), then score
+# two metrics per model vs obs: curve RMSE (shape) and peak offset (timing).
+# Additive only — four_way_scoring and the peak-hour values are untouched.
+
+def _traj_rmse(model, obs):
+    """RMSE over hours where BOTH model and obs exist (pairwise drop nulls)."""
+    pairs = [(m, o) for m, o in zip(model, obs) if m is not None and o is not None]
+    if not pairs:
+        return None
+    return round((sum((m - o) ** 2 for m, o in pairs) / len(pairs)) ** 0.5, 3)
+
+
+def _traj_argmax_idx(arr):
+    """Index of the max non-null value (first max on ties — deterministic)."""
+    best_i = best_v = None
+    for i, v in enumerate(arr):
+        if v is None:
+            continue
+        if best_v is None or v > best_v:
+            best_v, best_i = v, i
+    return best_i
+
+
+def _traj_peak_offset(model, obs):
+    """argmax(model) − argmax(obs) in hours on the 1-hour grid.
+    +late / −early / 0 on-time. None if either curve is all-null."""
+    mi = _traj_argmax_idx(model)
+    oi = _traj_argmax_idx(obs)
+    if mi is None or oi is None:
+        return None
+    return mi - oi
+
+
+def build_trajectory(event_id, station_results, domains, veg='trees'):
+    """Attach a `trajectory` block to each station_result that has an hourly
+    curve. Requires <event>_hourly_hrrr.json from trajectory_pull.py."""
+    hp = os.path.join(OUTPUT_DIR, f"{event_id}_hourly_hrrr.json")
+    if not os.path.exists(hp):
+        print(f"\n[Trajectory] no hourly file ({os.path.basename(hp)}) — "
+              f"run trajectory_pull.py (dem env) first. SKIP")
+        return
+    with open(hp, encoding='utf-8') as f:
+        hourly = json.load(f)
+    hstations = hourly.get('stations', {})
+    by_stid = {r['stid']: r for r in station_results}
+    models = ('hrrr_10m', 'hrrr_bc', 'wn10m', 'wn850')
+
+    print(f"\n[Trajectory]  {len(hstations)} station curves from {os.path.basename(hp)}")
+    print(f"  {'STID':<8} {'win':>4} {'peak_off (h): h10 / hbc / wn10 / wn850'}")
+    for stid, hb in hstations.items():
+        rA = by_stid.get(stid)
+        hours = hb['hours']
+        obs   = hb['obs']
+        h10, h10d = hb['hrrr_10m'], hb['hrrr_10m_dir']
+        bc,  bcd  = hb['hrrr_bc'],  hb['hrrr_bc_dir']
+        wn10  = [None] * len(hours)
+        wn850 = [None] * len(hours)
+
+        assigned = find_domain_for_station({'lat': hb['lat'], 'lon': hb['lon']}, domains)
+        if assigned is not None:
+            dem = assigned['dem_path']
+            for i in range(len(hours)):
+                if h10[i] is not None and h10d[i] is not None:
+                    vel, _ = run_wn(dem, h10[i], h10d[i], veg)
+                    v = read_asc_at(vel, hb['lat'], hb['lon']) if vel else None
+                    wn10[i] = round(v, 2) if v is not None else None
+                if bc[i] is not None and bcd[i] is not None:
+                    vel, _ = run_wn(dem, bc[i], bcd[i], veg)
+                    v = read_asc_at(vel, hb['lat'], hb['lon']) if vel else None
+                    wn850[i] = round(v, 2) if v is not None else None
+
+        curves = {'obs': obs, 'hrrr_10m': h10, 'hrrr_bc': bc,
+                  'wn10m': wn10, 'wn850': wn850}
+        rmse = {m: _traj_rmse(curves[m], obs) for m in models}
+        poff = {m: _traj_peak_offset(curves[m], obs) for m in models}
+
+        if rA is not None:
+            rA['trajectory'] = {
+                'window_utc':         hb['window_utc'],
+                'hours':              hours,
+                'curves':             curves,
+                'rmse':               rmse,
+                'peak_offset_h':      poff,
+                'obs_peak_hour_utc':  hb['obs_peak_hour_utc'],
+            }
+        po = lambda m: ('  · ' if poff[m] is None else f"{poff[m]:+3d} ")
+        dom_flag = '' if assigned is not None else '  (no domain → wn null)'
+        print(f"  {stid:<8} {len(hours):>4}  "
+              f"{po('hrrr_10m')}/{po('hrrr_bc')}/{po('wn10m')}/{po('wn850')}{dom_flag}")
+
+
 # ── Main event runner ─────────────────────────────────────────────────────────
 
-def run_event(event_id, reality_b=False, veg='trees'):
+def run_event(event_id, reality_b=False, veg='trees', trajectory=False):
     stations = load_event_stations(event_id)
     if not stations:
         print(f"No stations with BC+obs found for {event_id}")
@@ -794,6 +889,10 @@ def run_event(event_id, reality_b=False, veg='trees'):
         print(f"    WN(10m) beats raw HRRR 10m at {scoring['wn10_beats_hrrr10m']}/{len(scored)} stations")
         print(f"    WN(10m) beats WN(850)      at {scoring['wn10_beats_wn850']}/{len(scored)} stations")
 
+    # ── Trajectory Scoring (optional, additive) ──────────────────────────────
+    if trajectory:
+        build_trajectory(event_id, station_results, domains, veg)
+
     # ── Save station results ─────────────────────────────────────────────────
     out_path = os.path.join(OUTPUT_DIR, f"{event_id}_station_results.json")
     with open(out_path, 'w') as fh:
@@ -816,10 +915,15 @@ if __name__ == '__main__':
                         help='WindNinja vegetation type (default: trees)')
     parser.add_argument('--all',       action='store_true',
                         help='Run all 12 events (tubbs_2017 included — direction caveat)')
+    parser.add_argument('--trajectory', action='store_true',
+                        help='Also add the trajectory block (needs <event>_hourly_hrrr.json '
+                             'from trajectory_pull.py, dem env). Runs WN at each window hour.')
     args = parser.parse_args()
 
     if args.all:
         for ev in ALL_EVENTS:
-            run_event(ev, reality_b=args.reality_b, veg=args.veg)
+            run_event(ev, reality_b=args.reality_b, veg=args.veg,
+                      trajectory=args.trajectory)
     else:
-        run_event(args.event, reality_b=args.reality_b, veg=args.veg)
+        run_event(args.event, reality_b=args.reality_b, veg=args.veg,
+                  trajectory=args.trajectory)
