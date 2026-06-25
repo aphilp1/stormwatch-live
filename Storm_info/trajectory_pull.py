@@ -158,40 +158,31 @@ def station_window(obs_curve, window_h):
 
 # ── HRRR pulls (f00 analysis at each window hour) ──────────────────────────────
 
-_SFC_CACHE = {}   # hour_dt → merged 10m Dataset (or None)
-_PRS_CACHE = {}   # (hour_dt, level) → aloft Dataset (or None)
-
+# NO dataset caching: each hour is queried exactly once per event, so caching the
+# full CONUS HRRR Datasets just leaks RAM across events (was a MemoryError on the
+# --all run at event 8). Each ds is released after its hour's extraction.
 
 def get_sfc(hour):
-    if hour in _SFC_CACHE:
-        return _SFC_CACHE[hour]
-    res = None
     try:
         H = Herbie(hour.strftime('%Y-%m-%d %H:00'), model='hrrr', product='sfc',
                    fxx=0, save_dir=CACHE, priority=['aws', 'google'], verbose=False)
         u = H.xarray(':UGRD:10 m above ground:')
         v = H.xarray(':VGRD:10 m above ground:')
-        res = xr.merge([u, v])
+        return xr.merge([u, v])
     except Exception as e:
         print(f"      sfc {hour:%Y-%m-%d %HZ} FAIL: {e}")
-    _SFC_CACHE[hour] = res
-    return res
+        return None
 
 
 def get_prs(hour, level):
-    key = (hour, level)
-    if key in _PRS_CACHE:
-        return _PRS_CACHE[key]
-    res = None
     try:
         H = Herbie(hour.strftime('%Y-%m-%d %H:00'), model='hrrr', product='prs',
                    fxx=0, save_dir=CACHE, priority=['aws', 'google'], verbose=False)
         ds = H.xarray(f':(?:UGRD|VGRD):{level} mb:')
-        res = ds if hasattr(ds, 'data_vars') else None
+        return ds if hasattr(ds, 'data_vars') else None
     except Exception as e:
         print(f"      prs {hour:%Y-%m-%d %HZ} {level}mb FAIL: {e}")
-    _PRS_CACHE[key] = res
-    return res
+        return None
 
 
 def _pick(ds, comp):
@@ -200,6 +191,22 @@ def _pick(ds, comp):
     if not cands:  # fallback: anything containing the component letter+'grd'
         cands = [v for v in ds.data_vars if comp + 'grd' in v.lower()]
     return cands[0] if cands else None
+
+
+# The HRRR native grid is identical for every hour and product (sfc/prs), so the
+# KDTree only needs building ONCE — rebuilding ~1.9M points per hour was the bulk
+# of the runtime. Cache by grid signature; holds one ~60MB tree, reused throughout.
+_TREE_CACHE = {}
+
+
+def _grid_tree(glat, glon):
+    sig = (glat.shape[0], round(float(glat[0]), 3), round(float(glon[0]), 3),
+           round(float(glat[-1]), 3), round(float(glon[-1]), 3))
+    tree = _TREE_CACHE.get(sig)
+    if tree is None:
+        tree = KDTree(np.column_stack([glat, glon]))
+        _TREE_CACHE[sig] = tree
+    return tree
 
 
 def make_extractor(ds):
@@ -212,7 +219,7 @@ def make_extractor(ds):
     glat = ds['latitude'].values.ravel()
     glon = ds['longitude'].values.ravel()
     glon = np.where(glon > 180, glon - 360, glon)
-    tree = KDTree(np.column_stack([glat, glon]))
+    tree = _grid_tree(glat, glon)
     uf = ds[un].values.ravel()
     vf = ds[vn].values.ravel()
 
