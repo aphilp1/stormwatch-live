@@ -4,7 +4,18 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
-> **2026-06-24 update (HEAD `ac8279a`, pushed):** TRAJECTORY SCORING added (Camp Fire only).
+> **2026-06-24 update (HEAD `300305e`, pushed):** TRAJECTORY SCORING rolled out to ALL 12 events
+> (162 stations). Same pull→--trajectory path as Camp. §8 `verify_trajectory.py --all` =
+> **1296 checks ALL MATCH**. Additive-only (trajectory block only; four-way + peak values
+> byte-identical; `_reality_a_domain.json` display fields reverted → live app untouched).
+> **Finding REFINED:** "WN inherits input timing" holds at ~80% (wn10==h10 127/162, wn850==hbc
+> 135/162) but NOT universally — terrain reorders the peak (1–11 h) at ~20%, esp. complex terrain
+> + continental downslope (missoula CONM8 −6→−1). Camp's clean 12/12 was the exception. 10m level
+> still times+shapes better (median |peak_off| h10/wn10=2h vs hbc=4/wn850=3h; wn10 RMSE<wn850
+> 128/157). Fixed a --all MemoryError in trajectory_pull.py (uncleared HRRR dataset cache;
+> now drops it + builds the grid KDTree once). OPEN: tab wiring (separate later step).
+>
+> **2026-06-24 (earlier) (`ac8279a`):** TRAJECTORY SCORING added (Camp Fire only).
 > New hourly-curve layer scores timing, alongside (never replacing) the peak-hour pipeline.
 > Two metrics per station per model: curve RMSE (shape) + peak_offset_h (timing, +late/-early).
 > Files: `trajectory_pull.py` (dem env — hourly obs/HRRR pull), `hindcast_wn_runner.py`

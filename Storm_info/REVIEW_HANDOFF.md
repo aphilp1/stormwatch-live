@@ -7,7 +7,33 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
-## Latest session — 2026-06-24 (read first; TRAJECTORY SCORING added — Camp Fire only)
+## Latest session — 2026-06-24 (later): TRAJECTORY SCORING rolled out to ALL 12 events
+Committed + pushed (commit `300305e`). Camp was the template (`ac8279a`, below); the same
+`trajectory_pull.py` (dem env) → `--trajectory` path now covers all 12 events, **162 stations**.
+
+**§8 recompute, all events:** `verify_trajectory.py --all` → **1296 checks (162 stations × 4
+models × 2 metrics) ALL MATCH** — every persisted `rmse`/`peak_offset_h` reproduces from the raw
+committed `trajectory.curves`. YOUR TASK: confirm independently against the committed files.
+
+**Additive-only / app untouched:** each `<event>_station_results.json` only gained a `trajectory`
+block (every deleted diff line is a prior field gaining a trailing comma; no peak-hour value,
+four-way score, or WN value changed). All `_reality_a_domain.json` display fields were reverted,
+so the live Fire Winds arrow field is byte-identical.
+
+**KEY RESULT — the Camp "WN inherits its input timing" claim is REFINED, not universal:**
+- `wn10m` peak_offset == `hrrr_10m` at **127/162** (78%); `wn850` == `hrrr_bc` at **135/162** (83%).
+  (A handful of the mismatches are OUT_OF_DOMAIN labor_day stations where wn is null, not a shift.)
+- So WindNinja PRESERVES the input's peak hour ~80% of the time but GENUINELY SHIFTS it (1–11 h)
+  at ~20% — concentrated in complex terrain (thomas canyons, woolsey, kincade_ign) and continental
+  downslope (e.g. missoula CONM8: input −6 h → WN −1 h, a 5 h reorder). Camp's clean 12/12 was the
+  exception, not the rule. Honest statement: timing is *mostly* set by the BC level choice, but
+  terrain amplification can reorder near-equal hourly peaks.
+- **10 m level still times + shapes better:** median |peak_offset| h10=2 h / wn10=2 h vs hbc=4 h /
+  wn850=3 h; `wn10` RMSE < `wn850` RMSE at **128/157** (82%). Consistent with the peak-hour 2×2.
+- CHECK FOR US: are the ~20% WN timing-shifts physical (terrain reordering) or artifacts of
+  near-calm / window-edge argmax? The ±6 h edge cases flagged for Camp apply across all events.
+
+## Latest session — 2026-06-24 (earlier; TRAJECTORY SCORING added — Camp Fire only)
 Committed + pushed to origin/master as commit `ac8279a`.
 
 **What it is:** a new hourly-curve layer that grades *timing*, added ALONGSIDE the peak-hour
