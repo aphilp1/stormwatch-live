@@ -3,7 +3,33 @@
 **Read order on restart:** THIS file → `STORMWATCH_MASTER_STATUS.md` (authoritative findings
 ledger) → `stormwatch_test_protocol.md` (method). Update this file whenever work lands.
 
-**Last updated:** 2026-06-19 · latest commit: (see below)
+**Last updated:** 2026-06-25 · latest commit: (see below)
+
+---
+
+## ⚠ OPEN REGRESSION — Agents tab point/area broken again (2026-06-25)
+
+**User report:** Nowcast/Fire/Flood agent **point + area** clicks not working. This WORKED before
+and regressed — almost certainly broken by later map-click features (Fire Winds dot clicks and/or
+the 2026-06-19 alert-popup click handler). Pattern flagged by user: new features breaking old ones.
+
+**Diagnosis so far (2026-06-25):**
+- **Backend is HEALTHY** — not the cause. Live tests on localhost:3456: `/health` 200,
+  `/fire-agent?lat=34.05&lon=-118.25` returns valid JSON (riskScore 3 MODERATE),
+  `/flood-agent?lat=29.76&lon=-95.36` returns valid JSON (15 gauges). MCP server is fine.
+- **Regression is in the FRONTEND** (`weather-alerts.html`), in the map-click routing.
+- **PRIME SUSPECT: duplicated/competing `map.on('click')` handlers.** The point-mode dispatch
+  (`if (fireMode && fireInputMode==='point') runFireAgent(...)`) is copy-pasted in FOUR places:
+  lines ~2469-2473, ~2651-2652, ~3631-3632, ~3742-3743. Multiple click handlers + the newer
+  alert/dot handlers likely intercept or `return` early before the agent dispatch runs, or
+  double-fire. Area (box) handlers: `fwOnMouseDown`/`flOnMouseDown` (~6658/6680),
+  `setFireInputMode`/`setFloodInputMode` (~6645/6680) — verify a newer `map.on('mousedown')`
+  (dot drag / box draw) isn't shadowing them.
+- **NEXT STEP tomorrow:** open the page on :8001, open DevTools console, click in Fire point mode,
+  watch for which handler fires / any error. Consolidate the 4 duplicate click dispatchers into ONE
+  ordered handler so agent point-mode isn't pre-empted. Add a regression guard.
+
+**If not figured out quickly: REMIND THE USER** (their explicit request).
 
 ---
 
