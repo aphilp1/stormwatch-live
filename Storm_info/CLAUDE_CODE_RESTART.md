@@ -7,13 +7,23 @@ ledger) → `stormwatch_test_protocol.md` (method). Update this file whenever wo
 
 ---
 
-## ⚠ OPEN REGRESSION — Agents tab point/area broken again (2026-06-25)
+## ✅ RESOLVED — Agents "broke" was a stale-port issue, not code (2026-06-26)
 
-**User report:** Nowcast/Fire/Flood agent **point + area** clicks not working. This WORKED before
-and regressed — almost certainly broken by later map-click features (Fire Winds dot clicks and/or
-the 2026-06-19 alert-popup click handler). Pattern flagged by user: new features breaking old ones.
+**Outcome:** Agents tab works on the correct port (:8001). User confirmed Combined Threat **Area**
+mode drew a box over MT and returned a valid 5-sample-point panel; reported "things are working."
+**Root cause = the page was loaded from the dead :8000 server** (shut down the night before), so all
+agent fetch() calls failed silently while the cached page still rendered. NOT a code regression.
 
-**Diagnosis so far (2026-06-25):**
+**LESSON: check the browser is on the live port (:8001) BEFORE diagnosing any layer/agent as broken.**
+
+**Latent (not breaking):** point-mode dispatch is duplicated across ~4 `map.on('click')` handlers
+(lines ~2469-2473, 2651-2652, 3631-3632, 3742-3743) — fine to consolidate someday, but not the cause.
+
+<details><summary>Original 2026-06-25 diagnosis (kept for reference)</summary>
+
+**User report:** Nowcast/Fire/Flood agent **point + area** clicks not working.
+
+**Diagnosis (2026-06-25):**
 - **Backend is HEALTHY** — not the cause. Live tests on localhost:3456: `/health` 200,
   `/fire-agent?lat=34.05&lon=-118.25` returns valid JSON (riskScore 3 MODERATE),
   `/flood-agent?lat=29.76&lon=-95.36` returns valid JSON (15 gauges). MCP server is fine.
@@ -30,6 +40,8 @@ the 2026-06-19 alert-popup click handler). Pattern flagged by user: new features
   ordered handler so agent point-mode isn't pre-empted. Add a regression guard.
 
 **If not figured out quickly: REMIND THE USER** (their explicit request).
+
+</details>
 
 ---
 
