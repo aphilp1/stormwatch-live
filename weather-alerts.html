@@ -7883,6 +7883,81 @@ function makeWindSVG(col, dir, sz) {
 }
 
 // ── Station comparison popup (compact: obs + the four model winds) ────────────
+// ── Hourly trajectory mini-chart (timing + shape) for the station popup ──────
+// Renders the per-station hourly wind curves (obs vs the four model inputs) as a
+// dependency-free inline SVG sparkline, plus a legend carrying each model's curve
+// RMSE (shape) and peak-offset (timing) over the obs-peak ±6 h window. Additive —
+// returns '' when a station has no trajectory block (graceful, never throws).
+function makeTrajChart(t) {
+  if (!t || !t.curves || !Array.isArray(t.hours) || t.hours.length < 2) return '';
+  const LBL = '#9fb8d2', SEP = 'rgba(120,160,200,0.16)';
+  const hours = t.hours, n = hours.length;
+  // HRRR = blues, WindNinja = ambers, obs = green (matches the rest of the tab).
+  const SERIES = [
+    { k: 'obs',      lbl: 'Obs',        col: '#46c882', w: 2.4 },
+    { k: 'wn10m',    lbl: 'WN 10m',     col: '#f0a500', w: 1.8 },
+    { k: 'hrrr_10m', lbl: 'HRRR 10m',   col: '#5dade2', w: 1.4 },
+    { k: 'wn850',    lbl: 'WN aloft',   col: '#d6804a', w: 1.6 },
+    { k: 'hrrr_bc',  lbl: 'HRRR aloft', col: '#3a6ea5', w: 1.4 },
+  ].filter(s => Array.isArray(t.curves[s.k]));
+  if (!SERIES.length) return '';
+
+  let lo = Infinity, hi = -Infinity;
+  SERIES.forEach(s => t.curves[s.k].forEach(v => {
+    if (v != null && !isNaN(v)) { if (v < lo) lo = v; if (v > hi) hi = v; }
+  }));
+  if (!isFinite(lo)) return '';
+  if (hi === lo) hi = lo + 1;
+
+  const W = 272, H = 82, padX = 4, padT = 6, padB = 14;
+  const xAt = i => padX + (n <= 1 ? 0 : i * (W - 2 * padX) / (n - 1));
+  const yAt = v => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+  // Break each line into segments at null gaps so missing hours don't draw across.
+  const segsFor = arr => {
+    const segs = []; let cur = [];
+    arr.forEach((v, i) => {
+      if (v == null || isNaN(v)) { if (cur.length > 1) segs.push(cur); cur = []; }
+      else cur.push(xAt(i).toFixed(1) + ',' + yAt(v).toFixed(1));
+    });
+    if (cur.length > 1) segs.push(cur);
+    return segs;
+  };
+
+  const pk = t.obs_peak_hour_utc ? hours.indexOf(t.obs_peak_hour_utc) : -1;
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;margin-top:5px">`;
+  if (pk >= 0) svg += `<line x1="${xAt(pk).toFixed(1)}" y1="${padT}" x2="${xAt(pk).toFixed(1)}" y2="${H - padB}" stroke="#46c882" stroke-width="1" stroke-dasharray="2 2" opacity="0.45"/>`;
+  // Draw model lines first, obs last so the truth sits on top.
+  SERIES.slice().sort((a, b) => (a.k === 'obs' ? 1 : 0) - (b.k === 'obs' ? 1 : 0)).forEach(s => {
+    segsFor(t.curves[s.k]).forEach(seg => {
+      svg += `<polyline points="${seg.join(' ')}" fill="none" stroke="${s.col}" stroke-width="${s.w}" stroke-linejoin="round" stroke-linecap="round" opacity="${s.k === 'obs' ? 1 : 0.9}"/>`;
+    });
+  });
+  const hm = iso => (iso && iso.length >= 13) ? iso.slice(11, 13) + 'Z' : '';
+  svg += `<text x="${xAt(0).toFixed(1)}" y="${H - 3}" font-size="8" fill="${LBL}" text-anchor="start">${hm(hours[0])}</text>`;
+  if (pk > 0 && pk < n - 1) svg += `<text x="${xAt(pk).toFixed(1)}" y="${H - 3}" font-size="8" fill="#46c882" text-anchor="middle">peak ${hm(hours[pk])}</text>`;
+  svg += `<text x="${xAt(n - 1).toFixed(1)}" y="${H - 3}" font-size="8" fill="${LBL}" text-anchor="end">${hm(hours[n - 1])}</text>`;
+  svg += `<text x="${W - 2}" y="${padT + 7}" font-size="8" fill="${LBL}" text-anchor="end" opacity="0.65">${Math.round(hi)} mph</text>`;
+  svg += `</svg>`;
+
+  const offStr = v => (v == null || isNaN(v)) ? '' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + 'h';
+  const rmse = t.rmse || {}, po = t.peak_offset_h || {};
+  const legend = SERIES.map(s => {
+    const r = rmse[s.k], o = po[s.k];
+    const metric = s.k === 'obs' ? 'truth'
+      : `${r != null && !isNaN(r) ? (+r).toFixed(1) : '–'}${o != null && !isNaN(o) ? ' · ' + offStr(o) : ''}`;
+    return `<span style="display:inline-flex;align-items:center;gap:4px;margin:3px 9px 0 0;font-size:9px;color:${LBL}">`
+      + `<span style="width:10px;height:2.5px;background:${s.col};display:inline-block;border-radius:1px;flex-shrink:0"></span>`
+      + `<b style="color:#cfe0f2;font-weight:600">${s.lbl}</b> ${metric}</span>`;
+  }).join('');
+
+  return `<div style="margin-top:9px;padding-top:8px;border-top:1px solid ${SEP}">`
+    + `<div style="font-size:10px;font-weight:700;color:#bcd2ea;letter-spacing:0.3px">HOURLY TRAJECTORY <span style="font-weight:400;color:${LBL}">· timing &amp; shape</span></div>`
+    + svg
+    + `<div style="display:flex;flex-wrap:wrap">${legend}</div>`
+    + `<div style="font-size:8.5px;color:${LBL};margin-top:6px;line-height:1.45">Each model's curve RMSE (mph, shape) · peak offset (+late / −early vs obs) over the obs-peak ±6 h window.</div>`
+    + `</div>`;
+}
+
 function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wn850, wn10, ev) {
   const BG = '#0e1a28', LBL = '#9fb8d2', VAL = '#eaf4ff', DIM = '#b2c6dc', SEP = 'rgba(120,160,200,0.16)';
   const compass = d => (d == null || isNaN(d)) ? '' :
@@ -7944,6 +8019,7 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wn850, wn10, ev)
     +   `<span style="font-size:16px;font-weight:800;color:#46c882">${(obs || 0).toFixed(1)} mph</span></div>`
     + calmNote
     + `<div style="margin-top:6px">${four.map(modelRow).join('')}</div>`
+    + makeTrajChart(ev && ev._traj && ev._traj[row.stid])
     + (footer ? `<div style="margin-top:8px;padding-top:7px;border-top:1px solid ${SEP};font-size:9.5px;color:${LBL}">${footer}</div>` : '')
     + `</div>`;
 }
@@ -8342,6 +8418,14 @@ async function loadExptStationResults(ev) {
       };
     });
     if (Object.keys(map).length) ev.wn_stations = map;
+    // Stash the hourly trajectory block per station (timing + shape), keyed by
+    // stid, for the station popup chart. Independent of wn_speed_a so stations
+    // without a peak WN value can still show a trajectory.
+    const tmap = {};
+    (d.stations || []).forEach(s => {
+      if (s.trajectory && s.trajectory.curves && s.trajectory.hours) tmap[s.stid] = s.trajectory;
+    });
+    if (Object.keys(tmap).length) ev._traj = tmap;
   } catch(e) { /* keep hardcoded fallback */ }
 }
 
