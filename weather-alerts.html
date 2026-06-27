@@ -45,7 +45,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #sidebar{width:400px;background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width 0.2s}
 #sidebar.collapsed{width:0;overflow:hidden}
 
-.tab-bar{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab-bar{display:grid;grid-template-columns:repeat(8,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
 .tab{padding:8px 0;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center;white-space:nowrap}
 .tab.active{color:var(--text);border-bottom-color:var(--accent)}
 .tab:hover:not(.active){color:var(--text2)}
@@ -3968,40 +3968,54 @@ async function loadOutlook(force) {
   if (_outlookLoaded && !force) return;
   const body = document.getElementById('outlook-body');
   if (!body) return;
+  // Threat = small colored accent only; cards use the app's dark .agent-card look.
   const THREAT = {
-    CRITICAL: { bg:'#3a1414', bd:'#ff5252', fg:'#ff8a80', label:'🔴 Critical', rank:0 },
-    ELEVATED: { bg:'#3a2a14', bd:'#ffb74d', fg:'#ffcc80', label:'🟠 Elevated', rank:1 },
-    UNKNOWN:  { bg:'#222', bd:'#666', fg:'#bbb', label:'⚪ Unknown', rank:2 },
-    BENIGN:   { bg:'#13261a', bd:'#4caf50', fg:'#a5d6a7', label:'🟢 Benign', rank:3 },
+    CRITICAL: { c:'#ff5a5a', label:'Critical', rank:0 },
+    ELEVATED: { c:'#ffae42', label:'Elevated', rank:1 },
+    UNKNOWN:  { c:'#6a7f95', label:'Unknown',  rank:2 },
+    BENIGN:   { c:'#44bb66', label:'Benign',   rank:3 },
   };
+  const WN = { HIGH:'#44bb66', PARTIAL:'#ffae42', NONE:'#6a7f95' };
   const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const fmtGen = g => { try { return new Date(g).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); } catch(_) { return g; } };
   try {
     const res = await fetch('data/live_fire_wind.json', { cache: 'no-cache' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const rows = (await res.json()).filter(o => !o.error);
-    if (!rows.length) { body.innerHTML = '<div style="color:#9fb6cf">No outlook data available yet.</div>'; _outlookLoaded = true; return; }
+    if (!rows.length) { body.innerHTML = '<div style="color:#7a9ab8;font-size:11px">No outlook data available yet.</div>'; _outlookLoaded = true; return; }
     rows.sort((a,b) => (THREAT[a.threat_level]?.rank ?? 9) - (THREAT[b.threat_level]?.rank ?? 9));
     const gen = rows[0].generated_utc || '';
     const hrs = rows[0].window_hours || 24;
-    let html = `<div style="font-size:10px;color:#7fa0c0;margin-bottom:8px">Updated ${esc(gen)} · next ${esc(hrs)} h · engine: mechanism_classifier</div>`;
+    const nCrit = rows.filter(o => o.threat_level === 'CRITICAL').length;
+    const nElev = rows.filter(o => o.threat_level === 'ELEVATED').length;
+    let summ = nCrit ? `<span style="color:#ff5a5a;font-weight:700">${nCrit} critical</span>` : '';
+    if (nElev) summ += `${summ ? ' · ' : ''}<span style="color:#ffae42;font-weight:700">${nElev} elevated</span>`;
+    if (!summ) summ = `<span style="color:#44bb66;font-weight:700">all clear</span>`;
+    let html = `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;font-size:9.5px;color:#7a9ab8">
+        <span>${summ}<span style="color:#5a7794"> · ${rows.length} sites</span></span>
+        <span title="${esc(gen)} UTC">updated ${esc(fmtGen(gen))}</span>
+      </div>`;
     for (const o of rows) {
       const t = THREAT[o.threat_level] || THREAT.UNKNOWN;
       const pk = o.peak_surface || {};
       const wn = (o.windninja_applicability || 'n/a').split(' - ')[0].trim();
-      const gust = pk.gust_mph != null ? pk.gust_mph + ' mph' : '?';
-      const rh = pk.min_rh_pct != null ? pk.min_rh_pct + '%' : '?';
-      const w700 = o.drivers && o.drivers.w700_max_ms != null ? o.drivers.w700_max_ms + ' m/s' : '?';
-      html += `<div style="border:1px solid ${t.bd};background:${t.bg};border-radius:8px;padding:9px 11px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
-          <span style="font-weight:700;color:#e8eef6">${esc(o.site)}</span>
-          <span style="color:${t.fg};font-weight:700;font-size:11px;white-space:nowrap">${t.label}</span>
+      const wnc = WN[wn] || '#7a9ab8';
+      const gust = pk.gust_mph != null ? Math.round(pk.gust_mph) + ' mph' : '—';
+      const rh = pk.min_rh_pct != null ? pk.min_rh_pct + '%' : '—';
+      const w700 = o.drivers && o.drivers.w700_max_ms != null ? o.drivers.w700_max_ms + ' m/s' : '—';
+      const mech = esc(o.headline_mechanism).replace(/_/g, ' ').toLowerCase();
+      html += `<div style="background:#0d1b2a;border:1px solid rgba(80,130,190,0.2);border-left:3px solid ${t.c};border-radius:9px;padding:11px 13px;margin-bottom:9px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:11px;font-weight:700;color:#d0e8ff;letter-spacing:0.3px">${esc(o.site)}</span>
+          <span style="font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:${t.c};background:${t.c}22;padding:2px 7px;border-radius:9px;white-space:nowrap">${t.label}</span>
         </div>
-        <div style="margin-top:5px;font-size:11px;color:#c0d8f0">
-          <strong>${esc(o.headline_mechanism)}</strong>
-          <span style="color:#9fb6cf"> · WindNinja: ${esc(wn)}</span>
+        <div style="font-size:9.5px;color:#9fb6cf;margin-bottom:7px;text-transform:capitalize">
+          ${mech}<span style="color:#5a7794"> · WindNinja </span><span style="color:${wnc};font-weight:700">${esc(wn)}</span>
         </div>
-        <div style="margin-top:4px;font-size:10.5px;color:#9fb6cf">
-          peak gust ${esc(gust)} · min RH ${esc(rh)} · 700 hPa ${esc(w700)}
+        <div style="display:flex;gap:14px;font-size:9.5px;color:#7a9ab8">
+          <span title="peak wind gust">💨 ${esc(gust)}</span>
+          <span title="minimum relative humidity">💧 ${esc(rh)}</span>
+          <span title="700 hPa max wind (synoptic driver)">⛰ ${esc(w700)}</span>
         </div>
       </div>`;
     }
