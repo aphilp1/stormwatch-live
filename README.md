@@ -47,6 +47,8 @@ The classifier is **rule-based, not ML** — N is tiny, the physics is known, an
 
 Points the project's own classifier at the **next 24–48 h** instead of a past event. Pure standard library — no `pip`, no `conda`, runs under system Python.
 
+> 📊 **Today's outlook:** [`FIRE_WIND_OUTLOOK.md`](FIRE_WIND_OUTLOOK.md) — auto-updated daily by a [GitHub Action](.github/workflows/daily-fire-wind.yml). Also live as the **Outlook** tab in the [web app](https://aphilp1.github.io/stormwatch-live/), and as machine-readable [`data/live_fire_wind.json`](data/live_fire_wind.json).
+
 ```bash
 python live_forecast.py                 # all catalogued fire sites
 python live_forecast.py "Yarnell AZ"    # any named place
