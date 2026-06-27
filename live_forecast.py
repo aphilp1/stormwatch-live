@@ -344,11 +344,55 @@ def print_human(o: dict):
         print("  fired     : " + "; ".join(o["reasons_for_headline"]))
 
 
+_MD_MARK = {"CRITICAL": "🔴", "ELEVATED": "🟠", "BENIGN": "🟢", "UNKNOWN": "⚪"}
+
+
+def render_markdown(results: list, hours: int) -> str:
+    gen = next((o.get("generated_utc") for o in results if "generated_utc" in o), "")
+    order = {"CRITICAL": 0, "ELEVATED": 1, "UNKNOWN": 2, "BENIGN": 3}
+    rows = sorted((o for o in results if "error" not in o),
+                  key=lambda o: order.get(o["threat_level"], 9))
+    lines = [
+        "# StormWatch Live — Daily Fire-Wind Outlook",
+        "",
+        f"_Generated {gen} · window: next {hours} h · auto-updated daily._",
+        "",
+        "Engine: the repo's own `mechanism_classifier` (and its `THRESHOLDS`), "
+        "fed current Open-Meteo data (surface + 700 hPa). "
+        "**Not an official forecast** — see the [README](README.md) and disclaimer.",
+        "",
+        "| Threat | Site | Mechanism | WindNinja | Peak gust | Min RH | 700 hPa max |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for o in rows:
+        pk = o.get("peak_surface", {})
+        wn = (o["windninja_applicability"].split(" - ")[0].strip()
+              if o.get("windninja_applicability") else "n/a")
+        gust = f"{pk.get('gust_mph')} mph" if pk.get("gust_mph") is not None else "?"
+        rh = f"{pk.get('min_rh_pct')}%" if pk.get("min_rh_pct") is not None else "?"
+        w700 = o["drivers"].get("w700_max_ms")
+        w700s = f"{w700} m/s" if w700 is not None else "?"
+        mark = _MD_MARK.get(o["threat_level"], "⚪")
+        lines.append(f"| {mark} {o['threat_level']} | {o['site']} | {o['headline_mechanism']} "
+                     f"| {wn} | {gust} | {rh} | {w700s} |")
+    lines += ["", "Legend: 🔴 critical · 🟠 elevated · 🟢 benign. "
+              "WindNinja applicability — **HIGH** = terrain-downscalable; "
+              "**PARTIAL/NONE** = mechanism outside the steady-state solver's scope.", ""]
+    return "\n".join(lines)
+
+
 def main(argv):
+    try:  # ensure emoji/unicode print on Windows consoles (cp1252) too
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass
     args = list(argv)
     as_json = "--json" in args
     if as_json:
         args.remove("--json")
+    as_md = "--md" in args
+    if as_md:
+        args.remove("--md")
     hours = 24
     if "--hours" in args:
         i = args.index("--hours")
@@ -370,6 +414,8 @@ def main(argv):
 
     if as_json:
         print(json.dumps(results, indent=2))
+    elif as_md:
+        print(render_markdown(results, hours))
     else:
         print(f"StormWatch Live -- fire-wind outlook (next {hours} h)")
         print(f"Engine: mechanism_classifier (repo THRESHOLDS) | Data: Open-Meteo surface+700hPa")

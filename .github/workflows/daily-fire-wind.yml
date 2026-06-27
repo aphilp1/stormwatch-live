@@ -1,0 +1,45 @@
+name: Daily Fire-Wind Outlook
+
+# Runs the repo's mechanism_classifier against current Open-Meteo data for the
+# catalogued fire sites and commits a fresh outlook (JSON + Markdown) each day.
+on:
+  schedule:
+    - cron: "0 13 * * *"   # 13:00 UTC daily (~6 AM Pacific) — morning fire-weather window
+  workflow_dispatch:        # allow manual runs from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-fire-wind
+  cancel-in-progress: false
+
+jobs:
+  outlook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Generate fire-wind outlook
+        run: |
+          mkdir -p data
+          python live_forecast.py --json > data/live_fire_wind.json
+          python live_forecast.py --md   > FIRE_WIND_OUTLOOK.md
+          echo "----- outlook preview -----"
+          cat FIRE_WIND_OUTLOOK.md
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "stormwatch-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/live_fire_wind.json FIRE_WIND_OUTLOOK.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Daily fire-wind outlook ($(date -u +%Y-%m-%d))"
+            git push
+          fi
