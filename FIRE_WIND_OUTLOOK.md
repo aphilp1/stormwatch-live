@@ -1,6 +1,6 @@
 # StormWatch Live — Daily Fire-Wind Outlook
 
-_Generated 2026-06-27T16:52Z · window: next 24 h · auto-updated daily._
+_Generated 2026-06-27T16:53Z · window: next 24 h · auto-updated daily._
 
 Engine: the repo's own `mechanism_classifier` (and its `THRESHOLDS`), fed current Open-Meteo data (surface + 700 hPa). **Not an official forecast** — see the [README](README.md) and disclaimer.
 
