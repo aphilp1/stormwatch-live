@@ -85,3 +85,7 @@ Python (analysis) · HTML/JavaScript (web app) · Node.js (MCP server). Live dat
 ## Disclaimer
 
 Research and educational tool. **Not an official forecast.** For life-safety decisions, always rely on the [National Weather Service](https://www.weather.gov/) and local authorities.
+
+## License
+
+[MIT](./LICENSE) — the application code and original research data/findings are free to use, modify, and share with attribution. Third-party components (Leaflet, NOAA/NWS, NASA, USGS, EPA AirNow, Esri, OpenStreetMap, and the Fire Neural Network™ sample data) remain under their own terms.
