@@ -6054,6 +6054,7 @@ function setViirsDate(daysBack) {
 
 async function loadAirnow() {
   const note = document.getElementById('airnow-note');
+  if (!MCP_LOCAL) { if (note) note.textContent = 'local only'; return; }
   note.textContent = 'loading…';
   airnowGroup.clearLayers();
   const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
@@ -6189,6 +6190,7 @@ function parseHmsKml(text) {
 
 async function loadHMSSmoke() {
   const note = document.getElementById('hms-note');
+  if (!MCP_LOCAL) { if (note) note.textContent = 'local only'; return; }
   note.textContent = 'loading…';
   hmsGroup.clearLayers();
   try {
@@ -6401,6 +6403,7 @@ function wnSpeedColor(mph) {
 async function loadWindNinja() {
   const note = document.getElementById('windninja-note');
   const btn  = document.getElementById('wn-run-btn');
+  if (!MCP_LOCAL) { if (note) note.textContent = 'local only'; if (btn) btn.disabled = false; return; }
   const center = map.getCenter();
   const speed  = parseFloat(document.getElementById('wn-speed').value) || 10;
   const dir    = parseFloat(document.getElementById('wn-dir').value)   || 270;
@@ -6612,10 +6615,45 @@ function makeDraggable(elId) {
 }
 
 // Initialise draggable legends after page loads
+// ── Public-web mode (graceful degradation for the GitHub Pages site) ──────────
+// The agents (Nowcast/Fire/Flood/Combined), WindNinja, and the HMS-smoke / AirNow
+// layers reach a local analysis server at localhost:3456 that only exists when the
+// app runs on your own machine. On the public site we detect that and disable just
+// those features with a clear note — every other layer talks to public weather
+// APIs directly from the browser and stays fully live.
+const MCP_LOCAL = (location.protocol === 'file:' ||
+                   location.hostname === 'localhost' ||
+                   location.hostname === '127.0.0.1');
+
+const MCP_NOTICE_HTML =
+  '<div style="padding:14px 4px;line-height:1.55">'
+  + '<div style="font-size:12px;font-weight:700;color:#cfe0f2;margin-bottom:5px">Runs in the local app only</div>'
+  + '<div style="font-size:11px;color:#7fa0c0">This feature uses StormWatch’s on-device analysis server (WindNinja + the AI agents), which isn’t part of the public web version. '
+  + 'Everything else here — alerts, radar, satellite, fire &amp; flood layers, and the Fire Winds hindcasts — is fully live.</div></div>';
+
+// Show the notice in an agent panel and stop (used by the four run* functions).
+function mcpAgentNotice(panelId, bodyId) {
+  const p = document.getElementById(panelId); if (p) p.style.display = 'block';
+  const b = document.getElementById(bodyId);  if (b) b.innerHTML = MCP_NOTICE_HTML;
+}
+
+// On the public site, label the local-only features up front so it's clear before clicking.
+function initPublicMode() {
+  ['agent-card-nowcast','agent-card-fire','agent-card-flood','agent-card-combined'].forEach(id => {
+    const card = document.getElementById(id);
+    const badge = card && card.querySelector('.agent-card-badge');
+    if (badge) { badge.textContent = '◐ Local app'; badge.classList.remove('live'); badge.title = 'Available in the local StormWatch app only'; }
+  });
+  ['windninja-note','hms-note','airnow-note'].forEach(id => {
+    const n = document.getElementById(id); if (n) n.textContent = 'local only';
+  });
+}
+
 window.addEventListener('load', () => {
   ['legend','spc-legend','hrrr-legend','sat-legend','radar-legend',
    'fwx-legend','usgs-legend','usgsflow-legend','mrms-legend','fema-legend','expt-legend','expt-speed-panel']
   .forEach(makeDraggable);
+  if (!MCP_LOCAL) initPublicMode();
 });
 
 // Box drawing — mousedown/mousemove/mouseup on map
@@ -6785,6 +6823,7 @@ function ncApplyMapAlerts(d, ma) {
 }
 
 async function runNowcast(lat, lon, bounds) {
+  if (!MCP_LOCAL) return mcpAgentNotice('nowcast-panel', 'nowcast-body');
   const panel = document.getElementById('nowcast-panel');
   panel.style.display = 'block';
   const ncBody = document.getElementById('nowcast-body');
@@ -6896,6 +6935,7 @@ function fwPanelDragMove(e) {
 function fwPanelDragEnd() { _fwDrag = null; document.removeEventListener('mousemove', fwPanelDragMove); document.removeEventListener('mouseup', fwPanelDragEnd); }
 
 async function runFireAgent(lat, lon, bounds) {
+  if (!MCP_LOCAL) return mcpAgentNotice('fire-panel', 'fire-body');
   const panel = document.getElementById('fire-panel');
   panel.style.display = 'block';
   const body = document.getElementById('fire-body');
@@ -7081,6 +7121,7 @@ function ctPanelDragStart(e) {
 }
 
 async function runCombinedAgent(lat, lon, bounds) {
+  if (!MCP_LOCAL) return mcpAgentNotice('ct-panel', 'ct-body');
   const panel = document.getElementById('ct-panel');
   panel.style.display = 'block';
   const body = document.getElementById('ct-body');
@@ -7185,6 +7226,7 @@ function flPanelDragMove(e) {
 function flPanelDragEnd() { _flDrag = null; document.removeEventListener('mousemove', flPanelDragMove); document.removeEventListener('mouseup', flPanelDragEnd); }
 
 async function runFloodAgent(lat, lon, bounds) {
+  if (!MCP_LOCAL) return mcpAgentNotice('flood-panel', 'flood-body');
   const panel = document.getElementById('flood-panel');
   panel.style.display = 'block';
   const body = document.getElementById('flood-body');
