@@ -159,6 +159,9 @@ tr:nth-child(even) td { background: #fafbfc; }
 </table>
 <h2>Live fire-wind outlook (<code>live_forecast.py</code>)</h2>
 <p>Points the project's own classifier at the <strong>next 24–48 h</strong> instead of a past event. Pure standard library — no <code>pip</code>, no <code>conda</code>, runs under system Python.</p>
+<blockquote>
+<p>📊 <strong>Today's outlook:</strong> <a href="FIRE_WIND_OUTLOOK.md"><code>FIRE_WIND_OUTLOOK.md</code></a> — auto-updated daily by a <a href=".github/workflows/daily-fire-wind.yml">GitHub Action</a>. Also live as the <strong>Outlook</strong> tab in the <a href="https://aphilp1.github.io/stormwatch-live/">web app</a>, and as machine-readable <a href="data/live_fire_wind.json"><code>data/live_fire_wind.json</code></a>.</p>
+</blockquote>
 <pre><code class="language-bash">python live_forecast.py                 # all catalogued fire sites
 python live_forecast.py &quot;Yarnell AZ&quot;    # any named place
 python live_forecast.py 39.76,-121.37   # raw lat,lon
