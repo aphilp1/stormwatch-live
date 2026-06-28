@@ -47,8 +47,19 @@ agent fetch() calls failed silently while the cached page still rendered. NOT a 
 
 ## ONE-LINE STATE
 
-**StormWatch Live — working toward v1.0. NSSL Verification Overlays now built.
-Remaining major areas: Chat Panel, Forecasting Agents, MCP bug fixes, HindC WN runs.**
+**StormWatch Live is PUBLISHED to the public web (2026-06-27): https://aphilp1.github.io/stormwatch-live/**
+**— GitHub Pages, MIT licensed, README in .md/.html/.pdf. Public visitors get the full map + Fire**
+**Winds hindcasts (incl. new trajectory popup chart); the 7 localhost-only features (4 agents,**
+**WindNinja, HMS smoke, AirNow) are gracefully gated via MCP_LOCAL. Local :8001 unchanged.**
+**Remaining major areas: Chat Panel, MCP bug fixes; optional phase-2 = cloud backend so agents work publicly.**
+
+### Session 2026-06-27 shipped (all committed + pushed, HEAD 1df115d)
+- Fire Winds station popup: hourly **trajectory chart** + timing metrics (f3bc481)
+- **Published to GitHub Pages** w/ public-mode graceful degradation (da9e793); `index.html` redirect
+- **MIT LICENSE** added, GitHub-detected (0d74f56)
+- README generated to **.html + .pdf** (regenerate from .md whenever it changes)
+- Removed `_memory_backup/` from repo (private notes, kept local; 496f269)
+- User's own commit 11be779 removed the Outlook tab from the web app
 
 ---
 
