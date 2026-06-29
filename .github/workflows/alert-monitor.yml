@@ -1,0 +1,50 @@
+name: National Alert Trend Monitor
+
+# Every ~15 min: snapshot the full NWS active-alerts feed, append to the history
+# log (the agent's memory), score each hazard vs its seasonal/hourly baseline,
+# and push a notification when a hazard escalates. Commits the updated data back.
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # every 15 minutes, UTC
+  workflow_dispatch:          # allow manual runs from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alert-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      # Optional: only needed for the Claude-written briefing (Layer 5).
+      # The monitor runs fine without it — briefings are skipped gracefully.
+      - name: Install briefing dependency
+        run: pip install --quiet anthropic
+
+      - name: Run alert trend monitor
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python alerts_monitor.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name  "stormwatch-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/alert_history.jsonl data/alert_status.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Alert monitor snapshot ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git push
+          fi

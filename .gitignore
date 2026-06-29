@@ -49,6 +49,13 @@ Storm_info/hrrr_bc_cache/
 *.pre_audit_bak
 *.bak
 
+# Alert monitor: large reproducible build inputs (kept LOCAL; the live Action
+# reads only the small derived models baseline_model/composite_model/analog_library).
+# Rebuild the raw archive with: python backfill_iem.py --start 2008 --end 2026
+data/baseline_hourly.jsonl
+data/baseline_manifest.json
+data/_backfill.log
+
 # Build logs (ephemeral run output)
 Storm_info/phase_a_build.log
 Storm_info/dem_build.log
