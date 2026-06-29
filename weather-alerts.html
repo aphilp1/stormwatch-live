@@ -922,7 +922,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           <div class="layer-group-title">Alerts</div>
 
           <div class="layer-row">
-            <label class="toggle"><input type="checkbox" id="lyr-alerts" onchange="toggleLayer('alerts',this.checked)"><span class="toggle-slider"></span></label>
+            <label class="toggle"><input type="checkbox" id="lyr-alerts" checked onchange="toggleLayer('alerts',this.checked)"><span class="toggle-slider"></span></label>
             <span class="layer-label">NWS Active Alerts</span>
           </div>
 
@@ -2499,7 +2499,7 @@ function initMap() {
   spc1Group       = L.layerGroup();
   spc2Group       = L.layerGroup();
   inundationGroup = L.layerGroup();         // FIM polygons (below alerts, loaded on demand)
-  alertGroup      = L.layerGroup();
+  alertGroup      = L.layerGroup().addTo(map);  // alerts ON by default → polygons clickable
   fimGroup        = L.layerGroup();         // gauge markers (loaded on demand)
   usgsGroup       = L.layerGroup();         // NWS stream gauges (loaded on demand)
   usgsFlowGroup   = L.layerGroup();         // USGS streamflow gauges (loaded on demand)
