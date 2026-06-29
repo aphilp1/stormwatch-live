@@ -51,6 +51,15 @@ MODEL_PATH = os.path.join("data", "baseline_model.json")
 COMPOSITE_PATH = os.path.join("data", "composite_model.json")
 # Layer 4 analog library (historical day twins) built by build_analogs.py.
 ANALOG_PATH = os.path.join("data", "analog_library.json")
+# Anomaly-Map per-state baselines built by build_state_baselines.py.
+STATE_MODEL_PATH = os.path.join("data", "state_model.json")
+
+US_STATES = {
+    "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
+    "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
+    "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
+    "VA","WA","WV","WI","WY","DC",
+}
 
 # Tiers by "surprise" = -log10(exceedance prob) against the hazard's conditional
 # (this-month, this-time-of-day) 18-yr distribution. 1.3=~top 5%, 2=~top 1%,
@@ -346,6 +355,60 @@ def find_analogs(counts, analogs, now, k=3):
 
 
 # ----------------------------------------------------------------------------
+# Anomaly Map: score each state's current activity vs its own 18-yr history
+# ----------------------------------------------------------------------------
+def load_state_model():
+    if not os.path.exists(STATE_MODEL_PATH):
+        return None
+    try:
+        return json.load(open(STATE_MODEL_PATH, encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _alert_states(a):
+    ugc = ((a.get("properties") or {}).get("geocode") or {}).get("UGC") or []
+    return {u[:2] for u in ugc if len(u) >= 2 and u[:2] in US_STATES}
+
+
+def score_states(alerts, now, state_model):
+    """Per state: current active-alert count + how unusual it is for this state,
+    this month, this time of day. Returns {ST: {...}}."""
+    if not state_model:
+        return {}
+    smodels = state_model.get("states", {})
+    counts = {}                       # ST -> int
+    by_haz = {}                       # ST -> {event: count}
+    for a in alerts:
+        ev = ((a.get("properties") or {}).get("event") or "").strip()
+        for st in _alert_states(a):
+            counts[st] = counts.get(st, 0) + 1
+            by_haz.setdefault(st, {})[ev] = by_haz.setdefault(st, {}).get(ev, 0) + 1
+
+    out = {}
+    for st, cnt in counts.items():
+        sm = smodels.get(st)
+        if not sm:
+            continue
+        surprise, is_record, cmax = conditional_surprise(cnt, now, {"cells": sm})
+        tier = tier_for(surprise)
+        if is_record and cnt >= MIN_COUNT_TO_ALERT:
+            tier = "Extraordinary"
+        cell = sm.get(f"{now.month}-{now.hour // 6}")
+        typical = cell["q"][0] if cell else None
+        top = sorted(by_haz.get(st, {}).items(), key=lambda kv: -kv[1])[:3]
+        out[st] = {
+            "count": cnt,
+            "typical": typical,
+            "surprise": round(surprise, 2),
+            "tier": tier,
+            "record": bool(is_record),
+            "top": top,
+        }
+    return out
+
+
+# ----------------------------------------------------------------------------
 # Layer 5: Claude reasoning — turn the stats + analogs into a plain-language brief
 # ----------------------------------------------------------------------------
 def generate_briefing(now, total, nt, ranked_hazards, analogs):
@@ -522,6 +585,13 @@ def main():
               f"({nt['families_elevated']} families elevated: {elev})")
     # 2c) Historical analogs — what past day does today most resemble?
     analogs = find_analogs(counts, load_analogs(), now)
+
+    # 2d) Anomaly Map — per-state current activity vs each state's own history.
+    states = score_states(alerts, now, load_state_model())
+    if states:
+        hot = sorted(states.items(), key=lambda kv: -(kv[1]["surprise"] or 0))[:4]
+        print("[states] most unusual: " +
+              ", ".join(f"{s}({v['tier']},{v['count']})" for s, v in hot))
     if analogs:
         a = analogs[0]
         top = ", ".join(f"{h}:{n}" for h, n in a["peak"][:3])
@@ -561,6 +631,7 @@ def main():
         "national_threat": nt,
         "analogs": analogs,
         "briefing": briefing,
+        "states": states,
         "hazards": hazards,
     }
     os.makedirs("data", exist_ok=True)

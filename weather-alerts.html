@@ -2758,7 +2758,11 @@ function buildCard(alert) {
   const s = getStyle(p.event, p.severity);
   const sev = p.severity || 'Unknown';
   const sevCfg = SEV_FB[sev] || SEV_FB.Unknown;
-  const expires = p.expires ? new Date(p.expires) : null;
+  // Show the hazard END time (`ends`) — what users care about — falling back to the
+  // message-expiry (`expires`), which NWS often sets to an earlier re-issue deadline.
+  // (Using `expires` alone made still-active warnings read "expired" prematurely.)
+  const endRaw = p.ends || p.expires;
+  const expires = endRaw ? new Date(endRaw) : null;
 
   const card = document.createElement('div');
   card.className = 'acard';
@@ -2851,7 +2855,7 @@ function showDetail(alert, animate=false) {
 
   document.getElementById('det-area').textContent = p.areaDesc||'—';
   document.getElementById('det-eff').textContent  = p.effective ? fmtDT(new Date(p.effective)) : '—';
-  document.getElementById('det-exp').textContent  = p.expires   ? fmtDT(new Date(p.expires))   : '—';
+  document.getElementById('det-exp').textContent  = (p.ends || p.expires) ? fmtDT(new Date(p.ends || p.expires)) : '—';
 
   const hl = (p.headline||'').replace(/^.*?issued\s+/i,'').trim();
   document.getElementById('det-hl').textContent = hl||'—';
@@ -7062,6 +7066,19 @@ function ncApplyMapAlerts(d, ma) {
   };
 }
 
+// Region dimensions for area-mode agents — width × height (mi) + area (sq mi) from
+// the drawn box, computed client-side (haversine) so EVERY agent reports it the same
+// way. Used by the fire, flood, severe (nowcast) and combined agents.
+function boxRegionLabel(bounds) {
+  if (!bounds) return '';
+  const R = 3958.8, rad = x => x * Math.PI / 180;
+  const s = bounds.getSouth(), n = bounds.getNorth(), w = bounds.getWest(), e = bounds.getEast();
+  const hMi = Math.abs(rad(n - s)) * R;                          // N–S height
+  const wMi = Math.abs(rad(e - w)) * R * Math.cos(rad((s + n) / 2)); // E–W width at mid-lat
+  const W = Math.round(wMi), H = Math.round(hMi), sq = Math.round(wMi * hMi);
+  return `${W.toLocaleString()} × ${H.toLocaleString()} mi · ${sq.toLocaleString()} sq mi`;
+}
+
 async function runNowcast(lat, lon, bounds) {
   if (!MCP_LOCAL) return mcpAgentNotice('nowcast-panel', 'nowcast-body');
   const panel = document.getElementById('nowcast-panel');
@@ -7093,7 +7110,7 @@ function renderNowcast(d, bounds) {
   let html = '';
 
   const locLabel = bounds
-    ? `Area · center ${d.location.lat.toFixed(2)}°N, ${Math.abs(d.location.lon).toFixed(2)}°W${d.location.state ? ' · ' + d.location.state : ''}`
+    ? `Area · ${boxRegionLabel(bounds)}${d.location.state ? ' · ' + d.location.state : ''}`
     : `${d.location.lat.toFixed(3)}°N, ${Math.abs(d.location.lon).toFixed(3)}°W${d.location.state ? ' · ' + d.location.state : ''}`;
   html += `<div class="nc-loc">${locLabel}</div>`;
   html += `<div class="nc-threat nc-threat-${tl}">${d.headline}</div>`;
@@ -7191,13 +7208,13 @@ async function runFireAgent(lat, lon, bounds) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Server error ${res.status}`);
     const data = await res.json();
-    renderFireAgent(data);
+    renderFireAgent(data, bounds);
   } catch (err) {
     body.innerHTML = `<div class="fw-hint">Could not get fire weather data.<br><small style="color:#7a3a18">${err.message}</small><br><small style="color:#4a2010">Is the MCP server running?</small></div>`;
   }
 }
 
-function renderFireAgent(d) {
+function renderFireAgent(d, bounds) {
   const rating = d.riskRating.replace(/[- ]/g, '_');
   const score  = d.riskScore.toFixed(1);
   const env    = d.environment ?? {};
@@ -7205,7 +7222,8 @@ function renderFireAgent(d) {
 
   let html = '';
   if (loc.areaMode) {
-    html += `<div class="fw-loc">📍 ${loc.name}${loc.states ? ' · ' + loc.states : ''}`;
+    const region = bounds ? boxRegionLabel(bounds) : (loc.name ?? '');
+    html += `<div class="fw-loc">📍 ${region}${loc.states ? ' · ' + loc.states : ''}`;
     if (loc.worstPoint) html += `<br><span style="font-weight:400;opacity:0.75">Peak risk: ${loc.worstPoint}</span>`;
     html += `</div>`;
   } else {
@@ -7258,7 +7276,8 @@ function renderFireAgent(d) {
   if (d.alerts?.length) {
     html += `<div class="fw-section-hdr">Active Fire Alerts</div>`;
     d.alerts.forEach(a => {
-      const exp = a.expires ? ` · expires ${new Date(a.expires).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}` : '';
+      const expRaw = a.ends || a.expires;
+      const exp = expRaw ? ` · expires ${new Date(expRaw).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}` : '';
       html += `<div class="fw-alert-item">🚨 ${a.event}${exp}</div>`;
     });
   }
@@ -7376,19 +7395,20 @@ async function runCombinedAgent(lat, lon, bounds) {
     }
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Server error ${res.status}`);
-    renderCombinedAgent(await res.json());
+    renderCombinedAgent(await res.json(), bounds);
   } catch (err) {
     body.innerHTML = `<div class="ct-hint">Could not get combined threat data.<br><small style="color:#4a6a88">${err.message}</small><br><small>Is the MCP server running?</small></div>`;
   }
 }
 
-function renderCombinedAgent(d) {
+function renderCombinedAgent(d, bounds) {
   const loc   = d.location ?? {};
   const level = d.overallLevel ?? 'NONE';
   let html = '';
 
-  // Location
-  html += `<div class="ct-loc">📍 ${loc.name ?? ''}${loc.areaMode ? '' : (loc.state ? ' · ' + loc.state : '')}</div>`;
+  // Location (area mode shows the drawn box's dimensions + area)
+  const ctRegion = bounds ? boxRegionLabel(bounds) : (loc.name ?? '');
+  html += `<div class="ct-loc">📍 ${ctRegion}${bounds ? (loc.states ? ' · ' + loc.states : '') : (loc.state ? ' · ' + loc.state : '')}</div>`;
 
   // Overall threat banner
   html += `<div class="ct-overall ct-overall-${level}">`;
@@ -7482,17 +7502,18 @@ async function runFloodAgent(lat, lon, bounds) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Server error ${res.status}`);
     const data = await res.json();
-    renderFloodAgent(data);
+    renderFloodAgent(data, bounds);
   } catch (err) {
     body.innerHTML = `<div class="fl-hint">Could not get flood data.<br><small style="color:#2a4a80">${err.message}</small><br><small style="color:#1a2a50">Is the MCP server running?</small></div>`;
   }
 }
 
-function renderFloodAgent(d) {
+function renderFloodAgent(d, bounds) {
   const loc = d.location ?? {};
   let html = '';
   if (loc.areaMode) {
-    html += `<div class="fl-loc">📍 ${loc.name}${loc.states ? ' · ' + loc.states : ''}`;
+    const region = bounds ? boxRegionLabel(bounds) : (loc.name ?? '');
+    html += `<div class="fl-loc">📍 ${region}${loc.states ? ' · ' + loc.states : ''}`;
     if (loc.worstPoint) html += `<br><span style="font-weight:400;opacity:0.75">Highest activity: ${loc.worstPoint}</span>`;
     html += `</div>`;
   } else {
@@ -7521,7 +7542,8 @@ function renderFloodAgent(d) {
     html += `<div class="fl-section-hdr">Active Flood Alerts</div>`;
     d.floodAlerts.forEach(a => {
       const sevClass = `fl-alert-${a.severity}`;
-      const exp = a.expires ? ` · ${new Date(a.expires).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}` : '';
+      const expRaw = a.ends || a.expires;
+      const exp = expRaw ? ` · ${new Date(expRaw).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}` : '';
       html += `<div class="fl-alert-item ${sevClass}">🚨 ${a.event}${exp}`;
       if (a.area) html += `<br><span style="opacity:0.7">${a.area}</span>`;
       html += `</div>`;
@@ -7876,8 +7898,8 @@ const EXPT_EVENTS = [
       PSWC1: { speed: 38.3, ratio: 9.58, wn_err: +34.3 },
       QYRC1: { speed: 15.9, ratio: 7.91, wn_err: +13.9 }
     },
-    note: 'Camp Fire, November 8, 2018. HRRR underestimated ridge winds by 3–18 mph across 12 stations. Driven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja computed 28.5 mph at Colby Mountain (CBXC1) — the station recorded 29.0. WindNinja is the closest of the four sources at 6 of 10 scorable stations.',
-    narrative: 'Camp Fire ignited on the morning of November 8, 2018 under a Diablo offshore wind event — northeast flow funneling through the Sierra Nevada foothills.\n\nThe hindcast feeds WindNinja HRRR\'s 10 m surface wind plus 30 m terrain and lets the terrain solver compute the fine-scale surface wind. At Colby Mountain (CBXC1), WindNinja computed 28.5 mph against an observed 29.0 — within half a mph, and the closest of the four sources there (raw HRRR was 25.4, 3.6 low). At Saddleback Ridge (SLEC1), WindNinja computed 23.0 vs an observed 35.0 (12.0 low), still closer than raw HRRR (18.3 low).\n\nThe read: at the exposed ridges WindNinja pulls the surface wind toward what the stations actually recorded. It still overshoots at the open and valley sites (about +14 at HMRC1, +17 at PSWC1), where there is no terrain jet to capture. Across the 10 scorable stations WindNinja is closest at 6, raw HRRR at 4 — the terrain-jet-specialist pattern that holds across the library.'
+    note: 'Camp Fire, November 8, 2018. HRRR underestimated ridge winds by 3–18 mph across 12 stations. Driven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja computed 28.5 mph at Colby Mountain (CBXC1) — the station recorded 29.0. WindNinja is the closest to observed at 6 of 10 scorable stations.',
+    narrative: 'Camp Fire ignited on the morning of November 8, 2018 under a Diablo offshore wind event — northeast flow funneling through the Sierra Nevada foothills.\n\nThe hindcast feeds WindNinja HRRR\'s 10 m surface wind plus 30 m terrain and lets the terrain solver compute the fine-scale surface wind. At Colby Mountain (CBXC1), WindNinja computed 28.5 mph against an observed 29.0 — within half a mph, and the closest to observed there (raw HRRR was 25.4, 3.6 low). At Saddleback Ridge (SLEC1), WindNinja computed 23.0 vs an observed 35.0 (12.0 low), still closer than raw HRRR (18.3 low).\n\nThe read: at the exposed ridges WindNinja pulls the surface wind toward what the stations actually recorded. It still overshoots at the open and valley sites (about +14 at HMRC1, +17 at PSWC1), where there is no terrain jet to capture. Across the 10 scorable stations WindNinja is closest at 6, raw HRRR at 4 — the terrain-jet-specialist pattern that holds across the library.'
   },
   {
     id: 'tubbs_2017',
@@ -7894,7 +7916,7 @@ const EXPT_EVENTS = [
     status: 'pass',
     statusLabel: 'WN slight edge',
     wn_stations: {},
-    note: 'Tubbs Fire, October 8, 2017. Diablo offshore flow over Sonoma County. Driven by HRRR\'s 10 m surface wind, WindNinja is the closest of the four sources at 4 of 7 stations — a narrow edge over raw HRRR. Direction caveat: 4 valley/open stations recorded surface winds 25–66° more northerly than the synoptic flow.',
+    note: 'Tubbs Fire, October 8, 2017. Diablo offshore flow over Sonoma County. Driven by HRRR\'s 10 m surface wind, WindNinja is the closest to observed at 4 of 7 stations — a narrow edge over raw HRRR. Direction caveat: 4 valley/open stations recorded surface winds 25–66° more northerly than the synoptic flow.',
     narrative: 'Tubbs Fire ignited during a Diablo wind event, offshore flow from the northeast across Sonoma County. The mean HRRR error across 7 stations was −0.3 mph (a near-cancellation of station over- and under-estimates, not a per-station match).\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja computed 37.8 mph at the exposed Hawkeye Ridge anchor (HWKC1) against an observed 48 — an undershoot of 10.2, fractionally closer than raw HRRR (11.3 low). Neither recovers the full ridge wind, because the 10 m analysis there is itself below what the station felt.\n\nAcross the 7 stations WindNinja is closest at 4, raw HRRR at 3 — a narrow edge, consistent with a near-even event.\n\nDirection caveat (open): at four valley/open stations (NVHC1, WISC1, KELC1, KNXC1) the observed surface direction is 25–66° more northerly than the synoptic flow, so the per-station arrows there carry a known direction offset. Speed comparison is direction-independent and unaffected.'
   },
   {
@@ -7956,8 +7978,8 @@ const EXPT_EVENTS = [
     wn_stations: {
       WMSC1: { speed: 58.8, ratio: 1.279, wn_err: +12.8 }
     },
-    note: 'Thomas Fire, December 4–7, 2017. The largest HRRR errors in this library across 26 stations. Driven by HRRR\'s 10 m surface wind, WindNinja is the closest of the four sources at 17 of 26 stations. At Whitmore (WMSC1) the 10 m analysis itself is far too low (10 mph vs 46 observed), so neither source recovers that one extreme.',
-    narrative: 'The Thomas Fire burned under the largest HRRR errors in the hindcast library. At Whitmore Station (WMSC1), HRRR\'s 10 m wind was about 10 mph while the station recorded 46 — the 3 km model grid cannot resolve the steep terrain funneling that Santa Ana flow produces in the Transverse Ranges. Mean error across 26 stations was −35.6 mph.\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja is the closest of the four sources at 17 of 26 stations — the broad win comes at the canyon and ridge sites (for example TCLC1, where WindNinja lands 3.2 off the observed 10 mph while raw HRRR is 15.7 high). At WMSC1 itself both miss badly: the 10 m surface analysis fed in is already about 36 mph below what the station felt, and WindNinja amplifies terrain but cannot manufacture wind that is not in its input.\n\nThe read: where the 10 m field carries the flow into the terrain, WindNinja sharpens it well; where the analysis misses the event outright, no terrain solver can recover it.'
+    note: 'Thomas Fire, December 4–7, 2017. The largest HRRR errors in this library across 26 stations. Driven by HRRR\'s 10 m surface wind, WindNinja is the closest to observed at 17 of 26 stations. At Whitmore (WMSC1) the 10 m analysis itself is far too low (10 mph vs 46 observed), so neither source recovers that one extreme.',
+    narrative: 'The Thomas Fire burned under the largest HRRR errors in the hindcast library. At Whitmore Station (WMSC1), HRRR\'s 10 m wind was about 10 mph while the station recorded 46 — the 3 km model grid cannot resolve the steep terrain funneling that Santa Ana flow produces in the Transverse Ranges. Mean error across 26 stations was −35.6 mph.\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja is the closest to observed at 17 of 26 stations — the broad win comes at the canyon and ridge sites (for example TCLC1, where WindNinja lands 3.2 off the observed 10 mph while raw HRRR is 15.7 high). At WMSC1 itself both miss badly: the 10 m surface analysis fed in is already about 36 mph below what the station felt, and WindNinja amplifies terrain but cannot manufacture wind that is not in its input.\n\nThe read: where the 10 m field carries the flow into the terrain, WindNinja sharpens it well; where the analysis misses the event outright, no terrain solver can recover it.'
   },
   {
     id: 'woolsey_2018',
@@ -7995,7 +8017,7 @@ const EXPT_EVENTS = [
     statusLabel: 'Control Case',
     wn_stations: {},
     note: 'Labor Day Oregon fires, September 7–8, 2020. Three fire complexes spanning ~200 miles. HRRR overestimated by 2.0 mph across 34 stations. Hindcast now run across three stitched domains: driven by HRRR\'s 10 m surface wind, WindNinja is the closest source at 15 of 27 scorable stations — a slight edge in a downslope regime.',
-    narrative: 'The 2020 Labor Day fires burned simultaneously across three Oregon fire complexes spanning nearly 200 miles north-to-south. HRRR mean error was +2.0 mph across 34 stations — overestimating rather than underestimating, the opposite bias direction from the Santa Ana and Diablo cases.\n\nThe geographic extent needs more than one domain, so the hindcast stitches three WindNinja domains to cover the full span. Driven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja is the closest of the four sources at 15 of 27 scorable stations, raw HRRR at 12 — a slight edge.\n\nThis event documents the Oregon continental downslope pattern, where terrain helps only modestly and the HRRR bias runs the opposite way from the offshore California events.'
+    narrative: 'The 2020 Labor Day fires burned simultaneously across three Oregon fire complexes spanning nearly 200 miles north-to-south. HRRR mean error was +2.0 mph across 34 stations — overestimating rather than underestimating, the opposite bias direction from the Santa Ana and Diablo cases.\n\nThe geographic extent needs more than one domain, so the hindcast stitches three WindNinja domains to cover the full span. Driven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja is the closest to observed at 15 of 27 scorable stations, raw HRRR at 12 — a slight edge.\n\nThis event documents the Oregon continental downslope pattern, where terrain helps only modestly and the HRRR bias runs the opposite way from the offshore California events.'
   },
   {
     id: 'boulder_chin2021',
@@ -8172,9 +8194,9 @@ function makeWindSVG(col, dir, sz) {
   </svg>`;
 }
 
-// ── Station comparison popup (compact: obs + the four model winds) ────────────
+// ── Station comparison popup (compact: obs + HRRR 10m + WindNinja) ────────────
 // ── Hourly trajectory mini-chart (timing + shape) for the station popup ──────
-// Renders the per-station hourly wind curves (obs vs the four model inputs) as a
+// Renders the per-station hourly wind curves (obs vs HRRR 10m vs WindNinja) as a
 // dependency-free inline SVG sparkline, plus a legend carrying each model's curve
 // RMSE (shape) and peak-offset (timing) over the obs-peak ±6 h window. Additive —
 // returns '' when a station has no trajectory block (graceful, never throws).
@@ -8182,13 +8204,12 @@ function makeTrajChart(t) {
   if (!t || !t.curves || !Array.isArray(t.hours) || t.hours.length < 2) return '';
   const LBL = '#9fb8d2', SEP = 'rgba(120,160,200,0.16)';
   const hours = t.hours, n = hours.length;
-  // HRRR = blues, WindNinja = ambers, obs = green (matches the rest of the tab).
+  // Obs = green, WindNinja = amber, HRRR = blue. Only the two sources that
+  // differ (the BC is HRRR 10 m, so the old "(BC)" curves duplicated these).
   const SERIES = [
     { k: 'obs',      lbl: 'Obs',        col: '#46c882', w: 2.4 },
-    { k: 'wn10m',    lbl: 'WN 10m',     col: '#f0a500', w: 1.8 },
-    { k: 'hrrr_10m', lbl: 'HRRR 10m',   col: '#5dade2', w: 1.4 },
-    { k: 'wn850',    lbl: 'WN (BC)',    col: '#d6804a', w: 1.6 },
-    { k: 'hrrr_bc',  lbl: 'HRRR (BC)',  col: '#3a6ea5', w: 1.4 },
+    { k: 'wn10m',    lbl: 'WN (10m)',   col: '#f0a500', w: 1.8 },
+    { k: 'hrrr_10m', lbl: 'HRRR (10m)', col: '#5dade2', w: 1.4 },
   ].filter(s => Array.isArray(t.curves[s.k]));
   if (!SERIES.length) return '';
 
@@ -8263,12 +8284,11 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wn850, wn10, ev)
                 : tc.includes('valley')                          ? 'Valley'
                 : tc.includes('flat')  || tc.includes('plain')   ? 'Flat' : 'Open';
 
-  // The four model inputs (same as the table).
+  // The two wind sources scored against the station (same as the table):
+  // HRRR's raw 10 m wind, and WindNinja's terrain-downscaled wind.
   const four = [
-    { k: 'HRRR 10m',           v: hrrr },
-    { k: 'HRRR ' + lvl + ' (BC)', v: bc },
-    { k: 'WN(10m)',            v: wn10 },
-    { k: 'WN(' + lvl + ' BC)', v: wn850 },
+    { k: 'HRRR (10m)', v: hrrr },
+    { k: 'WN (10m)',   v: wn10 },
   ];
   // Closest-to-obs, only if scorable (not near-calm, not extreme bc/obs).
   const scorable = !calm && bc != null && obs > 0 && bc / obs <= 3;
