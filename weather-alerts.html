@@ -45,7 +45,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #sidebar{width:400px;background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width 0.2s}
 #sidebar.collapsed{width:0;overflow:hidden}
 
-.tab-bar{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab-bar{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
 .tab{padding:8px 0;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center;white-space:nowrap}
 .tab.active{color:var(--text);border-bottom-color:var(--accent)}
 .tab:hover:not(.active){color:var(--text2)}
@@ -804,6 +804,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #verif-minimap{height:175px;border-radius:5px;border:1px solid var(--border);overflow:hidden;margin-top:2px}
 .verif-tt{background:#101c2c!important;border:1px solid #243248!important;color:#b0c2da!important;font-size:10px!important;padding:2px 6px!important;border-radius:3px!important;box-shadow:0 2px 8px rgba(0,0,0,0.5)!important}
 
+/* ── EVENT WATCH ──────────────────────────────────────────────── */
+.ew-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:11px;cursor:pointer;color:#fff;letter-spacing:.3px;margin-left:6px}
+.ew-badge::before{content:"●";font-size:9px}
+.ew-t-Normal{background:#2e7d32}.ew-t-Elevated{background:#b8902a}.ew-t-High{background:#d9791f}.ew-t-Extreme{background:#cc342a}
+#ew-tab{padding:12px 16px 14px 16px;overflow-y:auto}
+#ew-tab .stat-section{margin-bottom:15px}
+#ew-tab .stat-title{color:var(--text2);font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
+.ew-empty{font-size:12px;color:var(--text2);padding:26px 14px;text-align:center;line-height:1.7}
+.ew-gauge{border-radius:8px;padding:13px 16px;margin-bottom:15px;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.ew-gauge .ew-tier{font-size:16px;font-weight:800;letter-spacing:.4px}
+.ew-gauge .ew-sub{font-size:11px;opacity:.97;margin-top:4px;line-height:1.45}
+.ew-haz{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:6px 1px;border-bottom:1px solid var(--border);font-size:12px}
+.ew-haz .ew-h-name{color:var(--text);font-weight:600}
+.ew-haz .ew-h-meta{font-size:10px;color:var(--text2);white-space:nowrap}
+.ew-tag{display:inline-block;font-size:8px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle;color:#fff}
+.ew-tag-Extraordinary{background:#cc342a}.ew-tag-Significant{background:#d9791f}.ew-tag-Elevated{background:#b8902a}
+.ew-rec{background:#7a1f8c}
+.ew-analog{font-size:12px;color:var(--text2);line-height:1.6}
+.ew-analog b{color:var(--text)}
+.ew-sub2{color:var(--text3)}
+.ew-brief{font-size:12px;color:var(--text);line-height:1.6}
+.ew-updated{font-size:10px;color:var(--text3);margin-top:10px;text-align:right}
+.ew-about{margin-bottom:15px}
+.ew-intro{font-size:11.5px;color:var(--text2);line-height:1.65;margin:0 0 6px 0}
+.ew-intro b{color:var(--text)}
+.ew-about summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:10px;letter-spacing:.4px;text-transform:uppercase;padding:3px 0;outline:none}
+.ew-about details[open] summary{margin-bottom:3px}
+.ew-about details p{font-size:11px;color:var(--text2);line-height:1.6;margin:6px 0}
+.ew-about details p b{color:var(--text)}
+.ew-cite{font-size:10px;color:var(--text3);line-height:1.7}
+.ew-mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;color:var(--text2)}
+
 </style>
 </head>
 <body>
@@ -812,6 +844,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div id="status-dot"></div>
   <span id="status-msg">Initializing…</span>
   <div id="count-bar"></div>
+  <span id="ew-badge" class="ew-badge" onclick="showTab('eventwatch')" title="National weather threat level — click for Event Watch" style="display:none"></span>
   <span id="clock"></span>
   <button id="refresh-btn" onclick="manualRefresh()">↻ Refresh</button>
 </div>
@@ -825,6 +858,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button class="tab" onclick="showTab('models')">Models</button>
       <button class="tab" onclick="showTab('maps')">Maps</button>
       <button class="tab" onclick="showTab('agents')">Agents</button>
+      <button class="tab" onclick="showTab('eventwatch')">Event Watch</button>
       <button class="tab" onclick="showTab('experiments')">Fire Winds</button>
     </div>
 
@@ -840,6 +874,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <button class="fpill"        data-f="Other"    onclick="setFilter('Other')">Other</button>
       </div>
       <div id="alert-list"></div>
+    </div>
+
+    <!-- EVENT WATCH TAB -->
+    <div id="tab-eventwatch" class="tab-content">
+      <div id="ew-tab">
+        <div id="ew-empty" class="ew-empty">Collecting data — the watchdog checks national alerts every 15 minutes.<br>First results will appear shortly.</div>
+        <div id="ew-body" style="display:none">
+          <div id="ew-gauge" class="ew-gauge"></div>
+          <div class="ew-about">
+            <p class="ew-intro">The <b>National Threat System (NTS)</b> reads every active U.S. weather alert every 15 minutes and asks one question: <i>is anything statistically unusual right now, compared with the last 18 years?</i> It ranks each hazard against its own history for this time of year and time of day, then sums how many hazard families are unusually elevated into a single level — Normal, Elevated, High, or Extreme.</p>
+            <details>
+              <summary>Method &amp; sources</summary>
+              <p><b>Method.</b> Each hazard's current nationwide count is compared with the distribution of that hazard's counts at the same month and 6-hour window across 2008–present. The result is an empirical exceedance percentile (a "surprise" score); <b>Extraordinary</b> means roughly the top 0.1% — or a new 18-year record — for that calendar slot. A magnitude filter keeps rare-but-tiny anomalies (a lone off-season winter alert) from raising the level. The threat level counts how many of seven hazard families (severe, flood, wind, fire, heat, winter, tropical) are elevated at once.</p>
+              <p><b>Data.</b> Live alerts come from the NOAA/National Weather Service public alerts feed; the 18-year baseline (~162,000 hourly snapshots, 2008–present) comes from the Iowa Environmental Mesonet's curated NWS Watch/Warning/Advisory archive.</p>
+              <p class="ew-cite">Sources &amp; methods:<br>
+                • NOAA/NWS Alerts (CAP) API — <span class="ew-mono">api.weather.gov</span><br>
+                • Iowa Environmental Mesonet, Iowa State University — <span class="ew-mono">mesonet.agron.iastate.edu</span><br>
+                • Climatological percentile / anomaly framework — Wilks, <i>Statistical Methods in the Atmospheric Sciences</i>, 3rd ed. (2011).</p>
+            </details>
+          </div>
+          <div class="stat-section"><div class="stat-title">Unusual right now</div><div id="ew-hazards"></div></div>
+          <div class="stat-section"><div class="stat-title">Active US alerts — recent trend</div><div style="height:150px;position:relative"><canvas id="ew-chart"></canvas></div></div>
+          <div class="stat-section"><div class="stat-title">Most similar past day</div><div id="ew-analog" class="ew-analog"></div></div>
+          <div class="stat-section"><div class="stat-title">Briefing</div><div id="ew-brief" class="ew-brief"></div></div>
+          <div id="ew-updated" class="ew-updated"></div>
+        </div>
+      </div>
     </div>
 
     <!-- LAYERS TAB -->
@@ -1609,12 +1670,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="expt-leg-row"><span class="expt-leg-dot" style="background:#8b5cf6"></span>Convective Outflow</div>
       <div class="expt-leg-divider"></div>
       <div class="expt-leg-section-hdr">WN Hindcast vs. Station Obs</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge pass">WN Niche</span>WN within 25% of obs at the anchor ridge (often overcorrects); a clean win (WN/obs ≈ 1.0) is unconfirmed on the production domain</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge nails">WN Nails It</span>WN/obs ≈ 1.0 at anchor; do-no-harm gate blocks overcorrection</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge improves">WN Corrects</span>WN + correction is closer to station obs than raw HRRR</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge hrrrok">HRRR OK</span>HRRR/obs ≈ 1.0 at anchor; no WN needed</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge control">Control Case</span>Flat terrain or flow-direction test; establishes baseline</div>
-      <div class="expt-leg-row"><span class="expt-leg-badge inprog">In Progress</span>WN not yet run; HRRR vs. obs only</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge improves">WN Corrects</span>WindNinja (driven by HRRR 10 m) is clearly the closest source to station obs — a strong terrain-jet win</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge pass">WN edge</span>WindNinja is the closest source at a majority of stations, but by a narrow margin (the terrain-jet niche)</div>
+      <div class="expt-leg-row"><span class="expt-leg-badge control">Control Case</span>Downslope, flat, or convective-outflow contrast — terrain downscaling does not help here; establishes baseline</div>
       <div class="expt-leg-divider"></div>
       <div class="expt-leg-section-hdr">Station Markers</div>
       <div class="expt-leg-row" style="align-items:flex-start;gap:9px">
@@ -3904,11 +3962,12 @@ function setBase(name) {
 function showTab(name) {
   currentTab = name;
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    const names=['alerts','stats','layers','models','maps','agents','experiments'];
+    const names=['alerts','stats','layers','models','maps','agents','eventwatch','experiments'];
     t.classList.toggle('active',names[i]===name);
   });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'eventwatch') loadEventWatch();
 
   const modPanel = document.getElementById('model-panel');
   const drag     = document.getElementById('panel-drag');
@@ -5080,6 +5139,103 @@ async function manualRefresh() {
 
 function scheduleRefresh() {
   refreshTimer = setInterval(loadAlerts, ALERT_REFRESH_MS);
+  if (!window._ewInited) { window._ewInited = true; loadEventWatch(); setInterval(loadEventWatch, 300000); }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// EVENT WATCH  — reads same-origin data/alert_status.json (+ history)
+// produced by the National Alert Trend Monitor GitHub Action.
+// ═══════════════════════════════════════════════════════════════════
+let ewChartInst = null;
+async function loadEventWatch() {
+  let status = null, history = [];
+  try { const r = await fetch('data/alert_status.json', {cache:'no-store'}); if (r.ok) status = await r.json(); } catch(e){}
+  try {
+    const r = await fetch('data/alert_history.jsonl', {cache:'no-store'});
+    if (r.ok) history = (await r.text()).trim().split('\n').filter(Boolean)
+      .map(l => { try { return JSON.parse(l); } catch(e){ return null; } }).filter(Boolean);
+  } catch(e){}
+
+  const badge = document.getElementById('ew-badge');
+  const empty = document.getElementById('ew-empty');
+  const body  = document.getElementById('ew-body');
+  if (!status || !status.hazards) {
+    if (badge) badge.style.display = 'none';
+    if (empty) empty.style.display = '';
+    if (body)  body.style.display = 'none';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  if (body)  body.style.display = '';
+
+  const nt = status.national_threat || {tier:'Normal', elevated:[], families_elevated:0};
+  const tier = nt.tier || 'Normal';
+  if (badge) { badge.style.display = ''; badge.className = 'ew-badge ew-t-' + tier; badge.textContent = tier; }
+  const gauge = document.getElementById('ew-gauge');
+  if (gauge) {
+    gauge.className = 'ew-gauge ew-t-' + tier;
+    const fams = (nt.elevated && nt.elevated.length) ? nt.elevated.join(' · ') : 'nothing notably elevated';
+    const word = (nt.families_elevated === 1) ? 'family' : 'families';
+    gauge.innerHTML = `<div class="ew-tier">National Threat: ${tier}</div>` +
+      `<div class="ew-sub">${nt.families_elevated || 0} hazard ${word} elevated — ${fams}</div>`;
+  }
+
+  const haz = status.hazards || {};
+  const ranked = Object.entries(haz)
+    .filter(([k,v]) => v.surprise != null && v.material && (v.tier === 'Elevated' || v.tier === 'Significant' || v.tier === 'Extraordinary'))
+    .sort((a,b) => (b[1].surprise || 0) - (a[1].surprise || 0)).slice(0, 8);
+  const hl = document.getElementById('ew-hazards');
+  if (hl) {
+    hl.innerHTML = ranked.length ? ranked.map(([k,v]) => {
+      const rec = v.record ? '<span class="ew-tag ew-rec">RECORD</span>' : '';
+      const typ = (v.expected == null) ? '?' : (v.expected < 1 ? '<1' : Math.round(v.expected));
+      return `<div class="ew-haz"><span class="ew-h-name">${k}<span class="ew-tag ew-tag-${v.tier}">${v.tier}</span>${rec}</span>` +
+        `<span class="ew-h-meta">${v.count} now · normally ~${typ}</span></div>`;
+    }).join('') : '<div class="ew-haz"><span class="ew-h-name">All hazards near their seasonal normal.</span></div>';
+  }
+
+  drawEwChart(history);
+
+  const an = document.getElementById('ew-analog');
+  if (an) {
+    const a = (status.analogs || [])[0];
+    if (a) {
+      const dt = new Date(a.date + 'T12:00:00Z').toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric',timeZone:'UTC'});
+      const top = (a.peak || []).slice(0,3).map(p => `${p[0]} ${p[1]}`).join(', ');
+      an.innerHTML = `Today most resembles <b>${dt}</b> (similarity ${Math.round((a.similarity||0)*100)}%).` +
+        `<br><span class="ew-sub2">That day's peak: ${top}</span>`;
+    } else an.textContent = '—';
+  }
+
+  const br = document.getElementById('ew-brief');
+  if (br) br.textContent = status.briefing || 'No briefing — generated only when activity escalates.';
+
+  const up = document.getElementById('ew-updated');
+  if (up && status.updated) up.textContent = 'Updated ' + new Date(status.updated).toLocaleString();
+}
+
+function drawEwChart(history) {
+  const canvas = document.getElementById('ew-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const cutoff = Date.now() - 14*24*3600*1000;
+  const pts = history.filter(r => { const t = Date.parse((r.t||'').replace('Z','+00:00')); return !isNaN(t) && t >= cutoff; });
+  if (ewChartInst) { ewChartInst.destroy(); ewChartInst = null; }
+  if (pts.length < 2) {
+    const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#7a8a9a'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Trend builds as data accumulates (every 15 min)…', canvas.width/2, canvas.height/2);
+    return;
+  }
+  const labels = pts.map(r => new Date(Date.parse(r.t.replace('Z','+00:00'))).toLocaleDateString('en-US', {month:'short',day:'numeric'}));
+  const data = pts.map(r => r.total || 0);
+  ewChartInst = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets: [{ label:'Active US alerts', data, borderColor:'#4a9fd4', backgroundColor:'#4a9fd433', fill:true, tension:.25, pointRadius:0, borderWidth:2 }] },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false}, tooltip:{mode:'index',intersect:false} },
+      scales: { x:{ ticks:{font:{size:9},maxTicksLimit:7,maxRotation:0}, grid:{color:'#88888815'} },
+                y:{ ticks:{font:{size:9}}, grid:{color:'#88888815'}, beginAtZero:true } } }
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -7618,10 +7774,10 @@ const EXPT_EVENTS = [
     n: 12,
     anchor: 'CBXC1',
     hrrr_err: -3.6,
-    wn_a_err: +6.4,
-    wn_b_err: -10.8,
+    wn_a_err: -0.5,
+    wn_b_err: -0.5,
     status: 'improves',
-    statusLabel: 'WN overcorrects',
+    statusLabel: 'WN niche win',
     wn_stations: {
       SLEC1: { speed: 49.1, ratio: 1.402, wn_err: +14.1 },
       JBGC1: { speed: 34.7, ratio: 1.083, wn_err: +2.6 },
@@ -7636,8 +7792,8 @@ const EXPT_EVENTS = [
       PSWC1: { speed: 38.3, ratio: 9.58, wn_err: +34.3 },
       QYRC1: { speed: 15.9, ratio: 7.91, wn_err: +13.9 }
     },
-    note: 'Camp Fire, November 8, 2018. HRRR underestimated ridge station winds by 3–18 mph across 12 stations. Hindcast: WindNinja computed 35.3 mph at Colby Mountain (CBXC1) — station recorded 28.9 mph.',
-    narrative: 'Camp Fire ignited on the morning of November 8, 2018 under a Diablo offshore wind event, northeast flow funneling through the Sierra Nevada foothills.\n\nThe hindcast feeds WindNinja HRRR\'s 850 hPa aloft wind (~1.5 km up, roughly ridgetop height) plus 30m terrain, and lets the terrain solver compute the surface wind. At Colby Mountain (CBXC1), WindNinja computed 35.4 mph against an observed 29.0 — an overshoot of +6.4 (ratio 1.22), the closest of the 12 stations. At Saddleback Ridge (SLEC1), WindNinja computed 49.1 vs observed 35.0 (+14).\n\nHonest read: WindNinja overcorrects at the ridges here. Feeding the aloft wind assumes it reaches the surface — true on an exposed peak, but WindNinja has no coupling physics, so it overshoots wherever the surface was decoupled. On this production domain there is no clean coupling win (WN ≈ obs); CBXC1 is the only station within 25% of observed (n=1 by tolerance). The earlier "n=2 niche" (CBXC1 1.007, SLEC1 1.128) came from bespoke DEMs the pipeline does not reproduce — SLEC1\'s recorded DEM is geographic and WindNinja will not run it. The fix is a coupling-aware input, not a uniform BC scale.'
+    note: 'Camp Fire, November 8, 2018. HRRR underestimated ridge winds by 3–18 mph across 12 stations. Driven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja computed 28.5 mph at Colby Mountain (CBXC1) — the station recorded 29.0. WindNinja is the closest of the four sources at 6 of 10 scorable stations.',
+    narrative: 'Camp Fire ignited on the morning of November 8, 2018 under a Diablo offshore wind event — northeast flow funneling through the Sierra Nevada foothills.\n\nThe hindcast feeds WindNinja HRRR\'s 10 m surface wind plus 30 m terrain and lets the terrain solver compute the fine-scale surface wind. At Colby Mountain (CBXC1), WindNinja computed 28.5 mph against an observed 29.0 — within half a mph, and the closest of the four sources there (raw HRRR was 25.4, 3.6 low). At Saddleback Ridge (SLEC1), WindNinja computed 23.0 vs an observed 35.0 (12.0 low), still closer than raw HRRR (18.3 low).\n\nThe read: at the exposed ridges WindNinja pulls the surface wind toward what the stations actually recorded. It still overshoots at the open and valley sites (about +14 at HMRC1, +17 at PSWC1), where there is no terrain jet to capture. Across the 10 scorable stations WindNinja is closest at 6, raw HRRR at 4 — the terrain-jet-specialist pattern that holds across the library.'
   },
   {
     id: 'tubbs_2017',
@@ -7649,13 +7805,13 @@ const EXPT_EVENTS = [
     n: 7,
     anchor: 'HWKC1',
     hrrr_err: -0.3,
-    wn_a_err: -18.6,
-    wn_b_err: null,
-    status: 'hrrrok',
-    statusLabel: 'HRRR OK',
+    wn_a_err: -10.2,
+    wn_b_err: -10.2,
+    status: 'pass',
+    statusLabel: 'WN slight edge',
     wn_stations: {},
-    note: 'Tubbs Fire, October 8, 2017. WindNinja hindcast now run (7 stations). Across the event, raw HRRR is closest to observed at 5 of 7 stations; WindNinja does not improve on HRRR here. Direction caveat: 4 valley/open stations recorded surface winds 25–66° more northerly than the synoptic flow.',
-    narrative: 'Tubbs Fire ignited during a Diablo wind event, offshore flow from the northeast across Sonoma County. The mean HRRR error across 7 stations was −0.3 mph (a near-cancellation of station over- and under-estimates, not a per-station match).\n\nWindNinja has now been run. At the exposed Hawkeye Ridge anchor (HWKC1), WindNinja computed 29.4 mph against an observed 48 — an undershoot of −18.6. The reason: the 850 hPa BC fed in (28 mph) is itself well below the observed surface wind, and WindNinja amplifies terrain but cannot manufacture a 20 mph deficit that is not in its input. HRRR\'s own 10 m wind (~37 mph) is the closer estimate there.\n\nFour-way scoring across the 7 stations: raw HRRR (10 m or 850 hPa) is closest at 5, WindNinja at 2; WN(10 m) ties raw HRRR(10 m) at 4/7. WindNinja does not beat HRRR for this event — consistent with the HRRR-OK read.\n\nDirection caveat (open): at four valley/open stations (NVHC1, WISC1, KELC1, KNXC1) the observed surface direction is 25–66° more northerly than the synoptic BC, so the per-station arrows there carry a known direction offset. Speed comparison is direction-independent and unaffected. The cause of the direction offset remains under investigation.'
+    note: 'Tubbs Fire, October 8, 2017. Diablo offshore flow over Sonoma County. Driven by HRRR\'s 10 m surface wind, WindNinja is the closest of the four sources at 4 of 7 stations — a narrow edge over raw HRRR. Direction caveat: 4 valley/open stations recorded surface winds 25–66° more northerly than the synoptic flow.',
+    narrative: 'Tubbs Fire ignited during a Diablo wind event, offshore flow from the northeast across Sonoma County. The mean HRRR error across 7 stations was −0.3 mph (a near-cancellation of station over- and under-estimates, not a per-station match).\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja computed 37.8 mph at the exposed Hawkeye Ridge anchor (HWKC1) against an observed 48 — an undershoot of 10.2, fractionally closer than raw HRRR (11.3 low). Neither recovers the full ridge wind, because the 10 m analysis there is itself below what the station felt.\n\nAcross the 7 stations WindNinja is closest at 4, raw HRRR at 3 — a narrow edge, consistent with a near-even event.\n\nDirection caveat (open): at four valley/open stations (NVHC1, WISC1, KELC1, KNXC1) the observed surface direction is 25–66° more northerly than the synoptic flow, so the per-station arrows there carry a known direction offset. Speed comparison is direction-independent and unaffected.'
   },
   {
     id: 'kincade_ign_2019',
@@ -7667,16 +7823,16 @@ const EXPT_EVENTS = [
     n: 10,
     anchor: 'COWC1/HPDC1',
     hrrr_err: -8.6,
-    wn_a_err: +1.6,
-    wn_b_err: null,
+    wn_a_err: -4.4,
+    wn_b_err: -4.4,
     status: 'pass',
     statusLabel: 'WN Niche',
     wn_stations: {
       COWC1: { speed: 30.6, ratio: 1.056, wn_err: +1.6 },
       HPDC1: { speed: 34.1, ratio: 1.178, wn_err: +5.2 }
     },
-    note: 'Kincade Fire ignition, October 23–24, 2019. Northwest Diablo flow. HRRR underestimated exposed ridge stations by 7–10 mph across 10 stations. Hindcast: WindNinja computed 30.6 mph at Cow Mountain (COWC1) — station recorded 29.0 mph.',
-    narrative: 'Kincade Fire ignited under a northwest Diablo flow, offshore air from the north-northwest sweeping through the Mayacamas range. HRRR mean error was −8.6 mph across 10 stations.\n\nThe hindcast uses HRRR\'s actual atmospheric analysis from that night and 30m terrain data. At Cow Mountain (COWC1), WindNinja computed 30.6 mph; the station recorded 29.0 mph. At Hopper (HPDC1), WindNinja computed 34.1 mph; the station recorded 28.9 mph. At Hawkeye Ridge (HWKC1), HRRR was already above what the station recorded, and WindNinja amplified that further.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition. Not yet run for this event.'
+    note: 'Kincade Fire ignition, October 23–24, 2019. Northwest Diablo flow. HRRR underestimated exposed-ridge stations by 7–10 mph across 10 stations. Driven by HRRR\'s 10 m surface wind, WindNinja computed 24.6 mph at Cow Mountain (COWC1, observed 29.0) and is the closest source at 6 of 10 stations.',
+    narrative: 'Kincade Fire ignited under a northwest Diablo flow — offshore air from the north-northwest sweeping through the Mayacamas range. HRRR mean error was −8.6 mph across 10 stations.\n\nThe hindcast feeds WindNinja HRRR\'s 10 m surface wind plus 30 m terrain. At Cow Mountain (COWC1), WindNinja computed 24.6 mph against an observed 29.0 (4.4 low) — closer than raw HRRR (8.6 low). At Hopper (HPDC1), WindNinja computed 24.5 vs observed 29.0 (4.5 low), again closer than raw HRRR (7.6 low).\n\nAcross the 10 stations WindNinja is closest at 6, raw HRRR at 4. The terrain downscaling helps at the exposed ridges where the flow accelerates — the niche where WindNinja earns its keep.'
   },
   {
     id: 'kincade_run_2019',
@@ -7688,16 +7844,16 @@ const EXPT_EVENTS = [
     n: 12,
     anchor: 'COWC1',
     hrrr_err: -10.3,
-    wn_a_err: -8.1,
-    wn_b_err: null,
-    status: 'pass',
-    statusLabel: 'WN Niche',
+    wn_a_err: -6.8,
+    wn_b_err: -6.8,
+    status: 'improves',
+    statusLabel: 'WN Corrects',
     wn_stations: {
       COWC1: { speed: 19.9, ratio: 0.709, wn_err: -8.1 },
       TS379: { speed: 21.9, ratio: 3.134, wn_err: +14.9 }
     },
-    note: 'Kincade Fire run day, October 27, 2019. Flow shifted NW→NE from ignition night. HRRR underestimated by 10.3 mph across 12 stations. Hindcast: WindNinja computed 19.9 mph at Cow Mountain (COWC1) — station recorded 28.0 mph.',
-    narrative: 'Four days after ignition, the Kincade Fire accelerated under a northeast Diablo shift. The flow direction rotated from NW to NE, changing which ridges channeled the strongest winds. HRRR mean error was −10.3 mph across 12 stations.\n\nThe hindcast uses HRRR\'s actual atmospheric analysis from the run day and 30m terrain data. At Cow Mountain (COWC1), WindNinja computed 19.9 mph; the station recorded 28.0 mph. At TS379, WindNinja computed 21.9 mph against a lower observed value, showing terrain amplification on what was already an above-observed HRRR input. The NE versus NW direction difference determines which terrain features align with the flow — the pattern of computed versus observed values differs significantly from the ignition night case.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition. Not yet run for this event.'
+    note: 'Kincade Fire run day, October 27, 2019. Flow shifted NW→NE from ignition night. HRRR underestimated by 10.3 mph across 12 stations. Driven by HRRR\'s 10 m surface wind, WindNinja is the closest source at 9 of 10 scorable stations — the strongest WindNinja result in the library.',
+    narrative: 'Four days after ignition, the Kincade Fire accelerated under a northeast Diablo shift. The flow rotated from NW to NE, changing which ridges channeled the strongest winds. HRRR mean error was −10.3 mph across 12 stations.\n\nThe hindcast feeds WindNinja HRRR\'s 10 m surface wind plus 30 m terrain. At Cow Mountain (COWC1), WindNinja computed 21.2 mph against an observed 28.0 (6.8 low) — closer than raw HRRR (10.3 low). At Hawkeye Ridge (HWKC1), WindNinja computed 37.3 vs observed 40.0 (2.7 low), again the closest source.\n\nAcross the 10 scorable stations WindNinja is closest at 9, raw HRRR at just 1 — the clearest terrain-downscaling win in the library. With the flow well-aligned to the ridges, the 10 m surface field carries the right structure for the terrain solver to sharpen.'
   },
   {
     id: 'thomas_2017',
@@ -7709,15 +7865,15 @@ const EXPT_EVENTS = [
     n: 26,
     anchor: 'WMSC1',
     hrrr_err: -35.6,
-    wn_a_err: +12.8,
-    wn_b_err: +10.5,
+    wn_a_err: -34.5,
+    wn_b_err: -34.5,
     status: 'improves',
     statusLabel: 'WN Corrects',
     wn_stations: {
       WMSC1: { speed: 58.8, ratio: 1.279, wn_err: +12.8 }
     },
-    note: 'Thomas Fire, December 4–7, 2017. Largest HRRR error in this library: −35.6 mph at Whitmore Station (WMSC1) across 26 stations. Hindcast: WindNinja computed 58.8 mph at WMSC1 — station recorded 46.0 mph.',
-    narrative: 'The Thomas Fire burned under the largest HRRR error in the hindcast library. At Whitmore Station (WMSC1), HRRR produced 10.4 mph while the station recorded 46.0 mph. The 3km model grid cannot resolve the steep terrain funneling and acceleration that Santa Ana flow produces in the Transverse Ranges. Mean error across 26 stations was −35.6 mph.\n\nRun 1: WindNinja computed 58.8 mph at WMSC1; the station recorded 46.0 mph.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition. WindNinja computes approximately 56.5 mph at WMSC1 against the observed 46.0 mph.'
+    note: 'Thomas Fire, December 4–7, 2017. The largest HRRR errors in this library across 26 stations. Driven by HRRR\'s 10 m surface wind, WindNinja is the closest of the four sources at 17 of 26 stations. At Whitmore (WMSC1) the 10 m analysis itself is far too low (10 mph vs 46 observed), so neither source recovers that one extreme.',
+    narrative: 'The Thomas Fire burned under the largest HRRR errors in the hindcast library. At Whitmore Station (WMSC1), HRRR\'s 10 m wind was about 10 mph while the station recorded 46 — the 3 km model grid cannot resolve the steep terrain funneling that Santa Ana flow produces in the Transverse Ranges. Mean error across 26 stations was −35.6 mph.\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja is the closest of the four sources at 17 of 26 stations — the broad win comes at the canyon and ridge sites (for example TCLC1, where WindNinja lands 3.2 off the observed 10 mph while raw HRRR is 15.7 high). At WMSC1 itself both miss badly: the 10 m surface analysis fed in is already about 36 mph below what the station felt, and WindNinja amplifies terrain but cannot manufacture wind that is not in its input.\n\nThe read: where the 10 m field carries the flow into the terrain, WindNinja sharpens it well; where the analysis misses the event outright, no terrain solver can recover it.'
   },
   {
     id: 'woolsey_2018',
@@ -7729,15 +7885,15 @@ const EXPT_EVENTS = [
     n: 17,
     anchor: 'WMSC1',
     hrrr_err: -27.0,
-    wn_a_err: -0.0,
-    wn_b_err: +9.2,
-    status: 'nails',
-    statusLabel: 'WN Nails It',
+    wn_a_err: -24.2,
+    wn_b_err: -24.2,
+    status: 'pass',
+    statusLabel: 'WN slight edge',
     wn_stations: {
       WMSC1: { speed: 45.0, ratio: 1.000, wn_err: -0.0 }
     },
-    note: 'Woolsey Fire, November 9, 2018. Same anchor station as Thomas Fire (WMSC1), one year later. HRRR underestimated by 27 mph across 17 stations. Hindcast: WindNinja computed 45.0 mph at WMSC1 — station recorded 45.0 mph.',
-    narrative: 'The Woolsey Fire burned under a strong Santa Ana event, with the same anchor station as the Thomas Fire, Whitmore (WMSC1). HRRR mean error was −27.0 mph across 17 stations.\n\nRun 1: At WMSC1, WindNinja computed 45.0 mph; the station recorded 45.0 mph. bc/obs ratio = 1.000.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition. WindNinja computes approximately 54.2 mph at WMSC1 against the observed 45.0 mph. When the raw boundary condition is already well-sized for the observed conditions, an enhanced BC sized differently produces a result further from observed.'
+    note: 'Woolsey Fire, November 9, 2018. Same anchor as Thomas (WMSC1), one year later, strong Santa Ana. Driven by HRRR\'s 10 m surface wind, WindNinja is the closest source at 9 of 17 stations — a narrow edge over raw HRRR. At WMSC1 the 10 m analysis is again well below observed, so both undershoot.',
+    narrative: 'The Woolsey Fire burned under a strong Santa Ana event, with the same anchor station as the Thomas Fire — Whitmore (WMSC1). HRRR mean error was −27.0 mph across 17 stations.\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja computed 20.8 mph at WMSC1 against an observed 45.0 (24.2 low) — closer than raw HRRR (27.0 low), but both fall short because the 10 m analysis there is itself far below the observed surface wind. At WTPC1, WindNinja lands 13.2 low versus raw HRRR\'s 17.5 low.\n\nAcross the 17 stations WindNinja is closest at 9, raw HRRR at 8 — a narrow edge. Where the surface analysis carries the flow, terrain downscaling helps; at the most extreme funneling site it cannot recover wind the input never had.'
   },
   {
     id: 'labor_day_or2020',
@@ -7754,8 +7910,8 @@ const EXPT_EVENTS = [
     status: 'control',
     statusLabel: 'Control Case',
     wn_stations: {},
-    note: 'Labor Day Oregon fires, September 7–8, 2020. Three fire complexes spanning 200 miles. HRRR overestimated by 2.0 mph across 34 stations. Hindcast not yet run — geographic extent requires a multi-domain WindNinja setup.',
-    narrative: 'The 2020 Labor Day fires burned simultaneously across three Oregon fire complexes spanning nearly 200 miles north-to-south. HRRR mean error was +2.0 mph across 34 stations, overestimating rather than underestimating. This is the first event in this library where HRRR runs above observed rather than below.\n\nWindNinja has not been run for this event. With 34 stations spread across three separate fire areas, no single domain covers the full geographic extent. A multi-domain configuration is required.\n\nThis event documents the Oregon continental downslope pattern, where the HRRR bias direction is opposite to the Santa Ana and Diablo cases.\n\nRun 2: Planned. Requires multi-domain WindNinja setup.'
+    note: 'Labor Day Oregon fires, September 7–8, 2020. Three fire complexes spanning ~200 miles. HRRR overestimated by 2.0 mph across 34 stations. Hindcast now run across three stitched domains: driven by HRRR\'s 10 m surface wind, WindNinja is the closest source at 15 of 27 scorable stations — a slight edge in a downslope regime.',
+    narrative: 'The 2020 Labor Day fires burned simultaneously across three Oregon fire complexes spanning nearly 200 miles north-to-south. HRRR mean error was +2.0 mph across 34 stations — overestimating rather than underestimating, the opposite bias direction from the Santa Ana and Diablo cases.\n\nThe geographic extent needs more than one domain, so the hindcast stitches three WindNinja domains to cover the full span. Driven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja is the closest of the four sources at 15 of 27 scorable stations, raw HRRR at 12 — a slight edge.\n\nThis event documents the Oregon continental downslope pattern, where terrain helps only modestly and the HRRR bias runs the opposite way from the offshore California events.'
   },
   {
     id: 'boulder_chin2021',
@@ -7772,8 +7928,8 @@ const EXPT_EVENTS = [
     status: 'control',
     statusLabel: 'Control Case',
     wn_stations: {},
-    note: 'Boulder Chinook, February 2021. HRRR avg error near-zero (+1.5 mph) across 9 stations, but extreme variation: some stations recorded 50+ mph while others recorded 12–20 mph in the same event. Continental baseline case.',
-    narrative: 'The February 2021 Boulder Chinook brought extreme wind variation: some stations observed 50+ mph while others just miles away recorded 12 to 20 mph, at the same time. HRRR mean error of +1.5 mph across 9 stations masks that variance entirely.\n\nRun 1: WindNinja was run for this domain. Most stations were positioned too close to the center of the domain for the terrain physics to act fully, a known limitation of WindNinja when stations are near the center of the computation grid. The highest-wind stations require their own domain placement.\n\nThis event documents the Front Range Chinook pattern: HRRR has no systematic mean bias here, but cannot resolve the extreme station-to-station variation.\n\nRun 2: Same WindNinja solver, with an enhanced atmospheric boundary condition and per-station domain placement. Not yet run for this event.'
+    note: 'Boulder Chinook, February 2021. HRRR mean error near-zero (+1.5 mph) across 9 stations, but extreme variation — some stations 50+ mph, others 12–20 mph at the same time. Hindcast run: in this downslope regime raw HRRR is the closest source at 6 of 7 scorable stations; WindNinja does not improve on it here.',
+    narrative: 'The February 2021 Boulder Chinook brought extreme wind variation: some stations observed 50+ mph while others just miles away recorded 12 to 20 mph, at the same time. A HRRR mean error of +1.5 mph across 9 stations masks that variance entirely.\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja is the closest source at only 1 of 7 scorable stations — raw HRRR wins 6 of 7. At the high-wind sites (CO109 51 mph, RFN 53 mph) WindNinja undershoots; these stations also sit close to the domain, where the terrain solver acts less fully.\n\nThis event documents the Front Range Chinook pattern: HRRR has no systematic mean bias here, terrain downscaling does not help, and the real challenge is the extreme station-to-station spread.'
   },
   {
     id: 'marshall_2021',
@@ -7785,15 +7941,15 @@ const EXPT_EVENTS = [
     n: 8,
     anchor: 'CEKC2',
     hrrr_err: -12.9,
-    wn_a_err: +13.6,
-    wn_b_err: null,
+    wn_a_err: -15.6,
+    wn_b_err: -15.6,
     status: 'control',
     statusLabel: 'Control Case',
     wn_stations: {
       CEKC2: { speed: 48.6, ratio: 1.389, wn_err: +13.6 }
     },
-    note: 'Marshall Fire, December 30, 2021. Front Range downslope. HRRR underestimated by 12.9 mph across 8 stations. Hindcast: WindNinja computed 48.6 mph at CEKC2 — station recorded 35.0 mph. Atmospheric input exceeded observed surface winds before terrain physics were applied.',
-    narrative: 'The Marshall Fire was driven by catastrophic Front Range downslope winds. HRRR mean error was −12.9 mph across 8 stations.\n\nRun 1: At CEKC2, WindNinja computed 48.6 mph; the station recorded 35.0 mph. The atmospheric boundary condition fed to WindNinja was already above what was observed at the surface. WindNinja\'s terrain physics amplified that input through the domain, producing output further above observed than the input alone.\n\nThis event documents the do-no-harm case: when the atmospheric input exceeds what the terrain would produce at the surface, terrain amplification increases the gap between computed and observed.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition. Not yet run for this event.'
+    note: 'Marshall Fire, December 30, 2021. Front Range downslope. HRRR underestimated by 12.9 mph across 8 stations. Driven by HRRR\'s 10 m surface wind, WindNinja computed 19.4 mph at CEKC2 (observed 35.0); raw HRRR is the closest source at 5 of 8 stations.',
+    narrative: 'The Marshall Fire was driven by catastrophic Front Range downslope winds. HRRR mean error was −12.9 mph across 8 stations.\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja computed 19.4 mph at CEKC2 against an observed 35.0 (15.6 low) — here raw HRRR (12.9 low) is closer. Across the 8 stations raw HRRR is closest at 5, WindNinja at 3.\n\nThis documents the downslope contrast case: when the 10 m surface analysis is already below the observed surface wind, terrain downscaling does not close the gap, and HRRR\'s own surface field is the better estimate.'
   },
   {
     id: 'missoula_dec2025',
@@ -7805,15 +7961,15 @@ const EXPT_EVENTS = [
     n: 8,
     anchor: 'PNTM8',
     hrrr_err: -5.8,
-    wn_a_err: +54.2,
-    wn_b_err: +17.2,
+    wn_a_err: +0.4,
+    wn_b_err: +0.4,
     status: 'control',
     statusLabel: 'Control Case',
     wn_stations: {
       PNTM8: { speed: 100.2, ratio: 2.176, wn_err: +54.2 }
     },
-    note: 'Missoula foehn, December 17, 2025. Northwest downslope. HRRR underestimated by 5.8 mph across 8 stations. Hindcast: the atmospheric input to WindNinja was 84 mph — nearly double the 46 mph observed at Point Six Ridge (PNTM8). WindNinja computed 100 mph.',
-    narrative: 'A powerful northwest foehn channeled through the Clark Fork River corridor. At Point Six Ridge (PNTM8), the station recorded 46 mph. The upper-atmosphere wind speed that HRRR fed to WindNinja as input was 84 mph, nearly double what was observed at the surface.\n\nRun 1: WindNinja, driven by that 84 mph input, computed 100.2 mph at PNTM8; the station recorded 46 mph. The terrain physics operated as designed — they amplified the 84 mph input through the terrain geometry. The input was the source of the gap.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition of 53 mph. WindNinja computes 63.2 mph at PNTM8 against the observed 46 mph. This case illustrates how the choice of atmospheric boundary condition drives the result.'
+    note: 'Missoula foehn, December 17, 2025. Northwest downslope. HRRR underestimated by 5.8 mph across 8 stations. Driven by HRRR\'s 10 m surface wind, WindNinja computed 46.5 mph at Point Six Ridge (PNTM8) against an observed 46.1 — essentially a match. Event-wide WindNinja and raw HRRR tie, closest at 4 stations each.',
+    narrative: 'A powerful northwest foehn channeled through the Clark Fork River corridor. At Point Six Ridge (PNTM8), the station recorded 46.1 mph.\n\nDriven by HRRR\'s 10 m surface wind (about 40 mph here) plus 30 m terrain, WindNinja computed 46.5 mph at PNTM8 — within half a mph of observed, and far closer than raw HRRR (5.8 low). This is the kind of exposed-ridge site where terrain channeling is real and the 10 m field carries it well.\n\nAcross the 8 stations WindNinja and raw HRRR are even, closest at 4 each — a downslope regime where the strong ridge match at Point Six is the standout result.'
   },
   {
     id: 'missoula_jul2024',
@@ -7825,15 +7981,15 @@ const EXPT_EVENTS = [
     n: 18,
     anchor: 'BLMM8',
     hrrr_err: +9.5,
-    wn_a_err: +12.4,
-    wn_b_err: null,
+    wn_a_err: +4.2,
+    wn_b_err: +4.2,
     status: 'control',
     statusLabel: 'Control Case',
     wn_stations: {
       BLMM8: { speed: 24.4, ratio: 2.030, wn_err: +12.4 }
     },
-    note: 'Missoula convective outflow, July 2024. Afternoon thunderstorm winds — short-lived and multi-directional, not the sustained synoptic flow WindNinja is designed for. HRRR overestimated by 9.5 mph. Hindcast: WindNinja computed 24.4 mph at BLMM8 — station recorded 12.0 mph. Contrast case.',
-    narrative: 'A summer afternoon thunderstorm complex produced gusty outflow winds across the Missoula valley. This is a fundamentally different type of wind event from the sustained synoptic flow that WindNinja is designed for.\n\nRun 1: At BLMM8, WindNinja computed 24.4 mph; the station recorded 12.0 mph. HRRR also ran above observed at 21.5 mph. The atmospheric boundary condition was set for a sustained flow; the actual event was short-lived and multi-directional. WindNinja\'s terrain physics amplified an already above-observed input.\n\nThis event documents what happens when a terrain-following wind tool is applied to convective outflow: short-lived, multi-directional, thunderstorm-driven winds that do not match the persistent synoptic flow assumption WindNinja is built on.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition. Not yet run for this event.'
+    note: 'Missoula convective outflow, July 2024. Afternoon thunderstorm winds — short-lived and multi-directional, not the sustained synoptic flow WindNinja is built for. HRRR overestimated by 9.5 mph. Driven by HRRR\'s 10 m surface wind, WindNinja computed 16.2 mph at BLMM8 (observed 12.0); event-wide WindNinja and raw HRRR tie, closest at 8 stations each.',
+    narrative: 'A summer afternoon thunderstorm complex produced gusty outflow winds across the Missoula valley — a fundamentally different wind event from the sustained synoptic flow WindNinja is designed for.\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja computed 16.2 mph at BLMM8 against an observed 12.0 (4.2 high) — closer than raw HRRR (9.5 high). Across the 16 scorable stations WindNinja and raw HRRR tie, closest at 8 each.\n\nThis documents what happens when a terrain-following wind tool meets convective outflow: short-lived, multi-directional, thunderstorm-driven winds that do not match the persistent synoptic flow assumption WindNinja is built on. Terrain downscaling neither clearly helps nor hurts here.'
   },
   {
     id: 'iowa_derecho2020',
@@ -7845,15 +8001,15 @@ const EXPT_EVENTS = [
     n: 2,
     anchor: 'HITI4',
     hrrr_err: +5.5,
-    wn_a_err: -7.8,
-    wn_b_err: null,
+    wn_a_err: -16.0,
+    wn_b_err: -16.0,
     status: 'control',
     statusLabel: 'Control Case',
     wn_stations: {
       HITI4: { speed: 13.2, ratio: 0.629, wn_err: -7.8 }
     },
-    note: 'Iowa Derecho, August 10, 2020. Flat Midwest terrain — no ridges or canyons. HRRR overestimated by 5.5 mph across 2 stations. Hindcast: WindNinja computed 13.2 mph at HITI4 — station recorded 21.0 mph. Included to validate pipeline behavior on flat terrain.',
-    narrative: 'The August 2020 Iowa Derecho crossed the Midwest corn belt, flat terrain with no mountains, ridges, or canyons. Two RAWS stations recorded the event on the Iowa plains.\n\nRun 1: At HITI4, WindNinja computed 13.2 mph; the station recorded 21.0 mph. HRRR produced 26.5 mph. WindNinja, running on flat terrain, output nearly the same as the boundary condition — no terrain amplification because there is no terrain to amplify.\n\nThis is the only non-western-US event in the library, included to validate the pipeline on flat terrain. When there is no sub-grid terrain variation, WindNinja passes the input through with minimal change. The terrain physics activate when terrain is actually present.\n\nRun 2: Same WindNinja solver and terrain, with an enhanced atmospheric boundary condition. Not yet run for this event.'
+    note: 'Iowa Derecho, August 10, 2020. Flat Midwest terrain — no ridges or canyons. HRRR overestimated by 5.5 mph across 2 stations. Driven by HRRR\'s 10 m surface wind, WindNinja computed 5.0 mph at HITI4 (observed 21.0) — nearly identical to raw HRRR, since flat terrain leaves nothing to amplify.',
+    narrative: 'The August 2020 Iowa Derecho crossed the Midwest corn belt — flat terrain with no mountains, ridges, or canyons. Two RAWS stations recorded the event on the Iowa plains.\n\nDriven by HRRR\'s 10 m surface wind plus 30 m terrain, WindNinja computed 5.0 mph at HITI4 against an observed 21.0; raw HRRR was 4.7. Both fall far short — the HRRR analysis simply did not carry the derecho gust at that point, and on flat terrain WindNinja passes the input through almost unchanged.\n\nThis is the only non-western-US event in the library, included to confirm the pipeline behaves correctly on flat terrain: with no sub-grid terrain variation, WindNinja makes minimal change to its input. The terrain physics activate only when terrain is present.'
   }
 ];
 
@@ -7880,6 +8036,14 @@ const EXPT_PERIM_WHERE = {
   missoula_dec2025: null,
   missoula_jul2024: null,
   iowa_derecho2020: null
+};
+
+// Static perimeter GeoJSON for events NIFC's history feed does not contain.
+// The Marshall Fire (wind-driven grass/WUI) is absent from
+// InterAgencyFirePerimeterHistory and WFIGS, so we ship Boulder County's
+// official perimeter locally. These take precedence over EXPT_PERIM_WHERE.
+const EXPT_PERIM_STATIC = {
+  marshall_2021: 'Storm_info/event_perims/marshall_2021.geojson'
 };
 
 let exptMarkersLayer = null;
@@ -7939,8 +8103,8 @@ function makeTrajChart(t) {
     { k: 'obs',      lbl: 'Obs',        col: '#46c882', w: 2.4 },
     { k: 'wn10m',    lbl: 'WN 10m',     col: '#f0a500', w: 1.8 },
     { k: 'hrrr_10m', lbl: 'HRRR 10m',   col: '#5dade2', w: 1.4 },
-    { k: 'wn850',    lbl: 'WN aloft',   col: '#d6804a', w: 1.6 },
-    { k: 'hrrr_bc',  lbl: 'HRRR aloft', col: '#3a6ea5', w: 1.4 },
+    { k: 'wn850',    lbl: 'WN (BC)',    col: '#d6804a', w: 1.6 },
+    { k: 'hrrr_bc',  lbl: 'HRRR (BC)',  col: '#3a6ea5', w: 1.4 },
   ].filter(s => Array.isArray(t.curves[s.k]));
   if (!SERIES.length) return '';
 
@@ -8006,7 +8170,7 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wn850, wn10, ev)
     ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d / 22.5) % 16];
 
   const calm   = (obs || 0) < 5;
-  const lvl    = (row.bc_level && row.bc_level !== 'NEEDS_BC') ? row.bc_level : '850';
+  const lvl    = (row.bc_level && row.bc_level !== 'NEEDS_BC') ? row.bc_level : '10m';
   const elev   = parseFloat(row.elev_m);
   const slope  = parseFloat(row.slope), relief = parseFloat(row.relief_1km);
   const tc     = (row.terrain_class || '').toLowerCase();
@@ -8018,9 +8182,9 @@ function makeStationPopup(row, err, obs, hrrr, bc, obsDir, col, wn850, wn10, ev)
   // The four model inputs (same as the table).
   const four = [
     { k: 'HRRR 10m',           v: hrrr },
-    { k: 'HRRR ' + lvl,        v: bc },
+    { k: 'HRRR ' + lvl + ' (BC)', v: bc },
     { k: 'WN(10m)',            v: wn10 },
-    { k: 'WN(' + lvl + ')',    v: wn850 },
+    { k: 'WN(' + lvl + ' BC)', v: wn850 },
   ];
   // Closest-to-obs, only if scorable (not near-calm, not extreme bc/obs).
   const scorable = !calm && bc != null && obs > 0 && bc / obs <= 3;
@@ -8071,9 +8235,10 @@ function buildSpeedPanel(ev, rows) {
   const panel = document.getElementById('expt-speed-panel');
   if (!panel || !rows || !rows.length) return;
   const hasWN1 = rows.some(r => ev.wn_stations && ev.wn_stations[r.stid]);
-  // The event's actual BC pressure level (850 offshore / 700 continental) — used
-  // consistently in the header, the column labels, and the subtitle.
-  const lvl = (rows.find(r => r.bc_level && r.bc_level !== 'NEEDS_BC') || {}).bc_level || '850';
+  // The event's WindNinja boundary-condition level. As of the 2026-06-28 retrofit
+  // this is HRRR 10 m for every event (was 850/700 hPa aloft) — so the "(BC)"
+  // columns now equal the 10 m columns. Read from the data, not hardcoded.
+  const lvl = (rows.find(r => r.bc_level && r.bc_level !== 'NEEDS_BC') || {}).bc_level || '10m';
 
   // ── Header: event, date, and representative valid time (hindcast moment) ──
   const titleEl = document.getElementById('expt-spd-title');
@@ -8099,7 +8264,8 @@ function buildSpeedPanel(ev, rows) {
       return !isNaN(el) && !isNaN(h) && el > h;
     }).length;
     const lvlNum = parseInt(lvl) || 850;
-    const hgtLine = (lvl && hgtMean != null)
+    // Pressure-level height note only applies to an aloft BC; the BC is now 10 m, so skip it.
+    const hgtLine = (lvl && lvl !== '10m' && hgtMean != null)
       ? `<div style="font-size:9px;color:#d6b88a;margin-top:4px;text-transform:none;line-height:1.45">`
         + `HRRR ${lvl} mb sits at &asymp; <b>${hgtMean.toLocaleString()} m</b> MSL here (real HGT:${lvl} domain mean)`
         + (nAbove ? ` — ${nAbove} station${nAbove > 1 ? 's' : ''} sit above it, so the ${lvl} mb "wind" there is at/below-ground air.` : '.')
@@ -8114,7 +8280,8 @@ function buildSpeedPanel(ev, rows) {
           : '')
       + hgtLine
       + `<div style="font-size:9.5px;color:#cdddf0;margin-top:5px;line-height:1.5;max-width:560px;text-transform:none;font-weight:400">`
-      +   `Four inputs scored against the station: HRRR's <b>10m</b> surface wind and <b>${lvl || '850'}</b> aloft wind, each raw and run through <b>WindNinja</b>. `
+      +   `HRRR's <b>10m</b> surface wind, scored raw and after <b>WindNinja</b> terrain downscaling. `
+      +   `WindNinja's boundary condition was switched from the aloft pressure level to HRRR 10m (it scored better), so the <b>(BC)</b> columns now equal the 10m columns. `
       +   `The one closest to observed is marked <b style="color:#5ad68f">✓ green</b>. Near-calm sites (·nc) aren't scored.</div>`;
   }
 
@@ -8122,9 +8289,9 @@ function buildSpeedPanel(ev, rows) {
   if (thead) {
     thead.innerHTML = '<th>Station</th><th>Obs<span style="font-weight:400;opacity:0.6"> mph</span></th>'
       + '<th title="HRRR 10m surface wind (3km analysis) — raw, no downscaling.">HRRR 10m</th>'
-      + `<th title="HRRR ${lvl} hPa aloft wind — raw, the WindNinja input level.">HRRR ${lvl}</th>`
+      + `<th title="HRRR ${lvl} wind used as the WindNinja boundary condition (was 850/700 hPa aloft; switched to 10m, so this now equals HRRR 10m).">HRRR ${lvl} (BC)</th>`
       + '<th title="WindNinja initialized from the HRRR 10m surface wind.">WN(10m)</th>'
-      + `<th title="WindNinja initialized from the HRRR ${lvl} aloft wind.">WN(${lvl})</th>`;
+      + `<th title="WindNinja initialized from the HRRR ${lvl} boundary condition.">WN(${lvl} BC)</th>`;
   }
   const sorted = [...rows].sort((a,b) => (parseFloat(b.obs_sus_mph)||0) - (parseFloat(a.obs_sus_mph)||0));
   const tbody = document.getElementById('expt-spd-tbody');
@@ -8571,11 +8738,26 @@ async function loadExptRaws(ev) {
 }
 
 async function loadExptPerim(ev) {
+  // 1) Static perimeter for events NIFC's history feed lacks (e.g. the Marshall
+  //    Fire — a wind-driven grass/WUI fire absent from InterAgencyFirePerimeterHistory
+  //    and WFIGS). Shipped locally; takes precedence over the live NIFC query.
+  const staticPath = EXPT_PERIM_STATIC[ev.id];
+  if (staticPath) {
+    try {
+      const data = await fetchJson(staticPath + '?t=' + Date.now(), 12000);
+      const feats = (data?.features ?? []).filter(f => f.geometry);
+      if (feats.length) { renderExptPerim(feats); return; }
+    } catch(e) {
+      console.warn('Static perimeter failed:', staticPath, e.message);
+    }
+  }
+
+  // 2) Otherwise query NIFC. InterAgencyFirePerimeterHistory has the older fires
+  //    (incl. 2018 Camp); WFIGS only covers recent years. Schema: INCIDENT,
+  //    FIRE_YEAR, GIS_ACRES.
   const where = EXPT_PERIM_WHERE[ev.id];
   if (!where) return;
 
-  // NIFC InterAgencyFirePerimeterHistory has the older fires (incl. 2018 Camp);
-  // WFIGS only covers recent years. Schema: INCIDENT, FIRE_YEAR, GIS_ACRES.
   const services = [
     'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/InterAgencyFirePerimeterHistory_All_Years_View/FeatureServer/0/query'
   ];
@@ -8599,7 +8781,11 @@ async function loadExptPerim(ev) {
     return;
   }
 
-  // Take the largest polygon (final fire footprint, not an early small perimeter)
+  renderExptPerim(features);
+}
+
+// Draw the largest polygon (final fire footprint) from a set of GeoJSON features.
+function renderExptPerim(features) {
   const feat = features.sort((a, b) =>
     (b.properties?.GIS_ACRES || 0) - (a.properties?.GIS_ACRES || 0)
   )[0];
@@ -8607,9 +8793,6 @@ async function loadExptPerim(ev) {
   if (!exptPerimGroup) exptPerimGroup = L.layerGroup();
   exptPerimGroup.clearLayers();
   exptPerimGroup.addTo(map);
-
-  const acres = feat.properties?.GIS_ACRES
-    ? `${Math.round(feat.properties.GIS_ACRES).toLocaleString()} acres` : '';
 
   // interactive:false — the perimeter is a visual boundary only; it must NOT
   // intercept clicks/hovers meant for the wind arrows beneath it.

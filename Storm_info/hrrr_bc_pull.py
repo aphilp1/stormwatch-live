@@ -2,17 +2,21 @@
 """
 hrrr_bc_pull.py  —  Populate bc_speed / bc_level / bc_dir in departure database
 
-For each of the 12 analysis events, downloads HRRR pressure-level analysis
-(f00) at the median peak hour, extracts U/V at the assigned bc_level for
-every station in the event, and writes bc_speed (mph), bc_level (hPa int),
-and bc_dir (degrees) back to:
+WindNinja's boundary condition = HRRR 10 m surface wind (policy locked
+2026-06-28; the gate showed 10 m beats the old 850/700 hPa aloft driver at
+every terrain class — see Earth2/GATE_AND_PLAN_AC.md). For each of the 12
+analysis events this downloads HRRR f00 surface analysis at the median peak
+hour, extracts the 10 m U/V for every station, and writes bc_speed (mph),
+bc_level ("10m"), and bc_dir (degrees) back to:
   - hrrr_error_dataset.csv
   - hrrr_error_dataset_dem.csv
 
-bc_level assignment (operational rule from hindcast framework):
-  850 hPa:  sub-inversion gap/gradient flow  →  diablo, santa_ana
-  700 hPa:  above-inversion ridgetop/downslope  →  chinook, downslope, frontal
-  850 hPa:  convective outflow (nearest surface-driver; note uncertainty)
+The pulled bc_speed should match the hrrr_10m_mph column closely (both are the
+HRRR 10 m wind) — the sanity check at the bottom confirms ratio ≈ 1.0.
+
+The old aloft (850/700 hPa) rule is retained below as REGIME_BC for reference
+only; it no longer drives the pull. To revert to the aloft driver, set
+BC_LEVEL = None and restore get_hrrr_prs_uv (see git history / .bak files).
 
 Run in hrrr311 env:  herbie, xarray, scipy all required.
 """
@@ -37,7 +41,10 @@ MS_MPH   = 2.23694  # m/s → mph
 
 os.makedirs(CACHE, exist_ok=True)
 
-# ── bc_level by regime ────────────────────────────────────────────────────────
+# ── WindNinja BC source: HRRR 10 m surface wind (locked policy) ────────────────
+BC_LEVEL = "10m"   # the value written to the bc_level column for every station
+
+# ── (reference only — no longer used) old aloft bc_level by regime ─────────────
 REGIME_BC = {
     "diablo_offshore":    850,
     "diablo_offshore_NW": 850,
@@ -97,7 +104,7 @@ for r in all_rows_src:
 event_bc = {}
 for eid, d in active.items():
     regime   = d["regime"]
-    bc_level = REGIME_BC.get(regime, 850)
+    bc_level = BC_LEVEL   # HRRR 10 m for every event (locked policy)
     dts = sorted([s["dt"] for s in d["stations"] if s["dt"] is not None])
     if not dts:
         print(f"  {eid}: no valid timestamps — SKIP")
@@ -107,23 +114,23 @@ for eid, d in active.items():
 
 print(f"Events to process: {len(event_bc)}")
 for eid, d in sorted(event_bc.items()):
-    print(f"  {eid:<25} regime={d['regime']:<25} bc_level={d['bc_level']} hPa  "
+    print(f"  {eid:<25} regime={d['regime']:<25} bc_level={d['bc_level']}  "
           f"peak={d['peak_dt'].strftime('%Y-%m-%d %HZ')}")
 print()
 
 
 # ── herbie pull + extraction ──────────────────────────────────────────────────
 
-def get_hrrr_prs_uv(peak_dt, level_hpa):
+def get_hrrr_10m_uv(peak_dt):
     """
-    Download HRRR f00 pressure-level U/V at `level_hpa` hPa.
+    Download HRRR f00 10 m surface U/V (the WindNinja boundary condition).
     Returns (ds, u_da, v_da) — xarray DataArrays with lat/lon coords.
     """
-    search = f":(?:UGRD|VGRD):{level_hpa} mb:"
+    search = r":(?:UGRD|VGRD):10 m above ground:"
     H = Herbie(
         peak_dt,
         model="hrrr",
-        product="prs",
+        product="sfc",
         fxx=0,
         save_dir=CACHE,
         verbose=False,
@@ -191,10 +198,10 @@ for eid, einfo in sorted(event_bc.items()):
     stids = [s["stid"] for s in stations]
 
     print(f"  {eid}  ({einfo['regime']})  {peak_dt.strftime('%Y-%m-%d %HZ')}  "
-          f"bc_level={bc_level} hPa  n_stations={len(stations)}")
+          f"bc_level={bc_level}  n_stations={len(stations)}")
 
     try:
-        ds, u_da, v_da = get_hrrr_prs_uv(peak_dt, bc_level)
+        ds, u_da, v_da = get_hrrr_10m_uv(peak_dt)
         speeds, dirs = extract_speeds_at_stations(u_da, v_da, lats, lons)
 
         ok_count = sum(1 for s in speeds if s is not None)

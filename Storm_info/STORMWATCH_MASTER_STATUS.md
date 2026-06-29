@@ -4,6 +4,28 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-06-28 update — BC DRIVER SWITCHED 850/700 hPa → HRRR 10 m (full retrofit):**
+> The gate (offset domains ≥10 km, all 12 events, 125 clean stations) settled the
+> WindNinja boundary-condition question with hard numbers: driving WindNinja from
+> **HRRR 10 m beats the aloft (850/700 hPa) driver everywhere** and beats raw HRRR 10 m
+> overall (7.3 vs 7.7 mph mean |err|; closest source at 72/125 vs 53). Policy LOCKED:
+> WindNinja's BC = HRRR 10 m. **Retrofit done:** `set_bc_10m.py` set bc_speed/bc_dir =
+> hrrr_10m and bc_level="10m" on 165 CSV rows; `hindcast_wn_runner.py --all` re-ran all
+> 12 events (every `_reality_a_domain.json` + `_station_results.json` regenerated, now
+> 10 m-driven). Because the BC *is* 10 m, the four-way collapses to two distinct sources
+> (HRRR10m ≡ HRRR850, WN10m ≡ WN850). Per-terrain: exposed_ridge 9.8→8.8 (WN wins),
+> canyon 7.6→7.4, valley 5.2→5.0, open 6.1 tie. BACKUPS: `hrrr_error_dataset.csv.bak_pre10m`
+> + `hindcast_grids_bak_pre10m/` (full revert path). **Fire Winds tab:** minimal label
+> fix only (user choice) — dynamic table/popup/trajectory labels relabeled "aloft/850" →
+> "(BC)" + a note that the BC columns now equal the 10 m columns; `weather-alerts.html`
+> backed up to `.bak_pre10m_labels`. **STILL OPEN:** (1) the 12 hand-written per-event
+> `narrative`/`note` strings still describe the 850 method with 850-era numbers — now
+> inconsistent with the live 10 m table/map (deferred; the bigger reframe the user declined
+> for now). (2) `hrrr_bc_pull.py` still pulls 850/700 — future re-pulls would revert bc to
+> aloft unless it's pointed at 10 m. Earth-2 context: this is the actionable result of the
+> WN-emulator gate (the emulator itself is a speed-only tool; copy error 0.75 mph > WN's
+> ~0.4–1 mph margin, so build only for fast-many-WN use cases). See `Earth2/GATE_AND_PLAN_AC.md`.
+>
 > **2026-06-24 update (HEAD `300305e`, pushed):** TRAJECTORY SCORING rolled out to ALL 12 events
 > (162 stations). Same pull→--trajectory path as Camp. §8 `verify_trajectory.py --all` =
 > **1296 checks ALL MATCH**. Additive-only (trajectory block only; four-way + peak values

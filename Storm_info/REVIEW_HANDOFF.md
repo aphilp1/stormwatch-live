@@ -7,6 +7,38 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
+## Latest session — 2026-06-28: WindNinja BC driver switched 850/700 hPa → HRRR 10 m
+The long-open question "what should drive WindNinja?" is settled. The gate (the real
+`hindcast_wn_runner.py` with offset domains ≥10 km, all 12 events, 125 clean stations)
+shows **HRRR 10 m beats the aloft 850/700 hPa driver at every terrain class, and beats raw
+HRRR 10 m overall** (mean |err| 7.3 vs 7.7 mph; closest source 72/125 vs 53). Policy locked.
+
+**What was changed (all reversible — backups noted):**
+- `set_bc_10m.py`: bc_speed/bc_dir = hrrr_10m, bc_level="10m" on 165 rows of
+  `hrrr_error_dataset.csv` (backup `.bak_pre10m`).
+- `hindcast_wn_runner.py --all`: re-ran all 12 events. Every `_reality_a_domain.json` +
+  `_station_results.json` is now 10 m-driven (backup dir `hindcast_grids_bak_pre10m/`).
+- Because the BC *is* 10 m now, the four-way collapses: HRRR10m ≡ HRRR850, WN10m ≡ WN850.
+  Per-terrain mean |err|: exposed_ridge 9.8→**8.8** (WN wins), canyon 7.6→**7.4**,
+  valley 5.2→**5.0**, open **6.1** tie. Aggregate via `Earth2/aggregate_fourway.py`.
+- `weather-alerts.html` (backup `.bak_pre10m_labels`): **minimal label fix only** (user
+  choice). The dynamic four-way table headers, station-popup rows, and trajectory legend
+  no longer say "aloft/850"; they read "(BC)", with a note that the BC columns now equal
+  the 10 m columns. No structural redesign.
+
+**REVIEWER — two known inconsistencies left open (NOT bugs, deferred by user):**
+1. The 12 hand-written per-event `narrative`/`note` strings in `weather-alerts.html` still
+   describe the **850 method with 850-era numbers** (e.g. Camp: "feeds WindNinja HRRR's 850
+   hPa aloft wind… 35.4 mph at CBXC1" — live 10 m run now gives 28.5). The live table/map/
+   popups are correct (10 m); only this prose is stale. Rewriting it is the bigger reframe
+   the user declined for now.
+2. `hrrr_bc_pull.py` still pulls 850/700 hPa. A future BC re-pull would revert bc_level to
+   aloft unless that script is pointed at 10 m. Flagged, not yet changed.
+
+This is also the actionable output of the Earth-2 WindNinja-emulator gate — see
+`Earth2/GATE_AND_PLAN_AC.md` (emulator = speed-only; its 0.75 mph copy error exceeds WN's
+~0.4–1 mph margin over raw HRRR, so only worth building for fast-many-WN use cases).
+
 ## Latest session — 2026-06-24 (later): TRAJECTORY SCORING rolled out to ALL 12 events
 Committed + pushed (commit `300305e`). Camp was the template (`ac8279a`, below); the same
 `trajectory_pull.py` (dem env) → `--trajectory` path now covers all 12 events, **162 stations**.
