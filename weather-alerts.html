@@ -10,7 +10,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg0:#eef0f5;--bg1:#ffffff;--bg2:#f4f5f9;--bg3:#e6e8ef;
-  --border:#d4d8e4;--text:#1a1d2e;--text2:#505868;--text3:#8892a4;
+  --border:#d4d8e4;--text:#1a1d2e;--text2:#2d333e;--text3:#4f5666;
   --accent:#d42b2b;
 }
 html,body{margin:0;padding:0}
@@ -46,20 +46,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #sidebar.collapsed{width:0;overflow:hidden}
 
 .tab-bar{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
-.tab{padding:8px 0;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center;white-space:nowrap}
-.tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.tab{position:relative;padding:8px 0;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center;white-space:nowrap}
+.tab.active{color:var(--text)}
+.tab.active::after{content:'';position:absolute;left:12px;right:12px;bottom:-2px;height:2px;background:var(--accent);border-radius:2px}
 .tab:hover:not(.active){color:var(--text2)}
 
 .tab-content{display:none;flex-direction:column;flex:1;overflow:hidden}
 .tab-content.active{display:flex}
 
 /* Alerts tab */
-#filter-row{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0}
+#filter-row{padding:10px 20px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0}
 .fpill{padding:3px 9px;border-radius:9px;border:1px solid var(--border);background:none;color:var(--text3);font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.4px}
 .fpill:hover{border-color:#445;color:var(--text2)}
 .fpill.active{background:var(--bg3);border-color:#446;color:var(--text)}
 
-#alert-list{flex:1;overflow-y:auto;padding:5px;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+#alert-list{flex:1;overflow-y:auto;padding:8px 20px 10px;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
 #alert-list::-webkit-scrollbar{width:7px}
 #alert-list::-webkit-scrollbar-track{background:transparent}
 #alert-list::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
@@ -76,7 +77,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .no-poly{font-size:9px;color:#445;margin-left:auto}
 
 /* Layers tab */
-#layers-tab{padding:12px 14px;gap:12px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+#layers-tab{padding:14px 20px;gap:12px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
 #layers-tab::-webkit-scrollbar,#stats-tab::-webkit-scrollbar,#tab-models::-webkit-scrollbar,#tab-maps::-webkit-scrollbar,#tab-agents::-webkit-scrollbar,#tab-experiments::-webkit-scrollbar,#mp-table-area::-webkit-scrollbar{width:7px}
 #layers-tab::-webkit-scrollbar-track,#stats-tab::-webkit-scrollbar-track,#tab-models::-webkit-scrollbar-track,#tab-maps::-webkit-scrollbar-track,#tab-agents::-webkit-scrollbar-track,#tab-experiments::-webkit-scrollbar-track,#mp-table-area::-webkit-scrollbar-track{background:transparent}
 #layers-tab::-webkit-scrollbar-thumb,#stats-tab::-webkit-scrollbar-thumb,#tab-models::-webkit-scrollbar-thumb,#tab-maps::-webkit-scrollbar-thumb,#tab-agents::-webkit-scrollbar-thumb,#tab-experiments::-webkit-scrollbar-thumb,#mp-table-area::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
@@ -149,7 +150,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #nsc-opacity-row span{font-size:10px;color:#8892a4;width:28px}
 
 /* Stats tab */
-#stats-tab{padding:12px 14px;overflow-y:auto;gap:10px;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+#stats-tab{padding:14px 20px;overflow-y:auto;gap:10px;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
 .stat-section{margin-bottom:16px}
 .stat-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-weight:700;margin-bottom:8px}
 .stat-sev-block{margin-bottom:9px}
@@ -351,7 +352,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #fwx-leg-toggle{position:absolute;top:5px;right:7px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px}
 
 /* ── AGENTS TAB ──────────────────────────────────────────────────── */
-#tab-agents{padding:12px 10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+#tab-agents{padding:14px 20px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
 .agent-card{background:#0d1b2a;border:1px solid rgba(80,130,190,0.2);border-radius:9px;padding:13px 14px;margin-bottom:10px;transition:border-color 0.15s}
 .agent-card.active{border-color:rgba(240,192,64,0.6);background:#111d2e}
 .agent-card.soon{opacity:0.45;pointer-events:none}
@@ -366,7 +367,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .agent-activate-btn.active{background:#f0c040;border-color:#f0c040;color:#0d1a28}
 
 /* ── EXPERIMENTS TAB ─────────────────────────────────────────────── */
-#tab-experiments{padding:12px 14px;overflow-y:auto;gap:0;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent;background:#080f18;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+#tab-experiments{padding:14px 20px;overflow-y:auto;gap:0;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent;background:#080f18;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 .expt-hdr{margin-bottom:12px}
 .expt-hdr-title{font-size:11px;font-weight:700;color:#d0e8ff;letter-spacing:0.4px;margin-bottom:3px}
 .expt-hdr-sub{font-size:9.5px;color:#7a9ab8;line-height:1.6}
@@ -681,7 +682,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .fl-ts{font-size:9px;color:#0a1a30;margin-top:14px;text-align:right}
 
 /* ── MODELS SIDEBAR (simplified) ────────────────────────────────── */
-#tab-models{padding:12px 10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+#tab-models{padding:14px 20px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
 .mod-section{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.05em;text-transform:uppercase;margin:12px 0 6px}
 .mod-section:first-child{margin-top:0}
 .mod-overlay-row{display:flex;gap:14px;margin-bottom:8px;flex-wrap:wrap}
@@ -772,7 +773,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .cam-ctrl-btn:hover{background:rgba(0,0,0,0.18)}
 .cam-ctrl-btn.playing{background:#2563a8;color:#fff;border-color:#2563a8}
 /* ── MAPS SIDEBAR TAB ────────────────────────────────────────────── */
-#tab-maps{padding:10px 10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+#tab-maps{padding:14px 20px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
 .cam-ctrl-group{margin-bottom:7px}
 .cam-ctrl-lbl{display:block;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
 .cam-sidebar-sel{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:4px;padding:4px 6px;cursor:pointer}
@@ -808,7 +809,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .ew-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:11px;cursor:pointer;color:#fff;letter-spacing:.3px;margin-left:6px}
 .ew-badge::before{content:"●";font-size:9px}
 .ew-t-Normal{background:#2e7d32}.ew-t-Elevated{background:#b8902a}.ew-t-High{background:#d9791f}.ew-t-Extreme{background:#cc342a}
-#ew-tab{padding:12px 16px 14px 16px;overflow-y:auto}
+#ew-tab{padding:14px 20px 18px 20px;overflow-y:auto}
 #ew-tab .stat-section{margin-bottom:15px}
 #ew-tab .stat-title{color:var(--text2);font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
 .ew-empty{font-size:12px;color:var(--text2);padding:26px 14px;text-align:center;line-height:1.7}
@@ -835,6 +836,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .ew-about details p b{color:var(--text)}
 .ew-cite{font-size:10px;color:var(--text3);line-height:1.7}
 .ew-mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;color:var(--text2)}
+.ew-map-toggle{display:block;width:100%;margin:0 0 14px 0;padding:9px;border:1px solid var(--border);border-radius:7px;background:var(--bg2);color:var(--text2);font-weight:700;font-size:11px;cursor:pointer;letter-spacing:.3px;transition:all .15s}
+.ew-map-toggle:hover{border-color:#446}
+.ew-map-toggle.on{background:#d9791f;color:#fff;border-color:#d9791f}
+.anom-pop{font-size:12px;line-height:1.55;color:#1a1d2e}
+.anom-pop b{color:#0f1420}
+.anom-odds{font-size:10px;color:#566}
+.anom-top{margin-top:6px;font-size:11px;color:#334;border-top:1px solid #e3e6ee;padding-top:5px}
+.anom-legend{background:rgba(255,255,255,.94);padding:8px 10px;border-radius:6px;box-shadow:0 1px 5px rgba(0,0,0,.25);font-size:10px;color:#333;line-height:1.7}
+.anom-legend-t{font-weight:700;margin-bottom:4px;font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#556}
+.anom-legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.15)}
 
 </style>
 </head>
@@ -882,6 +893,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div id="ew-empty" class="ew-empty">Collecting data — the watchdog checks national alerts every 15 minutes.<br>First results will appear shortly.</div>
         <div id="ew-body" style="display:none">
           <div id="ew-gauge" class="ew-gauge"></div>
+          <button id="ew-map-toggle" class="ew-map-toggle" onclick="toggleAnomalyMap()">🗺️ Show on map</button>
           <div class="ew-about">
             <p class="ew-intro">The <b>National Threat System (NTS)</b> reads every active U.S. weather alert every 15 minutes and asks one question: <i>is anything statistically unusual right now, compared with the last 18 years?</i> It ranks each hazard against its own history for this time of year and time of day, then sums how many hazard families are unusually elevated into a single level — Normal, Elevated, High, or Extreme.</p>
             <details>
@@ -4371,7 +4383,7 @@ function renderMpDayCards(allDates, todayIdx, modelResults, asosObs, rawsObs, er
         ${era5Val!=null?`<div style="font-size:10px;font-weight:700;color:#546E7A">ERA5 ${cfg.fmt(era5Val)}</div>`:''}
         ${asosVal!=null?`<div style="font-size:9px;color:#006064">ASOS ${cfg.fmt(asosVal)}</div>`:''}
         ${rawsVal!=null?`<div style="font-size:9px;color:#33691E">RAWS ${cfg.fmt(rawsVal)}</div>`:''}
-        ${era5Val==null&&asosVal==null&&rawsVal==null?`<div style="font-size:9px;color:#aaa">No obs</div>`:''}
+        ${era5Val==null&&asosVal==null&&rawsVal==null?`<div style="font-size:9px;color:#565d6c">No obs</div>`:''}
       </div>`;
     } else {
       const vals = modelResults.filter(r=>r?.data?.[cfg.key]).map(r=>{
@@ -5212,6 +5224,11 @@ async function loadEventWatch() {
 
   const up = document.getElementById('ew-updated');
   if (up && status.updated) up.textContent = 'Updated ' + new Date(status.updated).toLocaleString();
+
+  // Anomaly Map — feed per-state data; auto-enable once so the map lights up.
+  anomalyStates = status.states || {};
+  if (!window._anomShown && Object.keys(anomalyStates).length) { window._anomShown = true; toggleAnomalyMap(true); }
+  else if (anomalyOn) updateAnomalyMap();
 }
 
 function drawEwChart(history) {
@@ -5236,6 +5253,73 @@ function drawEwChart(history) {
       scales: { x:{ ticks:{font:{size:9},maxTicksLimit:7,maxRotation:0}, grid:{color:'#88888815'} },
                 y:{ ticks:{font:{size:9}}, grid:{color:'#88888815'}, beginAtZero:true } } }
   });
+}
+
+// ── ANOMALY MAP — color each state by how unusual its activity is for it ──────
+let anomalyGeo = null, anomalyLayer = null, anomalyOn = false, anomalyStates = {}, anomLegend = null;
+const ANOM_COLORS = {Normal:'#b9c2cf', Elevated:'#f2c14e', Significant:'#e8862b', Extraordinary:'#d23b2e'};
+
+async function ensureAnomalyGeo() {
+  if (anomalyGeo) return anomalyGeo;
+  try { const r = await fetch('data/us_states.geojson'); if (r.ok) anomalyGeo = await r.json(); } catch(e){}
+  return anomalyGeo;
+}
+function anomStyle(feature) {
+  const s = anomalyStates[feature.id];
+  const tier = s ? s.tier : 'Normal';
+  const up = tier !== 'Normal';
+  return { fillColor: ANOM_COLORS[tier] || '#b9c2cf', fillOpacity: up ? 0.6 : 0.05,
+           color: '#ffffff', weight: up ? 1.4 : 0.5, opacity: 0.85 };
+}
+function anomPopup(feature) {
+  const s = anomalyStates[feature.id];
+  const name = (feature.properties && feature.properties.name) || feature.id;
+  if (!s || s.tier === 'Normal') return `<div class="anom-pop"><b>${name}</b><br>Activity near normal.</div>`;
+  let pct = s.surprise ? (100 * (1 - Math.pow(10, -s.surprise))) : null;
+  pct = (pct == null) ? null : (pct >= 99.95 ? '>99.9' : pct.toFixed(1));
+  const rec = s.record ? ' — a record for this time of year!' : '';
+  const top = (s.top || []).map(t => `${t[0]} <b>${t[1]}</b>`).join('<br>');
+  return `<div class="anom-pop"><b>${name}: ${s.tier}</b>${rec}<br>` +
+    `${s.count} active alerts (normally ~${s.typical ?? '?'})<br>` +
+    (pct ? `<span class="anom-odds">More active than ~${pct}% of similar times of year</span>` : '') +
+    (top ? `<div class="anom-top">${top}</div>` : '') + `</div>`;
+}
+async function updateAnomalyMap() {
+  if (!anomalyOn || !window.map) return;
+  const geo = await ensureAnomalyGeo();
+  if (!geo) return;
+  if (!map.getPane('anomalyPane')) { map.createPane('anomalyPane'); map.getPane('anomalyPane').style.zIndex = 350; }
+  if (anomalyLayer) { map.removeLayer(anomalyLayer); anomalyLayer = null; }
+  anomalyLayer = L.geoJSON(geo, {
+    pane: 'anomalyPane',
+    style: anomStyle,
+    onEachFeature: (f, layer) => {
+      layer.bindPopup(anomPopup(f));
+      layer.on('mouseover', () => layer.setStyle({ weight: 2.2, fillOpacity: Math.min(0.75, (anomStyle(f).fillOpacity + 0.15)) }));
+      layer.on('mouseout', () => { if (anomalyLayer) anomalyLayer.resetStyle(layer); });
+    },
+  }).addTo(map);
+  showAnomLegend(true);
+}
+function showAnomLegend(on) {
+  if (on && !anomLegend && window.map) {
+    anomLegend = L.control({ position: 'topright' });
+    anomLegend.onAdd = () => {
+      const d = L.DomUtil.create('div', 'anom-legend');
+      d.innerHTML = '<div class="anom-legend-t">State anomaly vs its own 18-yr history</div>' +
+        Object.entries(ANOM_COLORS).map(([k, c]) =>
+          `<div><i style="background:${c}"></i>${k}</div>`).join('');
+      return d;
+    };
+    anomLegend.addTo(map);
+  } else if (!on && anomLegend) { map.removeControl(anomLegend); anomLegend = null; }
+}
+function toggleAnomalyMap(on) {
+  anomalyOn = (on !== undefined) ? on : !anomalyOn;
+  const btn = document.getElementById('ew-map-toggle');
+  if (btn) { btn.textContent = anomalyOn ? '🗺️ Anomaly Map: ON' : '🗺️ Show on map'; btn.classList.toggle('on', anomalyOn); }
+  if (anomalyOn) { updateAnomalyMap(); }
+  else { if (anomalyLayer) { map.removeLayer(anomalyLayer); anomalyLayer = null; } showAnomLegend(false); }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -6277,7 +6361,7 @@ function showAirnowCard(p) {
       <div style="font-size:11px;color:#555;line-height:1.6">
         PM2.5 air quality index based on current surface measurements in the ${p.city} reporting area.
       </div>
-      <div style="margin-top:10px;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:8px">
+      <div style="margin-top:10px;font-size:10px;color:#565d6c;border-top:1px solid #eee;padding-top:8px">
         Source: EPA AirNow · airnow.gov
       </div>
     </div>`;
@@ -6431,7 +6515,7 @@ function showHmsCard(f) {
         Satellite-detected smoke plume from the NOAA/NESDIS Hazard Mapping System (HMS),
         using GOES-East and GOES-West imagery analyzed by trained meteorologists.
       </div>
-      <div style="margin-top:10px;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:8px">
+      <div style="margin-top:10px;font-size:10px;color:#565d6c;border-top:1px solid #eee;padding-top:8px">
         Source: NOAA Office of Satellite and Product Operations · Updated daily
       </div>
     </div>`;
@@ -8280,18 +8364,15 @@ function buildSpeedPanel(ev, rows) {
           : '')
       + hgtLine
       + `<div style="font-size:9.5px;color:#cdddf0;margin-top:5px;line-height:1.5;max-width:560px;text-transform:none;font-weight:400">`
-      +   `HRRR's <b>10m</b> surface wind, scored raw and after <b>WindNinja</b> terrain downscaling. `
-      +   `WindNinja's boundary condition was switched from the aloft pressure level to HRRR 10m (it scored better), so the <b>(BC)</b> columns now equal the 10m columns. `
-      +   `The one closest to observed is marked <b style="color:#5ad68f">✓ green</b>. Near-calm sites (·nc) aren't scored.</div>`;
+      +   `HRRR's <b>10m</b> surface wind, scored raw and after <b>WindNinja</b> terrain downscaling onto the local terrain. `
+      +   `The value closer to observed is marked <b style="color:#5ad68f">✓ green</b>. Near-calm sites (·nc) aren't scored.</div>`;
   }
 
   const thead = document.getElementById('expt-spd-thead');
   if (thead) {
     thead.innerHTML = '<th>Station</th><th>Obs<span style="font-weight:400;opacity:0.6"> mph</span></th>'
-      + '<th title="HRRR 10m surface wind (3km analysis) — raw, no downscaling.">HRRR 10m</th>'
-      + `<th title="HRRR ${lvl} wind used as the WindNinja boundary condition (was 850/700 hPa aloft; switched to 10m, so this now equals HRRR 10m).">HRRR ${lvl} (BC)</th>`
-      + '<th title="WindNinja initialized from the HRRR 10m surface wind.">WN(10m)</th>'
-      + `<th title="WindNinja initialized from the HRRR ${lvl} boundary condition.">WN(${lvl} BC)</th>`;
+      + '<th title="HRRR 10m surface wind (3km analysis) — raw, no downscaling.">HRRR (10m)</th>'
+      + '<th title="WindNinja initialized from the HRRR 10m surface wind, downscaled onto the terrain.">WN (10m)</th>';
   }
   const sorted = [...rows].sort((a,b) => (parseFloat(b.obs_sus_mph)||0) - (parseFloat(a.obs_sus_mph)||0));
   const tbody = document.getElementById('expt-spd-tbody');
@@ -8299,28 +8380,26 @@ function buildSpeedPanel(ev, rows) {
     tbody.innerHTML = sorted.map(row => {
       const obs  = parseFloat(row.obs_sus_mph)  || 0;
       const h10  = parseFloat(row.hrrr_10m_mph);
-      const h850 = parseFloat(row.bc_speed);
       const wnD  = ev.wn_stations && ev.wn_stations[row.stid];
-      const w850 = wnD && wnD.speed != null ? wnD.speed : null;
       const w10  = wnD && wnD.wn10  != null ? wnD.wn10  : null;
-      // Scorable = not near-calm and not extreme aloft/obs (obs>=5 AND bc/obs<=3).
-      const scorable = obs >= 5 && !isNaN(h850) && h850 / obs <= 3;
-      // Closest-of-four to obs (only among present values, only if scorable).
-      const four = { h10, h850, w10, w850 };
+      // Scorable = not near-calm and not an extreme model/obs mismatch (obs>=5 AND model/obs<=3).
+      const scorable = obs >= 5 && !isNaN(h10) && h10 / obs <= 3;
+      // Closer-to-obs of the two columns (only if scorable).
+      const pair = { h10, w10 };
       let bestKey = null, bestErr = Infinity;
-      if (scorable) Object.keys(four).forEach(k => {
-        const v = four[k];
+      if (scorable) Object.keys(pair).forEach(k => {
+        const v = pair[k];
         if (v != null && !isNaN(v)) { const e = Math.abs(v - obs); if (e < bestErr) { bestErr = e; bestKey = k; } }
       });
       const cell = (k) => {
-        const v = four[k];
+        const v = pair[k];
         if (v == null || isNaN(v)) return '<td class="expt-spd-na">—</td>';
         const best = k === bestKey;
         return `<td style="color:${best ? '#5ad68f' : '#cfe0f2'};font-weight:${best ? '700' : '400'}">${v.toFixed(1)}${best ? ' ✓' : ''}</td>`;
       };
       const nc = scorable ? '' : ` <span style="color:#d0a878;font-size:9px">·nc</span>`;
       return `<tr><td>${row.stid}${nc}</td><td class="expt-spd-obs">${obs.toFixed(1)}</td>`
-        + cell('h10') + cell('h850') + cell('w10') + cell('w850') + '</tr>';
+        + cell('h10') + cell('w10') + '</tr>';
     }).join('');
   }
   const bodyEl = document.getElementById('expt-spd-body');
@@ -8390,26 +8469,26 @@ function initExptMarkers() {
     marker.bindPopup(`
       <div style="font-family:-apple-system,sans-serif;min-width:230px;max-width:280px">
         <div style="font-size:14px;font-weight:800;margin-bottom:2px;color:#1a1d2e">${ev.name}</div>
-        <div style="font-size:10px;color:#888;margin-bottom:10px">${ev.date} &nbsp;·&nbsp; ${ev.regimeLabel}</div>
+        <div style="font-size:10px;color:#565d6c;margin-bottom:10px">${ev.date} &nbsp;·&nbsp; ${ev.regimeLabel}</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #eee">
           <div>
-            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#999;font-weight:700">Stations</div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#565d6c;font-weight:700">Stations</div>
             <div style="font-size:16px;font-weight:800;color:#1a1d2e">${ev.n}</div>
           </div>
           <div>
-            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#999;font-weight:700">HRRR vs. Stations</div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#565d6c;font-weight:700">HRRR vs. Stations</div>
             <div style="font-size:16px;font-weight:800;color:${ev.hrrr_err<0?'#d42b2b':'#2266aa'}">${Math.abs(ev.hrrr_err).toFixed(1)}<span style="font-size:9px;font-weight:600"> mph ${ev.hrrr_err<0?'below':'above'}</span></div>
           </div>
           <div>
-            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#999;font-weight:700">Anchor RAWS</div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.6px;color:#565d6c;font-weight:700">Anchor RAWS</div>
             <div style="font-size:12px;font-weight:700;color:#1a1d2e;margin-top:2px">${ev.anchor}</div>
           </div>
         </div>
         <div style="margin-bottom:8px">
-          <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.7px;color:#999;font-weight:700;margin-bottom:4px">WindNinja Result</div>
+          <div style="font-size:8px;text-transform:uppercase;letter-spacing:0.7px;color:#565d6c;font-weight:700;margin-bottom:4px">WindNinja Result</div>
           <span style="display:inline-block;background:${wrapCol}22;color:${wrapCol};border:1px solid ${wrapCol}55;border-radius:4px;font-size:9px;font-weight:800;padding:2px 8px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">${ev.statusLabel}</span>
         </div>
-        <div style="font-size:10px;color:#777;padding-top:8px;border-top:1px solid #eee;line-height:1.55">${ev.note}</div>
+        <div style="font-size:10px;color:#2d333e;padding-top:8px;border-top:1px solid #eee;line-height:1.55">${ev.note}</div>
       </div>
     `, { maxWidth: 290 });
     marker.on('click', () => {
