@@ -346,6 +346,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* ── VIIRS DATE SELECTOR ─────────────────────────────────────────── */
 .viirs-day-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text3);padding:2px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;transition:all 0.15s}
 .viirs-day-btn.active{background:#2244aa22;border-color:#2244aa;color:#2244aa}
+/* Observed surface-wind arrows (station wind barbs) */
+.wind-arrow{background:none;border:none}
+.wind-arrow svg{filter:drop-shadow(0 0 1px rgba(0,0,0,.35))}
 
 /* ── FIRE WEATHER OUTLOOK LEGEND ─────────────────────────────────── */
 #fwx-legend{position:absolute;bottom:34px;left:345px;background:rgba(255,255,255,0.96);border:1px solid var(--border);border-radius:8px;padding:10px 13px;z-index:700;min-width:148px;display:none;backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
@@ -1135,6 +1138,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
         <div class="layer-group">
           <div class="layer-group-title">Wildland Fire</div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-winds" onchange="toggleLayer('winds',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Observed Surface Winds</span>
+            <span class="layer-note" id="winds-note">off</span>
+          </div>
+          <div class="usgs-key" id="winds-key" style="display:none">
+            <div class="usgs-key-hdr">RAWS fire stations · live measured wind · arrow points downwind</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#3fa34d;border-color:#2c7a38"></div>&lt; 12 mph</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#e0b400;border-color:#a88600"></div>12–20 mph</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#e8720c;border-color:#a34400"></div>20–30 mph</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#d23b2e;border-color:#8f0f00"></div>30+ mph</div>
+          </div>
 
           <div class="layer-row">
             <label class="toggle"><input type="checkbox" id="lyr-fire-incidents" onchange="toggleLayer('fire-incidents',this.checked)"><span class="toggle-slider"></span></label>
@@ -2465,6 +2481,7 @@ let alertsLoading = false;
 let fwxD1Group = null, fwxD1Enabled = false;
 let fwxD2Group = null, fwxD2Enabled = false;
 let rawsGroup = null, rawsEnabled = false, rawsLoaded = false;
+let windsGroup = null, windsEnabled = false, windsFeatures = null, _windsMoveTimer = null;
 let kbdiLayer = null, kbdiEnabled = false, kbdiOpacity = 0.75;
 let dryLtgGroup = null, dryLtgEnabled = false, dryLtgLoaded = false;
 let hmsGroup = null, hmsEnabled = false, hmsOpacity = 0.80;
@@ -2535,6 +2552,7 @@ function initMap() {
   fwxD1Group   = L.layerGroup();           // SPC fire weather outlook Day 1
   fwxD2Group   = L.layerGroup();           // SPC fire weather outlook Day 2
   rawsGroup    = L.layerGroup();           // RAWS weather stations
+  windsGroup   = L.layerGroup();           // Observed surface wind arrows
   redFlagGroup = L.layerGroup();           // Red Flag Warnings (from NWS alerts)
   fwxWatchGroup = L.layerGroup();          // Fire Weather Watches (from NWS alerts)
   hmsGroup      = L.layerGroup();          // NOAA HMS smoke plumes
@@ -3508,6 +3526,18 @@ async function toggleLayer(name, on) {
     on ? spc2Group.addTo(map) : spc2Group.remove();
     if (!document.getElementById('lyr-spc1').checked)
       document.getElementById('spc-legend').style.display = on ? 'block' : 'none';
+  } else if (name === 'winds') {
+    windsEnabled = on;
+    document.getElementById('winds-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      windsGroup.addTo(map);
+      loadWinds();
+      map.on('moveend', windsOnMove);
+    } else {
+      map.off('moveend', windsOnMove);
+      windsGroup.remove();
+      document.getElementById('winds-note').textContent = 'off';
+    }
   } else if (name === 'fire-incidents') {
     fireIncidentsEnabled = on;
     document.getElementById('fire-incidents-key').style.display = on ? 'block' : 'none';
@@ -6689,6 +6719,90 @@ function showHmsCard(f) {
 // ═══════════════════════════════════════════════════════════════════
 // RAWS WEATHER STATIONS
 // ═══════════════════════════════════════════════════════════════════
+
+// ── OBSERVED SURFACE WINDS ────────────────────────────────────────────────────
+// Live wind arrows from real fire-weather (RAWS) stations: measured speed +
+// direction. Arrows point DOWNWIND, colored by speed. The station feed is fetched
+// once and re-rendered for the current view on pan/zoom, so density scales with
+// how far you're zoomed in ("highest resolution" where you're looking).
+function windColor(mph) {
+  if (mph < 5)  return '#8aa0b8';   // calm
+  if (mph < 12) return '#3fa34d';   // light
+  if (mph < 20) return '#e0b400';   // moderate
+  if (mph < 30) return '#e8720c';   // strong
+  return '#d23b2e';                 // extreme
+}
+function windArrowIcon(dirFrom, mph) {
+  const col = windColor(mph);
+  const rot = (dirFrom + 180) % 360;                 // met dir is FROM → point downwind
+  const len = Math.min(24, 11 + mph * 0.5);          // longer shaft with stronger wind
+  const y1 = 15 + len / 2, y2 = 15 - len / 2;
+  const html =
+    `<svg width="30" height="30" viewBox="0 0 30 30" style="transform:rotate(${rot.toFixed(0)}deg);overflow:visible">` +
+    `<line x1="15" y1="${y1.toFixed(1)}" x2="15" y2="${y2.toFixed(1)}" stroke="${col}" stroke-width="2.2"/>` +
+    `<path d="M15 ${(y2 - 1).toFixed(1)} l-3.6 5.6 l3.6 -2 l3.6 2 z" fill="${col}"/>` +
+    `</svg>`;
+  return L.divIcon({ className: 'wind-arrow', html, iconSize: [30, 30], iconAnchor: [15, 15] });
+}
+async function loadWinds() {
+  const note = document.getElementById('winds-note');
+  if (windsFeatures) { renderWinds(); return; }
+  note.textContent = 'loading…';
+  try {
+    const data = await fetchJson(RAWS_URL, 30000);
+    windsFeatures = (data?.features ?? []).filter(f => {
+      const p = f.properties || {};
+      if (p.Status === 'Inactive') return false;
+      const s = parseFloat(String(p.WindSpeedMPH).replace(/[^0-9.]/g, ''));
+      const d = parseFloat(p.WindDirDegrees);
+      return !isNaN(s) && !isNaN(d) && !!(f.geometry && f.geometry.coordinates);
+    });
+    renderWinds();
+  } catch(e) {
+    console.error('loadWinds:', e);
+    note.textContent = 'unavailable';
+  }
+}
+function renderWinds() {
+  if (!windsEnabled || !map || !windsFeatures) return;
+  const note = document.getElementById('winds-note');
+  windsGroup.clearLayers();
+  const b = map.getBounds();
+  const CAP = 500;
+  const inView = [];
+  for (const f of windsFeatures) {
+    const c = f.geometry.coordinates;
+    const lon = c[0], lat = c[1];
+    if (lat == null || isNaN(lat)) continue;
+    if (b.contains([lat, lon])) inView.push(f);
+  }
+  let use = inView;
+  if (inView.length > CAP) {                          // thin evenly when too dense for the view
+    const step = Math.ceil(inView.length / CAP);
+    use = inView.filter((_, i) => i % step === 0);
+  }
+  let count = 0;
+  for (const f of use) {
+    const c = f.geometry.coordinates;
+    const p = f.properties;
+    const mph  = parseFloat(String(p.WindSpeedMPH).replace(/[^0-9.]/g, ''));
+    const dir  = parseFloat(p.WindDirDegrees);
+    const gust = parseFloat(String(p.WindSpeedPeak).replace(/[^0-9.]/g, ''));
+    const m = L.marker([c[1], c[0]], { icon: windArrowIcon(dir, mph), keyboard: false });
+    m.bindTooltip(
+      `<b>${esc(p.StationName || 'Station')}</b><br>Wind ${Math.round(mph)} mph from ${Math.round(dir)}°` +
+      (!isNaN(gust) && gust > mph ? `<br>Gusts ${Math.round(gust)} mph` : ''),
+      { sticky: true }
+    );
+    windsGroup.addLayer(m);
+    count++;
+  }
+  note.textContent = count ? `${count} stations${inView.length > CAP ? ' · zoom in for all' : ''}` : 'zoom in to see winds';
+}
+function windsOnMove() {
+  if (_windsMoveTimer) clearTimeout(_windsMoveTimer);
+  _windsMoveTimer = setTimeout(() => { if (windsEnabled) renderWinds(); }, 400);
+}
 
 async function loadRAWS() {
   const note = document.getElementById('raws-note');
