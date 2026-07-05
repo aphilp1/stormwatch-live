@@ -1153,6 +1153,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           </div>
 
           <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-windflow" onchange="toggleLayer('windflow',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Animated Wind Flow</span>
+            <span class="layer-note" id="windflow-note">off</span>
+          </div>
+          <div class="usgs-key" id="windflow-key" style="display:none">
+            <div class="usgs-key-hdr">Flowing streamlines interpolated from live station winds</div>
+          </div>
+
+          <div class="layer-row">
             <label class="toggle"><input type="checkbox" id="lyr-fire-incidents" onchange="toggleLayer('fire-incidents',this.checked)"><span class="toggle-slider"></span></label>
             <span class="layer-label">Active Fire Incidents</span>
             <span class="layer-note" id="fire-incidents-note">off</span>
@@ -2222,6 +2231,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-velocity@1.7.0/dist/leaflet-velocity.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -2482,6 +2492,7 @@ let fwxD1Group = null, fwxD1Enabled = false;
 let fwxD2Group = null, fwxD2Enabled = false;
 let rawsGroup = null, rawsEnabled = false, rawsLoaded = false;
 let windsGroup = null, windsEnabled = false, windsFeatures = null, _windsMoveTimer = null;
+let windFlowLayer = null, windFlowEnabled = false;
 let kbdiLayer = null, kbdiEnabled = false, kbdiOpacity = 0.75;
 let dryLtgGroup = null, dryLtgEnabled = false, dryLtgLoaded = false;
 let hmsGroup = null, hmsEnabled = false, hmsOpacity = 0.80;
@@ -3537,6 +3548,15 @@ async function toggleLayer(name, on) {
       map.off('moveend', windsOnMove);
       windsGroup.remove();
       document.getElementById('winds-note').textContent = 'off';
+    }
+  } else if (name === 'windflow') {
+    windFlowEnabled = on;
+    document.getElementById('windflow-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      enableWindFlow();
+    } else {
+      if (windFlowLayer) { map.removeLayer(windFlowLayer); windFlowLayer = null; }
+      document.getElementById('windflow-note').textContent = 'off';
     }
   } else if (name === 'fire-incidents') {
     fireIncidentsEnabled = on;
@@ -6744,24 +6764,24 @@ function windArrowIcon(dirFrom, mph) {
     `</svg>`;
   return L.divIcon({ className: 'wind-arrow', html, iconSize: [30, 30], iconAnchor: [15, 15] });
 }
+async function ensureWindStations() {
+  if (windsFeatures) return windsFeatures;
+  const data = await fetchJson(RAWS_URL, 30000);
+  windsFeatures = (data?.features ?? []).filter(f => {
+    const p = f.properties || {};
+    if (p.Status === 'Inactive') return false;
+    const s = parseFloat(String(p.WindSpeedMPH).replace(/[^0-9.]/g, ''));
+    const d = parseFloat(p.WindDirDegrees);
+    return !isNaN(s) && !isNaN(d) && !!(f.geometry && f.geometry.coordinates);
+  });
+  return windsFeatures;
+}
 async function loadWinds() {
   const note = document.getElementById('winds-note');
   if (windsFeatures) { renderWinds(); return; }
   note.textContent = 'loading…';
-  try {
-    const data = await fetchJson(RAWS_URL, 30000);
-    windsFeatures = (data?.features ?? []).filter(f => {
-      const p = f.properties || {};
-      if (p.Status === 'Inactive') return false;
-      const s = parseFloat(String(p.WindSpeedMPH).replace(/[^0-9.]/g, ''));
-      const d = parseFloat(p.WindDirDegrees);
-      return !isNaN(s) && !isNaN(d) && !!(f.geometry && f.geometry.coordinates);
-    });
-    renderWinds();
-  } catch(e) {
-    console.error('loadWinds:', e);
-    note.textContent = 'unavailable';
-  }
+  try { await ensureWindStations(); renderWinds(); }
+  catch(e) { console.error('loadWinds:', e); note.textContent = 'unavailable'; }
 }
 function renderWinds() {
   if (!windsEnabled || !map || !windsFeatures) return;
@@ -6802,6 +6822,82 @@ function renderWinds() {
 function windsOnMove() {
   if (_windsMoveTimer) clearTimeout(_windsMoveTimer);
   _windsMoveTimer = setTimeout(() => { if (windsEnabled) renderWinds(); }, 400);
+}
+
+// ── ANIMATED WIND FLOW (from observed winds) ──────────────────────────────────
+// Interpolate the live station winds onto a CONUS grid (inverse-distance) and hand
+// it to leaflet-velocity, so the flowing streamlines ARE the measured winds moving,
+// not a model. Runs fully client-side on the static site.
+function buildWindGrid(features) {
+  const lo1 = -125, la1 = 49.5, dx = 0.6, dy = 0.6, nx = 99, ny = 43;
+  const MS = 0.44704, DEG = Math.PI / 180;
+  const pts = [];
+  for (const f of features) {
+    const c = f.geometry.coordinates, p = f.properties;
+    const spd = parseFloat(String(p.WindSpeedMPH).replace(/[^0-9.]/g, '')) * MS;   // mph → m/s
+    const dir = parseFloat(p.WindDirDegrees);
+    if (isNaN(spd) || isNaN(dir)) continue;
+    const r = dir * DEG;                                    // met dir is FROM
+    pts.push({ lat: c[1], lon: c[0], u: -spd * Math.sin(r), v: -spd * Math.cos(r) });
+  }
+  const BIN = 1.5, R = 1.7, R2 = R * R, bins = new Map();
+  const key = (bi, bj) => bi + ',' + bj;
+  for (const pt of pts) {
+    const k = key(Math.floor(pt.lon / BIN), Math.floor(pt.lat / BIN));
+    if (!bins.has(k)) bins.set(k, []);
+    bins.get(k).push(pt);
+  }
+  const U = new Array(nx * ny).fill(0), V = new Array(nx * ny).fill(0);
+  for (let j = 0; j < ny; j++) {
+    const lat = la1 - j * dy, cosl = Math.cos(lat * DEG), bj = Math.floor(lat / BIN);
+    for (let i = 0; i < nx; i++) {
+      const lon = lo1 + i * dx, bi = Math.floor(lon / BIN);
+      let wsum = 0, usum = 0, vsum = 0;
+      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+        const arr = bins.get(key(bi + a, bj + b)); if (!arr) continue;
+        for (const pt of arr) {
+          const dla = lat - pt.lat, dlo = (lon - pt.lon) * cosl, d2 = dla * dla + dlo * dlo;
+          if (d2 > R2) continue;
+          const w = 1 / (d2 + 0.02);
+          wsum += w; usum += w * pt.u; vsum += w * pt.v;
+        }
+      }
+      if (wsum > 0) { const idx = j * nx + i; U[idx] = usum / wsum; V[idx] = vsum / wsum; }
+    }
+  }
+  const hdr = (pn, name) => ({ parameterCategory: 2, parameterNumber: pn, parameterNumberName: name,
+    parameterUnit: 'm.s-1', nx, ny, lo1, la1, lo2: lo1 + (nx - 1) * dx, la2: la1 - (ny - 1) * dy,
+    dx, dy, refTime: '2024-01-01T00:00:00Z', forecastTime: 0 });
+  return [ { header: hdr(2, 'U-component_of_wind'), data: U },
+           { header: hdr(3, 'V-component_of_wind'), data: V } ];
+}
+
+async function enableWindFlow() {
+  const note = document.getElementById('windflow-note');
+  if (typeof L.velocityLayer !== 'function') { note.textContent = 'unavailable'; return; }
+  note.textContent = 'loading…';
+  try {
+    const feats = await ensureWindStations();
+    if (!feats || !feats.length) { note.textContent = 'no data'; return; }
+    const grid = buildWindGrid(feats);
+    if (windFlowLayer) { map.removeLayer(windFlowLayer); windFlowLayer = null; }
+    windFlowLayer = L.velocityLayer({
+      displayValues: false,
+      data: grid,
+      maxVelocity: 15,               // saturate the color scale sooner so light winds still read
+      velocityScale: 0.014,          // longer streaks → more visible motion
+      particleAge: 120,
+      lineWidth: 1.8,
+      particleMultiplier: 1 / 170,   // denser field
+      frameRate: 20,
+      colorScale: ['#7d93ab', '#4aa6c9', '#3fa34d', '#e0b400', '#e8720c', '#d23b2e'],
+    });
+    windFlowLayer.addTo(map);
+    note.textContent = 'live · from station obs';
+  } catch(e) {
+    console.error('enableWindFlow:', e);
+    note.textContent = 'unavailable';
+  }
 }
 
 async function loadRAWS() {
