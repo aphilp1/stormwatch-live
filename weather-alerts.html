@@ -4014,6 +4014,8 @@ function showTab(name) {
   if (name === 'eventwatch') {
     loadEventWatch();
     if (!window._ewInited) { window._ewInited = true; setInterval(loadEventWatch, 300000); }
+  } else if (typeof anomalyOn !== 'undefined' && anomalyOn) {
+    toggleAnomalyMap(false);   // the anomaly overlay lives only in the Event Watch tab
   }
 
   const modPanel = document.getElementById('model-panel');
@@ -5261,10 +5263,11 @@ async function loadEventWatch() {
   const up = document.getElementById('ew-updated');
   if (up && status.updated) up.textContent = 'Updated ' + new Date(status.updated).toLocaleString();
 
-  // Anomaly Map — feed per-state data; auto-enable once so the map lights up.
+  // Anomaly Map — feed per-state data only. It is NEVER auto-enabled; it turns on
+  // solely when the user clicks "Show on map" inside the Event Watch tab, and is
+  // forced off again whenever they leave that tab (see showTab).
   anomalyStates = status.states || {};
-  if (!window._anomShown && Object.keys(anomalyStates).length) { window._anomShown = true; toggleAnomalyMap(true); }
-  else if (anomalyOn) updateAnomalyMap();
+  if (anomalyOn) updateAnomalyMap();
 }
 
 function drawEwChart(history) {
