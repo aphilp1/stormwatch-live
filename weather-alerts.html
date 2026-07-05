@@ -843,9 +843,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .anom-pop b{color:#0f1420}
 .anom-odds{font-size:10px;color:#566}
 .anom-top{margin-top:6px;font-size:11px;color:#334;border-top:1px solid #e3e6ee;padding-top:5px}
-.anom-legend{background:rgba(255,255,255,.94);padding:8px 10px;border-radius:6px;box-shadow:0 1px 5px rgba(0,0,0,.25);font-size:10px;color:#333;line-height:1.7}
-.anom-legend-t{font-weight:700;margin-bottom:4px;font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#556}
-.anom-legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.15)}
+.anom-legend{background:rgba(255,255,255,.975);padding:13px 14px 11px;border-radius:11px;box-shadow:0 6px 22px rgba(15,20,32,.20),0 0 0 1px rgba(15,20,32,.06);font-size:11px;color:#1a1d2e;line-height:1.5;max-width:238px;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.anom-legend-t{font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:#0f1420;display:flex;align-items:center;gap:6px}
+.anom-legend-t::before{content:"";width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#e8862b,#d23b2e);flex:none}
+.anom-legend-sub{font-size:9.5px;color:#3a4055;margin:3px 0 10px;line-height:1.4}
+.anom-legend-ramp{display:flex;height:6px;border-radius:4px;overflow:hidden;margin-bottom:11px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.anom-legend-ramp>span{flex:1}
+.anom-row{display:flex;align-items:flex-start;gap:9px;padding:3px 0}
+.anom-row i{flex:none;width:13px;height:13px;border-radius:3px;margin-top:1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+.anom-row-l{font-weight:700;color:#0f1420}
+.anom-row-d{color:#3a4055;font-size:9.5px}
+.anom-legend-live{margin-top:9px;padding-top:8px;border-top:1px solid #e3e6ee;font-size:10px;color:#1a1d2e}
+.anom-legend-live b{font-weight:800}
+.anom-legend-live .an-x{color:#d23b2e}.anom-legend-live .an-s{color:#e8862b}.anom-legend-live .an-e{color:#b8902a}
+.anom-legend-foot{margin-top:7px;font-size:8.5px;color:#4d5468;line-height:1.35}
 
 </style>
 </head>
@@ -1130,8 +1141,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <span class="layer-note" id="fire-incidents-note">off</span>
           </div>
           <div class="usgs-key" id="fire-incidents-key" style="display:none">
-            <div class="usgs-key-hdr">NIFC · Current Incidents</div>
-            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff4400;border-color:#aa1100"></div>Active fire (dot size ∝ acreage)</div>
+            <div class="usgs-key-hdr">NIFC · Active Wildfires · size ∝ acreage</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff3300;border-color:#8f0f00"></div>Uncontained (&lt;30%)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff8400;border-color:#a34400"></div>Partial (30–70%)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ffc021;border-color:#7d5e00"></div>Mostly held (70–99%)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#b08050;border-color:#5f4a34"></div>Contained</div>
           </div>
 
           <div class="layer-row">
@@ -1140,8 +1154,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <span class="layer-note" id="fire-perimeters-note">off</span>
           </div>
           <div class="usgs-key" id="fire-perimeters-key" style="display:none">
-            <div class="usgs-key-hdr">NIFC · Burn Boundaries</div>
-            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff6600;border-radius:2px;border-color:#aa2200"></div>Current fire perimeter</div>
+            <div class="usgs-key-hdr">NIFC/WFIGS · Active Burn Boundaries · ≥100 ac</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff3300;border-radius:2px;border-color:#8f0f00"></div>Uncontained (&lt;30%)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff8400;border-radius:2px;border-color:#a34400"></div>Partial (30–70%)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ffc021;border-radius:2px;border-color:#7d5e00"></div>Mostly held (70–99%)</div>
           </div>
 
           <div class="layer-row">
@@ -2208,7 +2224,15 @@ const HRRR_HOURS  = 19;  // F+0 through F+18
 const MRMS_QPE_WMS = 'https://mesonet.agron.iastate.edu/cgi-bin/wms/us/mrms_nn.cgi';
 const FEMA_WMS     = 'https://hazards.fema.gov/arcgis/services/public/NFHLWMS/MapServer/WMSServer';
 const NIFC_INCIDENTS  = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/EGP_Active_Incidents_Prod_Public_View/FeatureServer/0/query?where=1%3D1&outFields=*&returnGeometry=true&f=geojson&resultRecordCount=2000';
-const NIFC_PERIMETERS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_YearToDate/FeatureServer/0/query?where=attr_PercentContained+%3C+100+OR+attr_PercentContained+IS+NULL&outFields=poly_IncidentName,poly_GISAcres,poly_CreateDate,attr_POOState,attr_PercentContained&returnGeometry=true&f=geojson&resultRecordCount=2000';
+// Current, significant wildfire perimeters only: still burning (no fire-out date),
+// >=100 acres, and NOT prescribed burns — so the layer shows real active fires,
+// not the whole year's worth of contained/RX polygons.
+const NIFC_PERIM_WHERE = "attr_FireOutDateTime IS NULL AND poly_GISAcres >= 100 AND poly_FeatureCategory <> 'Prescribed Fire'";
+const NIFC_PERIMETERS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_YearToDate/FeatureServer/0/query'
+  + '?where=' + encodeURIComponent(NIFC_PERIM_WHERE)
+  + '&outFields=' + encodeURIComponent('poly_IncidentName,poly_GISAcres,attr_IncidentSize,attr_PercentContained,attr_POOState,attr_FireCause,attr_FireDiscoveryDateTime,poly_FeatureCategory')
+  + '&returnGeometry=true&orderByFields=' + encodeURIComponent('poly_GISAcres DESC')
+  + '&f=geojson&resultRecordCount=2000';
 const NIFC_HIST_PERIMS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_AllYears/FeatureServer/0/query';
 const SPC_FWX_BASE    = 'https://mapservices.weather.noaa.gov/vector/rest/services/fire_weather/SPC_firewx/MapServer';
 const RAWS_URL        = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/PublicView_RAWS/FeatureServer/1/query?where=1%3D1&outFields=StationName,StationID,Latitude,Longitude,Elevation,State,Agency,Status,AirTempStandPlace,WindSpeedMPH,WindDirDegrees,WindSpeedPeak,RelativeHumidity,FuelMoisture,FuelTemp,ObservedDate,MesoWestURL,NOAA_URL&returnGeometry=true&f=geojson&resultRecordCount=5000';
@@ -5305,17 +5329,44 @@ async function updateAnomalyMap() {
   }).addTo(map);
   showAnomLegend(true);
 }
+function anomLegendHTML() {
+  const tiers = [
+    ['Extraordinary', 'Near-record load for the date', 'an-x'],
+    ['Significant',   'Top ~5% of comparable dates',   'an-s'],
+    ['Elevated',      'Busier than its own normal',    'an-e'],
+    ['Normal',        'Typical for this time of year',  ''],
+  ];
+  const counts = { Extraordinary: 0, Significant: 0, Elevated: 0, Normal: 0 };
+  Object.values(anomalyStates || {}).forEach(s => { const t = s && s.tier; if (counts[t] != null) counts[t]++; });
+  const rows = tiers.map(([k, desc]) =>
+    `<div class="anom-row"><i style="background:${ANOM_COLORS[k]}"></i>` +
+    `<div><span class="anom-row-l">${k}</span><br><span class="anom-row-d">${desc}</span></div></div>`).join('');
+  const ramp = '<div class="anom-legend-ramp">' +
+    ['Normal', 'Elevated', 'Significant', 'Extraordinary']
+      .map(k => `<span style="background:${ANOM_COLORS[k]}"></span>`).join('') + '</div>';
+  const hi = counts.Extraordinary + counts.Significant + counts.Elevated;
+  const live = '<div class="anom-legend-live">' + (hi
+    ? `Now: <b class="an-x">${counts.Extraordinary}</b> extraordinary · <b class="an-s">${counts.Significant}</b> significant · <b class="an-e">${counts.Elevated}</b> elevated`
+    : 'All states near their seasonal norm right now') + '</div>';
+  return '<div class="anom-legend-t">State Activity Anomaly</div>' +
+    '<div class="anom-legend-sub">How unusual each state’s current alert load is <b>versus its own 18-year history</b> for this time of year.</div>' +
+    ramp + rows + live +
+    '<div class="anom-legend-foot">Percentile vs. 2008–2025 NWS/CAP climatology · updates live</div>';
+}
 function showAnomLegend(on) {
-  if (on && !anomLegend && window.map) {
-    anomLegend = L.control({ position: 'topright' });
-    anomLegend.onAdd = () => {
-      const d = L.DomUtil.create('div', 'anom-legend');
-      d.innerHTML = '<div class="anom-legend-t">State anomaly vs its own 18-yr history</div>' +
-        Object.entries(ANOM_COLORS).map(([k, c]) =>
-          `<div><i style="background:${c}"></i>${k}</div>`).join('');
-      return d;
-    };
-    anomLegend.addTo(map);
+  if (on && window.map) {
+    if (!anomLegend) {
+      anomLegend = L.control({ position: 'topright' });
+      anomLegend.onAdd = () => {
+        const d = L.DomUtil.create('div', 'anom-legend');
+        d.innerHTML = anomLegendHTML();
+        return d;
+      };
+      anomLegend.addTo(map);
+    } else {
+      const el = anomLegend.getContainer();          // refresh live counts on data update
+      if (el) el.innerHTML = anomLegendHTML();
+    }
   } else if (!on && anomLegend) { map.removeControl(anomLegend); anomLegend = null; }
 }
 function toggleAnomalyMap(on) {
@@ -5996,6 +6047,19 @@ function showGaugeDetail(g) {
 // FIRE ECOLOGY
 // ═══════════════════════════════════════════════════════════════════
 
+// Best available current size for an NIFC incident, in acres.
+function fireAcres(p) {
+  return Math.max(p.DailyAcres || p.CalculatedAcres || p.CALC_GISAcres || p.DiscoveryAcres || p.attr_IncidentSize || p.poly_GISAcres || 0, 0);
+}
+// Colour a fire by containment: uncontained = hot red, fully contained = muted.
+// pct may be null/undefined (unknown → treated as active).
+function fireColor(pct) {
+  if (pct == null || pct < 30) return { stroke:'#8f0f00', fill:'#ff3300' };  // active / growing
+  if (pct < 70)               return { stroke:'#a34400', fill:'#ff8400' };  // partial
+  if (pct < 100)              return { stroke:'#7d5e00', fill:'#ffc021' };  // mostly held
+  return { stroke:'#5f4a34', fill:'#b08050' };                              // contained
+}
+
 async function loadFireIncidents() {
   const note = document.getElementById('fire-incidents-note');
   note.textContent = 'loading…';
@@ -6004,22 +6068,30 @@ async function loadFireIncidents() {
     const data = await fetchJson(NIFC_INCIDENTS, 20000);
     const features = data?.features ?? [];
     const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
-    let count = 0;
-    for (const feat of features) {
+    let count = 0, major = 0;
+    // Draw largest fires last so they sit on top of the small ones.
+    const feats = features.slice().sort((a, b) => fireAcres(a.properties || {}) - fireAcres(b.properties || {}));
+    for (const feat of feats) {
       const coords = feat.geometry?.coordinates;
       if (!coords) continue;
       const [lon, lat] = coords;
       if (lat == null || isNaN(lat)) continue;
       const p = feat.properties;
+      // Wildfires only — drop prescribed burns (RX) and non-fire incidents.
+      if (!/WF/.test(p.Incident_Type_Kind || '')) continue;
       const name  = p.Name || p.IncidentName || p.incident_name || 'Unknown Fire';
-      const acres = Math.max(p.DailyAcres || p.CalculatedAcres || p.CALC_GISAcres || p.DiscoveryAcres || 0, 0);
+      const acres = fireAcres(p);
       const pct   = p.PercentContained != null ? p.PercentContained : null;
       const state = p.POOState || p.State || p.state || '';
-      const r = Math.min(12, Math.max(5, Math.log10(Math.max(acres, 10)) * 2.5));
+      const minor = acres < 100;                        // small/unknown → de-emphasised
+      const isMajor = acres >= 100 && (pct == null || pct < 90);
+      const col = fireColor(pct);
+      // Radius scales with size; tiny/unknown stay small so they don't blob.
+      const r = acres > 0 ? Math.min(20, Math.max(3.5, Math.log10(acres) * 4.4)) : 3.5;
       const marker = L.circleMarker([lat, lon], {
         renderer: canvas, pane: 'markerLayerPane', radius: Math.round(r),
-        color: '#aa1100', fillColor: '#ff4400',
-        weight: 1.5, opacity: 1, fillOpacity: 0.85,
+        color: minor ? '#7a3320' : col.stroke, fillColor: minor ? '#c65a3a' : col.fill,
+        weight: minor ? 0.6 : 1.6, opacity: minor ? 0.5 : 1, fillOpacity: minor ? 0.3 : 0.85,
       });
       const acresStr = acres ? Math.round(acres).toLocaleString() : '?';
       const pctStr   = pct != null ? pct + '%' : '?%';
@@ -6040,9 +6112,10 @@ async function loadFireIncidents() {
       marker.on('click', e => { L.DomEvent.stopPropagation(e); showFireCard(p, lat, lon); });
       fireIncidentsGroup.addLayer(marker);
       count++;
+      if (isMajor) major++;
     }
     fireIncidentsLoaded = true;
-    note.textContent = count ? `${count} incidents` : 'none active';
+    note.textContent = count ? `${count} fires · ${major} major` : 'none active';
   } catch(e) {
     console.error('loadFireIncidents:', e);
     note.textContent = 'unavailable';
@@ -6061,10 +6134,13 @@ async function loadFirePerimeters() {
       if (!feat.geometry) continue;
       const p = feat.properties;
       const name  = p.poly_IncidentName || p.attr_IncidentName || 'Fire Perimeter';
-      const acres = p.poly_GISAcres ? Math.round(p.poly_GISAcres).toLocaleString() : '?';
-      const pct   = p.attr_PercentContained != null ? p.attr_PercentContained + '%' : '?%';
+      const acresN = p.poly_GISAcres || p.attr_IncidentSize || 0;
+      const acres = acresN ? Math.round(acresN).toLocaleString() : '?';
+      const pctRaw = p.attr_PercentContained;
+      const pct   = pctRaw != null ? pctRaw + '%' : '?%';
+      const col = fireColor(pctRaw);
       const lyr = L.geoJSON(feat, {
-        style: { color:'#aa2200', fillColor:'#ff6600', weight:1.5, opacity:0.9, fillOpacity:0.30 }
+        style: { color:col.stroke, fillColor:col.fill, weight:2.2, opacity:0.95, fillOpacity:0.38 }
       });
       lyr.bindTooltip(
         `<b>${esc(name)}</b><br>${acres} acres · ${pct} contained` +
@@ -6076,7 +6152,7 @@ async function loadFirePerimeters() {
       count++;
     }
     firePerimLoaded = true;
-    note.textContent = count ? `${count} perimeters` : 'none active';
+    note.textContent = count ? `${count} active perimeters` : 'none active';
   } catch(e) {
     console.error('loadFirePerimeters:', e);
     note.textContent = 'unavailable';
@@ -6086,7 +6162,8 @@ async function loadFirePerimeters() {
 function showFireCard(p, lat, lon) {
   ensureDetStandard();
   const name     = p.Name || p.IncidentName || p.incident_name || 'Wildfire Incident';
-  const type     = p.Incident_Type_Kind || p.IncidentTypeCategory || p.IncidentType || 'Wildfire';
+  const rawType  = p.Incident_Type_Kind || p.IncidentTypeCategory || p.IncidentType || 'Wildfire';
+  const type     = /WF/.test(rawType) ? 'Wildfire' : /RX/.test(rawType) ? 'Prescribed Burn' : rawType;
   const state    = p.POOState || p.State || p.state || null;
   const county   = p.County || p.POOCounty || p.county || null;
   const acres    = p.DailyAcres || p.CalculatedAcres || p.CALC_GISAcres || p.DiscoveryAcres || null;
@@ -6113,7 +6190,17 @@ function showFireCard(p, lat, lon) {
   document.getElementById('det-hl').textContent = pct != null ? pct + '% contained' : '—';
   document.getElementById('det-hl-wrap').style.display = 'block';
   document.getElementById('det-instr-wrap').style.display = 'none';
-  document.getElementById('det-desc').textContent = '';
+  // Operational detail from the NIFC feed, when populated.
+  const personnel = p.TotalIncidentPersonnel;
+  const structs   = p.CALC_TotalStructuresThreatened;
+  const cost      = p.EstimatedCostToDate;
+  const cause     = p.Cause && String(p.Cause).trim() && String(p.Cause).trim() !== 'Undetermined' ? String(p.Cause).trim() : null;
+  document.getElementById('det-desc').textContent = [
+    personnel ? `Personnel assigned: ${Number(personnel).toLocaleString()}` : null,
+    structs   ? `Structures threatened: ${Number(structs).toLocaleString()}` : null,
+    cost      ? `Est. cost to date: $${Number(cost).toLocaleString()}` : null,
+    cause     ? `Cause: ${cause}` : null,
+  ].filter(Boolean).join('\n');
   document.getElementById('det-zoom').textContent = '⊕ Zoom to Fire';
   document.getElementById('det-zoom').onclick = () => map.setView([lat, lon], 10);
   document.getElementById('detail').style.display = 'flex';
@@ -6135,11 +6222,16 @@ function showFirePerimCard(p, lyr) {
   document.getElementById('det-area').textContent = p.attr_POOState || '—';
   document.getElementById('det-eff-lbl').textContent = 'Size';
   document.getElementById('det-exp-lbl').textContent = 'Contained';
-  document.getElementById('det-eff').textContent = p.poly_GISAcres ? Math.round(p.poly_GISAcres).toLocaleString() + ' acres' : '—';
+  const perimAcres = p.poly_GISAcres || p.attr_IncidentSize || 0;
+  document.getElementById('det-eff').textContent = perimAcres ? Math.round(perimAcres).toLocaleString() + ' acres' : '—';
   document.getElementById('det-exp').textContent = p.attr_PercentContained != null ? p.attr_PercentContained + '%' : '—';
   document.getElementById('det-hl-wrap').style.display = 'none';
   document.getElementById('det-instr-wrap').style.display = 'none';
-  document.getElementById('det-desc').textContent = p.poly_CreateDate ? 'Updated: ' + fmtDT(new Date(p.poly_CreateDate)) : '';
+  const perimDisco = p.attr_FireDiscoveryDateTime ? fmtDT(new Date(p.attr_FireDiscoveryDateTime)) : null;
+  const perimCause = p.attr_FireCause && p.attr_FireCause !== 'Undetermined' ? String(p.attr_FireCause).trim() : null;
+  document.getElementById('det-desc').textContent =
+    [perimDisco ? 'Discovered: ' + perimDisco : null, perimCause ? 'Cause: ' + perimCause : null]
+      .filter(Boolean).join('\n');
   document.getElementById('det-zoom').textContent = '⊕ Zoom to Perimeter';
   document.getElementById('det-zoom').onclick = () => {
     try { map.fitBounds(lyr.getBounds(), { padding:[50,50], maxZoom:12 }); } catch(_){}
