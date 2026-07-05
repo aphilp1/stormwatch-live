@@ -1170,15 +1170,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <span id="smoke-opacity-val">80%</span>
           </div>
           <div class="usgs-key" id="smoke-key" style="display:none">
-            <div class="usgs-key-hdr">NASA VIIRS · Near Real-Time</div>
-            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff4400;border-color:#aa1100"></div>Active fire pixel detected</div>
+            <div class="usgs-key-hdr">NASA VIIRS/MODIS · satellite fire detections · click a point</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff2b00;border-color:#8f1400"></div>Detected &lt; 6 h ago</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff7a00;border-color:#a34400"></div>6–12 h ago</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ffca28;border-color:#8a6a00"></div>12–24 h ago</div>
           </div>
           <div id="viirs-date-row" style="display:none;padding-left:44px;margin-top:-4px;margin-bottom:8px">
-            <div class="usgs-key-hdr" style="margin-bottom:5px">Detection Date</div>
+            <div class="usgs-key-hdr" style="margin-bottom:5px">Detected within</div>
             <div style="display:flex;gap:4px">
-              <button class="viirs-day-btn active" data-days="1" onclick="setViirsDate(1)">Yesterday</button>
-              <button class="viirs-day-btn" data-days="0" onclick="setViirsDate(0)">Today</button>
-              <button class="viirs-day-btn" data-days="2" onclick="setViirsDate(2)">2d Ago</button>
+              <button class="viirs-day-btn active" data-days="1" onclick="setViirsDate(1)">24 h</button>
+              <button class="viirs-day-btn" data-days="2" onclick="setViirsDate(2)">48 h</button>
+              <button class="viirs-day-btn" data-days="3" onclick="setViirsDate(3)">72 h</button>
             </div>
           </div>
 
@@ -3527,13 +3529,15 @@ async function toggleLayer(name, on) {
     }
   } else if (name === 'smoke') {
     smokeEnabled = on;
-    document.getElementById('smoke-opacity-row').style.display = on ? 'flex' : 'none';
+    document.getElementById('smoke-opacity-row').style.display = 'none';  // vector points — no opacity slider
     document.getElementById('smoke-key').style.display = on ? 'block' : 'none';
     document.getElementById('viirs-date-row').style.display = on ? 'block' : 'none';
     if (on) {
       initViirs();
+      map.on('moveend', viirsOnMove);
     } else {
-      if (smokeLayer) { smokeLayer.remove(); smokeLayer = null; }
+      map.off('moveend', viirsOnMove);
+      if (smokeLayer) { map.removeLayer(smokeLayer); smokeLayer = null; }
       document.getElementById('smoke-note').textContent = 'off';
     }
   } else if (name === 'hms-smoke') {
@@ -4007,7 +4011,10 @@ function showTab(name) {
   });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   document.getElementById(`tab-${name}`).classList.add('active');
-  if (name === 'eventwatch') loadEventWatch();
+  if (name === 'eventwatch') {
+    loadEventWatch();
+    if (!window._ewInited) { window._ewInited = true; setInterval(loadEventWatch, 300000); }
+  }
 
   const modPanel = document.getElementById('model-panel');
   const drag     = document.getElementById('panel-drag');
@@ -5179,7 +5186,8 @@ async function manualRefresh() {
 
 function scheduleRefresh() {
   refreshTimer = setInterval(loadAlerts, ALERT_REFRESH_MS);
-  if (!window._ewInited) { window._ewInited = true; loadEventWatch(); setInterval(loadEventWatch, 300000); }
+  // Event Watch (threat badge, anomaly map + legend) is NOT loaded on startup —
+  // it initialises only when the user opens the Event Watch tab (see showTab).
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -6363,18 +6371,73 @@ function localDateStr(daysBack) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function initViirs() {
-  if (smokeLayer) { smokeLayer.remove(); smokeLayer = null; }
-  const date = localDateStr(viirsDaysBack);
-  smokeLayer = L.tileLayer.wms(
-    'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
-    { layers:'VIIRS_NOAA20_Thermal_Anomalies_375m_All', format:'image/png',
-      transparent:true, TIME:date, version:'1.3.0',
-      opacity:smokeOpacity, zIndex:155, attribution:'NASA GIBS · VIIRS NOAA-20' }
-  );
-  smokeLayer.addTo(map).setOpacity(smokeOpacity);
-  const label = viirsDaysBack === 0 ? 'today' : viirsDaysBack === 1 ? 'yesterday' : `${viirsDaysBack}d ago`;
-  document.getElementById('smoke-note').textContent = label;
+// VIIRS/MODIS fire detections as crisp, CLICKABLE vector points (NIFC feed).
+// Raster tiles blurred when zoomed in; these stay sharp at any zoom and carry
+// per-detection info. Loads only detections in the current view so it's fast.
+const VIIRS_HEAT_URL = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/VIIRS_Heat_Detections/FeatureServer/0/query';
+let _viirsMoveTimer = null;
+
+function viirsColor(ageH) {
+  if (ageH < 6)  return { s:'#8f1400', f:'#ff2b00' };  // < 6 h — hottest / freshest
+  if (ageH < 12) return { s:'#a34400', f:'#ff7a00' };  // 6–12 h
+  if (ageH < 24) return { s:'#8a6a00', f:'#ffca28' };  // 12–24 h
+  return { s:'#6b4b34', f:'#c88a5a' };                 // older
+}
+
+async function initViirs() {
+  if (!smokeEnabled || !map) return;
+  const note = document.getElementById('smoke-note');
+  note.textContent = 'loading…';
+  const maxAge = viirsDaysBack * 24;                    // 24 / 48 / 72 h
+  const b = map.getBounds();
+  const env = `${b.getWest().toFixed(3)},${b.getSouth().toFixed(3)},${b.getEast().toFixed(3)},${b.getNorth().toFixed(3)}`;
+  const url = VIIRS_HEAT_URL
+    + '?where=' + encodeURIComponent('AgeInHours <= ' + maxAge)
+    + '&geometry=' + encodeURIComponent(env) + '&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects'
+    + '&outFields=' + encodeURIComponent('AgeInHours,Confidence,FRP,Brightness,Sensor,Detection_Time,Day_Night')
+    + '&orderByFields=' + encodeURIComponent('FRP DESC')
+    + '&returnGeometry=true&f=geojson&resultRecordCount=2000';
+  try {
+    const data = await fetchJson(url, 15000);
+    const feats = data?.features ?? [];
+    if (smokeLayer) { map.removeLayer(smokeLayer); smokeLayer = null; }
+    const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
+    const grp = L.layerGroup();
+    let count = 0;
+    for (const feat of feats) {
+      const c = feat.geometry && feat.geometry.coordinates;
+      if (!c) continue;
+      const lon = c[0], lat = c[1];
+      if (lat == null || isNaN(lat)) continue;
+      const p = feat.properties || {};
+      const ageH = (p.AgeInHours != null) ? p.AgeInHours : 99;
+      const col = viirsColor(ageH);
+      const m = L.circleMarker([lat, lon], {
+        renderer: canvas, pane: 'markerLayerPane', radius: 5,
+        color: col.s, fillColor: col.f, weight: 1, opacity: 1, fillOpacity: 0.92,
+      });
+      m.bindTooltip(
+        `<b>Fire detection</b> · ${ageH} h ago<br>${esc(p.Sensor || 'VIIRS')}` +
+        (p.FRP ? ` · Power ${esc(String(p.FRP))}` : '') +
+        (p.Confidence != null ? `<br>Confidence ${esc(String(p.Confidence))}%` : '') +
+        (p.Detection_Time ? `<br>${esc(String(p.Detection_Time))}` : ''),
+        { sticky: true }
+      );
+      grp.addLayer(m);
+      count++;
+    }
+    smokeLayer = grp.addTo(map);
+    note.textContent = count >= 2000 ? '2000+ · zoom in' : (count ? `${count} detections` : 'none in view');
+  } catch(e) {
+    console.error('initViirs:', e);
+    note.textContent = 'unavailable';
+  }
+}
+
+// Reload detections for the new view (debounced) when panning/zooming.
+function viirsOnMove() {
+  if (_viirsMoveTimer) clearTimeout(_viirsMoveTimer);
+  _viirsMoveTimer = setTimeout(() => { if (smokeEnabled) initViirs(); }, 500);
 }
 
 function setViirsDate(daysBack) {
