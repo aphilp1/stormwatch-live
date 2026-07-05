@@ -813,9 +813,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #ew-tab .stat-section{margin-bottom:15px}
 #ew-tab .stat-title{color:var(--text2);font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
 .ew-empty{font-size:12px;color:var(--text2);padding:26px 14px;text-align:center;line-height:1.7}
-.ew-gauge{border-radius:8px;padding:13px 16px;margin-bottom:15px;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18)}
-.ew-gauge .ew-tier{font-size:16px;font-weight:800;letter-spacing:.4px}
-.ew-gauge .ew-sub{font-size:11px;opacity:.97;margin-top:4px;line-height:1.45}
+.ew-gauge{border-radius:10px;padding:14px 17px;margin-bottom:15px;color:#fff;box-shadow:0 2px 9px rgba(0,0,0,.15);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+.ew-gauge .ew-tier-lbl{font-size:9.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;opacity:.85;margin-bottom:1px}
+.ew-gauge .ew-tier{font-size:22px;font-weight:700;letter-spacing:-.3px;line-height:1.08}
+.ew-gauge .ew-sub{font-size:11px;opacity:.9;margin-top:6px;line-height:1.45;font-weight:500}
 .ew-haz{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:6px 1px;border-bottom:1px solid var(--border);font-size:12px}
 .ew-haz .ew-h-name{color:var(--text);font-weight:600}
 .ew-haz .ew-h-meta{font-size:10px;color:var(--text2);white-space:nowrap}
@@ -5226,7 +5227,8 @@ async function loadEventWatch() {
     gauge.className = 'ew-gauge ew-t-' + tier;
     const fams = (nt.elevated && nt.elevated.length) ? nt.elevated.join(' · ') : 'nothing notably elevated';
     const word = (nt.families_elevated === 1) ? 'family' : 'families';
-    gauge.innerHTML = `<div class="ew-tier">National Threat: ${tier}</div>` +
+    gauge.innerHTML = `<div class="ew-tier-lbl">National Threat</div>` +
+      `<div class="ew-tier">${tier}</div>` +
       `<div class="ew-sub">${nt.families_elevated || 0} hazard ${word} elevated — ${fams}</div>`;
   }
 
