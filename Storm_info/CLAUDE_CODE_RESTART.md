@@ -3,7 +3,36 @@
 **Read order on restart:** THIS file → `STORMWATCH_MASTER_STATUS.md` (authoritative findings
 ledger) → `stormwatch_test_protocol.md` (method). Update this file whenever work lands.
 
-**Last updated:** 2026-06-25 · latest commit: (see below)
+**Last updated:** 2026-07-06 · latest feature commit: 27a4396
+
+---
+
+## SESSION 2026-07-05/06 — Fire experience overhaul + wind visualization (all LIVE)
+
+Product/UI work (all pushed to public site, verified in-browser):
+- **Wildland Fire map fixed:** active fires filtered to real wildfires, sized by
+  acreage + colored by containment (was an undifferentiated blob); perimeters query
+  current significant still-burning fires only; rich click cards (personnel/cost/cause).
+- **VIIRS hotspots:** blurry GIBS raster → crisp clickable vector detection points
+  (age-colored), covers AK+HI.
+- **Observed Surface Winds** (new layer): live wind arrows from real RAWS stations,
+  colored by speed, arrow points downwind.
+- **Animated Wind Flow** (new layer): flowing streamlines built by interpolating the
+  observed station winds onto a grid (IDW) client-side → leaflet-velocity@1.7.0 CDN.
+  The flow IS the measured wind, not a model. Covers **CONUS + Alaska + Hawaii**.
+- **Event Watch / State Anomaly** no longer auto-loads on startup; anomaly map only
+  runs when explicitly enabled inside Event Watch tab. Cleaner "National Threat" type.
+- Details/design in memory: `stormwatch_fire_section.md`, `FIRE_DATA_CATALOG.md`.
+
+Infra fixes:
+- **`.nojekyll` added** — GitHub Pages was failing/stalling ("Page build failed") on
+  Jekyll; now serves static, deploys in ~10-15s. See `stormwatch_pages_nojekyll.md`.
+- Occasional residual Pages deploy failures auto-retry (site always ends up current);
+  user declined the concurrency-queue fix. Alert-monitor stays at 15 min.
+
+Health at wrap: public site + local :8001 + MCP :3456 all UP; git pushed & in sync.
+KEY LESSON: after any push, user must hard-refresh (Ctrl+Shift+R) — stale cache
+caused a long "it's not working / you're hallucinating" episode until diagnosed.
 
 ---
 
