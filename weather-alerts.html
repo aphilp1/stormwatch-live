@@ -191,9 +191,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #det-body::-webkit-scrollbar-thumb{background:#243248;border-radius:4px}
 #det-body::-webkit-scrollbar-thumb:hover{background:#3a4d68}
 .df{margin-bottom:10px}
-.dl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#4e6080;font-weight:700;margin-bottom:3px}
-.dv{font-size:13px;color:#b0c2da;line-height:1.5}
-#det-desc{white-space:pre-wrap;font-size:11.5px;color:#8898b4;line-height:1.65}
+.dl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#9db2d2;font-weight:700;margin-bottom:3px}
+.dv{font-size:13px;color:#dce7f5;line-height:1.5}
+#det-desc{white-space:pre-wrap;font-size:11.5px;color:#c6d4ea;line-height:1.65}
 .instr-box{background:rgba(255,140,0,0.13);border-left:2px solid #ff8c00;padding:7px 9px;border-radius:0 5px 5px 0;font-size:11.5px;color:#b8c8de;white-space:pre-wrap;line-height:1.65}
 /* Waterway feature card */
 .wc-body{margin:0}
@@ -2259,7 +2259,7 @@ const NIFC_INCIDENTS  = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/re
 const NIFC_PERIM_WHERE = "attr_FireOutDateTime IS NULL AND poly_GISAcres >= 100 AND poly_FeatureCategory <> 'Prescribed Fire'";
 const NIFC_PERIMETERS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_YearToDate/FeatureServer/0/query'
   + '?where=' + encodeURIComponent(NIFC_PERIM_WHERE)
-  + '&outFields=' + encodeURIComponent('poly_IncidentName,poly_GISAcres,attr_IncidentSize,attr_PercentContained,attr_POOState,attr_FireCause,attr_FireDiscoveryDateTime,poly_FeatureCategory')
+  + '&outFields=*'
   + '&returnGeometry=true&orderByFields=' + encodeURIComponent('poly_GISAcres DESC')
   + '&f=geojson&resultRecordCount=2000';
 const NIFC_HIST_PERIMS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_AllYears/FeatureServer/0/query';
@@ -6237,10 +6237,11 @@ function showFireCard(p, lat, lon) {
   document.getElementById('det-event').style.color = '#ff4400';
   const chips = document.getElementById('det-chips');
   chips.innerHTML = '';
-  [[type, '#ff4400'], [state, '#886633']].forEach(([lbl, clr]) => {
+  [[type, '#ff7a45'], [state, '#d3b57e']].forEach(([lbl, clr]) => {
     if (!lbl) return;
     const c = document.createElement('div'); c.className = 'det-chip';
-    c.style.cssText = `background:${clr}28;border-color:${clr}66;color:${clr}`;
+    // Bright accent text on a subtle tinted background — readable on the dark panel.
+    c.style.cssText = `background:${clr}22;border-color:${clr}80;color:${clr}`;
     c.innerHTML = `<span class="chip-val">${esc(lbl)}</span>`;
     chips.appendChild(c);
   });
@@ -6282,19 +6283,35 @@ function showFirePerimCard(p, lyr) {
     chips.appendChild(c);
   }
   document.getElementById('det-sev-desc').textContent = '';
-  document.getElementById('det-area').textContent = p.attr_POOState || '—';
+  document.getElementById('det-area').textContent =
+    [p.attr_POOCounty && (p.attr_POOCounty + ' County'), p.attr_POOState].filter(Boolean).join(', ') || p.attr_POOState || '—';
   document.getElementById('det-eff-lbl').textContent = 'Size';
   document.getElementById('det-exp-lbl').textContent = 'Contained';
-  const perimAcres = p.poly_GISAcres || p.attr_IncidentSize || 0;
+  const perimAcres = p.poly_GISAcres || p.attr_IncidentSize || p.attr_CalculatedAcres || 0;
   document.getElementById('det-eff').textContent = perimAcres ? Math.round(perimAcres).toLocaleString() + ' acres' : '—';
   document.getElementById('det-exp').textContent = p.attr_PercentContained != null ? p.attr_PercentContained + '%' : '—';
   document.getElementById('det-hl-wrap').style.display = 'none';
   document.getElementById('det-instr-wrap').style.display = 'none';
-  const perimDisco = p.attr_FireDiscoveryDateTime ? fmtDT(new Date(p.attr_FireDiscoveryDateTime)) : null;
-  const perimCause = p.attr_FireCause && p.attr_FireCause !== 'Undetermined' ? String(p.attr_FireCause).trim() : null;
-  document.getElementById('det-desc').textContent =
-    [perimDisco ? 'Discovered: ' + perimDisco : null, perimCause ? 'Cause: ' + perimCause : null]
-      .filter(Boolean).join('\n');
+  // Full detail — every populated field from the perimeter record.
+  const asDate = v => { if (v == null || v === '') return null; const d = new Date(v); return isNaN(d) ? null : fmtDT(d); };
+  const clean  = v => (v == null || v === '' || v === 'Undetermined' || v === 'Null') ? null : String(v).trim();
+  const cause  = [p.attr_FireCause, p.attr_FireCauseGeneral, p.attr_FireCauseSpecific].map(clean).filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(' · ');
+  const rows = [
+    ['Fire name',        clean(p.poly_IncidentName || p.attr_IncidentName)],
+    ['Discovered',       asDate(p.attr_FireDiscoveryDateTime)],
+    ['Contained on',     asDate(p.attr_ContainmentDateTime)],
+    ['Controlled on',    asDate(p.attr_ControlDateTime)],
+    ['Cause',            cause || null],
+    ['Complexity',       clean(p.attr_FireMgmtComplexity)],
+    ['Managing org',     clean(p.attr_IncidentManagementOrganization)],
+    ['Est. cost to date',p.attr_EstimatedCostToDate ? '$' + Number(p.attr_EstimatedCostToDate).toLocaleString() : null],
+    ['Fire behavior',    clean(p.attr_FireBehaviorGeneral)],
+    ['Perimeter mapped', clean(p.poly_MapMethod)],
+    ['Perimeter updated',asDate(p.poly_DateCurrent || p.poly_PolygonDateTime)],
+    ['Feature type',     clean(p.poly_FeatureCategory)],
+    ['Fire ID',          clean(p.attr_UniqueFireIdentifier)],
+  ];
+  document.getElementById('det-desc').textContent = rows.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join('\n');
   document.getElementById('det-zoom').textContent = '⊕ Zoom to Perimeter';
   document.getElementById('det-zoom').onclick = () => {
     try { map.fitBounds(lyr.getBounds(), { padding:[50,50], maxZoom:12 }); } catch(_){}
@@ -6891,7 +6908,17 @@ async function enableWindFlow() {
     const grid = buildWindGrid(feats);
     if (windFlowLayer) { map.removeLayer(windFlowLayer); windFlowLayer = null; }
     windFlowLayer = L.velocityLayer({
-      displayValues: false,
+      displayValues: true,     // show the interpolated wind at the mouse position
+      displayOptions: {
+        velocityType: 'Surface wind',
+        position: 'bottomleft',
+        emptyString: 'Move over land to read wind',
+        showCardinal: true,
+        speedUnit: 'mph',
+        directionString: 'Direction',
+        speedString: 'Speed',
+        angleConvention: 'meteoCW',
+      },
       data: grid,
       maxVelocity: 15,               // saturate the color scale sooner so light winds still read
       velocityScale: 0.0075,         // slower, more natural pace (fast winds no longer zip)
