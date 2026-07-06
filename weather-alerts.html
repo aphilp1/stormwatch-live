@@ -6829,7 +6829,9 @@ function windsOnMove() {
 // it to leaflet-velocity, so the flowing streamlines ARE the measured winds moving,
 // not a model. Runs fully client-side on the static site.
 function buildWindGrid(features) {
-  const lo1 = -125, la1 = 49.5, dx = 0.6, dy = 0.6, nx = 99, ny = 43;
+  // Covers CONUS + Alaska + Hawaii; the open-ocean gaps between them stay calm
+  // (no nearby stations → zero wind → no particles there).
+  const lo1 = -170, la1 = 72, dx = 0.6, dy = 0.6, nx = 175, ny = 91;
   const MS = 0.44704, DEG = Math.PI / 180;
   const pts = [];
   for (const f of features) {
