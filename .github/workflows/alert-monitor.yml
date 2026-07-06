@@ -1,11 +1,12 @@
 name: National Alert Trend Monitor
 
-# Every ~15 min: snapshot the full NWS active-alerts feed, append to the history
+# Every ~30 min: snapshot the full NWS active-alerts feed, append to the history
 # log (the agent's memory), score each hazard vs its seasonal/hourly baseline,
 # and push a notification when a hazard escalates. Commits the updated data back.
+# (30 min, not 15, to halve GitHub Pages redeploys and avoid deploy collisions.)
 on:
   schedule:
-    - cron: "*/15 * * * *"   # every 15 minutes, UTC
+    - cron: "*/30 * * * *"   # every 30 minutes, UTC
   workflow_dispatch:          # allow manual runs from the Actions tab
 
 permissions:
