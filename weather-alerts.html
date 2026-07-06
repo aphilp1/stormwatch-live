@@ -6445,7 +6445,14 @@ async function initViirs() {
   note.textContent = 'loading…';
   const maxAge = viirsDaysBack * 24;                    // 24 / 48 / 72 h
   const b = map.getBounds();
-  const env = `${b.getWest().toFixed(3)},${b.getSouth().toFixed(3)},${b.getEast().toFixed(3)},${b.getNorth().toFixed(3)}`;
+  // Clamp to valid WGS84 ranges — when zoomed out far the map edges run past ±180°
+  // lon / ±85° lat, and ArcGIS rejects that envelope (returns nothing). Clamping
+  // keeps the query valid at every zoom, so detections show even zoomed all the way out.
+  const west  = Math.max(-179.99, b.getWest());
+  const south = Math.max(-85, b.getSouth());
+  const east  = Math.min(179.99, b.getEast());
+  const north = Math.min(85, b.getNorth());
+  const env = `${west.toFixed(3)},${south.toFixed(3)},${east.toFixed(3)},${north.toFixed(3)}`;
   const url = VIIRS_HEAT_URL
     + '?where=' + encodeURIComponent('AgeInHours <= ' + maxAge)
     + '&geometry=' + encodeURIComponent(env) + '&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects'
