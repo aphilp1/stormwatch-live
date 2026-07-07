@@ -3576,6 +3576,9 @@ async function toggleLayer(name, on) {
     firePerimEnabled = on;
     document.getElementById('fire-perimeters-key').style.display = on ? 'block' : 'none';
     if (on) {
+      // Turn off Active Fire Incidents so the fire polygon isn't hidden under the dots.
+      const incCb = document.getElementById('lyr-fire-incidents');
+      if (incCb && incCb.checked) { incCb.checked = false; toggleLayer('fire-incidents', false); }
       firePerimGroup.addTo(map);
       if (!firePerimLoaded) loadFirePerimeters();
     } else {
