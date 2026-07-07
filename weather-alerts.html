@@ -5459,7 +5459,8 @@ function reflowText(s) {
     .replace(/([^\n])\n([^\n])/g, '$1 $2')
     .trim();
 }
-function fmtDT(d){return d instanceof Date && !isNaN(d) ? d.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';}
+// Full numeric date + 24-hour (military) time + time-zone abbreviation, e.g. "3/6/2026, 14:08 MDT".
+function fmtDT(d){return d instanceof Date && !isNaN(d) ? d.toLocaleString('en-US',{year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZoneName:'short'}) : '—';}
 function parseNifcDate(s) {
   if (!s) return null;
   // NIFC format: "2026-01-31 18:2600 UTC" — missing colon between MM and SS
