@@ -349,6 +349,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* Observed surface-wind arrows (station wind barbs) */
 .wind-arrow{background:none;border:none}
 .wind-arrow svg{filter:drop-shadow(0 0 1px rgba(0,0,0,.35))}
+/* The animated wind-flow particle canvas must NOT capture clicks, or perimeters /
+   fire incidents / alerts beneath it become unclickable. The wind readout uses the
+   map's mousemove (not the canvas), so it still works with pointer-events off. */
+canvas.velocity-overlay{pointer-events:none!important}
 
 /* ── FIRE WEATHER OUTLOOK LEGEND ─────────────────────────────────── */
 #fwx-legend{position:absolute;bottom:34px;left:345px;background:rgba(255,255,255,0.96);border:1px solid var(--border);border-radius:8px;padding:10px 13px;z-index:700;min-width:148px;display:none;backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
