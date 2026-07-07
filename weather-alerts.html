@@ -2595,6 +2595,12 @@ function initMap() {
   map.createPane('markerLayerPane');
   map.getPane('markerLayerPane').style.zIndex = 450;
 
+  // Fire perimeters — ABOVE the marker/station canvases (z:450) so the polygon stays
+  // clickable even when VIIRS or wind marker canvases cover the same area (a full-map
+  // canvas at z:450 was intercepting real clicks meant for the perimeter beneath it).
+  map.createPane('firePerimPane');
+  map.getPane('firePerimPane').style.zIndex = 460;
+
   map.on('click', (e) => {
     if (nowcastMode    && nowcastInputMode    === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
     if (fireMode       && fireInputMode       === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
@@ -6211,6 +6217,7 @@ async function loadFirePerimeters() {
       const pct   = pctRaw != null ? pctRaw + '%' : '?%';
       const col = fireColor(pctRaw);
       const lyr = L.geoJSON(feat, {
+        pane: 'firePerimPane',
         style: { color:col.stroke, fillColor:col.fill, weight:2.2, opacity:0.95, fillOpacity:0.38 }
       });
       lyr.bindTooltip(
