@@ -36,6 +36,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #refresh-btn{margin-left:auto;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:4px 11px;border-radius:6px;cursor:pointer;font-size:12px;flex-shrink:0;transition:all 0.15s}
 #refresh-btn:hover{background:#2a2a55;color:var(--text)}
 #refresh-btn:disabled{opacity:0.35;cursor:default}
+#snap-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:4px 11px;border-radius:6px;cursor:pointer;font-size:12px;flex-shrink:0;transition:all 0.15s}
+#snap-btn:hover{background:#2a2a55;color:#fff}
+#snap-btn:disabled{opacity:0.35;cursor:default}
+
+/* ── SNAPSHOT MODAL (Clip · Zip · Ship) ──────────────────────────── */
+#snap-modal{position:fixed;inset:0;background:rgba(10,15,28,0.55);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+#snap-card-ui{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;width:min(430px,92vw);max-height:88vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,0.35)}
+#snap-hdr{font-size:14px;font-weight:800;color:#1a1d2e;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+#snap-close{background:none;border:none;color:#4f5666;cursor:pointer;font-size:15px;padding:2px 6px;border-radius:4px}
+#snap-close:hover{color:#1a1d2e}
+#snap-preview{width:100%;border-radius:8px;border:1px solid var(--border);display:block;margin-bottom:10px;max-height:240px;object-fit:cover;object-position:center top;background:#eef0f5}
+#snap-meta{font-size:11px;color:#2d333e;line-height:1.6;margin-bottom:12px}
+#snap-actions{display:flex;gap:8px;flex-wrap:wrap}
+.snap-act{flex:1;min-width:96px;background:var(--bg3);border:1px solid var(--border);color:#1a1d2e;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s}
+.snap-act:hover{background:#dfe3ee}
+.snap-act.primary{background:#d42b2b;border-color:#d42b2b;color:#fff}
+.snap-act.primary:hover{background:#b82222}
+#snap-note{font-size:10px;color:#4f5666;margin-top:10px;line-height:1.5}
 
 /* ── LAYOUT ─────────────────────────────────────────────────────── */
 #main{display:flex;flex:1;min-height:0;overflow:hidden}
@@ -877,6 +895,7 @@ canvas.velocity-overlay{pointer-events:none!important}
   <span id="ew-badge" class="ew-badge" onclick="showTab('eventwatch')" title="National weather threat level — click for Event Watch" style="display:none"></span>
   <span id="clock"></span>
   <button id="refresh-btn" onclick="manualRefresh()">↻ Refresh</button>
+  <button id="snap-btn" onclick="takeSnapshot()" title="Clip · Zip · Ship — capture this view as a shareable file">📸 Snapshot</button>
 </div>
 
 <div id="main">
@@ -2134,6 +2153,21 @@ canvas.velocity-overlay{pointer-events:none!important}
     </div>
 
     <div id="toasts"></div>
+
+    <!-- SNAPSHOT MODAL — Clip · Zip · Ship -->
+    <div id="snap-modal" onclick="if(event.target===this)closeSnapModal()">
+      <div id="snap-card-ui">
+        <div id="snap-hdr">📸 Snapshot ready <button id="snap-close" onclick="closeSnapModal()" title="Close">✕</button></div>
+        <img id="snap-preview" alt="Snapshot preview">
+        <div id="snap-meta"></div>
+        <div id="snap-actions">
+          <button id="snap-share-btn" class="snap-act primary" onclick="shipSnapshot()">📤 Share…</button>
+          <button class="snap-act" onclick="downloadSnapshot('html')">⬇ .html</button>
+          <button class="snap-act" onclick="downloadSnapshot('pdf')">⬇ .pdf</button>
+        </div>
+        <div id="snap-note"></div>
+      </div>
+    </div>
   </div><!-- end #map-wrap -->
 
   <!-- NOWCAST PANEL — outside map-wrap so overflow:hidden doesn't clip it -->
@@ -2285,6 +2319,9 @@ canvas.velocity-overlay{pointer-events:none!important}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-velocity@1.7.0/dist/leaflet-velocity.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.10.0/dist/dom-to-image-more.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/modern-screenshot@4.7.0/dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -5341,6 +5378,378 @@ function showLoading(on, msg='') {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// SNAPSHOT — Clip · Zip · Ship  (📸 header button)
+// Captures the current view + open card + wind readout into a branded,
+// self-contained .html (offline-capable) and a .pdf, then shares or
+// downloads them. No server, no external requests in the output file.
+// ═══════════════════════════════════════════════════════════════════
+
+let snapLast = null;   // { state, png:{dataUri,w,h}, htmlFile, pdfFile }
+
+async function takeSnapshot() {
+  const btn = document.getElementById('snap-btn');
+  if (btn.disabled) return;
+  btn.disabled = true; btn.textContent = '📸 Capturing…';
+  try {
+    const state = snapCollectState();
+    const png   = await snapCaptureMap();
+    const html  = snapBuildHtml(state, png);
+    const pdf   = snapBuildPdf(state, png);
+    const base  = 'StormWatch_' + state.fileStamp;
+    snapLast = {
+      state, png,
+      htmlFile: new File([html], base + '.html', { type: 'text/html' }),
+      pdfFile:  new File([pdf],  base + '.pdf',  { type: 'application/pdf' }),
+    };
+    snapShowModal();
+  } catch (e) {
+    console.error('takeSnapshot:', e);
+    toast('Snapshot failed — see console for details', '#ff4444', 6000);
+  } finally {
+    btn.disabled = false; btn.textContent = '📸 Snapshot';
+  }
+}
+
+// ── 1. Read everything the app already knows ──────────────────────
+function snapCollectState() {
+  const now = new Date(), iso = now.toISOString();
+  const c = map.getCenter(), z = map.getZoom();
+  const BASE_NAMES = { light:'Light', dark:'Dark', satellite:'Satellite',
+                       topo:'Topographic', dem:'USGS Topo', hillshade:'Hillshade' };
+  const baseKey = (Object.entries(baseLayers).find(([,l]) => l && map.hasLayer(l)) || ['light'])[0];
+
+  const layers = [...document.querySelectorAll('#layers-tab input[type=checkbox]:checked')]
+    .map(cb => cb.closest('.layer-row')?.querySelector('.layer-label')?.textContent.trim())
+    .filter(Boolean);
+
+  const natChips = [...document.querySelectorAll('#count-bar .chip')]
+    .map(el => el.textContent.trim()).filter(Boolean);
+
+  // The one reused #detail DOM serves alert / fire / perimeter / gauge /
+  // station cards alike, so a single generic scrape covers every card type.
+  // NOTE: pair on .dl labels, NOT .df wrappers — the Effective/Expires row
+  // (#det-dates-row; repurposed by fire cards as Discovered/Size and
+  // Size/Contained) is a plain flex div, not a .df, and would be missed.
+  let card = null;
+  const det = document.getElementById('detail');
+  if (det && det.style.display && det.style.display !== 'none') {
+    const fields = [...det.querySelectorAll('#det-body .dl')]
+      .filter(dl => dl.offsetParent !== null &&
+                    !dl.closest('#det-desc-row') && !dl.closest('#det-instr-wrap'))
+      .map(dl => ({ l: dl.textContent.trim(),
+                    v: dl.parentElement.querySelector('.dv')?.textContent.trim() || '' }))
+      .filter(f => f.v && f.v !== '—');
+    const instrWrap = document.getElementById('det-instr-wrap');
+    card = {
+      title: document.getElementById('det-event')?.textContent.trim() || 'Detail',
+      color: document.getElementById('det-event')?.style.color || '#d42b2b',
+      sub:   document.getElementById('det-sev-desc')?.textContent.trim() || '',
+      chips: [...det.querySelectorAll('#det-chips .det-chip')]
+               .map(el => el.textContent.trim().replace(/\s+/g, ' ')),
+      fields,
+      instr: (instrWrap && instrWrap.offsetParent !== null)
+               ? (document.getElementById('det-instr')?.textContent || '').trim().slice(0, 600) : '',
+      desc: (document.getElementById('det-desc')?.textContent || '').trim().slice(0, 900),
+    };
+    // Cards that render into #det-custom (e.g. Montana mesonet, waterways)
+    if (!card.fields.length && !card.desc)
+      card.desc = (det.querySelector('#det-body')?.innerText || '')
+                    .trim().replace(/\n{3,}/g, '\n\n').slice(0, 900);
+  }
+
+  const wind = document.querySelector('.leaflet-control-velocity')?.textContent.trim() || null;
+  const attrib = map.attributionControl?._container?.textContent.trim()
+              || '© OpenStreetMap © CARTO · data NOAA / NWS / NIFC / USGS';
+
+  return {
+    tsText: fmtDT(now),                                             // same clock format as the app
+    fileStamp: iso.slice(0,10) + '_' + iso.slice(11,16).replace(':','') + 'Z',
+    lat: c.lat.toFixed(3), lon: c.lng.toFixed(3), zoom: z,
+    baseName: BASE_NAMES[baseKey] || baseKey,
+    layers, natChips, card, wind, attrib,
+    url: location.href.split('#')[0],
+  };
+}
+
+// ── 2. Rasterize the map (foreignObject primary + fallback) ───────
+// dom-to-image-more lets the browser engine paint the DOM, so Leaflet's
+// translate3d panes + SVG overlays + canvas overlays come through cleanly
+// (html2canvas mangles those transforms). The whole foreignObject family
+// can render blank on Safari's FIRST pass, so the primary renders twice.
+async function snapCaptureMap() {
+  const mapEl = document.getElementById('map');
+  const cw = mapEl.clientWidth, ch = mapEl.clientHeight;
+  // Retina-crisp but bounded twice over: ≤2600px wide (email-sized .html)
+  // AND ≤16.7M px total (Safari's hard canvas-area cap — above it = black).
+  let scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1), 2600 / cw);
+  if (cw * ch * scale * scale > 16000000) scale = Math.sqrt(16000000 / (cw * ch));
+
+  const looksBlank = uri => !uri || uri.length < 3000;   // empty foreignObject → tiny data URI
+
+  // Primary: dom-to-image-more, hi-res via width/height + CSS scale, double render.
+  const opts = {
+    bgcolor: '#eef0f5',
+    width: cw * scale, height: ch * scale,
+    style: { transform: 'scale(' + scale + ')', transformOrigin: 'top left' },
+    cacheBust: true, imagePlaceholder: undefined,
+  };
+  let dataUri = '';
+  try {
+    dataUri = await domtoimage.toPng(mapEl, opts);          // warm-up pass (may be blank on Safari)
+    dataUri = await domtoimage.toPng(mapEl, opts);          // keep the second
+  } catch (e) { console.warn('snapshot: dom-to-image-more failed', e); }
+
+  // Fallback: modern-screenshot (different foreignObject impl).
+  if (looksBlank(dataUri)) {
+    try {
+      dataUri = await modernScreenshot.domToPng(mapEl, { scale, backgroundColor: '#eef0f5' });
+    } catch (e) { console.warn('snapshot: modern-screenshot fallback failed', e); }
+  }
+  if (looksBlank(dataUri)) throw new Error('map capture produced no image');
+
+  const w = Math.round(cw * scale), h = Math.round(ch * scale);
+  // Derive a JPEG for the PDF (PNG in a PDF bloats the file + decodes slowly in
+  // jsPDF's pure-JS path). One canvas re-encode from the same-origin data URI.
+  const jpegUri = await pngToJpeg(dataUri, w, h);
+  return { dataUri, jpegUri, w, h };
+}
+
+function pngToJpeg(pngUri, w, h) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#eef0f5'; ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      } catch (_) { resolve(pngUri); }     // fall back to PNG if anything trips
+    };
+    img.onerror = () => resolve(pngUri);
+    img.src = pngUri;
+  });
+}
+
+// ── 3. Compose the self-contained situation-card .html ────────────
+function snapBuildHtml(s, png) {
+  const pills = (s.layers.length ? s.layers : ['Base map only'])
+    .map(l => `<span class="pill">${esc(l)}</span>`).join('');
+  const nat = s.natChips.length
+    ? `<div class="nat">${s.natChips.map(x => `<span class="natchip">${esc(x)}</span>`).join('')}</div>` : '';
+  let cardHtml = '';
+  if (s.card) {
+    const chips  = s.card.chips.map(x => `<span class="chip">${esc(x)}</span>`).join('');
+    const rows   = s.card.fields.map(f =>
+      `<div class="row"><span class="k">${esc(f.l)}</span><span class="v">${esc(f.v)}</span></div>`).join('');
+    const instr  = s.card.instr ? `<div class="instr">⚠ ${esc(s.card.instr)}</div>` : '';
+    const desc   = s.card.desc ? `<p class="desc">${esc(s.card.desc)}</p>` : '';
+    cardHtml = `
+  <section class="card" style="border-left-color:${esc(s.card.color)}">
+    <h2 style="color:${esc(s.card.color)}">${esc(s.card.title)}</h2>
+    ${s.card.sub ? `<p class="sub">${esc(s.card.sub)}</p>` : ''}
+    ${chips ? `<div class="chips">${chips}</div>` : ''}
+    ${rows ? `<div class="rows">${rows}</div>` : ''}
+    ${instr}
+    ${desc}
+  </section>`;
+  }
+  const windHtml = s.wind ? `
+  <section class="wind"><span class="wlbl">Wind readout</span> ${esc(s.wind)}</section>` : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StormWatch Snapshot — ${esc(s.card ? s.card.title : s.tsText)}</title>
+<style>
+:root{--bg:#eef0f5;--panel:#ffffff;--border:#d4d8e4;--text:#1a1d2e;--text2:#2d333e;--muted:#4f5666;--accent:#d42b2b}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0b1020;--panel:#101a2c;--border:#243248;--text:#dce7f5;--text2:#c6d4ea;--muted:#9db2d2}
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);padding:18px 12px;line-height:1.5}
+.wrap{max-width:680px;margin:0 auto}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.brand{font-size:19px;font-weight:800;color:var(--accent);letter-spacing:-0.3px;white-space:nowrap}
+.brand .k{display:block;font-size:9px;font-weight:700;letter-spacing:2.2px;color:var(--muted);text-transform:uppercase;margin-top:1px}
+.ts{font-size:12px;font-weight:700;color:var(--text2);font-variant-numeric:tabular-nums;text-align:right}
+figure{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 3px 16px rgba(10,15,28,0.10)}
+figure img{width:100%;display:block}
+figcaption{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);font-variant-numeric:tabular-nums}
+section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-top:12px}
+.card{border-left:4px solid var(--accent)}
+.card h2{font-size:16px;font-weight:800;margin-bottom:8px;line-height:1.3}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2)}
+.rows{margin-bottom:6px}
+.row{display:flex;justify-content:space-between;gap:14px;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px}
+.row:last-child{border-bottom:none}
+.k{color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;padding-top:2px;white-space:nowrap}
+.v{color:var(--text);font-weight:600;text-align:right}
+.sub{font-size:11.5px;color:var(--muted);margin:-4px 0 8px}
+.instr{background:rgba(255,140,0,0.12);border-left:3px solid #e8720c;border-radius:0 6px 6px 0;padding:8px 11px;font-size:12.5px;color:var(--text2);white-space:pre-wrap;line-height:1.6;margin:8px 0}
+.desc{font-size:12.5px;color:var(--text2);white-space:pre-wrap;line-height:1.65;margin-top:6px}
+.wind{font-size:13px;font-weight:600;color:var(--text)}
+.wlbl{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);margin-right:8px}
+.lyr h3,.natwrap h3{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:11px;font-weight:600;color:var(--text2)}
+.nat{display:flex;gap:6px;flex-wrap:wrap}
+.natchip{border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:11px;font-weight:700;color:var(--text2)}
+footer{margin-top:14px;font-size:10px;color:var(--muted);line-height:1.7;text-align:center}
+footer a{color:var(--accent);text-decoration:none;font-weight:700}
+.disclaim{margin-top:4px;font-style:italic}
+@media (max-width:480px){body{padding:10px 8px}.row{flex-direction:column;gap:1px}.v{text-align:left}}
+@media print{body{background:#fff;padding:0}.wrap{max-width:100%}figure,section{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">&#9889; Storm<span style="font-style:normal">Watch</span> Live<span class="k">Situation snapshot</span></div>
+    <div class="ts">${esc(s.tsText)}</div>
+  </header>
+  <figure>
+    <img src="${png.dataUri}" alt="Map snapshot" width="${png.w}" height="${png.h}">
+    <figcaption><span>${esc(s.lat)}, ${esc(s.lon)} &middot; zoom ${esc(String(s.zoom))}</span><span>${esc(s.baseName)} basemap</span></figcaption>
+  </figure>
+${cardHtml}${windHtml}
+  ${nat ? `<section class="natwrap"><h3>Active US alerts</h3>${nat}</section>` : ''}
+  <section class="lyr"><h3>Layers shown</h3><div class="pills">${pills}</div></section>
+  <footer>
+    ${esc(s.attrib)}<br>
+    Captured from <a href="${esc(s.url)}">StormWatch Live</a> &middot; works offline &middot; Clip &middot; Zip &middot; Ship
+    <div class="disclaim">Snapshot of live data at capture time — verify current conditions at weather.gov before acting.</div>
+  </footer>
+</div>
+</body>
+</html>`;
+}
+
+// ── 4. Draw the same card natively in jsPDF (vector text + JPEG map) ─
+function snapBuildPdf(s, png) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });          // 612 × 792 pt
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 42;
+  let y = M;
+  const pageBreak = need => { if (y + need > H - M) { doc.addPage(); y = M; } };
+  // helvetica is Latin-1 only. Scraped alert text is full of smart punctuation
+  // (em-dashes, curly quotes, ellipses, bullets) that would render as tofu —
+  // normalize to ASCII, drop the rest.
+  const P = t => String(t == null ? '' : t)
+    .replace(/[‘’‚]/g, "'").replace(/[“”„]/g, '"')
+    .replace(/[–—―]/g, '-').replace(/…/g, '...')
+    .replace(/[•·]/g, '·')                   // bullets → middot (Latin-1, OK)
+    .replace(/[^\x00-\xFF]/g, '');                          // strip anything still non-Latin-1
+
+  // jsPDF's built-in helvetica is Latin-1 only — NO emoji (⚡/⚠ render as tofu).
+  // Keep all PDF text plain ASCII; the ⚡ brand mark lives only in the .html + UI.
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(212, 43, 43);
+  doc.text('StormWatch Live', M, y);
+  doc.setFontSize(8); doc.setTextColor(79, 86, 102); doc.setFont('helvetica', 'normal');
+  doc.text('SITUATION SNAPSHOT  ·  ' + P(s.tsText), M, y + 13);
+  y += 26;
+
+  // Map image (JPEG — small + fast in jsPDF), fit to page width, aspect preserved
+  let iw = W - 2 * M, ih = iw * (png.h / png.w);
+  if (ih > 400) { ih = 400; iw = ih * (png.w / png.h); }
+  doc.addImage(png.jpegUri, 'JPEG', M, y, iw, ih);
+  y += ih + 12;
+  doc.setFontSize(8); doc.setTextColor(79, 86, 102);
+  doc.text(`${s.lat}, ${s.lon}  ·  zoom ${s.zoom}  ·  ${P(s.baseName)} basemap`, M, y);
+  y += 18;
+
+  if (s.card) {
+    pageBreak(40);
+    doc.setDrawColor(212, 43, 43); doc.setLineWidth(2); doc.line(M, y - 10, M, y + 6);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(26, 29, 46);
+    doc.text(P(s.card.title), M + 10, y); y += 16;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+    for (const f of s.card.fields) {
+      pageBreak(14);
+      doc.setTextColor(79, 86, 102); doc.text(P(f.l) + ':', M + 10, y);
+      doc.setTextColor(26, 29, 46);  doc.text(P(f.v), M + 110, y, { maxWidth: W - M - 110 - M });
+      y += 14;
+    }
+    if (s.card.instr) {
+      const il = doc.splitTextToSize('! ' + P(s.card.instr), W - 2 * M - 10);   // ASCII-only (no ⚠ in PDF)
+      pageBreak(il.length * 11 + 10);
+      doc.setTextColor(196, 92, 10); doc.setFont('helvetica', 'bold');
+      doc.text(il, M + 10, y + 4); y += il.length * 11 + 10;
+      doc.setFont('helvetica', 'normal');
+    }
+    if (s.card.desc) {
+      const lines = doc.splitTextToSize(P(s.card.desc), W - 2 * M - 10);
+      pageBreak(Math.min(lines.length, 8) * 11 + 8);
+      doc.setTextColor(45, 51, 62);
+      doc.text(lines, M + 10, y + 4); y += lines.length * 11 + 12;
+    }
+  }
+  if (s.wind) { pageBreak(16); doc.setTextColor(26,29,46); doc.setFont('helvetica','bold');
+    doc.setFontSize(9.5); doc.text('Wind readout:  ' + P(s.wind), M, y); y += 16; }
+  if (s.layers.length) { pageBreak(24);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(79,86,102);
+    const ll = doc.splitTextToSize('Layers: ' + P(s.layers.join('  ·  ')), W - 2 * M);
+    doc.text(ll, M, y); y += ll.length * 11 + 6; }
+
+  doc.setFontSize(7); doc.setTextColor(120, 126, 140);
+  doc.text(doc.splitTextToSize(P(s.attrib) + '  ·  Snapshot of live data at capture time - verify at weather.gov.', W - 2 * M),
+           M, H - M + 14);
+  return doc.output('blob');
+}
+
+// ── 5. Modal / ship / download ────────────────────────────────────
+function snapShowModal() {
+  const { state, png, htmlFile, pdfFile } = snapLast;
+  document.getElementById('snap-preview').src = png.dataUri;
+  document.getElementById('snap-meta').innerHTML =
+    `<b>${esc(state.card ? state.card.title : 'Current view')}</b> · ${esc(state.tsText)}<br>` +
+    `${esc(state.lat)}, ${esc(state.lon)} · zoom ${esc(String(state.zoom))} · ` +
+    `${(htmlFile.size/1048576).toFixed(1)} MB html · ${(pdfFile.size/1048576).toFixed(1)} MB pdf`;
+  let canShare = false;
+  try {
+    canShare = !!(navigator.canShare &&
+      (navigator.canShare({ files: [pdfFile] }) || navigator.canShare({ files: [htmlFile] })));
+  } catch (_) {}
+  document.getElementById('snap-share-btn').style.display = canShare ? '' : 'none';
+  document.getElementById('snap-note').textContent = canShare
+    ? 'Share hands the file straight to Mail / Messages. The .html opens offline on any phone or computer.'
+    : 'This browser can’t share files directly — download, then attach to an email. The .html opens offline on any phone or computer.';
+  document.getElementById('snap-modal').style.display = 'flex';
+}
+function closeSnapModal() { document.getElementById('snap-modal').style.display = 'none'; }
+
+async function shipSnapshot() {
+  if (!snapLast) return;
+  const { htmlFile, pdfFile, state } = snapLast;
+  const meta = { title: 'StormWatch snapshot',
+                 text: 'StormWatch Live snapshot — ' + state.tsText };
+  // Some platforms (iOS) refuse text/html files in the share sheet → try combos.
+  const combos = [[htmlFile, pdfFile], [pdfFile], [htmlFile]];
+  for (const files of combos) {
+    let ok = false;
+    try { ok = navigator.canShare && navigator.canShare({ files }); } catch (_) {}
+    if (!ok) continue;
+    try { await navigator.share({ ...meta, files }); return; }
+    catch (err) { if (err.name === 'AbortError') return; }   // user closed the sheet — done
+  }
+  downloadSnapshot('html'); downloadSnapshot('pdf');
+  toast('Direct share unavailable here — both files downloaded instead', '#4488ff', 6000);
+}
+
+function downloadSnapshot(kind) {
+  if (!snapLast) return;
+  const f = kind === 'pdf' ? snapLast.pdfFile : snapLast.htmlFile;
+  const url = URL.createObjectURL(f);
+  const a = document.createElement('a');
+  a.href = url; a.download = f.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // REFRESH
 // ═══════════════════════════════════════════════════════════════════
 
@@ -6567,8 +6976,10 @@ async function loadPspOutlook(day) {
     const data = await fetchJson(url, 20000);
     if (!pspEnabled || day !== pspDay) return;              // stale — user toggled off or changed day
     pspGroup.clearLayers();
-    // Skip withdrawn polygons (isvalid=0); draw dryness fills first, risk areas on top.
-    const feats = (data?.features ?? []).filter(f => f.geometry && f.properties?.isvalid !== 0);
+    // Official renderer paints CRITICAL/IGNITION risk regardless of isvalid (live data
+    // often carries isvalid=0 on ALL risk polygons); only dryness fills honor the flag.
+    const feats = (data?.features ?? []).filter(f =>
+      f.geometry && (PSP_SFP[f.properties?.type] || f.properties?.isvalid !== 0));
     feats.sort((a, b) => (a.properties.type ? 1 : 0) - (b.properties.type ? 1 : 0));
     let risk = 0, zones = 0, valid = null;
     for (const feat of feats) {
@@ -8428,7 +8839,8 @@ async function loadMontanaStations() {
 function showMontanaCard(ob, meta) {
   ensureDetStandard();
   document.getElementById('det-event').textContent = meta.name || ob.station;
-  document.getElementById('det-event').style.color = '';
+  // Panel is dark — an unset color inherits the page's dark text (invisible).
+  document.getElementById('det-event').style.color = '#dce7f5';
   document.getElementById('det-chips').innerHTML = '';
   document.getElementById('det-sev-desc').textContent = '';
   const county = meta.county ? meta.county + ' County, MT' : 'Montana';
@@ -8454,18 +8866,19 @@ function showMontanaCard(ob, meta) {
   const precip= ob['Precipitation [in]'];
   const snow  = ob['Snow Depth [in]'];
   const solar = ob['Solar Radiation [W/m²]'];
-  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12px">';
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px">';
   // Feed sends null (not missing) for offline sensors — `!= null` covers both.
-  html += `<div><span style="color:var(--text3)">Temp</span><br><b>${tempF != null ? (+tempF).toFixed(1) + '°F' : '–'}</b></div>`;
-  html += `<div><span style="color:var(--text3)">Humidity</span><br><b>${rh != null ? (+rh).toFixed(0) + '%' : '–'}</b></div>`;
+  // .dl/.dv are the dark panel's light label/value styles — contrast rule.
+  html += `<div><div class="dl">Temp</div><div class="dv"><b>${tempF != null ? (+tempF).toFixed(1) + '°F' : '–'}</b></div></div>`;
+  html += `<div><div class="dl">Humidity</div><div class="dv"><b>${rh != null ? (+rh).toFixed(0) + '%' : '–'}</b></div></div>`;
   if (wspd != null && wdir != null)
-    html += `<div><span style="color:var(--text3)">Wind</span><br><b>${degToCompass(wdir)} ${(+wspd).toFixed(1)} mph${wgst != null ? ' G' + (+wgst).toFixed(1) : ''}</b></div>`;
+    html += `<div><div class="dl">Wind</div><div class="dv"><b>${degToCompass(wdir)} ${(+wspd).toFixed(1)} mph${wgst != null ? ' G' + (+wgst).toFixed(1) : ''}</b></div></div>`;
   if (precip != null)
-    html += `<div><span style="color:var(--text3)">Precip</span><br><b>${(+precip).toFixed(2)} in</b></div>`;
+    html += `<div><div class="dl">Precip</div><div class="dv"><b>${(+precip).toFixed(2)} in</b></div></div>`;
   if (snow != null && snow > 0)
-    html += `<div><span style="color:var(--text3)">Snow Depth</span><br><b>${(+snow).toFixed(1)} in</b></div>`;
+    html += `<div><div class="dl">Snow Depth</div><div class="dv"><b>${(+snow).toFixed(1)} in</b></div></div>`;
   if (solar != null)
-    html += `<div><span style="color:var(--text3)">Solar Rad</span><br><b>${Math.round(solar)} W/m²</b></div>`;
+    html += `<div><div class="dl">Solar Rad</div><div class="dv"><b>${Math.round(solar)} W/m²</b></div></div>`;
   html += '</div>';
   const custom = document.getElementById('det-custom');
   custom.style.display = 'block';
