@@ -7158,8 +7158,8 @@ async function enableWindFlow() {
       },
       data: grid,
       maxVelocity: 15,               // saturate the color scale sooner so light winds still read
-      velocityScale: 0.0075,         // slower, more natural pace (fast winds no longer zip)
-      particleAge: 140,              // longer-lived trails keep light winds visible despite slower speed
+      velocityScale: 0.005,          // slower, more natural pace (fast winds no longer zip)
+      particleAge: 110,              // shorter trails read cleaner at the slower pace
       lineWidth: 1.9,
       particleMultiplier: 1 / 170,   // denser field
       frameRate: 20,
