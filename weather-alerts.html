@@ -2320,7 +2320,6 @@ canvas.velocity-overlay{pointer-events:none!important}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-velocity@1.7.0/dist/leaflet-velocity.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.10.0/dist/dom-to-image-more.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/modern-screenshot@4.7.0/dist/index.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -5418,12 +5417,54 @@ function snapCollectState() {
                        topo:'Topographic', dem:'USGS Topo', hillshade:'Hillshade' };
   const baseKey = (Object.entries(baseLayers).find(([,l]) => l && map.hasLayer(l)) || ['light'])[0];
 
-  const layers = [...document.querySelectorAll('#layers-tab input[type=checkbox]:checked')]
-    .map(cb => cb.closest('.layer-row')?.querySelector('.layer-label')?.textContent.trim())
-    .filter(Boolean);
+  // Active layers WITH their live status notes ("229 alerts", "13 risk areas", …)
+  const layers = [...document.querySelectorAll('#layers-tab .layer-row')].map(row => {
+    const cb = row.querySelector('input[type=checkbox]');
+    if (!cb || !cb.checked) return null;
+    const note = row.querySelector('.layer-note')?.textContent.trim() || '';
+    return { name: row.querySelector('.layer-label')?.textContent.trim() || '',
+             note: (note === 'off' || note === '–') ? '' : note };
+  }).filter(l => l && l.name);
+
+  // Legend keys of enabled layers — swatch color + label, reproduced in the export.
+  // Judge by the key's own inline display (set by toggleLayer), NOT offsetParent:
+  // the Layers tab is usually hidden while the user looks at the map.
+  const legends = [...document.querySelectorAll('#layers-tab .usgs-key')]
+    .filter(k => k.style.display === 'block')
+    .map(k => ({
+      title: k.querySelector('.usgs-key-hdr')?.textContent.trim() || 'Legend',
+      rows: [...k.querySelectorAll('.usgs-key-row')].map(r => {
+        const dot = r.querySelector('.usgs-dot');
+        const cs = dot ? getComputedStyle(dot) : null;
+        return { color: cs ? cs.backgroundColor : '#888',
+                 square: cs ? !cs.borderRadius.includes('%') : false,
+                 label: r.textContent.trim() };
+      }).filter(r => r.label),
+    })).filter(l => l.rows.length);
+
+  // In-map alert-type legend — the raster carries only map content, so the
+  // alert color key travels as a Map-keys group instead.
+  if (document.getElementById('lyr-alerts')?.checked) {
+    const rows = [...document.querySelectorAll('#legend-items > .leg')].map(r => {
+      const sw = r.querySelector('.lsw');
+      return { color: sw ? getComputedStyle(sw).backgroundColor : '#888',
+               square: true, label: r.textContent.trim() };
+    }).filter(r => r.label);
+    if (rows.length) legends.unshift({ title: 'NWS Alert Types', rows });
+  }
 
   const natChips = [...document.querySelectorAll('#count-bar .chip')]
     .map(el => el.textContent.trim()).filter(Boolean);
+
+  // Basic cartography: scale at center latitude, view width, extent
+  const mapPx = document.getElementById('map').clientWidth;
+  const mPerPx = 156543.03392 * Math.cos(c.lat * Math.PI / 180) / Math.pow(2, z);
+  const ratio = mPerPx * 96 / 0.0254;                     // 1:N at 96 dpi
+  const magn = Math.pow(10, Math.max(0, String(Math.round(ratio)).length - 2));
+  const viewKmN = mPerPx * mapPx / 1000;
+  const fLat = v => Math.abs(v).toFixed(2) + '°' + (v >= 0 ? 'N' : 'S');
+  const fLon = v => Math.abs(v).toFixed(2) + '°' + (v >= 0 ? 'E' : 'W');
+  const bnds = map.getBounds();
 
   // The one reused #detail DOM serves alert / fire / perimeter / gauge /
   // station cards alike, so a single generic scrape covers every card type.
@@ -5445,7 +5486,8 @@ function snapCollectState() {
       color: document.getElementById('det-event')?.style.color || '#d42b2b',
       sub:   document.getElementById('det-sev-desc')?.textContent.trim() || '',
       chips: [...det.querySelectorAll('#det-chips .det-chip')]
-               .map(el => el.textContent.trim().replace(/\s+/g, ' ')),
+               .map(el => [...el.children].map(c => c.textContent.trim()).filter(Boolean).join(' ')
+                          || el.textContent.trim().replace(/\s+/g, ' ')),
       fields,
       instr: (instrWrap && instrWrap.offsetParent !== null)
                ? (document.getElementById('det-instr')?.textContent || '').trim().slice(0, 600) : '',
@@ -5463,55 +5505,166 @@ function snapCollectState() {
 
   return {
     tsText: fmtDT(now),                                             // same clock format as the app
+    utcText: iso.slice(0,16).replace('T',' ') + ' UTC',
     fileStamp: iso.slice(0,10) + '_' + iso.slice(11,16).replace(':','') + 'Z',
     lat: c.lat.toFixed(3), lon: c.lng.toFixed(3), zoom: z,
+    center: fLat(c.lat) + ', ' + fLon(c.lng),
+    extent: fLat(bnds.getSouth()) + ' – ' + fLat(bnds.getNorth()) + '  ·  '
+          + fLon(bnds.getWest()) + ' – ' + fLon(bnds.getEast()),
+    scaleText: '≈ 1:' + (Math.round(ratio / magn) * magn).toLocaleString(),
+    viewKm: viewKmN >= 100 ? Math.round(viewKmN).toLocaleString() + ' km' : viewKmN.toFixed(1) + ' km',
     baseName: BASE_NAMES[baseKey] || baseKey,
-    layers, natChips, card, wind, attrib,
+    layers, legends, natChips, card, wind, attrib,
     url: location.href.split('#')[0],
   };
 }
 
-// ── 2. Rasterize the map (foreignObject primary + fallback) ───────
-// dom-to-image-more lets the browser engine paint the DOM, so Leaflet's
-// translate3d panes + SVG overlays + canvas overlays come through cleanly
-// (html2canvas mangles those transforms). The whole foreignObject family
-// can render blank on Safari's FIRST pass, so the primary renders twice.
+// ── 2. Rasterize the map ──────────────────────────────────────────
+// Purpose-built compositor: draws tile <img>s (CORS-refetched from cache),
+// marker <canvas>es (direct) and polygon <svg> panes (serialized — Leaflet
+// paths carry presentation attributes, no CSS needed) straight onto a canvas.
+// The foreignObject engines are unusable here: modern-screenshot mangles
+// Leaflet's pane transforms, dom-to-image-more is correct but takes 60-90 s
+// walking the ~450-polygon overlay SVG node-by-node. Small HTML bits (detail
+// card, legends, controls) still go through dom-to-image — subtrees that
+// size rasterize in well under a second.
 async function snapCaptureMap() {
+  // Capture #map-wrap, not #map — the open detail card, in-map legends, scale
+  // bar and north arrow are all part of "what I'm looking at" and ship in the image.
+  const wrap = document.getElementById('map-wrap');
   const mapEl = document.getElementById('map');
-  const cw = mapEl.clientWidth, ch = mapEl.clientHeight;
+  const wr = wrap.getBoundingClientRect();
+  const cw = Math.round(wr.width), ch = Math.round(wr.height);
   // Retina-crisp but bounded twice over: ≤2600px wide (email-sized .html)
   // AND ≤16.7M px total (Safari's hard canvas-area cap — above it = black).
   let scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1), 2600 / cw);
   if (cw * ch * scale * scale > 16000000) scale = Math.sqrt(16000000 / (cw * ch));
 
-  const looksBlank = uri => !uri || uri.length < 3000;   // empty foreignObject → tiny data URI
-
-  // Primary: dom-to-image-more, hi-res via width/height + CSS scale, double render.
-  const opts = {
-    bgcolor: '#eef0f5',
-    width: cw * scale, height: ch * scale,
-    style: { transform: 'scale(' + scale + ')', transformOrigin: 'top left' },
-    cacheBust: true, imagePlaceholder: undefined,
-  };
+  try {
+    return await snapComposite(wrap, mapEl, wr, cw, ch, scale);
+  } catch (e) {
+    console.warn('snapshot: compositor failed, falling back to dom-to-image', e);
+  }
+  // Fallback: dom-to-image-more full-DOM render (slow but thorough).
   let dataUri = '';
   try {
-    dataUri = await domtoimage.toPng(mapEl, opts);          // warm-up pass (may be blank on Safari)
-    dataUri = await domtoimage.toPng(mapEl, opts);          // keep the second
-  } catch (e) { console.warn('snapshot: dom-to-image-more failed', e); }
-
-  // Fallback: modern-screenshot (different foreignObject impl).
-  if (looksBlank(dataUri)) {
-    try {
-      dataUri = await modernScreenshot.domToPng(mapEl, { scale, backgroundColor: '#eef0f5' });
-    } catch (e) { console.warn('snapshot: modern-screenshot fallback failed', e); }
-  }
-  if (looksBlank(dataUri)) throw new Error('map capture produced no image');
-
+    dataUri = await domtoimage.toPng(wrap, {
+      bgcolor: '#eef0f5', copyDefaultStyles: false,
+      width: cw * scale, height: ch * scale,
+      style: { transform: 'scale(' + scale + ')', transformOrigin: 'top left' },
+    });
+  } catch (e) { console.warn('snapshot: dom-to-image-more fallback failed', e); }
+  if (!dataUri || dataUri.length < 3000) throw new Error('map capture produced no image');
   const w = Math.round(cw * scale), h = Math.round(ch * scale);
-  // Derive a JPEG for the PDF (PNG in a PDF bloats the file + decodes slowly in
-  // jsPDF's pure-JS path). One canvas re-encode from the same-origin data URI.
   const jpegUri = await pngToJpeg(dataUri, w, h);
   return { dataUri, jpegUri, w, h };
+}
+
+async function snapComposite(wrap, mapEl, wr, cw, ch, scale) {
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(cw * scale); canvas.height = Math.round(ch * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  ctx.fillStyle = '#eef0f5'; ctx.fillRect(0, 0, cw, ch);
+  const rel = el => { const r = el.getBoundingClientRect();
+    return { x: r.left - wr.left, y: r.top - wr.top, w: r.width, h: r.height }; };
+  const toImg = src => new Promise(res => { const im = new Image();
+    im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+  const mr = rel(mapEl);
+
+  // Map panes in z order. Tiles refetch via CORS (they're in the HTTP cache, so
+  // this is fast) because the live <img>s were loaded without crossOrigin and
+  // would taint the canvas if drawn directly.
+  const fetches = new Map();
+  const getBmp = src => { if (!fetches.has(src)) fetches.set(src,
+      fetch(src, { mode: 'cors' }).then(r => r.ok ? r.blob() : Promise.reject())
+        .then(b => createImageBitmap(b)).catch(() => null));
+    return fetches.get(src); };
+  const panes = [...mapEl.querySelectorAll('.leaflet-pane')]
+    .filter(p => !p.classList.contains('leaflet-map-pane')
+              && !p.classList.contains('leaflet-tooltip-pane')
+              && !p.classList.contains('leaflet-popup-pane'))
+    .sort((a, b) => (+getComputedStyle(a).zIndex || 0) - (+getComputedStyle(b).zIndex || 0));
+  const jobs = [];
+  for (const pane of panes) {
+    for (const el of pane.querySelectorAll('img,canvas,svg')) {
+      const r = rel(el);
+      if (r.w < 1 || r.h < 1 || r.x > mr.x + mr.w || r.y > mr.y + mr.h
+          || r.x + r.w < mr.x || r.y + r.h < mr.y) continue;
+      if (el.tagName === 'IMG') {
+        const src = el.currentSrc || el.src;
+        if (src && el.complete) jobs.push({ r, bmp: getBmp(src) });
+      } else if (el.tagName === 'CANVAS') {
+        jobs.push({ r, cnv: el });
+      } else {                       // vector pane — serialize the whole SVG in one go
+        const clone = el.cloneNode(true);
+        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        const url = URL.createObjectURL(
+          new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' }));
+        jobs.push({ r, bmp: toImg(url), url });
+      }
+    }
+    // HTML/divIcon markers are NOT drawn (dom-to-image takes 45 s+ per call in
+    // this page). All current marker layers render via canvas or SVG — covered.
+  }
+  ctx.save(); ctx.beginPath(); ctx.rect(mr.x, mr.y, mr.w, mr.h); ctx.clip();
+  for (const j of jobs) {
+    const im = j.cnv || await j.bmp;
+    if (im) { try { ctx.drawImage(im, j.r.x, j.r.y, j.r.w, j.r.h); } catch (_) {} }
+    if (j.url) URL.revokeObjectURL(j.url);
+  }
+  ctx.restore();
+
+  // Cartographic furniture, drawn natively. The app's HTML panels (detail card,
+  // legends) travel as designed sections of the export card instead of pixels.
+  ctx.save();
+  const pad = 14, bx = mr.x + pad, by = mr.y + mr.h - pad;
+  // Scale bar — nearest 1/2/5×10ⁿ distance to ~90 px at the center latitude
+  const mPerPx = 156543.03392 * Math.cos(map.getCenter().lat * Math.PI / 180) / Math.pow(2, map.getZoom());
+  const targetM = mPerPx * 90;
+  const pow10 = Math.pow(10, Math.floor(Math.log10(targetM)));
+  const niceM = [1, 2, 5, 10].map(k => k * pow10)
+    .reduce((a, b) => Math.abs(b - targetM) < Math.abs(a - targetM) ? b : a);
+  const barPx = niceM / mPerPx;
+  const barLbl = niceM >= 1000 ? (niceM / 1000) + ' km' : niceM + ' m';
+  ctx.font = '600 12px system-ui,sans-serif';
+  const lblW = ctx.measureText(barLbl).width;
+  ctx.fillStyle = 'rgba(255,255,255,0.78)';
+  ctx.fillRect(bx - 7, by - 26, barPx + lblW + 24, 33);
+  ctx.strokeStyle = '#1a1d2e'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(bx, by - 9); ctx.lineTo(bx, by);
+  ctx.lineTo(bx + barPx, by); ctx.lineTo(bx + barPx, by - 9); ctx.stroke();
+  ctx.fillStyle = '#1a1d2e'; ctx.textBaseline = 'bottom';
+  ctx.fillText(barLbl, bx + barPx + 9, by + 2);
+  // North arrow — top-right of the map area
+  const nx = mr.x + mr.w - 30, ny = mr.y + 32;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.beginPath(); ctx.arc(nx, ny, 16, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#1a1d2e'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(nx, ny, 16, 0, 7); ctx.stroke();
+  ctx.fillStyle = '#d42b2b';
+  ctx.beginPath(); ctx.moveTo(nx, ny - 11); ctx.lineTo(nx - 5, ny + 3);
+  ctx.lineTo(nx + 5, ny + 3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#1a1d2e'; ctx.font = '700 9px system-ui,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('N', nx, ny + 4);
+  // Attribution — bottom-right
+  const attr = (map.attributionControl?._container?.textContent || '')
+    .trim().replace(/\s+/g, ' ').slice(0, 110);
+  if (attr) {
+    ctx.font = '10px system-ui,sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    const tw = ctx.measureText(attr).width;
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.fillRect(mr.x + mr.w - tw - 14, mr.y + mr.h - 18, tw + 14, 18);
+    ctx.fillStyle = '#2d333e';
+    ctx.fillText(attr, mr.x + mr.w - 7, mr.y + mr.h - 4);
+  }
+  ctx.restore();
+
+  const dataUri = canvas.toDataURL('image/png');
+  if (dataUri.length < 3000) throw new Error('composite came out blank');
+  return { dataUri, jpegUri: canvas.toDataURL('image/jpeg', 0.85),
+           w: canvas.width, h: canvas.height };
 }
 
 function pngToJpeg(pngUri, w, h) {
@@ -5533,10 +5686,24 @@ function pngToJpeg(pngUri, w, h) {
 
 // ── 3. Compose the self-contained situation-card .html ────────────
 function snapBuildHtml(s, png) {
-  const pills = (s.layers.length ? s.layers : ['Base map only'])
-    .map(l => `<span class="pill">${esc(l)}</span>`).join('');
-  const nat = s.natChips.length
-    ? `<div class="nat">${s.natChips.map(x => `<span class="natchip">${esc(x)}</span>`).join('')}</div>` : '';
+  // Severity dot colors for the national-alert tiles (text stays in ink colors)
+  const sevDot = t => /extreme/i.test(t) ? '#d23b2e' : /severe/i.test(t) ? '#e8720c'
+                    : /moderate/i.test(t) ? '#d9a800' : /minor/i.test(t) ? '#2f6fce' : '#6a7487';
+  const tiles = s.natChips.map(x => {
+    const m = x.match(/^([\d,]+)\s+(.+)$/);
+    const n = m ? m[1] : '', lbl = m ? m[2] : x;
+    return `<div class="tile"><span class="tdot" style="background:${sevDot(lbl)}"></span><span class="tn">${esc(n)}</span><span class="tl">${esc(lbl)}</span></div>`;
+  }).join('');
+
+  const layerRows = (s.layers.length ? s.layers : [{ name:'Base map only', note:'' }])
+    .map(l => `<div class="lrow"><span class="lname">${esc(l.name)}</span><span class="ldots"></span><span class="lnote">${esc(l.note || 'on')}</span></div>`).join('');
+
+  const legendCards = s.legends.map(g => `
+    <div class="lg">
+      <div class="lgt">${esc(g.title)}</div>
+      ${g.rows.map(r => `<div class="lgr"><span class="sw${r.square ? ' sq' : ''}" style="background:${esc(r.color)}"></span>${esc(r.label)}</div>`).join('')}
+    </div>`).join('');
+
   let cardHtml = '';
   if (s.card) {
     const chips  = s.card.chips.map(x => `<span class="chip">${esc(x)}</span>`).join('');
@@ -5546,6 +5713,7 @@ function snapBuildHtml(s, png) {
     const desc   = s.card.desc ? `<p class="desc">${esc(s.card.desc)}</p>` : '';
     cardHtml = `
   <section class="card" style="border-left-color:${esc(s.card.color)}">
+    <div class="sechdr">Selected feature</div>
     <h2 style="color:${esc(s.card.color)}">${esc(s.card.title)}</h2>
     ${s.card.sub ? `<p class="sub">${esc(s.card.sub)}</p>` : ''}
     ${chips ? `<div class="chips">${chips}</div>` : ''}
@@ -5564,23 +5732,34 @@ function snapBuildHtml(s, png) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StormWatch Snapshot — ${esc(s.card ? s.card.title : s.tsText)}</title>
 <style>
-:root{--bg:#eef0f5;--panel:#ffffff;--border:#d4d8e4;--text:#1a1d2e;--text2:#2d333e;--muted:#4f5666;--accent:#d42b2b}
+:root{--bg:#e9ecf3;--panel:#ffffff;--border:#d4d8e4;--text:#1a1d2e;--text2:#2d333e;--muted:#4f5666;--accent:#d42b2b}
 @media (prefers-color-scheme: dark){
   :root{--bg:#0b1020;--panel:#101a2c;--border:#243248;--text:#dce7f5;--text2:#c6d4ea;--muted:#9db2d2}
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);padding:18px 12px;line-height:1.5}
-.wrap{max-width:680px;margin:0 auto}
-header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.brand{font-size:19px;font-weight:800;color:var(--accent);letter-spacing:-0.3px;white-space:nowrap}
-.brand .k{display:block;font-size:9px;font-weight:700;letter-spacing:2.2px;color:var(--muted);text-transform:uppercase;margin-top:1px}
-.ts{font-size:12px;font-weight:700;color:var(--text2);font-variant-numeric:tabular-nums;text-align:right}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);padding:20px 12px;line-height:1.5}
+.wrap{max-width:740px;margin:0 auto}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:3px solid var(--accent);padding-bottom:10px;margin-bottom:14px}
+.brand{font-size:22px;font-weight:800;color:var(--accent);letter-spacing:-0.4px;white-space:nowrap}
+.brand .k{display:block;font-size:9.5px;font-weight:700;letter-spacing:2.4px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.ts{text-align:right;font-variant-numeric:tabular-nums}
+.ts .big{font-size:14px;font-weight:800;color:var(--text)}
+.ts .utc{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:1px}
+.tiles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tile{display:flex;align-items:baseline;gap:7px;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:7px 13px}
+.tdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;align-self:center}
+.tn{font-size:17px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.tl{font-size:11px;font-weight:700;color:var(--muted)}
 figure{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 3px 16px rgba(10,15,28,0.10)}
 figure img{width:100%;display:block}
-figcaption{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);font-variant-numeric:tabular-nums}
+.carto{display:grid;grid-template-columns:repeat(3,1fr);gap:9px 16px;padding:11px 14px;border-top:1px solid var(--border);font-variant-numeric:tabular-nums}
+.carto .ci{min-width:0}
+.carto .cl{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted)}
+.carto .cv{font-size:12px;font-weight:700;color:var(--text);margin-top:1px}
 section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-top:12px}
+.sechdr{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin-bottom:8px}
 .card{border-left:4px solid var(--accent)}
-.card h2{font-size:16px;font-weight:800;margin-bottom:8px;line-height:1.3}
+.card h2{font-size:17px;font-weight:800;margin-bottom:8px;line-height:1.3}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .chip{border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2)}
 .rows{margin-bottom:6px}
@@ -5593,31 +5772,44 @@ section{background:var(--panel);border:1px solid var(--border);border-radius:12p
 .desc{font-size:12.5px;color:var(--text2);white-space:pre-wrap;line-height:1.65;margin-top:6px}
 .wind{font-size:13px;font-weight:600;color:var(--text)}
 .wlbl{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);margin-right:8px}
-.lyr h3,.natwrap h3{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
-.pills{display:flex;gap:6px;flex-wrap:wrap}
-.pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:11px;font-weight:600;color:var(--text2)}
-.nat{display:flex;gap:6px;flex-wrap:wrap}
-.natchip{border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:11px;font-weight:700;color:var(--text2)}
+.lrow{display:flex;align-items:baseline;gap:8px;padding:4.5px 0;font-size:12.5px;border-bottom:1px solid var(--border)}
+.lrow:last-child{border-bottom:none}
+.lname{font-weight:700;color:var(--text);white-space:nowrap}
+.ldots{flex:1;border-bottom:1px dotted var(--border);transform:translateY(-3px)}
+.lnote{color:var(--muted);font-weight:600;font-size:11.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lgwrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px 18px}
+.lg{min-width:0}
+.lgt{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:5px;line-height:1.4}
+.lgr{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text2);padding:2px 0;font-weight:600}
+.sw{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:1px solid rgba(0,0,0,0.25)}
+.sw.sq{border-radius:2px}
 footer{margin-top:14px;font-size:10px;color:var(--muted);line-height:1.7;text-align:center}
 footer a{color:var(--accent);text-decoration:none;font-weight:700}
 .disclaim{margin-top:4px;font-style:italic}
-@media (max-width:480px){body{padding:10px 8px}.row{flex-direction:column;gap:1px}.v{text-align:left}}
+@media (max-width:520px){body{padding:10px 8px}.row{flex-direction:column;gap:1px}.v{text-align:left}.carto{grid-template-columns:1fr 1fr}}
 @media print{body{background:#fff;padding:0}.wrap{max-width:100%}figure,section{box-shadow:none;break-inside:avoid}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">&#9889; Storm<span style="font-style:normal">Watch</span> Live<span class="k">Situation snapshot</span></div>
-    <div class="ts">${esc(s.tsText)}</div>
+    <div class="brand">&#9889; StormWatch Live<span class="k">Situation snapshot</span></div>
+    <div class="ts"><div class="big">${esc(s.tsText)}</div><div class="utc">${esc(s.utcText)}</div></div>
   </header>
+  ${tiles ? `<div class="tiles">${tiles}</div>` : ''}
   <figure>
     <img src="${png.dataUri}" alt="Map snapshot" width="${png.w}" height="${png.h}">
-    <figcaption><span>${esc(s.lat)}, ${esc(s.lon)} &middot; zoom ${esc(String(s.zoom))}</span><span>${esc(s.baseName)} basemap</span></figcaption>
+    <div class="carto">
+      <div class="ci"><div class="cl">Map center</div><div class="cv">${esc(s.center)}</div></div>
+      <div class="ci"><div class="cl">Scale</div><div class="cv">${esc(s.scaleText)} &middot; z${esc(String(s.zoom))}</div></div>
+      <div class="ci"><div class="cl">View width</div><div class="cv">${esc(s.viewKm)}</div></div>
+      <div class="ci" style="grid-column:span 2"><div class="cl">Extent (S–N &middot; W–E)</div><div class="cv">${esc(s.extent)}</div></div>
+      <div class="ci"><div class="cl">Basemap &middot; projection</div><div class="cv">${esc(s.baseName)} &middot; Web Mercator</div></div>
+    </div>
   </figure>
 ${cardHtml}${windHtml}
-  ${nat ? `<section class="natwrap"><h3>Active US alerts</h3>${nat}</section>` : ''}
-  <section class="lyr"><h3>Layers shown</h3><div class="pills">${pills}</div></section>
+  <section><div class="sechdr">Active layers</div>${layerRows}</section>
+  ${legendCards ? `<section><div class="sechdr">Map keys</div><div class="lgwrap">${legendCards}</div></section>` : ''}
   <footer>
     ${esc(s.attrib)}<br>
     Captured from <a href="${esc(s.url)}">StormWatch Live</a> &middot; works offline &middot; Clip &middot; Zip &middot; Ship
@@ -5658,8 +5850,12 @@ function snapBuildPdf(s, png) {
   doc.addImage(png.jpegUri, 'JPEG', M, y, iw, ih);
   y += ih + 12;
   doc.setFontSize(8); doc.setTextColor(79, 86, 102);
-  doc.text(`${s.lat}, ${s.lon}  ·  zoom ${s.zoom}  ·  ${P(s.baseName)} basemap`, M, y);
-  y += 18;
+  doc.text(`Center ${P(s.center)}  ·  ${P(s.scaleText)} (z${s.zoom})  ·  view ~ ${P(s.viewKm)}  ·  ${P(s.baseName)} basemap, Web Mercator`, M, y);
+  y += 11;
+  doc.text(`Extent ${P(s.extent)}  ·  ${P(s.utcText)}`, M, y);
+  y += 11;
+  if (s.natChips.length) { doc.text('Active US alerts:  ' + P(s.natChips.join('  ·  ')), M, y); y += 11; }
+  y += 7;
 
   if (s.card) {
     pageBreak(40);
@@ -5691,7 +5887,8 @@ function snapBuildPdf(s, png) {
     doc.setFontSize(9.5); doc.text('Wind readout:  ' + P(s.wind), M, y); y += 16; }
   if (s.layers.length) { pageBreak(24);
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(79,86,102);
-    const ll = doc.splitTextToSize('Layers: ' + P(s.layers.join('  ·  ')), W - 2 * M);
+    const ll = doc.splitTextToSize('Layers: ' + P(s.layers.map(l =>
+      l.note ? `${l.name} (${l.note})` : l.name).join('  ·  ')), W - 2 * M);
     doc.text(ll, M, y); y += ll.length * 11 + 6; }
 
   doc.setFontSize(7); doc.setTextColor(120, 126, 140);
