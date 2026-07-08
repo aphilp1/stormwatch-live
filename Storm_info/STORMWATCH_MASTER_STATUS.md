@@ -4,6 +4,21 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-07-08 update — FIRE LAYERS + SNAPSHOT FLAGSHIP + MONTANA MESONET FIX (HEAD `ba91573`, pushed, live):**
+> App session (weather-alerts.html only). NEW: "7-Day Fire Potential" (NIFC Predictive
+> Services D1–D7; dryness fills + CRITICAL/IGNITION risk polygons; risk features must BYPASS
+> the isvalid filter — live data flags all risk isvalid=0), "Fresh Perimeters (72 h)" (WFIGS
+> daily IR/GPS shapes, newest per fire, age-colored), and the **📸 Snapshot (Clip·Zip·Ship)
+> flagship** — header button → self-contained offline .html + .pdf situation card → Web Share
+> / download (dom-to-image-more + modern-screenshot fallback + jsPDF; ~30–60 s on national
+> views; phone share untested). FIXED: Montana Mesonet layer dead ("error") — feed sends null
+> for offline sensors (87/216 stations), .toFixed(null) crashed the loop; card was dark-on-dark
+> (pre-darkening colors) AND nuked #det-body wholesale breaking the shared card — now renders
+> into #det-custom with .dl/.dv; ensureDetStandard restores det-zoom defaults. Wind-flow pace
+> slowed (velocityScale 0.005). READY NEXT: fable_specs/05_fire_risk_part2.md (click-anywhere
+> fire risk from USGS WFPI + NIFC PSP point lookups, endpoints live-verified, additive).
+> BLOCKED: MCP cloud publish awaits user's Cloudflare account.
+>
 > **2026-06-28 update — BC DRIVER SWITCHED 850/700 hPa → HRRR 10 m (full retrofit):**
 > The gate (offset domains ≥10 km, all 12 events, 125 clean stations) settled the
 > WindNinja boundary-condition question with hard numbers: driving WindNinja from

@@ -7,7 +7,29 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
-## Latest session — 2026-06-28: WindNinja BC driver switched 850/700 hPa → HRRR 10 m
+## Latest session — 2026-07-08: Fire layers + Clip·Zip·Ship snapshot + Montana Mesonet fixes
+All in `weather-alerts.html`, pushed through `ba91573`, live on Pages. (1) **New Wildland
+Fire layers** (Fable spec 01): "7-Day Fire Potential" — NIFC Predictive Services outlook,
+D1–D7 buttons, official dryness fills + CRITICAL/IGNITION risk polygons (simplified geometry
+45 MB→0.5 MB/day); "Fresh Perimeters (72 h)" — WFIGS daily IR/GPS shapes, newest per fire,
+age-colored, opens the existing perimeter card. **Gotcha fixed post-spec:** live PSP data
+carries `isvalid=0` on ALL risk polygons — the official renderer paints risk regardless, so
+risk features bypass the isvalid filter (else "no risk areas" forever). (2) **📸 Snapshot /
+Clip·Zip·Ship flagship** (Fable spec 04): header button → captures map+layers+open card+wind
+readout → branded self-contained offline `.html` + vector-text `.pdf` → Web Share sheet or
+download. dom-to-image-more primary, modern-screenshot fallback, jsPDF; ~420 additive lines;
+national-view capture takes ~30–60 s (cache-busted tile refetch) — phone-side share still
+untested. (3) **Montana Mesonet was dead** ("error"): feed now sends `null` for offline
+sensors (87/216 stations) → `.toFixed(null)` crash; all guards now `!= null`. Station card
+was ALSO dark-on-dark (built pre-theme-darkening) and overwrote `#det-body` wholesale,
+destroying the shared card internals — now renders into `#det-custom` with the panel's
+`.dl`/`.dv` classes; `ensureDetStandard()` now restores the zoom button label/handler that
+custom cards override. (4) Wind-flow animation slowed (velocityScale 0.005, particleAge 110).
+**Ready next:** `Storm_info/fable_specs/05_fire_risk_part2.md` — click-anywhere fire risk
+from USGS WFPI GetFeatureInfo + NIFC PSP point query (all endpoints live-verified, no
+homemade score), not yet applied. MCP cloud publish still blocked on user's Cloudflare account.
+
+## Previous session — 2026-06-28: WindNinja BC driver switched 850/700 hPa → HRRR 10 m
 The long-open question "what should drive WindNinja?" is settled. The gate (the real
 `hindcast_wn_runner.py` with offset domains ≥10 km, all 12 events, 125 clean stations)
 shows **HRRR 10 m beats the aloft 850/700 hPa driver at every terrain class, and beats raw
