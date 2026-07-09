@@ -4,6 +4,16 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-07-08 later update — SNAPSHOT REBUILT (HEAD `5ceb542`, pushed, live):** user rejected
+> v1 output; foreignObject engines proved unusable (modern-screenshot = wrong pane transforms;
+> dom-to-image-more = correct but 60–90 s). New `snapComposite()`: tiles CORS-refetched from
+> cache, canvases direct, SVG panes serialized whole; native scale bar/north arrow/attribution
+> on the image; **0.5 s capture**. Export card: cartography block (center/≈1:N/view width/
+> extent/basemap/projection/local+UTC), Active Layers w/ live notes, Map Keys = every enabled
+> layer's legend (filter by key's inline display, NOT offsetParent), severity stat tiles; PDF
+> same info. Verified via real generated .html. Phone-side Share still untested. LESSON saved
+> to memory: fix first, don't argue with user's screenshot.
+>
 > **2026-07-08 update — FIRE LAYERS + SNAPSHOT FLAGSHIP + MONTANA MESONET FIX (HEAD `ba91573`, pushed, live):**
 > App session (weather-alerts.html only). NEW: "7-Day Fire Potential" (NIFC Predictive
 > Services D1–D7; dryness fills + CRITICAL/IGNITION risk polygons; risk features must BYPASS

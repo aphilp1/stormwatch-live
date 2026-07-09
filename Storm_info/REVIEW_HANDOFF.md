@@ -7,7 +7,27 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
-## Latest session — 2026-07-08: Fire layers + Clip·Zip·Ship snapshot + Montana Mesonet fixes
+## Latest session — 2026-07-08 (later): Snapshot REBUILT after user feedback (`5ceb542`)
+User rejected the first Clip·Zip·Ship output ("greatly improve; better layer info, basic
+cartographic info"). Root causes found by generating + opening the real .html end-to-end:
+modern-screenshot mangles Leaflet pane transforms (tiles missing, polygons misplaced);
+dom-to-image-more is correct but 60–90 s (45 s+ even on a tiny control — unusable per-call
+in this page). **Replaced with a purpose-built compositor** in `snapComposite()`: tile
+<img>s CORS-refetched from HTTP cache → ImageBitmap, marker <canvas>es drawn directly,
+vector panes serialized whole via XMLSerializer; scale bar (1/2/5×10ⁿ at center lat),
+north arrow, attribution drawn natively on the canvas. **0.5 s capture measured** (was 90).
+dom-to-image kept only as last-resort fallback; modern-screenshot CDN tag removed; HTML/
+divIcon markers are NOT drawn (all current marker layers are canvas/SVG — noted in code).
+Export card upgraded: cartography block (center, ≈1:N scale + zoom, view width, S–N/W–E
+extent, basemap, Web Mercator, local+UTC), Active Layers with live status notes, Map Keys
+reproducing every enabled layer's legend (incl. NWS alert types; keys no longer dropped
+when the Layers tab is hidden — filter is the key's own inline display, not offsetParent),
+severity-dotted alert stat tiles, chip label/value join fix; PDF carries the same info.
+Verified: real .html opened at zoom-7 fire view — map correct, Babylon card, 3 legend
+groups, layer notes. Note: an app-boot behavior resets the map view when the initial
+alert load lands (racing scripted setView) — user-facing impact nil, not investigated.
+
+## Previous session — 2026-07-08: Fire layers + Clip·Zip·Ship snapshot + Montana Mesonet fixes
 All in `weather-alerts.html`, pushed through `ba91573`, live on Pages. (1) **New Wildland
 Fire layers** (Fable spec 01): "7-Day Fire Potential" — NIFC Predictive Services outlook,
 D1–D7 buttons, official dryness fills + CRITICAL/IGNITION risk polygons (simplified geometry
