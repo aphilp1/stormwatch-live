@@ -7,7 +7,26 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
-## Latest session — 2026-07-08 (later): Snapshot REBUILT after user feedback (`5ceb542`)
+## Latest session — 2026-07-18: Fire Risk at a Point (spec 05) applied + live (`877a539`)
+Applied `Storm_info/fable_specs/05_fire_risk_part2.md` to `weather-alerts.html` (+262 lines,
+additive). New Wildland Fire toggle "Fire Risk at a Point": while on, a transparent
+click-catcher rectangle in a dedicated pane (z620, above firePerimPane 460/marker canvases
+450, below tooltips/popups) captures every map click → dark popup card with four
+government-sourced sections: USGS fire danger (WFPI value+band chip via WMS GetFeatureInfo,
+large-fire %, spread %), NIFC PSP Day-1 (significant fire potential + fuel dryness +
+GACC/PSA/valid date), Red Flag/Fire Wx Watch containment (client-side ptInGeom, zero
+network), and nearest active NIFC wildfire ≤100 mi (haversine + compass). No composite
+score — values verbatim per source (hard user rule). Agent point-modes keep priority via
+the same forwarding block as alert polygons. All endpoints public-CORS → works identically
+on Pages, no MCP_LOCAL gating. **Spec bug found during browser verify:** WFSP serves water
+mask as ×1 code (254) unlike WLFP's ×10 (2540) → "spreads: 254%" leaked at Lake Tahoe;
+both probability rows now guard `GRAY_INDEX < 248` (genuine percentages ≤100). Verified
+end-to-end on :8001: clean console, live cards (SW Idaho WFPI 79; live Oregon Red Flag
+Warning probe w/ until-time; ocean + Tahoe empty/mask states), stale-guard on rapid
+clicks, toggle-off restores alert-card clicks (regression check passed), alerts layer
+still on by default. Deploy verified live on Pages via curl marker.
+
+## Previous session — 2026-07-08 (later): Snapshot REBUILT after user feedback (`5ceb542`)
 User rejected the first Clip·Zip·Ship output ("greatly improve; better layer info, basic
 cartographic info"). Root causes found by generating + opening the real .html end-to-end:
 modern-screenshot mangles Leaflet pane transforms (tiles missing, polygons misplaced);

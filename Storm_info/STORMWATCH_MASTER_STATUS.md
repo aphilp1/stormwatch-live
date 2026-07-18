@@ -4,6 +4,16 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-07-18 update — FIRE RISK AT A POINT (spec 05) LIVE (HEAD `877a539`, pushed, Pages-verified):**
+> Applied `fable_specs/05_fire_risk_part2.md` (+262 additive lines). New Wildland Fire toggle:
+> click-anywhere probe → dark card w/ USGS WFPI/large-fire%/spread% (GetFeatureInfo), NIFC PSP
+> Day-1 potential+dryness, Red Flag/FWW at point (client-side), nearest NIFC wildfire ≤100 mi.
+> No composite score — values verbatim per source. Click-catcher pane z620; agent point-modes
+> keep priority; all endpoints public-CORS (works on Pages, no MCP gating). SPEC BUG FIXED in
+> verify: WFSP water mask is ×1 (254) not ×10 like WLFP → both probability guards now `<248`.
+> Full checklist browser-verified incl. live Oregon Red Flag probe + alert-card regression.
+> REMAINING: phone test of 📸 Share button; MCP cloud publish awaits user's Cloudflare account.
+>
 > **2026-07-08 later update — SNAPSHOT REBUILT (HEAD `5ceb542`, pushed, live):** user rejected
 > v1 output; foreignObject engines proved unusable (modern-screenshot = wrong pane transforms;
 > dom-to-image-more = correct but 60–90 s). New `snapComposite()`: tiles CORS-refetched from
