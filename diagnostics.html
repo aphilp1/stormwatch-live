@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🩺 StormWatch Diagnostics</title>
+<style>
+:root{--bg:#0a1420;--panel:#0e1a2e;--panel2:#132238;--border:rgba(80,130,190,0.3);
+--text:#e8f0f8;--text2:#c2d3e4;--text3:#8fb0d0;--accent:#ffb066;
+--ok:#3ddc84;--warn:#ffd24d;--fail:#ff6b52;--skip:#7a95b0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:22px 18px 60px}
+.wrap{max-width:900px;margin:0 auto}
+h1{font-size:1.25rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1 .sub{font-size:0.8rem;font-weight:400;color:var(--text3)}
+#summary{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:10px 16px;min-width:96px}
+.stat .n{font-size:1.5rem;font-weight:700}
+.stat .l{font-size:0.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px}
+.stat.ok .n{color:var(--ok)}.stat.warn .n{color:var(--warn)}.stat.fail .n{color:var(--fail)}
+#banner{border-radius:9px;padding:11px 16px;margin:4px 0 18px;font-size:0.92rem;font-weight:600;display:none}
+#banner.ok{display:block;background:rgba(61,220,132,0.12);border:1px solid rgba(61,220,132,0.45);color:var(--ok)}
+#banner.warn{display:block;background:rgba(255,210,77,0.10);border:1px solid rgba(255,210,77,0.45);color:var(--warn)}
+#banner.fail{display:block;background:rgba(255,107,82,0.10);border:1px solid rgba(255,107,82,0.5);color:var(--fail)}
+.controls{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+button{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:8px 16px;font-size:0.85rem;cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button:disabled{opacity:0.5;cursor:wait}
+label.chk{font-size:0.8rem;color:var(--text2);display:flex;gap:6px;align-items:center;cursor:pointer}
+.grp{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden}
+.grp h2{font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);padding:10px 15px;background:var(--panel2);border-bottom:1px solid var(--border)}
+.row{display:flex;align-items:center;gap:12px;padding:9px 15px;border-bottom:1px solid rgba(80,130,190,0.12);font-size:0.86rem}
+.row:last-child{border-bottom:none}
+.dot{width:11px;height:11px;border-radius:50%;flex:none;background:#26364a}
+.dot.pend{animation:pulse 1.1s infinite}
+@keyframes pulse{50%{opacity:0.35}}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.fail{background:var(--fail)}.dot.skip{background:var(--skip)}
+.nm{flex:1;min-width:0}
+.nm .t{font-weight:600;color:var(--text)}
+.nm .d{font-size:0.72rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms{font-size:0.72rem;color:var(--text3);flex:none;min-width:52px;text-align:right}
+.st{font-size:0.72rem;font-weight:700;flex:none;min-width:118px;text-align:right}
+.st.ok{color:var(--ok)}.st.warn{color:var(--warn)}.st.fail{color:var(--fail)}.st.skip{color:var(--skip)}
+#cloudbox{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:13px 16px;margin-bottom:18px;font-size:0.83rem;color:var(--text2);line-height:1.55}
+#cloudbox b{color:var(--text)}
+.foot{margin-top:26px;font-size:0.72rem;color:var(--text3);line-height:1.6}
+a{color:#7ab8ff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🩺 StormWatch Diagnostics <span class="sub" id="runinfo">loading…</span></h1>
+
+  <div id="summary">
+    <div class="stat ok"><div class="n" id="n-ok">–</div><div class="l">Passing</div></div>
+    <div class="stat warn"><div class="n" id="n-warn">–</div><div class="l">Warnings</div></div>
+    <div class="stat fail"><div class="n" id="n-fail">–</div><div class="l">Failing</div></div>
+    <div class="stat"><div class="n" id="n-tot">–</div><div class="l">Checked</div></div>
+  </div>
+  <div id="banner"></div>
+
+  <div id="cloudbox">Loading last automated check-in…</div>
+
+  <div class="controls">
+    <button id="runbtn" onclick="runAll()">↻ Run all checks</button>
+    <label class="chk"><input type="checkbox" id="probfilter" onchange="applyFilter()"> Show problems only</label>
+  </div>
+
+  <div id="groups"></div>
+
+  <div class="foot">
+    Every check is a tiny real request to the same service the app uses — one record, one tile,
+    or a capabilities ping — so a green row means the live feature genuinely works right now.
+    An automated version of these checks also runs in the cloud every 6 hours (GitHub Action
+    <code>health-monitor</code>) and its result appears in the box above, so problems get caught
+    even when nobody has this page open.
+    · <a href="weather-alerts.html">← back to StormWatch Live</a>
+  </div>
+</div>
+
+<script>
+'use strict';
+const LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+const T = 15000; // per-check timeout ms
+
+// ── check helpers ───────────────────────────────────────────────────────────
+function tfetch(url, opts = {}) {
+  const ctl = new AbortController();
+  const id = setTimeout(() => ctl.abort(), T);
+  return fetch(url, { ...opts, signal: ctl.signal }).finally(() => clearTimeout(id));
+}
+// JSON endpoint: PASS when validate(data) is truthy.
+const jsonCheck = (url, validate, note) => async () => {
+  const r = await tfetch(url);
+  if (!r.ok) return { s: 'fail', note: `HTTP ${r.status}` };
+  const d = await r.json();
+  return validate(d) ? { s: 'ok', note: note || 'live data' } : { s: 'warn', note: 'reachable, unexpected payload' };
+};
+// Text endpoint: PASS when body contains marker.
+const textCheck = (url, marker, note) => async () => {
+  const r = await tfetch(url);
+  if (!r.ok) return { s: 'fail', note: `HTTP ${r.status}` };
+  const t = await r.text();
+  return t.includes(marker) ? { s: 'ok', note: note || 'live' } : { s: 'warn', note: 'reachable, unexpected body' };
+};
+// Reachability: CORS fetch first; if the browser blocks it, fall back to an
+// opaque no-cors request (resolves only if the server actually answered).
+const reachCheck = (url, note) => async () => {
+  try {
+    const r = await tfetch(url);
+    return r.status < 500 ? { s: 'ok', note: note || `HTTP ${r.status}` } : { s: 'fail', note: `HTTP ${r.status}` };
+  } catch (e) {
+    if (e.name === 'AbortError') throw e;
+    await tfetch(url, { mode: 'no-cors' });               // throws on true network failure
+    return { s: 'ok', note: 'reachable (opaque)' };
+  }
+};
+// Image/tile endpoint: PASS when the image decodes.
+const imgCheck = (url, note) => () => new Promise((res, rej) => {
+  const im = new Image();
+  const id = setTimeout(() => { im.src = ''; rej(new Error('timeout')); }, T);
+  im.onload = () => { clearTimeout(id); res({ s: 'ok', note: note || 'tile renders' }); };
+  im.onerror = () => { clearTimeout(id); res({ s: 'fail', note: 'tile failed to load' }); };
+  im.src = url;
+});
+
+const arc = (base, fields = 'OBJECTID') =>
+  `${base}?where=1%3D1&outFields=${fields}&returnGeometry=false&resultRecordCount=1&f=json`;
+const arcOk = d => !d.error && Array.isArray(d.features);
+
+// ── the checks — one row per service the app actually uses ──────────────────
+const GROUPS = [
+{ name: 'App & Hosting', checks: [
+  { t: 'Public site (GitHub Pages)', d: 'aphilp1.github.io/stormwatch-live',
+    fn: reachCheck('https://aphilp1.github.io/stormwatch-live/weather-alerts.html') },
+  { t: 'Cloud backend — health', d: 'stormwatch.stormwatch-live.workers.dev/health',
+    fn: jsonCheck('https://stormwatch.stormwatch-live.workers.dev/health', d => d.status === 'ok', 'worker up') },
+  { t: 'Cloud backend — Fire agent (live run)', d: 'full fire-risk analysis for Los Angeles',
+    fn: jsonCheck('https://stormwatch.stormwatch-live.workers.dev/fire-agent?lat=34.05&lon=-118.25',
+                  d => typeof d.riskScore === 'number' && d.riskRating, 'agent computes') },
+  { t: 'Local analysis server (:3456)', d: 'WindNinja + agents backend — local app only', local: true,
+    fn: reachCheck('http://localhost:3456/health', 'local backend up') },
+]},
+{ name: 'Alert Pipeline (NWS)', checks: [
+  { t: 'Active alerts feed', d: 'api.weather.gov/alerts/active',
+    fn: jsonCheck('https://api.weather.gov/alerts/active/count', d => typeof d.total === 'number' && d.total > 0, 'alerts flowing') },
+  { t: 'Point metadata', d: 'api.weather.gov/points (agents, station lookup)',
+    fn: jsonCheck('https://api.weather.gov/points/39.7392,-104.9847', d => d.properties && d.properties.gridId) },
+  { t: 'Station observations', d: 'api.weather.gov/stations/KDEN/observations',
+    fn: jsonCheck('https://api.weather.gov/stations/KDEN/observations?limit=1', d => Array.isArray(d.features)) },
+]},
+{ name: 'Wildland Fire', checks: [
+  { t: 'Active incidents', d: 'NIFC EGP_Active_Incidents',
+    fn: jsonCheck(arc('https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/EGP_Active_Incidents_Prod_Public_View/FeatureServer/0/query'), arcOk) },
+  { t: 'Fire perimeters (year-to-date)', d: 'WFIGS_Interagency_Perimeters_YearToDate',
+    fn: jsonCheck(arc('https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_YearToDate/FeatureServer/0/query'), arcOk) },
+  { t: 'Fresh perimeters (daily IR)', d: 'WFIGS_Daily_Perimeters_Public',
+    fn: jsonCheck(arc('https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Daily_Perimeters_Public/FeatureServer/0/query'), arcOk) },
+  { t: 'VIIRS heat detections', d: 'NIFC VIIRS_Heat_Detections (hotspots layer)',
+    fn: jsonCheck(arc('https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/VIIRS_Heat_Detections/FeatureServer/0/query'), arcOk) },
+  { t: 'RAWS stations + winds', d: 'NIFC PublicView_RAWS (observed winds layers)',
+    fn: jsonCheck(arc('https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/PublicView_RAWS/FeatureServer/1/query', 'StationID'), arcOk) },
+  { t: '7-Day Fire Potential', d: 'NIFC Predictive Services outlook (PSP)',
+    fn: jsonCheck(arc('https://fsapps.nwcg.gov/psp/arcgis/rest/services/npsg/outlooks_forecast/MapServer/0/query', 'drynesscode'), arcOk) },
+  { t: 'SPC fire weather outlook', d: 'mapservices.weather.noaa.gov SPC_firewx',
+    fn: jsonCheck('https://mapservices.weather.noaa.gov/vector/rest/services/fire_weather/SPC_firewx/MapServer?f=json', d => Array.isArray(d.layers)) },
+  { t: 'USGS fire danger (probe rasters)', d: 'WFPI GetFeatureInfo — feeds Fire Risk at a Point',
+    fn: jsonCheck('https://dmsdata.cr.usgs.gov/geoserver/firedanger_wfpi-forecast-1_conus_day_data/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=wfpi-forecast-1_conus_day_data&QUERY_LAYERS=wfpi-forecast-1_conus_day_data&CRS=CRS:84&BBOX=-116.24,43.37,-116.22,43.39&WIDTH=101&HEIGHT=101&I=50&J=50&INFO_FORMAT=application%2Fjson',
+                  d => d.features && d.features.length && d.features[0].properties.PALETTE_INDEX != null, 'raster answers') },
+  { t: 'KBDI drought tiles', d: 'ncei.noaa.gov ncsu-meas-kbdi',
+    fn: imgCheck('https://www.ncei.noaa.gov/pub/data/nidis/tile/ncsu-meas-kbdi/4/4/6.png') },
+  { t: 'HMS smoke imagery', d: 'mapservices.weather.noaa.gov ndgd_smoke WMS',
+    fn: textCheck('https://mapservices.weather.noaa.gov/raster/services/air_quality/ndgd_smoke_sfc_1hr_avg_time/ImageServer/WMSServer?service=WMS&request=GetCapabilities', 'Capabilities') },
+]},
+{ name: 'Radar, Satellite & Models', checks: [
+  { t: 'RainViewer radar index', d: 'api.rainviewer.com weather-maps',
+    fn: jsonCheck('https://api.rainviewer.com/public/weather-maps.json', d => d.radar) },
+  { t: 'HRRR model WMS', d: 'mesonet.agron.iastate.edu (IEM) refd',
+    fn: reachCheck('https://mesonet.agron.iastate.edu/cgi-bin/wms/hrrr/refd.cgi?service=WMS&request=GetCapabilities') },
+  { t: 'MRMS QPE WMS', d: 'mesonet.agron.iastate.edu mrms_nn',
+    fn: reachCheck('https://mesonet.agron.iastate.edu/cgi-bin/wms/us/mrms_nn.cgi?service=WMS&request=GetCapabilities') },
+  { t: 'NEXRAD single-site geoserver', d: 'opengeo.ncep.noaa.gov',
+    fn: reachCheck('https://opengeo.ncep.noaa.gov/geoserver/web/') },
+  { t: 'NSSL CAMs graphics', d: 'cams.nssl.noaa.gov (Models tab)',
+    fn: reachCheck('https://cams.nssl.noaa.gov/') },
+]},
+{ name: 'Water & Flood', checks: [
+  { t: 'River gauges', d: 'mapservices.weather.noaa.gov riv_gauges',
+    fn: jsonCheck(arc('https://mapservices.weather.noaa.gov/eventdriven/rest/services/water/riv_gauges/MapServer/0/query', 'gaugelid'), arcOk) },
+  { t: 'NWPS gauge API', d: 'api.water.noaa.gov/nwps',
+    fn: reachCheck('https://api.water.noaa.gov/nwps/v1/gauges/denc2') },
+  { t: 'USGS streamflow (latest)', d: 'api.waterdata.usgs.gov latest-continuous',
+    fn: jsonCheck('https://api.waterdata.usgs.gov/ogcapi/v0/collections/latest-continuous/items?f=json&parameter_code=00060&limit=1', d => Array.isArray(d.features)) },
+  { t: 'USGS flow statistics', d: 'waterservices.usgs.gov daily stats',
+    fn: textCheck('https://waterservices.usgs.gov/nwis/stat/?format=rdb&sites=06730500&statReportType=daily&statType=P50&parameterCd=00060', '#') },
+  { t: 'FEMA flood hazard WMS', d: 'hazards.fema.gov NFHL',
+    fn: reachCheck('https://hazards.fema.gov/arcgis/services/public/NFHLWMS/MapServer/WMSServer?service=WMS&request=GetCapabilities') },
+  { t: 'NWS flood inundation maps', d: 'mapservices.weather.noaa.gov NWS_FIM',
+    fn: jsonCheck('https://mapservices.weather.noaa.gov/static/rest/services/NWS_FIM?f=json', d => Array.isArray(d.services)) },
+]},
+{ name: 'Observations', checks: [
+  { t: 'Montana Mesonet', d: 'mesonet.climate.umt.edu stations',
+    fn: jsonCheck('https://mesonet.climate.umt.edu/api/v2/stations/?type=json&active=true', d => Array.isArray(d) && d.length > 0) },
+]},
+{ name: 'Basemaps & Libraries', checks: [
+  { t: 'CARTO basemap tiles', d: 'basemaps.cartocdn.com light_all',
+    fn: imgCheck('https://a.basemaps.cartocdn.com/light_all/4/4/6.png') },
+  { t: 'USGS topo tiles', d: 'basemap.nationalmap.gov USGSTopo',
+    fn: imgCheck('https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/4/6/4') },
+  { t: 'Leaflet (unpkg CDN)', d: 'unpkg.com leaflet@1.9.4',
+    fn: reachCheck('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js') },
+  { t: 'Chart.js / velocity / export libs (jsDelivr)', d: 'cdn.jsdelivr.net',
+    fn: reachCheck('https://cdn.jsdelivr.net/npm/leaflet-velocity@1.7.0/dist/leaflet-velocity.min.js') },
+]},
+];
+
+// ── render + run ────────────────────────────────────────────────────────────
+const rows = [];
+function build() {
+  const holder = document.getElementById('groups');
+  GROUPS.forEach(g => {
+    const div = document.createElement('div'); div.className = 'grp';
+    div.innerHTML = `<h2>${g.name}</h2>`;
+    g.checks.forEach(c => {
+      if (c.local && !LOCAL) return;                       // local-only rows hidden on the public site
+      const r = document.createElement('div'); r.className = 'row';
+      r.innerHTML = `<div class="dot"></div><div class="nm"><div class="t">${c.t}</div>` +
+        `<div class="d">${c.d}</div></div><div class="ms"></div><div class="st">queued</div>`;
+      div.appendChild(r);
+      rows.push({ c, el: r, dot: r.querySelector('.dot'), st: r.querySelector('.st'), ms: r.querySelector('.ms'), res: null });
+    });
+    if (div.children.length > 1) holder.appendChild(div);
+  });
+}
+
+async function runOne(row) {
+  row.dot.className = 'dot pend'; row.st.className = 'st'; row.st.textContent = 'checking…'; row.ms.textContent = '';
+  const t0 = performance.now();
+  let res;
+  try { res = await row.c.fn(); }
+  catch (e) { res = { s: 'fail', note: e.name === 'AbortError' ? 'timeout (15 s)' : 'unreachable' }; }
+  row.res = res.s;
+  row.dot.className = 'dot ' + res.s;
+  row.st.className = 'st ' + res.s;
+  row.st.textContent = (res.s === 'ok' ? 'PASS' : res.s === 'warn' ? 'WARN' : 'FAIL') + ' · ' + res.note;
+  row.ms.textContent = Math.round(performance.now() - t0) + ' ms';
+  applyFilter();
+}
+
+async function runAll() {
+  const btn = document.getElementById('runbtn'); btn.disabled = true;
+  document.getElementById('runinfo').textContent = 'running… (' + (LOCAL ? 'local app' : 'public site') + ' view)';
+  const queue = [...rows];
+  const workers = Array.from({ length: 6 }, async () => { while (queue.length) await runOne(queue.shift()); });
+  await Promise.all(workers);
+  const n = s => rows.filter(r => r.res === s).length;
+  document.getElementById('n-ok').textContent = n('ok');
+  document.getElementById('n-warn').textContent = n('warn');
+  document.getElementById('n-fail').textContent = n('fail');
+  document.getElementById('n-tot').textContent = rows.length;
+  const b = document.getElementById('banner');
+  if (n('fail')) { b.className = 'fail'; b.textContent = `⚠ ${n('fail')} service${n('fail') > 1 ? 's are' : ' is'} down or unreachable — the matching app feature(s) will be degraded.`; }
+  else if (n('warn')) { b.className = 'warn'; b.textContent = `${n('warn')} service(s) reachable but answering oddly — worth watching.`; }
+  else { b.className = 'ok'; b.textContent = '✓ All services healthy — every StormWatch feature has live data right now.'; }
+  document.getElementById('runinfo').textContent =
+    `checked ${rows.length} services · ${new Date().toLocaleTimeString()} · ${LOCAL ? 'local app' : 'public site'} view`;
+  btn.disabled = false;
+}
+
+function applyFilter() {
+  const only = document.getElementById('probfilter').checked;
+  rows.forEach(r => { r.el.style.display = (only && r.res === 'ok') ? 'none' : 'flex'; });
+}
+
+// Last automated cloud check-in (written by .github/workflows/health-monitor.yml).
+async function loadCloudStatus() {
+  const box = document.getElementById('cloudbox');
+  try {
+    const r = await tfetch('data/health_status.json?cb=' + Date.now());
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const age = Math.round((Date.now() - new Date(d.checked_utc).getTime()) / 3600000 * 10) / 10;
+    const bad = (d.results || []).filter(x => x.status !== 'ok');
+    box.innerHTML = `<b>Last automated check-in:</b> ${new Date(d.checked_utc).toLocaleString()} (${age} h ago) — ` +
+      (bad.length
+        ? `<span style="color:var(--fail)">${bad.length} of ${d.results.length} checks failing: ${bad.map(x => x.name).join(', ')}</span>`
+        : `<span style="color:var(--ok)">all ${d.results.length} cloud checks passed ✓</span>`) +
+      (age > 9 ? ' <span style="color:var(--warn)">· check-ins look stale — the monitor Action may be stuck</span>' : '');
+  } catch {
+    box.innerHTML = '<b>Last automated check-in:</b> none found yet — the cloud monitor writes ' +
+      '<code>data/health_status.json</code> every 6 hours once the health-monitor Action has run.';
+  }
+}
+
+build();
+loadCloudStatus();
+runAll();
+</script>
+</body>
+</html>

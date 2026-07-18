@@ -7,7 +7,24 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
-## Latest session — 2026-07-18: Fire Risk at a Point (spec 05) applied + live (`877a539`)
+## Latest session — 2026-07-18 (later): cloud backend live · probe card redesign · diagnostics
+(1) Cloudflare Worker (`stormwatch-cloud/`) deployed to
+https://stormwatch.stormwatch-live.workers.dev — /health + /fire-agent verified byte-equivalent
+to the local :3456 backend; root URL now serves a friendly landing page. Public site NOT yet
+wired to it (user holding as a plan; wire with graceful fallback when approved).
+(2) Fire Risk probe redesigned per user feedback: Leaflet popup → fixed draggable dark card
+top-right of the map (reuses makeDraggable; close button; orange ring marker at the probed
+point), fonts enlarged + contrast raised (`acbcf80`). Verified: card clear of zoom control,
+drag/close/reopen, live Red Flag row, no console errors.
+(3) NEW diagnostics stack: `diagnostics.html` — 33 grouped live service checks (every endpoint
+the app uses: NWS, NIFC/WFIGS, PSP, USGS fire+water, IEM, RainViewer, FEMA, Mesonet, CDNs,
+Worker, local :3456 when local) with latency, problems filter, summary banner;
+`health_monitor.py` (stdlib-only, 20 checks, ntfy push on down/recover transitions) +
+`health-monitor.yml` Action every 6 h committing `data/health_status.json`, which the page
+displays as "last automated check-in". NWS gotcha: /alerts/active rejects `limit` (400) —
+use /alerts/active/count as the probe.
+
+## Previous session — 2026-07-18: Fire Risk at a Point (spec 05) applied + live (`877a539`)
 Applied `Storm_info/fable_specs/05_fire_risk_part2.md` to `weather-alerts.html` (+262 lines,
 additive). New Wildland Fire toggle "Fire Risk at a Point": while on, a transparent
 click-catcher rectangle in a dedicated pane (z620, above firePerimPane 460/marker canvases

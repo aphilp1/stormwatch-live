@@ -4,6 +4,18 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-07-18 update 2 — CLOUD BACKEND LIVE + DIAGNOSTICS + PROBE CARD REDESIGN:**
+> (1) **Cloudflare Worker deployed**: user made free CF account; subdomain `stormwatch-live`;
+> `stormwatch-cloud/` deployed → https://stormwatch.stormwatch-live.workers.dev (/health,
+> /fire-agent verified identical to local :3456; friendly root landing page added). Site NOT
+> yet pointed at it — user said hold as a plan. (2) **Fire Risk probe redesigned** on user
+> feedback (hidden behind zoom, hard to read, wanted movable): popup → draggable dark card
+> top-right (makeDraggable), bigger/higher-contrast text, orange ring marker at probed point
+> (commit `acbcf80`). (3) **NEW: full-stack diagnostics** — `diagnostics.html` (33 live
+> service checks, grouped, latency, problems filter, local-only rows) + `health_monitor.py`
+> (stdlib, 20 checks, ntfy on down/recover) + `.github/workflows/health-monitor.yml`
+> (every 6 h, commits data/health_status.json shown on the page). All verified locally.
+>
 > **2026-07-18 update — FIRE RISK AT A POINT (spec 05) LIVE (HEAD `877a539`, pushed, Pages-verified):**
 > Applied `fable_specs/05_fire_risk_part2.md` (+262 additive lines). New Wildland Fire toggle:
 > click-anywhere probe → dark card w/ USGS WFPI/large-fire%/spread% (GetFeatureInfo), NIFC PSP

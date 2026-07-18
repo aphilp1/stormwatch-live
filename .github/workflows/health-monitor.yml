@@ -1,0 +1,46 @@
+name: Service Health Monitor
+
+# Every 6 hours: ping every external service StormWatch depends on with one tiny
+# real request, write the scoreboard (data/health_status.json — shown on
+# diagnostics.html), append to the history log, and push an ntfy notification
+# when a service goes down or recovers. Pure stdlib — no pip install.
+on:
+  schedule:
+    - cron: "23 */6 * * *"    # 4x daily, offset from the alert monitor's :00/:15/:30/:45
+  workflow_dispatch:           # allow manual runs from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: health-monitor
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Run health checks
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          python health_monitor.py
+
+      - name: Commit updated status
+        run: |
+          git config user.name  "stormwatch-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/health_status.json data/health_history.jsonl
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Health check-in ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git pull --rebase
+            git push
+          fi
