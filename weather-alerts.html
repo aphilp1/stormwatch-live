@@ -562,6 +562,25 @@ canvas.velocity-overlay{pointer-events:none!important}
 /* ── COMBINED THREAT PANEL ───────────────────────────────────────── */
 #map-wrap.ct-mode,#map-wrap.ct-mode .leaflet-container,
 #map-wrap.ct-mode .leaflet-interactive{cursor:crosshair !important}
+
+/* ── FIRE RISK PROBE (click-anywhere point report) ───────────────── */
+#map-wrap.frp-mode,#map-wrap.frp-mode .leaflet-container,
+#map-wrap.frp-mode .leaflet-interactive{cursor:crosshair !important}
+.frp-popup .leaflet-popup-content-wrapper{background:#0e1a2e;border:1px solid rgba(255,150,70,0.45);box-shadow:0 4px 18px rgba(0,0,0,0.7);border-radius:8px}
+.frp-popup .leaflet-popup-content{margin:10px 12px;line-height:1.45;min-width:230px}
+.frp-popup .leaflet-popup-tip{background:#0e1a2e}
+.frp-popup .leaflet-popup-close-button{color:#7aa0c0!important;font-size:16px!important}
+.frp-hdr{font-size:10px;font-weight:700;color:#ffb066;letter-spacing:1.1px;text-transform:uppercase}
+.frp-coords{font-size:9px;color:#8fa8c0;margin-bottom:2px}
+.frp-sec{margin-top:7px;padding-top:6px;border-top:1px solid rgba(120,160,200,0.18)}
+.frp-src{font-size:8.5px;color:#7a95b0;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px}
+.frp-val{font-size:11px;color:#e8f0f8;font-weight:600}
+.frp-sub{font-size:9.5px;color:#a8bcd0}
+.frp-alert{color:#ff7a55}
+.frp-chip{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px;border:1px solid rgba(255,255,255,0.25)}
+.frp-loading{font-size:10px;color:#9fb4c8;font-style:italic;margin-top:6px}
+.frp-unavail{font-size:10px;color:#8fa8c0;font-style:italic}
+.frp-foot{font-size:8px;color:#7a95b0;margin-top:8px;padding-top:5px;border-top:1px solid rgba(120,160,200,0.14)}
 #ct-panel{position:fixed;top:55px;left:270px;width:330px;background:#0a1420;border:1px solid rgba(80,130,190,0.3);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
 #ct-header{padding:10px 13px;border-bottom:1px solid rgba(80,130,190,0.2);display:flex;justify-content:space-between;align-items:center;background:#0a1420;gap:8px;cursor:move;user-select:none}
 #ct-body{overflow-y:auto;max-height:calc(100vh - 115px);padding:12px 13px;scrollbar-width:thin;scrollbar-color:#1a3060 transparent}
@@ -1358,6 +1377,21 @@ canvas.velocity-overlay{pointer-events:none!important}
             <div class="usgs-key-row"><div class="usgs-dot" style="background:#d9a45e;border-radius:2px;border-color:#7d5a24"></div>Fuels: Very Dry</div>
             <div class="usgs-key-row"><div class="usgs-dot" style="background:#ffd900;border-radius:2px;border-color:#8a7400"></div>Fuels: Dry</div>
             <div class="usgs-key-row"><div class="usgs-dot" style="background:#5fb336;border-radius:2px;border-color:#3d7a20"></div>Fuels: Moist</div>
+          </div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-fire-probe" onchange="toggleLayer('fire-probe',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Fire Risk at a Point</span>
+            <span class="layer-note" id="fire-probe-note">off</span>
+          </div>
+          <div class="usgs-key" id="fire-probe-key" style="display:none">
+            <div class="usgs-key-hdr">Click anywhere on the map · government point data</div>
+            <div style="font-size:9px;color:var(--text3);line-height:1.5">
+              Reports for the clicked point: USGS fire-danger indices (WFPI · large-fire % · spread %),
+              NIFC 7-day significant fire potential + fuel dryness, any Red Flag Warning or Fire Weather
+              Watch, and the nearest active wildfire within 100 mi. Values are shown exactly as served —
+              no blended score. While on, map clicks probe instead of opening features.
+            </div>
           </div>
 
           <div class="layer-row">
@@ -2575,6 +2609,7 @@ let fireIncidentsEnabled = false, fireIncidentsGroup = null, fireIncidentsLoaded
 let firePerimEnabled = false, firePerimGroup = null, firePerimLoaded = false;
 let pspGroup = null, pspEnabled = false, pspDay = 1;
 let dailyPerimGroup = null, dailyPerimEnabled = false, dailyPerimLoaded = false;
+let frpEnabled = false, frpRect = null, frpPopup = null, frpSeq = 0;
 let smokeLayer = null, smokeEnabled = false, smokeOpacity = 0.80;
 
 const STAGE_CFG = {
@@ -3731,6 +3766,34 @@ async function toggleLayer(name, on) {
     } else {
       pspGroup.remove();
       document.getElementById('psp-note').textContent = 'off';
+    }
+  } else if (name === 'fire-probe') {
+    frpEnabled = on;
+    document.getElementById('fire-probe-key').style.display = on ? 'block' : 'none';
+    document.getElementById('map-wrap').classList.toggle('frp-mode', on);
+    if (on) {
+      if (!frpRect) {
+        // Transparent click-catcher over every feature layer: alert polygons and
+        // markers stopPropagation in their own handlers, so a plain map-click
+        // listener would never fire over them. Pane 620 sits above firePerimPane
+        // (460) and the marker canvases (450), below tooltips (650) and popups (700).
+        // Map drag and scroll-zoom pass through unaffected.
+        if (!map.getPane('frpPane')) {
+          map.createPane('frpPane');
+          map.getPane('frpPane').style.zIndex = 620;
+          map.getPane('frpPane').style.pointerEvents = 'auto';
+        }
+        frpRect = L.rectangle([[-85, -360], [85, 360]],
+          { pane: 'frpPane', stroke: false, fill: true, fillOpacity: 0, interactive: true });
+        frpRect.on('click', onFireProbeClick);
+      }
+      frpRect.addTo(map);
+      document.getElementById('fire-probe-note').textContent = 'click the map';
+      toast('Fire risk probe on — click anywhere on the map', '#ff8800');
+    } else {
+      if (frpRect) frpRect.remove();
+      if (frpPopup) { map.closePopup(frpPopup); frpPopup = null; }
+      document.getElementById('fire-probe-note').textContent = 'off';
     }
   } else if (name === 'smoke') {
     smokeEnabled = on;
@@ -7210,6 +7273,205 @@ function setPspDay(day) {
   document.querySelectorAll('#psp-day-row .viirs-day-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.day) === day));
   if (pspEnabled) loadPspOutlook(day);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FIRE RISK PROBE (click anywhere → authoritative point report)
+// ═══════════════════════════════════════════════════════════════════
+// Hard rule: every row is a value served by a government system, shown
+// verbatim with its source — no blended/homemade composite score.
+// USGS GetFeatureInfo semantics (verified live, spec 05 §0):
+//   WFPI  → PALETTE_INDEX: 0–247 = index value, ≥248 = non-burnable mask
+//   WLFP/WFSP → GRAY_INDEX: percent; ≥2480 = mask code ×10
+//   empty features array = outside the CONUS raster.
+const FRP_USGS_BASE = 'https://dmsdata.cr.usgs.gov/geoserver';
+const FRP_MASK = { 248:'Outside US mapping', 249:'Outside US mapping', 250:'Snow / ice',
+                   251:'Agricultural land', 252:'Barren', 253:'Marsh', 254:'Water', 255:'No data' };
+// WFPI bands + colors exactly as the layer's own JSON legend serves them.
+const FRP_WFPI_BANDS = [
+  { max:10,  label:'0–10',    c:'#004500' }, { max:20,  label:'11–20',   c:'#006100' },
+  { max:30,  label:'21–30',   c:'#0f8208' }, { max:40,  label:'31–40',   c:'#40a621' },
+  { max:50,  label:'41–50',   c:'#7ad445' }, { max:60,  label:'51–60',   c:'#c2ff6e' },
+  { max:70,  label:'61–70',   c:'#ffff19' }, { max:80,  label:'71–80',   c:'#cf703d' },
+  { max:90,  label:'81–90',   c:'#961900' }, { max:100, label:'91–100',  c:'#bf0000' },
+  { max:120, label:'101–120', c:'#ff8000' }, { max:140, label:'121–140', c:'#ff00ff' },
+  { max:247, label:'141–247', c:'#ff0000' },
+];
+const FRP_PSP_DRY   = { 0:'No data', 1:'Moist', 2:'Dry', 3:'Very Dry' };
+const FRP_PSP_DRY_C = { 1:'#5fb336', 2:'#ffd900', 3:'#d9a45e' };
+const FRP_PSP_TYPE  = {
+  CRITICAL: { label:'Critical burn environment (wind-driven)', c:'#ff8c00' },
+  IGNITION: { label:'Lightning ignition risk',                 c:'#ff1a00' },
+};
+
+function frpGfiUrl(product, lat, lon) {
+  // 101×101 px window ±0.01° around the point; I/J=50 = the exact click pixel.
+  // CRS:84 keeps lon,lat axis order under WMS 1.3.0.
+  const name = `${product}-forecast-1_conus_day_data`;
+  const d = 0.01;
+  return `${FRP_USGS_BASE}/firedanger_${name}/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo`
+    + `&LAYERS=${name}&QUERY_LAYERS=${name}&CRS=CRS:84`
+    + `&BBOX=${(lon - d).toFixed(4)},${(lat - d).toFixed(4)},${(lon + d).toFixed(4)},${(lat + d).toFixed(4)}`
+    + '&WIDTH=101&HEIGHT=101&I=50&J=50&INFO_FORMAT=application%2Fjson';
+}
+
+function frpMiles(lat1, lon1, lat2, lon2) {
+  const R = 3958.8, rad = x => x * Math.PI / 180;
+  const h = Math.sin(rad(lat2 - lat1) / 2) ** 2
+          + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function frpCompass(lat1, lon1, lat2, lon2) {  // 8-point direction from point 1 toward point 2
+  const rad = x => x * Math.PI / 180;
+  const y = Math.sin(rad(lon2 - lon1)) * Math.cos(rad(lat2));
+  const x = Math.cos(rad(lat1)) * Math.sin(rad(lat2))
+          - Math.sin(rad(lat1)) * Math.cos(rad(lat2)) * Math.cos(rad(lon2 - lon1));
+  const b = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  return ['N','NE','E','SE','S','SW','W','NW'][Math.round(b / 45) % 8];
+}
+
+function frpPct(v) { return v < 0.1 ? '&lt;0.1%' : (v < 10 ? v.toFixed(1) : Math.round(v)) + '%'; }
+function frpChip(c) { return `<span class="frp-chip" style="background:${c}"></span>`; }
+
+function onFireProbeClick(e) {
+  L.DomEvent.stopPropagation(e);
+  // Agent point-modes keep priority — same forwarding block as the alert-polygon handler.
+  if (nowcastMode    && nowcastInputMode    === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
+  if (fireMode       && fireInputMode       === 'point') { runFireAgent(e.latlng.lat, e.latlng.lng); return; }
+  if (floodMode      && floodInputMode      === 'point') { runFloodAgent(e.latlng.lat, e.latlng.lng); return; }
+  if (combinedMode   && combinedInputMode   === 'point') { runCombinedAgent(e.latlng.lat, e.latlng.lng); return; }
+  probeFireRisk(e.latlng.lat, e.latlng.lng);
+}
+
+async function probeFireRisk(lat, lon) {
+  const seq = ++frpSeq;
+  const hdr = '<div class="frp-hdr">Fire Risk at Point</div>'
+            + `<div class="frp-coords">${lat.toFixed(4)}, ${lon.toFixed(4)}</div>`;
+  frpPopup = L.popup({ className: 'frp-popup', maxWidth: 330 })
+    .setLatLng([lat, lon])
+    .setContent(hdr + '<div class="frp-loading">Checking USGS · NIFC · NWS…</div>')
+    .openOn(map);
+
+  // PSP layer 0 = Day 1 of the 7-day significant fire potential outlook.
+  const pspUrl = `${PSP_OUTLOOK_BASE}/0/query`
+    + `?geometry=${lon.toFixed(5)}%2C${lat.toFixed(5)}`
+    + '&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects'
+    + '&outFields=*&returnGeometry=false&f=json';
+  // Active wildfires within 100 statute miles (client-side nearest; the service can't sort by distance).
+  const incUrl = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/EGP_Active_Incidents_Prod_Public_View/FeatureServer/0/query'
+    + `?geometry=${lon.toFixed(5)}%2C${lat.toFixed(5)}`
+    + '&geometryType=esriGeometryPoint&inSR=4326'
+    + '&distance=100&units=esriSRUnit_StatuteMile&spatialRel=esriSpatialRelIntersects'
+    + '&where=' + encodeURIComponent("Incident_Type_Kind LIKE '%WF%'")   // values are 'FI / WF' etc.
+    + '&outFields=Name,DailyAcres,PercentContained,POOState'
+    + '&returnGeometry=true&f=geojson&resultRecordCount=1000';
+
+  const [wfpi, wlfp, wfsp, psp, inc] = await Promise.allSettled([
+    fetchJson(frpGfiUrl('wfpi', lat, lon), 15000),
+    fetchJson(frpGfiUrl('wlfp', lat, lon), 15000),
+    fetchJson(frpGfiUrl('wfsp', lat, lon), 15000),
+    fetchJson(pspUrl, 15000),
+    fetchJson(incUrl, 15000),
+  ]);
+  if (seq !== frpSeq || !frpEnabled || !frpPopup) return;   // stale: newer click or toggled off
+
+  frpPopup.setContent(hdr
+    + '<div class="frp-sec"><div class="frp-src">USGS Fire Danger · today</div>' + frpUsgsRows(wfpi, wlfp, wfsp) + '</div>'
+    + '<div class="frp-sec"><div class="frp-src">NIFC 7-Day Fire Potential · Day 1</div>' + frpPspRows(psp) + '</div>'
+    + '<div class="frp-sec"><div class="frp-src">NWS Fire Weather Alerts</div>' + frpAlertRows(lat, lon) + '</div>'
+    + '<div class="frp-sec"><div class="frp-src">Nearest Active Wildfire · NIFC</div>' + frpIncidentRow(inc, lat, lon) + '</div>'
+    + '<div class="frp-foot">USGS EROS · NIFC Predictive Services · NWS · NIFC/WFIGS — values as served, no composite score</div>');
+}
+
+function frpUsgsRows(wfpi, wlfp, wfsp) {
+  const px = r => (r.status === 'fulfilled' && r.value?.features?.length)
+    ? r.value.features[0].properties : null;
+  const w = px(wfpi);
+  if (wfpi.status === 'fulfilled' && !w)
+    return '<div class="frp-sub">Outside CONUS raster coverage (USGS fire-danger grids are CONUS-only)</div>';
+  const rows = [];
+  if (w && w.PALETTE_INDEX != null) {
+    const v = w.PALETTE_INDEX;
+    if (v <= 247) {
+      const band = FRP_WFPI_BANDS.find(b => v <= b.max);
+      rows.push(`<div class="frp-val">${frpChip(band.c)}Fire Potential Index (WFPI): ${v}`
+              + ` <span class="frp-sub">/ 247 · band ${band.label}</span></div>`);
+    } else {
+      rows.push(`<div class="frp-val">Not rated: ${esc(FRP_MASK[v] || 'No data')}</div>`
+              + '<div class="frp-sub">non-burnable or unmapped cell in the USGS grid</div>');
+    }
+  } else {
+    rows.push('<div class="frp-unavail">WFPI unavailable</div>');
+  }
+  // Mask guard: WLFP serves mask codes ×10 (water=2540) but WFSP serves them ×1
+  // (water=254, observed live at Lake Tahoe) — and a genuine probability is ≤100,
+  // so anything ≥248 is a mask under either scheme.
+  const l = px(wlfp);
+  if (l && l.GRAY_INDEX != null && l.GRAY_INDEX < 248)
+    rows.push(`<div class="frp-sub">Chance a large fire (≥500 ac) occurs: <b>${frpPct(l.GRAY_INDEX)}</b></div>`);
+  const s = px(wfsp);
+  if (s && s.GRAY_INDEX != null && s.GRAY_INDEX < 248)
+    rows.push(`<div class="frp-sub">Chance an existing fire spreads: <b>${frpPct(s.GRAY_INDEX)}</b></div>`);
+  return rows.join('');
+}
+
+function frpPspRows(psp) {
+  if (psp.status === 'rejected') return '<div class="frp-unavail">unavailable</div>';
+  const feats = psp.value?.features ?? [];
+  if (!feats.length) return '<div class="frp-sub">No outlook polygon at this point</div>';
+  // Risk polygons carry BOTH the significant-potential type and the dryness code (verified live).
+  // The service renderer paints risk areas regardless of isvalid — do NOT drop them on isvalid=0.
+  const risk = feats.find(f => FRP_PSP_TYPE[f.attributes?.type]);
+  const a = (risk || feats[0]).attributes || {};
+  const rows = [];
+  if (risk) {
+    const t = FRP_PSP_TYPE[risk.attributes.type];
+    rows.push(`<div class="frp-val frp-alert">${frpChip(t.c)}Significant Fire Potential: ${esc(t.label)}</div>`);
+  }
+  const dc = a.drynesscode;
+  rows.push(`<div class="frp-sub">${FRP_PSP_DRY_C[dc] ? frpChip(FRP_PSP_DRY_C[dc]) : ''}`
+          + `Fuel dryness: <b>${esc(FRP_PSP_DRY[dc] ?? 'No data')}</b>`
+          + (!risk && a.isvalid === 0 ? ' · not yet validated today (provisional)' : '')
+          + '</div>');
+  const where = [a.gacc, a.nat_code].filter(Boolean).map(esc).join(' · ');
+  const vd = a.timestampdate ? new Date(a.timestampdate) : null;
+  const vStr = vd && !isNaN(vd)
+    ? ' · valid ' + vd.toLocaleDateString('en-US', { month:'short', day:'numeric', timeZone:'UTC' }) : '';
+  if (where || vStr) rows.push(`<div class="frp-sub">${where}${vStr}</div>`);
+  return rows.join('');
+}
+
+function frpAlertRows(lat, lon) {
+  const ll = { lat: lat, lng: lon };
+  const hits = alerts.filter(a =>
+    (a.properties.event === 'Red Flag Warning' || a.properties.event === 'Fire Weather Watch') &&
+    ptInGeom(ll, geomCache[a.id]));
+  if (!hits.length) return '<div class="frp-sub">No Red Flag Warning or Fire Weather Watch here</div>';
+  return hits.map(a => {
+    const p = a.properties;
+    const d = p.ends || p.expires ? new Date(p.ends || p.expires) : null;
+    return `<div class="frp-val frp-alert">${esc(p.event)}</div>`
+         + (d && !isNaN(d) ? `<div class="frp-sub">until ${fmtDT(d)}</div>` : '');
+  }).join('');
+}
+
+function frpIncidentRow(inc, lat, lon) {
+  if (inc.status === 'rejected') return '<div class="frp-unavail">unavailable</div>';
+  const feats = (inc.value?.features ?? []).filter(f => f.geometry?.coordinates);
+  if (!feats.length) return '<div class="frp-sub">No active wildfires within 100 mi</div>';
+  let best = null, bestMi = Infinity;
+  for (const f of feats) {
+    const mi = frpMiles(lat, lon, f.geometry.coordinates[1], f.geometry.coordinates[0]);
+    if (mi < bestMi) { bestMi = mi; best = f; }
+  }
+  const p = best.properties;
+  const acres = p.DailyAcres ? Math.round(p.DailyAcres).toLocaleString() + ' ac' : 'size n/a';
+  const pct = p.PercentContained != null ? ` · ${p.PercentContained}% contained` : '';
+  return `<div class="frp-val">${esc(p.Name || 'Unnamed fire')}</div>`
+       + `<div class="frp-sub">${bestMi < 1 ? '&lt;1' : Math.round(bestMi)} mi `
+       + `${frpCompass(lat, lon, best.geometry.coordinates[1], best.geometry.coordinates[0])}`
+       + ` · ${acres}${pct}${p.POOState ? ' · ' + esc(p.POOState) : ''}</div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
