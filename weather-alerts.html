@@ -566,21 +566,23 @@ canvas.velocity-overlay{pointer-events:none!important}
 /* ── FIRE RISK PROBE (click-anywhere point report) ───────────────── */
 #map-wrap.frp-mode,#map-wrap.frp-mode .leaflet-container,
 #map-wrap.frp-mode .leaflet-interactive{cursor:crosshair !important}
-.frp-popup .leaflet-popup-content-wrapper{background:#0e1a2e;border:1px solid rgba(255,150,70,0.45);box-shadow:0 4px 18px rgba(0,0,0,0.7);border-radius:8px}
-.frp-popup .leaflet-popup-content{margin:10px 12px;line-height:1.45;min-width:230px}
-.frp-popup .leaflet-popup-tip{background:#0e1a2e}
-.frp-popup .leaflet-popup-close-button{color:#7aa0c0!important;font-size:16px!important}
-.frp-hdr{font-size:10px;font-weight:700;color:#ffb066;letter-spacing:1.1px;text-transform:uppercase}
-.frp-coords{font-size:9px;color:#8fa8c0;margin-bottom:2px}
-.frp-sec{margin-top:7px;padding-top:6px;border-top:1px solid rgba(120,160,200,0.18)}
-.frp-src{font-size:8.5px;color:#7a95b0;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px}
-.frp-val{font-size:11px;color:#e8f0f8;font-weight:600}
-.frp-sub{font-size:9.5px;color:#a8bcd0}
-.frp-alert{color:#ff7a55}
-.frp-chip{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px;border:1px solid rgba(255,255,255,0.25)}
-.frp-loading{font-size:10px;color:#9fb4c8;font-style:italic;margin-top:6px}
-.frp-unavail{font-size:10px;color:#8fa8c0;font-style:italic}
-.frp-foot{font-size:8px;color:#7a95b0;margin-top:8px;padding-top:5px;border-top:1px solid rgba(120,160,200,0.14)}
+#frp-card{position:absolute;top:12px;right:12px;width:312px;background:#0e1a2e;border:1px solid rgba(255,150,70,0.5);border-radius:9px;box-shadow:0 6px 24px rgba(0,0,0,0.75);z-index:1050;display:none;overflow:hidden}
+#frp-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:#132238;border-bottom:1px solid rgba(255,150,70,0.25);cursor:move;user-select:none}
+#frp-body{padding:9px 13px 11px;line-height:1.5;max-height:calc(100vh - 230px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a3060 transparent}
+#frp-close{background:none;border:none;color:#9fc0e0;font-size:15px;cursor:pointer;padding:0 2px;line-height:1}
+#frp-close:hover{color:#fff}
+.frp-hdr{font-size:11px;font-weight:700;color:#ffb066;letter-spacing:1.1px;text-transform:uppercase}
+.frp-coords{font-size:10px;color:#9db6cf;margin-top:1px}
+.frp-sec{margin-top:8px;padding-top:7px;border-top:1px solid rgba(120,160,200,0.22)}
+#frp-body .frp-sec:first-child{margin-top:0;padding-top:0;border-top:none}
+.frp-src{font-size:9.5px;font-weight:700;color:#8fb0d0;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px}
+.frp-val{font-size:12.5px;color:#f2f7fc;font-weight:600}
+.frp-sub{font-size:11px;color:#c2d3e4}
+.frp-alert{color:#ff8a60}
+.frp-chip{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;border:1px solid rgba(255,255,255,0.3)}
+.frp-loading{font-size:11px;color:#a8c0d8;font-style:italic}
+.frp-unavail{font-size:11px;color:#9db6cf;font-style:italic}
+.frp-foot{font-size:8.5px;color:#8aa6c2;margin-top:9px;padding-top:6px;border-top:1px solid rgba(120,160,200,0.16)}
 #ct-panel{position:fixed;top:55px;left:270px;width:330px;background:#0a1420;border:1px solid rgba(80,130,190,0.3);border-radius:10px;z-index:950;display:none;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.75)}
 #ct-header{padding:10px 13px;border-bottom:1px solid rgba(80,130,190,0.2);display:flex;justify-content:space-between;align-items:center;background:#0a1420;gap:8px;cursor:move;user-select:none}
 #ct-body{overflow-y:auto;max-height:calc(100vh - 115px);padding:12px 13px;scrollbar-width:thin;scrollbar-color:#1a3060 transparent}
@@ -1966,6 +1968,17 @@ canvas.velocity-overlay{pointer-events:none!important}
       </div>
     </div>
 
+    <div id="frp-card">
+      <div id="frp-head">
+        <div>
+          <div class="frp-hdr">Fire Risk at Point</div>
+          <div class="frp-coords" id="frp-coords"></div>
+        </div>
+        <button id="frp-close" onclick="frpCloseCard()" title="Close">✕</button>
+      </div>
+      <div id="frp-body"></div>
+    </div>
+
     <div id="legend">
       <button id="legend-toggle" onclick="toggleLegend()">–</button>
       <h3>Alert Type</h3>
@@ -2609,7 +2622,7 @@ let fireIncidentsEnabled = false, fireIncidentsGroup = null, fireIncidentsLoaded
 let firePerimEnabled = false, firePerimGroup = null, firePerimLoaded = false;
 let pspGroup = null, pspEnabled = false, pspDay = 1;
 let dailyPerimGroup = null, dailyPerimEnabled = false, dailyPerimLoaded = false;
-let frpEnabled = false, frpRect = null, frpPopup = null, frpSeq = 0;
+let frpEnabled = false, frpRect = null, frpMarker = null, frpSeq = 0;
 let smokeLayer = null, smokeEnabled = false, smokeOpacity = 0.80;
 
 const STAGE_CFG = {
@@ -3792,7 +3805,7 @@ async function toggleLayer(name, on) {
       toast('Fire risk probe on — click anywhere on the map', '#ff8800');
     } else {
       if (frpRect) frpRect.remove();
-      if (frpPopup) { map.closePopup(frpPopup); frpPopup = null; }
+      frpCloseCard();
       document.getElementById('fire-probe-note').textContent = 'off';
     }
   } else if (name === 'smoke') {
@@ -7344,14 +7357,20 @@ function onFireProbeClick(e) {
   probeFireRisk(e.latlng.lat, e.latlng.lng);
 }
 
+function frpCloseCard() {
+  document.getElementById('frp-card').style.display = 'none';
+  if (frpMarker) { frpMarker.remove(); frpMarker = null; }
+}
+
 async function probeFireRisk(lat, lon) {
   const seq = ++frpSeq;
-  const hdr = '<div class="frp-hdr">Fire Risk at Point</div>'
-            + `<div class="frp-coords">${lat.toFixed(4)}, ${lon.toFixed(4)}</div>`;
-  frpPopup = L.popup({ className: 'frp-popup', maxWidth: 330 })
-    .setLatLng([lat, lon])
-    .setContent(hdr + '<div class="frp-loading">Checking USGS · NIFC · NWS…</div>')
-    .openOn(map);
+  // Draggable card (never hidden by map controls) + ring marker at the probed point.
+  document.getElementById('frp-coords').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  document.getElementById('frp-body').innerHTML = '<div class="frp-loading">Checking USGS · NIFC · NWS…</div>';
+  document.getElementById('frp-card').style.display = 'block';
+  if (frpMarker) frpMarker.remove();
+  frpMarker = L.circleMarker([lat, lon], { pane: 'frpPane', radius: 7, color: '#ff8800',
+    weight: 2.5, fillColor: '#ff8800', fillOpacity: 0.25, interactive: false }).addTo(map);
 
   // PSP layer 0 = Day 1 of the 7-day significant fire potential outlook.
   const pspUrl = `${PSP_OUTLOOK_BASE}/0/query`
@@ -7374,9 +7393,9 @@ async function probeFireRisk(lat, lon) {
     fetchJson(pspUrl, 15000),
     fetchJson(incUrl, 15000),
   ]);
-  if (seq !== frpSeq || !frpEnabled || !frpPopup) return;   // stale: newer click or toggled off
+  if (seq !== frpSeq || !frpEnabled) return;   // stale: newer click or toggled off
 
-  frpPopup.setContent(hdr
+  document.getElementById('frp-body').innerHTML = (''
     + '<div class="frp-sec"><div class="frp-src">USGS Fire Danger · today</div>' + frpUsgsRows(wfpi, wlfp, wfsp) + '</div>'
     + '<div class="frp-sec"><div class="frp-src">NIFC 7-Day Fire Potential · Day 1</div>' + frpPspRows(psp) + '</div>'
     + '<div class="frp-sec"><div class="frp-src">NWS Fire Weather Alerts</div>' + frpAlertRows(lat, lon) + '</div>'
@@ -8408,7 +8427,8 @@ function initPublicMode() {
 
 window.addEventListener('load', () => {
   ['legend','spc-legend','hrrr-legend','sat-legend','radar-legend',
-   'fwx-legend','usgs-legend','usgsflow-legend','mrms-legend','fema-legend','expt-legend','expt-speed-panel']
+   'fwx-legend','usgs-legend','usgsflow-legend','mrms-legend','fema-legend','expt-legend','expt-speed-panel',
+   'frp-card']
   .forEach(makeDraggable);
   if (!MCP_LOCAL) initPublicMode();
 });
