@@ -7,7 +7,23 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
-## Latest session — 2026-07-18 (later): cloud backend live · probe card redesign · diagnostics
+## Latest session — 2026-07-19: badge scrub + MCP bug backlog closed · PROJECT PARKED
+Project parked for a while per user; resume anchor = `PICKUP_TOMORROW.md` (repo root, local).
+(1) Fire Winds badge scrub (`7697325`): last two "niche" badges relabeled per the 2026-06-22
+niche re-quote directive — camp_2018 → "WN Corrects", kincade_ign_2019 → "WN edge" (matching
+each event's status class taxonomy). Browser-verified on :8001 before push.
+(2) MCP server bug backlog CLOSED (`5b0aeb0`, `mcp-server/index.js`): all remaining
+2026-05-28 QA-sweep bugs fixed — US-coverage gate (CONUS/AK/HI/PR/VI/GU) on the three
+briefing tools + drought; geocoder honors explicit country suffixes and PR/VI/GU territory
+codes, and fails honestly on wrong-state matches instead of returning a same-named town
+elsewhere; marine inland guard; all-hazards severity taxonomy unified + duplicate line
+removed; river summary Unknown-gauge noise collapsed; friendly validation (no raw Zod JSON);
+assorted cosmetics (10-yr range label, rain-recency grammar, County dedupe, source labels,
+AirNow-vs-model note). Verified by driving the real server over stdio: 17/17 bug repros +
+8/8 geocoder regressions pass. Sandbox note: re-verification requires Claude Code (spawns
+the node MCP server locally).
+
+## Previous session — 2026-07-18 (later): cloud backend live · probe card redesign · diagnostics
 (1) Cloudflare Worker (`stormwatch-cloud/`) deployed to
 https://stormwatch.stormwatch-live.workers.dev — /health + /fire-agent verified byte-equivalent
 to the local :3456 backend; root URL now serves a friendly landing page. Public site NOT yet

@@ -4,6 +4,16 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-07-19 — PROJECT PARKED (badge scrub + MCP bug backlog closed):** Parked for a
+> while per user; resume list lives in `PICKUP_TOMORROW.md` (repo root, local-only).
+> (1) Last two "niche" tab badges scrubbed per the 2026-06-22 directive (`7697325`):
+> camp_2018 → "WN Corrects", kincade_ign_2019 → "WN edge"; browser-verified.
+> (2) MCP server QA-sweep backlog CLOSED (`5b0aeb0`): all remaining bugs fixed (US-coverage
+> gate, country-suffix + territory-aware geocoder with honest wrong-state failure, marine
+> inland guard, unified alert taxonomy, friendly validation, cosmetics). Verified over
+> stdio: 17/17 bug repros + 8/8 geocoder regressions. Restart Claude Desktop to load.
+> At park: site LIVE + healthy (cloud monitor 20/20), all work pushed, monitors running.
+
 > **2026-07-18 update 2 — CLOUD BACKEND LIVE + DIAGNOSTICS + PROBE CARD REDESIGN:**
 > (1) **Cloudflare Worker deployed**: user made free CF account; subdomain `stormwatch-live`;
 > `stormwatch-cloud/` deployed → https://stormwatch.stormwatch-live.workers.dev (/health,
