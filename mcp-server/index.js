@@ -66,6 +66,22 @@ const US_STATES = {
 };
 const STATE_NAME_TO_ABBREV = Object.fromEntries(Object.entries(US_STATES).map(([k, v]) => [v.toLowerCase(), k]));
 
+// US coverage check (BUG-007/012/013/017): NWS/SPC/USDM/USGS products cover the
+// US only. Bounding boxes for CONUS + AK + HI + PR/VI + GU; generous on purpose —
+// this gates messaging, not data access.
+function isUSCoverage(lat, lon) {
+  return (lat >= 24.0 && lat <= 49.8 && lon >= -125.5 && lon <= -66.5) || // CONUS
+         (lat >= 51.0 && lat <= 72.0 && lon >= -180.0 && lon <= -129.0) || // Alaska
+         (lat >= 51.0 && lat <= 56.0 && lon >= 172.0  && lon <= 180.0)  || // W Aleutians
+         (lat >= 18.4 && lat <= 22.5 && lon >= -161.0 && lon <= -154.0) || // Hawaii
+         (lat >= 17.4 && lat <= 18.7 && lon >= -68.0  && lon <= -64.3)  || // PR / USVI
+         (lat >= 13.1 && lat <= 13.8 && lon >= 144.5  && lon <= 145.1);    // Guam
+}
+const NON_US_MSG = (placeName) =>
+  `${placeName} appears to be outside US coverage. This briefing is built on US-only sources ` +
+  `(NWS alerts, SPC outlooks, USGS/NOAA river gauges), so a report here would be misleading. ` +
+  `For non-US locations try get_point_forecast, get_marine_weather, or get_air_quality, which use global models.`;
+
 // Geocoding helper — handles city names, "City, ST", "City ST", "City StateName" formats, and raw coordinates
 async function geocode(location) {
   // Accept raw coordinates: "34.74,-98.69" or "34.74N 98.69W" or "34.74 -98.69"
@@ -120,16 +136,21 @@ async function geocode(location) {
     }
   }
 
-  // If we identified a state, fetch multiple results and filter by admin1
+  // If we identified a state, fetch multiple results and filter by admin1.
+  // US territories (PR/VI/GU) come back from the geocoder with their own
+  // country_code rather than country_code=US + admin1 — match on that instead.
   if (stateFilter && cityQuery) {
+    const stateAbbrev = Object.keys(US_STATES).find(k => US_STATES[k].toLowerCase() === stateFilter.toLowerCase());
+    const isTerritory = ['PR', 'VI', 'GU'].includes(stateAbbrev);
+    const stateMatchFn = r => isTerritory
+      ? r.country_code === stateAbbrev
+      : (r.country_code === 'US' && r.admin1?.toLowerCase() === stateFilter.toLowerCase());
     // Pass 1: search just the city name, filter by state
     const url1 = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityQuery)}&count=10&language=en&format=json`;
     const res1 = await fetch(url1);
     if (res1.ok) {
       const data1 = await res1.json();
-      const match = (data1.results ?? []).find(r =>
-        r.country_code === 'US' && r.admin1?.toLowerCase() === stateFilter.toLowerCase()
-      );
+      const match = (data1.results ?? []).find(stateMatchFn);
       if (match) return { lat: match.latitude, lon: match.longitude, name: `${match.name}, ${match.admin1}` };
     }
 
@@ -139,44 +160,51 @@ async function geocode(location) {
     if (res2.ok) {
       const data2 = await res2.json();
       const results2 = data2.results ?? [];
-      const stateMatch = results2.find(r =>
-        r.country_code === 'US' && r.admin1?.toLowerCase() === stateFilter.toLowerCase()
-      );
+      const stateMatch = results2.find(stateMatchFn);
       if (stateMatch) return { lat: stateMatch.latitude, lon: stateMatch.longitude, name: `${stateMatch.name}, ${stateMatch.admin1}` };
       // At minimum keep it in the US rather than falling to a foreign result
-      const usMatch = results2.find(r => r.country_code === 'US');
+      const usMatch = results2.find(r => r.country_code === 'US' || (isTerritory && r.country_code === stateAbbrev));
       if (usMatch) return { lat: usMatch.latitude, lon: usMatch.longitude, name: `${usMatch.name}, ${usMatch.admin1 ?? 'US'}` };
     }
 
-    // Pass 3: city-only search, take any US result
-    const res3 = await fetch(url1);
-    if (res3.ok) {
-      const data3 = await res3.json();
-      const usMatch = (data3.results ?? []).find(r => r.country_code === 'US');
-      if (usMatch) return { lat: usMatch.latitude, lon: usMatch.longitude, name: `${usMatch.name}, ${usMatch.admin1 ?? 'US'}` };
-    }
+    // No match in the requested state — fail honestly rather than silently
+    // returning a same-named place in another state (BUG-001 companion fix).
+    throw new Error(`Could not find "${cityQuery}" in ${stateFilter}. The geocoder may not know this feature by that name — try the nearest town (e.g. "Colorado Springs CO") or decimal coordinates like "38.84,-105.04".`);
   }
 
-  // Fallback: progressive candidate search — prefer US results at each step
-  const candidates = [trimmed];
+  // Fallback: progressive candidate search — prefer US results at each step,
+  // UNLESS the stripped suffix names a country ("London UK", "Paris France"):
+  // then honor the country instead of hijacking to a same-named US town.
+  const candidates = [{ q: trimmed, suffix: null }];
+  const commaSuffix = trimmed.match(/,\s*(.+)$/)?.[1] ?? null;
   const noCommaSuffix = trimmed.replace(/,\s*.+$/, '').trim();
-  if (noCommaSuffix && noCommaSuffix !== trimmed) candidates.push(noCommaSuffix);
-  if (words.length >= 2) candidates.push(words.slice(0, -1).join(' '));
-  if (words.length >= 3) candidates.push(words.slice(0, -2).join(' '));
+  if (noCommaSuffix && noCommaSuffix !== trimmed) candidates.push({ q: noCommaSuffix, suffix: commaSuffix });
+  if (words.length >= 2) candidates.push({ q: words.slice(0, -1).join(' '), suffix: words[words.length - 1] });
+  if (words.length >= 3) candidates.push({ q: words.slice(0, -2).join(' '), suffix: words.slice(-2).join(' ') });
 
   const seen = new Set();
-  const tries = candidates.filter(c => c.length > 0 && !seen.has(c) && seen.add(c));
+  const tries = candidates.filter(c => c.q.length > 0 && !seen.has(c.q) && seen.add(c.q));
 
-  for (const query of tries) {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json`;
+  // A foreign result with no explicit country hint is a last resort — a fuzzy match
+  // on an early candidate must not shadow a solid match on a later one.
+  let deferred = null;
+  for (const { q, suffix } of tries) {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=10&language=en&format=json`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Geocoding failed: ${res.status}`);
     const data = await res.json();
     const results = data.results ?? [];
-    // Prefer US result; fall back to first result only if nothing US found
-    const r = results.find(r => r.country_code === 'US') ?? results[0];
+    // If the stripped suffix matches a result's country name or ISO code, that wins
+    const sfx = suffix?.toLowerCase().replace(/\./g, '').trim() ?? null;
+    const sfxCode = sfx === 'uk' ? 'gb' : sfx === 'england' || sfx === 'scotland' || sfx === 'wales' ? 'gb' : sfx;
+    const countryHit = sfx ? results.find(r =>
+      r.country?.toLowerCase() === sfx || r.country_code?.toLowerCase() === sfxCode
+    ) : null;
+    const r = countryHit ?? results.find(r => r.country_code === 'US');
     if (r) return { lat: r.latitude, lon: r.longitude, name: `${r.name}, ${r.admin1 ?? r.country_code}` };
+    if (!deferred && results[0]) deferred = results[0];
   }
+  if (deferred) return { lat: deferred.latitude, lon: deferred.longitude, name: `${deferred.name}, ${deferred.admin1 ?? deferred.country_code}` };
 
   throw new Error(`Location not found: "${location}". Try adding the state name, e.g. "Breckenridge Colorado", or use decimal coordinates like "39.49,-106.04".`);
 }
@@ -206,7 +234,7 @@ server.tool(
   "get_active_alerts",
   "Get currently active NWS weather alerts for a US state",
   {
-    state: z.string().length(2).toUpperCase().describe("Two-letter US state code, e.g. OK, TX, FL"),
+    state: z.string().describe("Two-letter US state code, e.g. OK, TX, FL (case-insensitive — 'ca' works too)"),
   },
   async ({ state }) => {
     const upperState = state.toUpperCase();
@@ -361,7 +389,7 @@ server.tool(
     return {
       content: [{
         type: "text",
-        text: `${hours}-hour forecast for ${placeName}:\n\n${lines.join("\n")}`,
+        text: `${hours}-hour forecast for ${placeName}:\n\n${lines.join("\n")}\n\nSource: Open-Meteo (best_match model)`,
       }],
     };
   }
@@ -424,6 +452,9 @@ server.tool(
     state: z.string().optional().describe("Optional two-letter state code to filter (e.g. TX, OK). Leave blank for all US reports."),
   },
   async ({ state }) => {
+    if (state && !US_STATES[state.toUpperCase()] && !['PR','VI','GU','DC'].includes(state.toUpperCase())) {
+      return { content: [{ type: "text", text: `"${state}" is not a recognized US state or territory code. Use a two-letter abbreviation like TX, OK, KS — or leave blank for all US reports.` }] };
+    }
     const url = "https://www.spc.noaa.gov/climo/reports/today.csv";
     const res = await fetch(url);
     if (!res.ok) throw new Error(`SPC reports error: ${res.status}`);
@@ -493,6 +524,7 @@ server.tool(
       `Air Quality — ${placeName}:`,
       `${category.emoji} US AQI: ${currentAqi} — ${category.label}`,
     ];
+    if (!isUSCoverage(lat, lon)) lines.push(`Note: this location is outside the US — values are Open-Meteo global model estimates (AQI shown on the US EPA scale), not monitor readings.`);
     if (h.pm2_5[startIdx] != null) lines.push(`PM2.5: ${h.pm2_5[startIdx].toFixed(1)} µg/m³`);
     if (h.pm10[startIdx] != null) lines.push(`PM10: ${h.pm10[startIdx].toFixed(1)} µg/m³`);
     if (h.ozone[startIdx] != null) lines.push(`Ozone: ${h.ozone[startIdx].toFixed(1)} µg/m³`);
@@ -736,6 +768,7 @@ server.tool(
   },
   async ({ location }) => {
     const { lat, lon, name: placeName } = await geocode(location);
+    if (!isUSCoverage(lat, lon)) return { content: [{ type: "text", text: NON_US_MSG(placeName) }] };
 
     let stateCode = null;
     try {
@@ -761,8 +794,8 @@ server.tool(
       const severe = alerts.filter(f => ["Extreme","Severe"].includes(f.properties?.severity));
       const others = alerts.filter(f => !["Extreme","Severe"].includes(f.properties?.severity));
       let alertText = `\nACTIVE ALERTS (${alerts.length} for ${stateCode}):`;
-      severe.forEach(f => alertText += `\n[SEVERE] ${f.properties.event} — ${f.properties.areaDesc}`);
-      others.slice(0, 3).forEach(f => alertText += `\n[WATCH/ADV] ${f.properties.event} — ${f.properties.areaDesc}`);
+      severe.forEach(f => alertText += `\n[${(f.properties?.severity ?? "SEVERE").toUpperCase()}] ${f.properties.event} — ${f.properties.areaDesc}`);
+      others.slice(0, 3).forEach(f => alertText += `\n[${(f.properties?.severity ?? "UNKNOWN").toUpperCase()}] ${f.properties.event} — ${f.properties.areaDesc}`);
       if (others.length > 3) alertText += `\n   ...and ${others.length - 3} more`;
       sections.push(alertText);
     } else {
@@ -792,7 +825,7 @@ server.tool(
         const precip = h.precipitation[i] > 0 ? ` | ${h.precipitation[i].toFixed(2)}"` : "";
         flines.push(`  ${time}: ${temp}, ${cond}, Wind ${wind}${precip}`);
       }
-      sections.push(`\nNEXT 12 HOURS:\n${flines.join("\n")}`);
+      sections.push(`\nNEXT 12 HOURS (Open-Meteo best_match — same source as get_point_forecast):\n${flines.join("\n")}`);
 
       // Trend analysis: compare first 6h vs next 6h
       const h1temps  = h.temperature_2m.slice(startIdx, startIdx + 6).filter(v => v != null);
@@ -857,11 +890,17 @@ server.tool(
     for (const key of STATUS_ORDER) {
       const group = byStatus[key];
       if (!group?.length) continue;
+      // Unknown-status gauges are noise (85% of some regions) — count them, don't list them (BUG-018)
+      if (key === "unknown") {
+        lines.push(`[Unknown] ${group.length} gauge${group.length === 1 ? "" : "s"} reporting no flood status (not listed)`);
+        continue;
+      }
       const label = STATUS_EMOJI[key];
       lines.push(`[${label}] (${group.length}):`);
       group.slice(0, 5).forEach(f => {
         const a = f.attributes;
-        lines.push(`  ${a.location ?? a.gaugelid} — ${a.waterbody ?? "?"} — ${a.observed ?? "?"} ${a.units ?? "ft"} (${f.dist.toFixed(0)} km away)`);
+        const name = (a.location ?? "").trim() || a.gaugelid || "Unnamed gauge";
+        lines.push(`  ${name} — ${a.waterbody ?? "?"} — ${a.observed ?? "?"} ${a.units ?? "ft"} (${f.dist.toFixed(0)} km away)`);
       });
       if (group.length > 5) lines.push(`  ...and ${group.length - 5} more`);
     }
@@ -880,6 +919,7 @@ server.tool(
   },
   async ({ location }) => {
     const { lat, lon, name: placeName } = await geocode(location);
+    if (!isUSCoverage(lat, lon)) return { content: [{ type: "text", text: NON_US_MSG(placeName) }] };
 
     let stateCode = null;
     try {
@@ -921,23 +961,31 @@ server.tool(
       const temp = h.temperature_2m[idx] != null ? `${Math.round(h.temperature_2m[idx])}°F` : "?";
       const wind = h.windspeed_10m[idx] != null ? `${Math.round(h.windspeed_10m[idx])} mph` : "?";
       const cond = WMO[h.weathercode[idx]] ?? "Unknown";
-      sections.push(`\nCURRENT CONDITIONS: ${temp}, ${cond}, Wind ${wind}`);
+      sections.push(`\nCURRENT CONDITIONS (Open-Meteo): ${temp}, ${cond}, Wind ${wind}`);
     }
 
-    // NWS ALERTS
+    // NWS ALERTS — same severity taxonomy as get_active_alerts / get_watch_warning_summary
+    // (BUG-016); when there are no alerts the priority lead carries the message (BUG-021).
+    const fmtAreas = (areaDesc) => {
+      const areas = (areaDesc ?? "").split(";").map(s => s.trim()).filter(Boolean);
+      if (!areas.length) return "";
+      return ` — ${areas[0]}${areas.length > 1 ? ` (+${areas.length - 1} more areas)` : ""}`;
+    };
     if (alertsRes.status === "fulfilled" && alertsRes.value?.features?.length) {
       const alerts = alertsRes.value.features;
-      const extreme = alerts.filter(f => f.properties?.severity === "Extreme");
-      const severe = alerts.filter(f => f.properties?.severity === "Severe");
-      const other = alerts.filter(f => !["Extreme","Severe"].includes(f.properties?.severity));
+      const SEV_ORDER = ["Extreme", "Severe", "Moderate", "Minor", "Unknown"];
       let txt = `\nACTIVE ALERTS — ${stateCode} (${alerts.length} total):`;
-      extreme.forEach(f => txt += `\n[EXTREME] ${f.properties.event} — ${f.properties.areaDesc?.split(";")[0]}`);
-      severe.forEach(f => txt += `\n[SEVERE] ${f.properties.event} — ${f.properties.areaDesc?.split(";")[0]}`);
-      other.slice(0, 4).forEach(f => txt += `\n[WATCH/ADV] ${f.properties.event}`);
-      if (other.length > 4) txt += `\n  (+${other.length - 4} more)`;
+      let othersShown = 0, othersSkipped = 0;
+      for (const sev of SEV_ORDER) {
+        for (const f of alerts.filter(a => (a.properties?.severity ?? "Unknown") === sev)) {
+          const major = sev === "Extreme" || sev === "Severe";
+          if (!major && othersShown >= 4) { othersSkipped++; continue; }
+          txt += `\n[${sev.toUpperCase()}] ${f.properties.event}${fmtAreas(f.properties.areaDesc)}`;
+          if (!major) othersShown++;
+        }
+      }
+      if (othersSkipped) txt += `\n  (+${othersSkipped} more)`;
       sections.push(txt);
-    } else {
-      sections.push(`\nALERTS: No active NWS alerts for ${stateCode ?? "this area"}.`);
     }
 
     // SPC SEVERE
@@ -1244,7 +1292,7 @@ server.tool(
         const dryDays   = precip.filter(v => v < 0.01).length;
         const rev       = [...precip].reverse();
         const sinceRain = rev.findIndex(v => v >= 0.10);
-        const daysLabel = sinceRain === -1 ? "90+" : sinceRain === 0 ? "today" : String(sinceRain);
+        const sinceRainLabel = sinceRain === -1 ? "90+ days" : sinceRain === 0 ? "today" : `${sinceRain} day${sinceRain === 1 ? "" : "s"} ago`;
         const avgMaxT   = maxTemps.length ? maxTemps.reduce((a, b) => a + b, 0) / maxTemps.length : null;
         const totalET0  = et0.length ? et0.reduce((a, b) => a + b, 0) : null;
         const deficit   = totalET0 != null ? (totalET0 - total90).toFixed(1) : null;
@@ -1253,7 +1301,7 @@ server.tool(
         lines.push(`  Total:              ${total90.toFixed(2)}"`);
         lines.push(`  Last 30 days:       ${total30.toFixed(2)}"`);
         lines.push(`  Dry days (<0.01"):  ${dryDays} of ${precip.length}`);
-        lines.push(`  Since 0.10" rain:   ${daysLabel} day${daysLabel !== "today" && daysLabel !== "90+" ? "s" : ""}`);
+        lines.push(`  Last 0.10" rain:    ${sinceRainLabel}`);
         if (avgMaxT != null) lines.push(`  Avg high temp:      ${avgMaxT.toFixed(0)}°F`);
         if (deficit != null) lines.push(`  Moisture deficit:   ${deficit}" (ET minus precip)`);
 
@@ -1339,6 +1387,9 @@ server.tool(
   },
   async ({ location }) => {
     const { lat, lon, name: placeName } = await geocode(location);
+    if (!isUSCoverage(lat, lon)) {
+      return { content: [{ type: "text", text: `${placeName} appears to be outside the US. The US Drought Monitor covers US states and territories only — no drought data is available for this location. See https://droughtmonitor.unl.edu for coverage.` }] };
+    }
 
     // FCC census block geocoder → county FIPS, county name, state abbreviation + FIPS
     let countyFips = null, countyName = null, stateCode = null, stateFips = null;
@@ -1401,7 +1452,8 @@ server.tool(
         if (row) {
           const md = row.MapDate ?? '';
           const mapDate = md.length === 8 ? `${md.slice(0,4)}-${md.slice(4,6)}-${md.slice(6,8)}` : "current";
-          lines.push(`\n${countyName} County, ${stateCode ?? ""} (week ending ${mapDate}):`);
+          const countyLabel = /\b(county|parish|borough|municipio|census area|city|island)\b/i.test(countyName) ? countyName : `${countyName} County`;
+          lines.push(`\n${countyLabel}, ${stateCode ?? ""} (week ending ${mapDate}):`);
           const none = parseFloat(row.None ?? 0);
           if (none > 0) lines.push(`  No drought:        ${none.toFixed(1)}%`);
           for (const { key, label, emoji } of CATS) {
@@ -1704,6 +1756,11 @@ server.tool(
     }
 
     const h = marineRes.value.hourly;
+    // Inland/no-marine-cell guard (BUG-012): the marine model returns the arrays
+    // but every value is null for points with no ocean/Great Lakes coverage.
+    if (h.wave_height.every(v => v == null)) {
+      return { content: [{ type: "text", text: `No marine data for ${placeName} — this point is inland (no wave model coverage). Marine forecasts cover US coastal waters, the Great Lakes, and open ocean; try a coastal city or offshore coordinates like "28.5,-88.5".` }] };
+    }
     const w = windRes.status === "fulfilled" ? windRes.value.hourly : null;
     const now = new Date();
     const startIdx = Math.max(0, h.time.findIndex(t => new Date(t) >= now));
@@ -2000,7 +2057,7 @@ server.tool(
 
         lines.push(`\n10-YEAR AVERAGE FOR ${mm}/${dd} (2015–2024):`);
         lines.push(`  Avg high: ${avgHigh}°F  |  Avg low: ${avgLow ?? "?"}°F`);
-        lines.push(`  Record range: ${minHigh}°F – ${maxHigh}°F (for this date)`);
+        lines.push(`  10-yr high range: ${minHigh}°F – ${maxHigh}°F (for this date, 2015–2024 — not all-time records)`);
         if (avgPrecip != null) lines.push(`  Avg precip: ${avgPrecip.toFixed(2)}" (daily average)`);
 
         if (todayHigh != null) {
@@ -2028,9 +2085,12 @@ server.tool(
   "get_multi_location_comparison",
   "Compare current weather conditions side-by-side for 2–5 locations — temperature, wind, humidity, and sky conditions at a glance. Great for travel planning, chasing decisions, regional storm situational awareness, and 'where should I go?' questions.",
   {
-    locations: z.array(z.string()).min(2).max(5).describe("2–5 city names or coordinates, e.g. ['Oklahoma City', 'Dallas TX', 'Kansas City MO']"),
+    locations: z.array(z.string()).describe("2–5 city names or coordinates, e.g. ['Oklahoma City', 'Dallas TX', 'Kansas City MO']"),
   },
   async ({ locations }) => {
+    if (!Array.isArray(locations) || locations.length < 2 || locations.length > 5) {
+      return { content: [{ type: "text", text: `Please provide between 2 and 5 locations to compare (received ${Array.isArray(locations) ? locations.length : 0}).` }] };
+    }
     const geocoded = await Promise.allSettled(locations.map(geocode));
     const valid = geocoded
       .map((r, i) => r.status === "fulfilled" ? { ...r.value, orig: locations[i] } : null)
@@ -2099,10 +2159,13 @@ server.tool(
   "get_watch_warning_summary",
   "Get a prioritized, organized summary of all active NWS watches, warnings, and advisories for a US state — grouped by severity (Extreme → Severe → Moderate → Minor) with counts and affected areas. Cleaner situational awareness than get_active_alerts for high-alert days.",
   {
-    state: z.string().length(2).describe("Two-letter US state code, e.g. TX, OK, FL, CA"),
+    state: z.string().describe("Two-letter US state code, e.g. TX, OK, FL, CA (case-insensitive)"),
   },
   async ({ state }) => {
     const st = state.toUpperCase();
+    if (!US_STATES[st] && !['PR','VI','GU','DC'].includes(st)) {
+      return { content: [{ type: "text", text: `"${state}" is not a recognized US state or territory code. Use a two-letter abbreviation like TX, CA, FL, MT, or PR.` }] };
+    }
     const res = await fetch(`https://api.weather.gov/alerts/active?area=${st}&status=actual`, { headers: NWS_HEADERS });
     if (!res.ok) throw new Error(`NWS API error: ${res.status}`);
     const data = await res.json();
@@ -2290,6 +2353,7 @@ server.tool(
   },
   async ({ location }) => {
     const { lat, lon, name: placeName } = await geocode(location);
+    if (!isUSCoverage(lat, lon)) return { content: [{ type: "text", text: NON_US_MSG(placeName) }] };
 
     let stateCode = null;
     try {
@@ -2730,6 +2794,7 @@ server.tool(
 
     // ── AirNow surface observations ──
     let airnowResult = "unavailable";
+    let airnowNearestAqi = null;
     if (airnowRes.status === "fulfilled" && airnowRes.value) {
       const stations = [];
       for (const line of airnowRes.value.split(/\r?\n/)) {
@@ -2750,6 +2815,7 @@ server.tool(
       } else {
         const nearest = stations[0];
         const worst = stations.reduce((a, b) => b.aqi > a.aqi ? b : a);
+        airnowNearestAqi = nearest.aqi;
         airnowResult = `${nearest.cat.emoji} Nearest (${nearest.city}, ${nearest.state}, ${nearest.dist} mi): AQI ${nearest.aqi} — ${nearest.cat.label}`;
         if (worst.city !== nearest.city) {
           airnowResult += `\n   ${worst.cat.emoji} Worst nearby (${worst.city}, ${worst.state}): AQI ${worst.aqi} — ${worst.cat.label}`;
@@ -2782,6 +2848,16 @@ server.tool(
       }
     }
     lines.push(`\n🌐 Open-Meteo Model:\n   ${modelResult}`);
+
+    // Surface monitor vs model can legitimately disagree — say so when they do (BUG-015)
+    {
+      const modelAqiNow = (aqiRes.status === "fulfilled" && aqiRes.value?.hourly)
+        ? aqiRes.value.hourly.us_aqi[Math.max(0, aqiRes.value.hourly.time.findIndex(t => new Date(t) >= new Date()))]
+        : null;
+      if (airnowNearestAqi != null && modelAqiNow != null && Math.abs(airnowNearestAqi - modelAqiNow) >= 25) {
+        lines.push(`\n   ℹ️  AirNow (measured at a surface monitor) and the Open-Meteo model disagree here — trust the monitor reading for current conditions.`);
+      }
+    }
 
     // ── Health guidance ──
     const worstAqi = (() => {
