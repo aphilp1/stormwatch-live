@@ -7,6 +7,22 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
+## Latest session addendum — 2026-07-25 (later): Fire Perimeters fixes + full fire-layer sweep
+User re-reported Wildland Fire layers failing. Additional fixes (all pushed + Pages-verified):
+(1) `eff81cc` — Fire Perimeters gets the same auto-retry 5×/70 s + single-flight + retry-reset
+as Fresh Perimeters. (2) `8688482` — **Fire Perimeters payload was 8+ MB full-res geometry
+(13-decimal coords) and froze the tab for MINUTES on successful loads**; added
+maxAllowableOffset=0.0001 + geometryPrecision=5 (same ~10 m simplification the daily layer
+had); verified live: 480 perimeters render in seconds, no freeze. (3) `a7d0fe6` — daily-perims
+outFields trimmed from * to the 24 fields the card/tooltip read (schema-validated; NB daily
+service names it attr_IncidentManagementOrg, NOT ...Organization — that card row never
+populated on the daily layer). Live click-through sweep during NIFC saturation: Active
+Incidents 659 ✓, Fire Perimeters 480 ✓, VIIRS 1000 ✓, Red Flag 20 ✓, FWW none-active ✓
+(true), 7-Day PSP 29 areas ✓, SPC D1 4 zones ✓, NAQFC smoke ✓, KBDI ✓; Fresh Perimeters
+rode retries against continuous 429s (evening peak — NIFC over quota for hours). PROPOSED
+(not built, needs user OK): git-scraping snapshot fallback Action so perimeters survive NIFC
+outages with an age-labeled cached copy.
+
 ## Latest session — 2026-07-25: NIFC/ArcGIS 429 quota outage made honest + auto-retry
 User report: "Fresh Perimeters (72 h)" showed nothing on the live site. Root cause is
 EXTERNAL: NIFC's ArcGIS Online org is exceeding its shared request-unit quota

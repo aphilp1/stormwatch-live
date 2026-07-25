@@ -4,6 +4,14 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-07-25 later — FIRE PERIMETERS 8 MB PAYLOAD + RETRY ROLLOUT:** Fire Perimeters
+> layer froze the tab minutes per successful load (8+ MB full-res geometry) → ~10 m
+> simplification added (`8688482`), 480 perimeters now render in seconds (live-verified).
+> Fire Perimeters also got the auto-retry/single-flight treatment (`eff81cc`); daily-perims
+> outFields trimmed to the 24 read fields (`a7d0fe6`, schema-validated). Full live sweep:
+> all Wildland Fire layers ✓ except Fresh Perimeters, which honestly retried against NIFC's
+> hours-long evening saturation. Proposed next (needs OK): snapshot-fallback Action.
+>
 > **2026-07-25 — NIFC 429 QUOTA OUTAGE MADE HONEST (user-reported):** "Fresh Perimeters
 > (72 h)" empty on live site. External cause: NIFC ArcGIS Online org over its shared
 > 57,600 request-units/min quota (peak season, all consumers nationwide); 429 arrives inside
