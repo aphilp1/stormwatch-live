@@ -2619,7 +2619,7 @@ let mrmsQpeLayer = null, mrmsQpeEnabled = false, mrmsQpeOpacity = 0.70;
 let femaLayer = null, femaEnabled = false, femaOpacity = 0.85;
 let nhdGroup = null, nhdEnabled = false, nhdOpacity = 0.75, nhdLoadTimer = null;
 let fireIncidentsEnabled = false, fireIncidentsGroup = null, fireIncidentsLoaded = false;
-let firePerimEnabled = false, firePerimGroup = null, firePerimLoaded = false;
+let firePerimEnabled = false, firePerimGroup = null, firePerimLoaded = false, firePerimRetries = 0, firePerimLoading = false;
 let pspGroup = null, pspEnabled = false, pspDay = 1;
 let dailyPerimGroup = null, dailyPerimEnabled = false, dailyPerimLoaded = false, dailyPerimRetries = 0, dailyPerimLoading = false;
 let frpEnabled = false, frpRect = null, frpMarker = null, frpSeq = 0;
@@ -3754,6 +3754,7 @@ async function toggleLayer(name, on) {
       const incCb = document.getElementById('lyr-fire-incidents');
       if (incCb && incCb.checked) { incCb.checked = false; toggleLayer('fire-incidents', false); }
       firePerimGroup.addTo(map);
+      firePerimRetries = 0;
       if (!firePerimLoaded) loadFirePerimeters();
     } else {
       firePerimGroup.remove();
@@ -7000,6 +7001,8 @@ async function loadFireIncidents() {
 }
 
 async function loadFirePerimeters() {
+  if (firePerimLoading) return;
+  firePerimLoading = true;
   const note = document.getElementById('fire-perimeters-note');
   note.textContent = 'loading…';
   firePerimGroup.clearLayers();
@@ -7030,11 +7033,20 @@ async function loadFirePerimeters() {
       count++;
     }
     firePerimLoaded = true;
+    firePerimRetries = 0;
     note.textContent = count ? `${count} active perimeters` : 'none active';
   } catch(e) {
     console.error('loadFirePerimeters:', e);
-    note.textContent = 'unavailable';
-  }
+    // Same transient-NIFC handling as Fresh Perimeters: quota resets each minute, so retry.
+    if (firePerimEnabled && firePerimRetries < 5) {
+      firePerimRetries++;
+      const why = /ArcGIS 429/.test(String(e)) ? 'NIFC busy' : 'NIFC not responding';
+      note.textContent = `${why} — retry ${firePerimRetries}/5 in 70 s`;
+      setTimeout(() => { if (firePerimEnabled && !firePerimLoaded) loadFirePerimeters(); }, 70000);
+    } else {
+      note.textContent = 'NIFC unavailable — toggle to retry';
+    }
+  } finally { firePerimLoading = false; }
 }
 
 // Freshest operational shape per fire — IR-flight / GPS-walked daily uploads, last 72 h.
