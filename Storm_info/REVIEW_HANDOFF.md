@@ -7,7 +7,24 @@ committing this doc creates a newer HEAD than any hash written in it.) Verify ag
 **committed** files, never a local cache. Claude Code (on the Windows machine) can run
 WindNinja and pull HRRR; this sandbox cannot — flag re-runs back to Claude Code.
 
-## Latest session — 2026-07-19: badge scrub + MCP bug backlog closed · PROJECT PARKED
+## Latest session — 2026-07-25: NIFC/ArcGIS 429 quota outage made honest + auto-retry
+User report: "Fresh Perimeters (72 h)" showed nothing on the live site. Root cause is
+EXTERNAL: NIFC's ArcGIS Online org is exceeding its shared request-unit quota
+(57,600 units/min, all public consumers nationwide — peak fire season); the service
+returns `{"error":{"code":429,…}}` **inside an HTTP 200 body**, so `fetchJson` resolved
+fine and the layer read the missing `features` as "none in last 72 h" (silent-fake — and
+`dailyPerimLoaded=true` meant re-toggling never refetched). Fixes in `weather-alerts.html`:
+(1) `fetchJson` now throws on an ArcGIS error body (`/arcgis/i` URLs only) so every
+NIFC/WFIGS layer fails honestly ("unavailable") instead of drawing nothing;
+(2) `loadDailyPerims` detects ArcGIS 429 → note "NIFC busy — retry n/5 in 70 s", auto-retries
+up to 5× (quota resets each minute), resets counter on success, and no longer latches the
+loaded flag on failure so re-toggling retries. Browser-verified on :8001 (real click →
+honest note + 70 s retries observed in console). NOTE: 6-h health monitor's daily-perims
+probe is a 1-record no-geometry query — too cheap to trip the quota, so it passed at
+14:06 UTC during the same outage; and **NTFY_TOPIC secret is still unset** (workflow log
+shows empty), so no alert could have reached the user — user action still pending.
+
+## Previous session — 2026-07-19: badge scrub + MCP bug backlog closed · PROJECT PARKED
 Project parked for a while per user; resume anchor = `PICKUP_TOMORROW.md` (repo root, local).
 (1) Fire Winds badge scrub (`7697325`): last two "niche" badges relabeled per the 2026-06-22
 niche re-quote directive — camp_2018 → "WN Corrects", kincade_ign_2019 → "WN edge" (matching

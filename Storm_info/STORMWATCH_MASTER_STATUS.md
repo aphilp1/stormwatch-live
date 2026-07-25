@@ -4,6 +4,16 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-07-25 — NIFC 429 QUOTA OUTAGE MADE HONEST (user-reported):** "Fresh Perimeters
+> (72 h)" empty on live site. External cause: NIFC ArcGIS Online org over its shared
+> 57,600 request-units/min quota (peak season, all consumers nationwide); 429 arrives inside
+> an HTTP 200 body → old code showed fake "none in last 72 h" and latched loaded=true (no
+> retry without reload). Fixed: fetchJson throws on ArcGIS error bodies (all NIFC layers now
+> honest); daily-perims auto-retries 5× at 70 s with "NIFC busy" note. Browser-verified :8001.
+> Health-monitor gap: its 1-record probe is too cheap to hit the quota (passed mid-outage)
+> and NTFY_TOPIC secret STILL unset → notifications impossible. USER ACTIONS still pending:
+> set NTFY_TOPIC + subscribe; Claude Desktop restart; 📸 phone test.
+>
 > **2026-07-19 — PROJECT PARKED (badge scrub + MCP bug backlog closed):** Parked for a
 > while per user; resume list lives in `PICKUP_TOMORROW.md` (repo root, local-only).
 > (1) Last two "niche" tab badges scrubbed per the 2026-06-22 directive (`7697325`):

@@ -2621,7 +2621,7 @@ let nhdGroup = null, nhdEnabled = false, nhdOpacity = 0.75, nhdLoadTimer = null;
 let fireIncidentsEnabled = false, fireIncidentsGroup = null, fireIncidentsLoaded = false;
 let firePerimEnabled = false, firePerimGroup = null, firePerimLoaded = false;
 let pspGroup = null, pspEnabled = false, pspDay = 1;
-let dailyPerimGroup = null, dailyPerimEnabled = false, dailyPerimLoaded = false;
+let dailyPerimGroup = null, dailyPerimEnabled = false, dailyPerimLoaded = false, dailyPerimRetries = 0;
 let frpEnabled = false, frpRect = null, frpMarker = null, frpSeq = 0;
 let smokeLayer = null, smokeEnabled = false, smokeOpacity = 0.80;
 
@@ -2805,7 +2805,13 @@ async function fetchJson(url, ms=9000) {
       headers: {'User-Agent':'StormWatchLive/2.0','Accept':'application/geo+json,application/json'},
     });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
+    const j = await r.json();
+    // ArcGIS Online returns errors (e.g. 429 org-quota exceeded) inside an HTTP 200 body —
+    // surface them as real failures so layers show "unavailable" instead of silently drawing nothing.
+    if (j && j.error && j.error.code && /arcgis/i.test(url)) {
+      throw new Error(`ArcGIS ${j.error.code}: ${j.error.message || 'service error'}`);
+    }
+    return j;
   } finally { clearTimeout(t); }
 }
 
@@ -7078,10 +7084,18 @@ async function loadDailyPerims() {
       count++;
     }
     dailyPerimLoaded = true;
+    dailyPerimRetries = 0;
     note.textContent = count ? `${count} fresh shapes` : 'none in last 72 h';
   } catch(e) {
     console.error('loadDailyPerims:', e);
-    note.textContent = 'unavailable';
+    // NIFC's shared org quota (429) resets every minute — retry a few times while the layer is on.
+    if (/ArcGIS 429/.test(String(e)) && dailyPerimEnabled && dailyPerimRetries < 5) {
+      dailyPerimRetries++;
+      note.textContent = `NIFC busy — retry ${dailyPerimRetries}/5 in 70 s`;
+      setTimeout(() => { if (dailyPerimEnabled && !dailyPerimLoaded) loadDailyPerims(); }, 70000);
+    } else {
+      note.textContent = /ArcGIS 429/.test(String(e)) ? 'NIFC over capacity — toggle to retry' : 'unavailable';
+    }
   }
 }
 
