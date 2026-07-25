@@ -2409,9 +2409,17 @@ const PSP_OUTLOOK_BASE = 'https://fsapps.nwcg.gov/psp/arcgis/rest/services/npsg/
 // is a running archive back to 2023 (~56k polygons) — the 72-h date filter is what makes
 // it a "fresh shapes" layer. Newest shape per fire is kept at render time (feed has dupes).
 const NIFC_DAILY_WHERE = "poly_DateCurrent >= CURRENT_TIMESTAMP - 3 AND attr_IncidentTypeCategory = 'WF'";
+// Only the fields the tooltip + detail card read — outFields=* quadruples the attribute
+// payload and raises the query's ArcGIS request-unit cost (worse odds when NIFC is near quota).
+const NIFC_DAILY_FIELDS = 'poly_IRWINID,attr_IrwinID,attr_UniqueFireIdentifier,poly_IncidentName,'
+  + 'attr_IncidentName,poly_DateCurrent,poly_PolygonDateTime,poly_GISAcres,attr_IncidentSize,'
+  + 'attr_CalculatedAcres,poly_MapMethod,attr_POOState,attr_POOCounty,attr_PercentContained,'
+  + 'attr_FireDiscoveryDateTime,attr_ContainmentDateTime,attr_ControlDateTime,attr_FireCause,'
+  + 'attr_FireCauseGeneral,attr_FireCauseSpecific,attr_FireMgmtComplexity,'
+  + 'attr_EstimatedCostToDate,attr_FireBehaviorGeneral,poly_FeatureCategory';
 const NIFC_DAILY_PERIMS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Daily_Perimeters_Public/FeatureServer/0/query'
   + '?where=' + encodeURIComponent(NIFC_DAILY_WHERE)
-  + '&outFields=*'
+  + '&outFields=' + NIFC_DAILY_FIELDS
   // ~10 m simplification: 10.9 MB → 3.7 MB, invisible at perimeter-viewing zooms.
   + '&returnGeometry=true&maxAllowableOffset=0.0001&geometryPrecision=5'
   + '&orderByFields=' + encodeURIComponent('poly_DateCurrent DESC')
