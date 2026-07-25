@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-25T22:38:36Z",
-  "total_active": 458,
-  "hazard_types": 19,
-  "history_rows": 352,
+  "updated": "2026-07-25T23:44:16Z",
+  "total_active": 445,
+  "hazard_types": 22,
+  "history_rows": 353,
   "model_built": "2026-06-28T23:50:49Z",
   "model_coverage": [
     "2008-01-01T00:00Z",
@@ -16,7 +16,7 @@
       "heat"
     ],
     "family_surprise": {
-      "severe": 0.65,
+      "severe": 0,
       "flood": 0,
       "wind": 0,
       "fire": 3.52,
@@ -28,30 +28,8 @@
   },
   "analogs": [
     {
-      "date": "2023-08-26",
-      "similarity": 0.956,
-      "peak": [
-        [
-          "Extreme Heat Warning",
-          31
-        ],
-        [
-          "Heat Advisory",
-          27
-        ],
-        [
-          "Severe Thunderstorm Warning",
-          20
-        ],
-        [
-          "Flash Flood Warning",
-          12
-        ]
-      ]
-    },
-    {
       "date": "2023-08-23",
-      "similarity": 0.954,
+      "similarity": 0.952,
       "peak": [
         [
           "Extreme Heat Warning",
@@ -72,24 +50,46 @@
       ]
     },
     {
-      "date": "2023-08-02",
-      "similarity": 0.954,
+      "date": "2023-08-26",
+      "similarity": 0.952,
       "peak": [
         [
-          "Heat Advisory",
-          18
-        ],
-        [
           "Extreme Heat Warning",
-          16
+          31
         ],
         [
-          "Flash Flood Warning",
-          15
+          "Heat Advisory",
+          27
         ],
         [
           "Severe Thunderstorm Warning",
-          14
+          20
+        ],
+        [
+          "Flash Flood Warning",
+          12
+        ]
+      ]
+    },
+    {
+      "date": "2020-08-18",
+      "similarity": 0.95,
+      "peak": [
+        [
+          "Severe Thunderstorm Warning",
+          19
+        ],
+        [
+          "Heat Advisory",
+          17
+        ],
+        [
+          "Extreme Heat Warning",
+          15
+        ],
+        [
+          "Flood Warning",
+          13
         ]
       ]
     }
@@ -117,95 +117,32 @@
         ]
       ]
     },
-    "MT": {
-      "count": 25,
-      "typical": 1,
-      "surprise": 3.13,
-      "tier": "Extraordinary",
-      "record": false,
-      "top": [
-        [
-          "Extreme Heat Warning",
-          7
-        ],
-        [
-          "Special Weather Statement",
-          5
-        ],
-        [
-          "Severe Thunderstorm Watch",
-          4
-        ]
-      ]
-    },
-    "NE": {
-      "count": 14,
-      "typical": 1,
-      "surprise": 1.6,
-      "tier": "Elevated",
-      "record": false,
-      "top": [
-        [
-          "Extreme Heat Warning",
-          8
-        ],
-        [
-          "Heat Advisory",
-          5
-        ],
-        [
-          "Extreme Heat Watch",
-          1
-        ]
-      ]
-    },
-    "KS": {
-      "count": 27,
-      "typical": 2,
-      "surprise": 2.56,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Heat Advisory",
-          15
-        ],
-        [
-          "Extreme Heat Warning",
-          8
-        ],
-        [
-          "Extreme Heat Watch",
-          3
-        ]
-      ]
-    },
     "FL": {
-      "count": 12,
+      "count": 8,
       "typical": 4,
-      "surprise": 1.1,
+      "surprise": 0.7,
       "tier": "Normal",
       "record": false,
       "top": [
         [
-          "Special Weather Statement",
-          4
-        ],
-        [
-          "Heat Advisory",
+          "Flood Advisory",
           3
         ],
         [
-          "Severe Thunderstorm Warning",
+          "Special Weather Statement",
+          2
+        ],
+        [
+          "Rip Current Statement",
           2
         ]
       ]
     },
     "CO": {
-      "count": 20,
+      "count": 18,
       "typical": 1,
-      "surprise": 2.11,
-      "tier": "Significant",
+      "surprise": 1.9,
+      "tier": "Elevated",
       "record": false,
       "top": [
         [
@@ -214,11 +151,53 @@
         ],
         [
           "Flood Advisory",
-          6
+          5
+        ],
+        [
+          "Flash Flood Warning",
+          1
+        ]
+      ]
+    },
+    "GA": {
+      "count": 3,
+      "typical": 1,
+      "surprise": 0.5,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Severe Thunderstorm Warning",
+          1
         ],
         [
           "Special Weather Statement",
-          2
+          1
+        ],
+        [
+          "Flood Warning",
+          1
+        ]
+      ]
+    },
+    "MT": {
+      "count": 23,
+      "typical": 1,
+      "surprise": 3.0,
+      "tier": "Extraordinary",
+      "record": false,
+      "top": [
+        [
+          "Extreme Heat Warning",
+          7
+        ],
+        [
+          "Severe Thunderstorm Watch",
+          4
+        ],
+        [
+          "Red Flag Warning",
+          4
         ]
       ]
     },
@@ -244,9 +223,9 @@
       ]
     },
     "AZ": {
-      "count": 14,
+      "count": 15,
       "typical": 2,
-      "surprise": 1.38,
+      "surprise": 1.46,
       "tier": "Elevated",
       "record": false,
       "top": [
@@ -259,113 +238,143 @@
           3
         ],
         [
-          "Special Weather Statement",
+          "Dust Advisory",
           1
         ]
       ]
     },
-    "MS": {
-      "count": 5,
-      "typical": 2,
-      "surprise": 0.65,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Extreme Heat Warning",
-          2
-        ],
-        [
-          "Heat Advisory",
-          2
-        ],
-        [
-          "Flood Advisory",
-          1
-        ]
-      ]
-    },
-    "TN": {
-      "count": 4,
-      "typical": 1,
-      "surprise": 0.65,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Flood Advisory",
-          2
-        ],
-        [
-          "Heat Advisory",
-          1
-        ],
-        [
-          "Extreme Heat Warning",
-          1
-        ]
-      ]
-    },
-    "GA": {
-      "count": 8,
-      "typical": 1,
+    "HI": {
+      "count": 1,
+      "typical": 0,
       "surprise": 1.0,
       "tier": "Normal",
       "record": false,
       "top": [
         [
-          "Special Weather Statement",
+          "High Surf Advisory",
+          1
+        ]
+      ]
+    },
+    "NE": {
+      "count": 18,
+      "typical": 1,
+      "surprise": 2.0,
+      "tier": "Significant",
+      "record": false,
+      "top": [
+        [
+          "Extreme Heat Warning",
+          9
+        ],
+        [
+          "Heat Advisory",
           6
         ],
         [
-          "Flood Warning",
-          1
-        ],
-        [
-          "Heat Advisory",
-          1
+          "Special Weather Statement",
+          2
         ]
       ]
     },
-    "WY": {
-      "count": 9,
-      "typical": 0,
-      "surprise": 1.58,
-      "tier": "Elevated",
+    "AK": {
+      "count": 6,
+      "typical": 1,
+      "surprise": 2.0,
+      "tier": "Significant",
       "record": false,
       "top": [
-        [
-          "Heat Advisory",
-          5
-        ],
-        [
-          "Red Flag Warning",
-          2
-        ],
         [
           "Special Weather Statement",
-          1
-        ]
-      ]
-    },
-    "AR": {
-      "count": 15,
-      "typical": 2,
-      "surprise": 1.58,
-      "tier": "Elevated",
-      "record": false,
-      "top": [
-        [
-          "Heat Advisory",
-          10
+          4
         ],
         [
-          "Extreme Heat Warning",
-          4
+          "Winter Weather Advisory",
+          1
         ],
         [
           "Flood Advisory",
           1
+        ]
+      ]
+    },
+    "UT": {
+      "count": 6,
+      "typical": 1,
+      "surprise": 1.53,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Heat Advisory",
+          4
+        ],
+        [
+          "Special Weather Statement",
+          1
+        ],
+        [
+          "Extreme Heat Warning",
+          1
+        ]
+      ]
+    },
+    "NM": {
+      "count": 3,
+      "typical": 3,
+      "surprise": 0.0,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Flood Watch",
+          2
+        ],
+        [
+          "Flood Advisory",
+          1
+        ]
+      ]
+    },
+    "ID": {
+      "count": 12,
+      "typical": 1,
+      "surprise": 2.38,
+      "tier": "Significant",
+      "record": false,
+      "top": [
+        [
+          "Air Quality Alert",
+          6
+        ],
+        [
+          "Red Flag Warning",
+          3
+        ],
+        [
+          "Heat Advisory",
+          2
+        ]
+      ]
+    },
+    "KS": {
+      "count": 27,
+      "typical": 2,
+      "surprise": 2.56,
+      "tier": "Significant",
+      "record": false,
+      "top": [
+        [
+          "Heat Advisory",
+          15
+        ],
+        [
+          "Extreme Heat Warning",
+          8
+        ],
+        [
+          "Extreme Heat Watch",
+          3
         ]
       ]
     },
@@ -390,23 +399,6 @@
         ]
       ]
     },
-    "WA": {
-      "count": 9,
-      "typical": 0,
-      "surprise": 2.2,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Air Quality Alert",
-          5
-        ],
-        [
-          "Red Flag Warning",
-          4
-        ]
-      ]
-    },
     "OR": {
       "count": 9,
       "typical": 0,
@@ -428,24 +420,20 @@
         ]
       ]
     },
-    "NM": {
-      "count": 13,
-      "typical": 3,
-      "surprise": 1.2,
-      "tier": "Normal",
+    "WA": {
+      "count": 9,
+      "typical": 0,
+      "surprise": 2.2,
+      "tier": "Significant",
       "record": false,
       "top": [
         [
-          "Flood Watch",
-          6
+          "Air Quality Alert",
+          5
         ],
         [
-          "Flood Advisory",
+          "Red Flag Warning",
           4
-        ],
-        [
-          "Flash Flood Warning",
-          3
         ]
       ]
     },
@@ -491,48 +479,6 @@
         ]
       ]
     },
-    "UT": {
-      "count": 6,
-      "typical": 1,
-      "surprise": 1.53,
-      "tier": "Elevated",
-      "record": false,
-      "top": [
-        [
-          "Heat Advisory",
-          4
-        ],
-        [
-          "Flood Advisory",
-          1
-        ],
-        [
-          "Extreme Heat Warning",
-          1
-        ]
-      ]
-    },
-    "ID": {
-      "count": 11,
-      "typical": 1,
-      "surprise": 2.25,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Air Quality Alert",
-          6
-        ],
-        [
-          "Red Flag Warning",
-          3
-        ],
-        [
-          "Heat Advisory",
-          2
-        ]
-      ]
-    },
     "MO": {
       "count": 11,
       "typical": 5,
@@ -572,6 +518,27 @@
         [
           "Extreme Heat Watch",
           5
+        ]
+      ]
+    },
+    "WY": {
+      "count": 8,
+      "typical": 0,
+      "surprise": 1.44,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Heat Advisory",
+          5
+        ],
+        [
+          "Red Flag Warning",
+          2
+        ],
+        [
+          "Extreme Heat Warning",
+          1
         ]
       ]
     },
@@ -686,6 +653,23 @@
         ]
       ]
     },
+    "AR": {
+      "count": 14,
+      "typical": 2,
+      "surprise": 1.44,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Heat Advisory",
+          10
+        ],
+        [
+          "Extreme Heat Warning",
+          4
+        ]
+      ]
+    },
     "MA": {
       "count": 1,
       "typical": 0,
@@ -712,15 +696,36 @@
         ]
       ]
     },
-    "HI": {
-      "count": 1,
-      "typical": 0,
-      "surprise": 1.0,
+    "MS": {
+      "count": 4,
+      "typical": 2,
+      "surprise": 0.53,
       "tier": "Normal",
       "record": false,
       "top": [
         [
-          "High Surf Advisory",
+          "Extreme Heat Warning",
+          2
+        ],
+        [
+          "Heat Advisory",
+          2
+        ]
+      ]
+    },
+    "TN": {
+      "count": 2,
+      "typical": 1,
+      "surprise": 0.42,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Heat Advisory",
+          1
+        ],
+        [
+          "Extreme Heat Warning",
           1
         ]
       ]
@@ -750,73 +755,45 @@
           1
         ]
       ]
-    },
-    "AK": {
-      "count": 3,
-      "typical": 1,
-      "surprise": 1.0,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Special Weather Statement",
-          2
-        ],
-        [
-          "Flood Advisory",
-          1
-        ]
-      ]
     }
   },
   "hazards": {
     "Small Craft Advisory": {
       "count": 140,
-      "expected": 17.06,
+      "expected": 17.31,
       "typical_high": 36,
       "record": true,
       "surprise": 3.52,
       "tier": "Extraordinary",
       "delta_1h": 0,
-      "delta_6h": -2,
+      "delta_6h": -1,
       "material": true
     },
     "Heat Advisory": {
-      "count": 110,
-      "expected": 13.57,
+      "count": 108,
+      "expected": 12.47,
       "typical_high": 61,
       "record": true,
       "surprise": 3.52,
       "tier": "Extraordinary",
-      "delta_1h": -3,
-      "delta_6h": 11,
+      "delta_1h": -2,
+      "delta_6h": -4,
       "material": true
     },
     "Extreme Heat Warning": {
-      "count": 69,
-      "expected": 5.03,
+      "count": 70,
+      "expected": 4.9,
       "typical_high": 39,
       "record": true,
       "surprise": 3.52,
       "tier": "Extraordinary",
-      "delta_1h": 2,
-      "delta_6h": 12,
+      "delta_1h": 1,
+      "delta_6h": 8,
       "material": true
-    },
-    "Special Weather Statement": {
-      "count": 21,
-      "expected": null,
-      "typical_high": null,
-      "record": false,
-      "surprise": null,
-      "tier": "Unmodeled",
-      "delta_1h": 4,
-      "delta_6h": 19,
-      "material": false
     },
     "Red Flag Warning": {
       "count": 20,
-      "expected": 3.57,
+      "expected": 3.82,
       "typical_high": 20,
       "record": true,
       "surprise": 3.52,
@@ -825,15 +802,15 @@
       "delta_6h": 0,
       "material": true
     },
-    "Flood Advisory": {
-      "count": 15,
-      "expected": 20.34,
-      "typical_high": 73,
+    "Special Weather Statement": {
+      "count": 17,
+      "expected": null,
+      "typical_high": null,
       "record": false,
-      "surprise": 0.0,
-      "tier": "Normal",
-      "delta_1h": 6,
-      "delta_6h": 12,
+      "surprise": null,
+      "tier": "Unmodeled",
+      "delta_1h": -4,
+      "delta_6h": 11,
       "material": false
     },
     "Air Quality Alert": {
@@ -844,7 +821,7 @@
       "surprise": null,
       "tier": "Unmodeled",
       "delta_1h": 0,
-      "delta_6h": -1,
+      "delta_6h": 1,
       "material": false
     },
     "Extreme Heat Watch": {
@@ -855,30 +832,30 @@
       "surprise": null,
       "tier": "Unmodeled",
       "delta_1h": 0,
-      "delta_6h": -3,
+      "delta_6h": -1,
+      "material": false
+    },
+    "Flood Advisory": {
+      "count": 11,
+      "expected": 20.56,
+      "typical_high": 73,
+      "record": false,
+      "surprise": 0.0,
+      "tier": "Normal",
+      "delta_1h": -4,
+      "delta_6h": 8,
       "material": false
     },
     "Severe Thunderstorm Warning": {
-      "count": 9,
-      "expected": 26.32,
+      "count": 8,
+      "expected": 25.49,
       "typical_high": 130,
       "record": false,
       "surprise": 0.0,
       "tier": "Normal",
-      "delta_1h": 7,
-      "delta_6h": 9,
+      "delta_1h": -1,
+      "delta_6h": 8,
       "material": false
-    },
-    "Severe Thunderstorm Watch": {
-      "count": 7,
-      "expected": 4.99,
-      "typical_high": 28,
-      "record": false,
-      "surprise": 0.65,
-      "tier": "Normal",
-      "delta_1h": 1,
-      "delta_6h": 7,
-      "material": true
     },
     "Beach Hazards Statement": {
       "count": 7,
@@ -893,7 +870,7 @@
     },
     "Flood Warning": {
       "count": 7,
-      "expected": 28.09,
+      "expected": 28.11,
       "typical_high": 160,
       "record": false,
       "surprise": 0.0,
@@ -902,31 +879,31 @@
       "delta_6h": 0,
       "material": false
     },
-    "Flood Watch": {
-      "count": 7,
-      "expected": 2.29,
-      "typical_high": 38,
+    "Severe Thunderstorm Watch": {
+      "count": 6,
+      "expected": 5.13,
+      "typical_high": 28,
       "record": false,
-      "surprise": 1.0,
+      "surprise": 0.56,
       "tier": "Normal",
-      "delta_1h": -2,
-      "delta_6h": -2,
+      "delta_1h": -1,
+      "delta_6h": 6,
       "material": false
     },
     "Flash Flood Warning": {
-      "count": 6,
-      "expected": 8.87,
+      "count": 5,
+      "expected": 9.71,
       "typical_high": 46,
       "record": false,
       "surprise": 0.0,
       "tier": "Normal",
-      "delta_1h": -2,
-      "delta_6h": 3,
+      "delta_1h": -1,
+      "delta_6h": 2,
       "material": false
     },
     "Gale Warning": {
       "count": 4,
-      "expected": 2.22,
+      "expected": 2.27,
       "typical_high": 14,
       "record": false,
       "surprise": 1.0,
@@ -935,14 +912,69 @@
       "delta_6h": 0,
       "material": false
     },
+    "Flood Watch": {
+      "count": 3,
+      "expected": 2.3,
+      "typical_high": 38,
+      "record": false,
+      "surprise": 0.6,
+      "tier": "Normal",
+      "delta_1h": -4,
+      "delta_6h": -6,
+      "material": false
+    },
     "Rip Current Statement": {
       "count": 3,
-      "expected": 1.36,
+      "expected": 1.3,
       "typical_high": 9,
       "record": false,
       "surprise": 0.77,
       "tier": "Normal",
       "delta_1h": 0,
+      "delta_6h": 0,
+      "material": false
+    },
+    "Dust Advisory": {
+      "count": 1,
+      "expected": null,
+      "typical_high": null,
+      "record": false,
+      "surprise": null,
+      "tier": "Unmodeled",
+      "delta_1h": 1,
+      "delta_6h": 1,
+      "material": false
+    },
+    "High Surf Advisory": {
+      "count": 1,
+      "expected": 0.51,
+      "typical_high": 5,
+      "record": false,
+      "surprise": 1.0,
+      "tier": "Normal",
+      "delta_1h": 0,
+      "delta_6h": 0,
+      "material": false
+    },
+    "Marine Weather Statement": {
+      "count": 1,
+      "expected": null,
+      "typical_high": null,
+      "record": false,
+      "surprise": null,
+      "tier": "Unmodeled",
+      "delta_1h": 1,
+      "delta_6h": -1,
+      "material": false
+    },
+    "Winter Weather Advisory": {
+      "count": 1,
+      "expected": 0.02,
+      "typical_high": 52,
+      "record": false,
+      "surprise": 0.0,
+      "tier": "Normal",
+      "delta_1h": 1,
       "delta_6h": 1,
       "material": false
     },
@@ -953,17 +985,6 @@
       "record": false,
       "surprise": 2.0,
       "tier": "Significant",
-      "delta_1h": 0,
-      "delta_6h": 0,
-      "material": false
-    },
-    "High Surf Advisory": {
-      "count": 1,
-      "expected": 0.52,
-      "typical_high": 5,
-      "record": false,
-      "surprise": 1.0,
-      "tier": "Normal",
       "delta_1h": 0,
       "delta_6h": 0,
       "material": false
