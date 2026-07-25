@@ -7088,13 +7088,15 @@ async function loadDailyPerims() {
     note.textContent = count ? `${count} fresh shapes` : 'none in last 72 h';
   } catch(e) {
     console.error('loadDailyPerims:', e);
-    // NIFC's shared org quota (429) resets every minute — retry a few times while the layer is on.
-    if (/ArcGIS 429/.test(String(e)) && dailyPerimEnabled && dailyPerimRetries < 5) {
+    // NIFC outages are transient (org quota resets every minute; 503s clear when load drops) —
+    // retry a few times while the layer is on instead of leaving it dead until a page reload.
+    if (dailyPerimEnabled && dailyPerimRetries < 5) {
       dailyPerimRetries++;
-      note.textContent = `NIFC busy — retry ${dailyPerimRetries}/5 in 70 s`;
+      const why = /ArcGIS 429/.test(String(e)) ? 'NIFC busy' : 'NIFC not responding';
+      note.textContent = `${why} — retry ${dailyPerimRetries}/5 in 70 s`;
       setTimeout(() => { if (dailyPerimEnabled && !dailyPerimLoaded) loadDailyPerims(); }, 70000);
     } else {
-      note.textContent = /ArcGIS 429/.test(String(e)) ? 'NIFC over capacity — toggle to retry' : 'unavailable';
+      note.textContent = 'NIFC unavailable — toggle to retry';
     }
   }
 }
