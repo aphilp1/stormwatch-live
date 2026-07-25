@@ -2396,7 +2396,10 @@ const NIFC_PERIM_WHERE = "attr_FireOutDateTime IS NULL AND poly_GISAcres >= 100 
 const NIFC_PERIMETERS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_YearToDate/FeatureServer/0/query'
   + '?where=' + encodeURIComponent(NIFC_PERIM_WHERE)
   + '&outFields=*'
-  + '&returnGeometry=true&orderByFields=' + encodeURIComponent('poly_GISAcres DESC')
+  // Full-res payload is 8+ MB with 13-decimal coords and freezes the tab for minutes while
+  // rendering; ~10 m simplification (same as the daily layer) is invisible at map zooms.
+  + '&returnGeometry=true&maxAllowableOffset=0.0001&geometryPrecision=5'
+  + '&orderByFields=' + encodeURIComponent('poly_GISAcres DESC')
   + '&f=geojson&resultRecordCount=2000';
 const NIFC_HIST_PERIMS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_AllYears/FeatureServer/0/query';
 const SPC_FWX_BASE    = 'https://mapservices.weather.noaa.gov/vector/rest/services/fire_weather/SPC_firewx/MapServer';
