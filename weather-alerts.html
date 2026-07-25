@@ -2621,7 +2621,7 @@ let nhdGroup = null, nhdEnabled = false, nhdOpacity = 0.75, nhdLoadTimer = null;
 let fireIncidentsEnabled = false, fireIncidentsGroup = null, fireIncidentsLoaded = false;
 let firePerimEnabled = false, firePerimGroup = null, firePerimLoaded = false;
 let pspGroup = null, pspEnabled = false, pspDay = 1;
-let dailyPerimGroup = null, dailyPerimEnabled = false, dailyPerimLoaded = false, dailyPerimRetries = 0;
+let dailyPerimGroup = null, dailyPerimEnabled = false, dailyPerimLoaded = false, dailyPerimRetries = 0, dailyPerimLoading = false;
 let frpEnabled = false, frpRect = null, frpMarker = null, frpSeq = 0;
 let smokeLayer = null, smokeEnabled = false, smokeOpacity = 0.80;
 
@@ -3770,6 +3770,7 @@ async function toggleLayer(name, on) {
       const incCb = document.getElementById('lyr-fire-incidents');
       if (incCb && incCb.checked) { incCb.checked = false; toggleLayer('fire-incidents', false); }
       dailyPerimGroup.addTo(map);
+      dailyPerimRetries = 0;
       if (!dailyPerimLoaded) loadDailyPerims();
     } else {
       dailyPerimGroup.remove();
@@ -7045,6 +7046,9 @@ function dailyPerimColor(ageH) {
 }
 
 async function loadDailyPerims() {
+  // Queued retry timers can all fire at once after the tab was busy — one request at a time.
+  if (dailyPerimLoading) return;
+  dailyPerimLoading = true;
   const note = document.getElementById('daily-perims-note');
   note.textContent = 'loading…';
   dailyPerimGroup.clearLayers();
@@ -7098,7 +7102,7 @@ async function loadDailyPerims() {
     } else {
       note.textContent = 'NIFC unavailable — toggle to retry';
     }
-  }
+  } finally { dailyPerimLoading = false; }
 }
 
 function showFireCard(p, lat, lon) {
