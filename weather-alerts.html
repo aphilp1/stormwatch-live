@@ -1396,8 +1396,10 @@ canvas.velocity-overlay{pointer-events:none!important}
             <div class="usgs-key-hdr">Real fires threatening people, + conditions to watch · Daily</div>
             <div style="font-size:10px;color:#8a94a3;line-height:1.5;padding:2px 0 4px">
               🔥 = a real, currently-burning NIFC wildfire, ranked by the incident team's
-              own reported structures-threatened count. 👁 = no fire yet, but an official
-              trigger (Red Flag/SPC/NIFC 7-day potential) sits over dry fuels and people.
+              own reported structures-threatened count. 🆕 = a fire NIFC discovered in the
+              last 24h, near a populated place — too fresh for a full incident report.
+              👁 = no fire yet, but an official trigger (Red Flag/SPC/NIFC 7-day potential)
+              sits over dry fuels and people.
             </div>
           </div>
 
@@ -7445,6 +7447,7 @@ async function loadFireWatchlist() {
     const data = await fetchJson('data/fire_watchlist.json?v=' + Date.now(), 15000);
     watchlistData = data;
     const active = data?.active_threats ?? [];
+    const ignitions = data?.new_ignitions ?? [];
     const emerging = data?.emerging_conditions ?? [];
 
     active.forEach((f, i) => {
@@ -7453,6 +7456,13 @@ async function loadFireWatchlist() {
       const struct = f.structures_threatened ? `${f.structures_threatened.toLocaleString()} structures threatened` : `${f.pct_contained}% contained`;
       m.bindTooltip(`<b>🔥 ${esc(f.name)} Fire, ${f.state}</b><br>${esc(struct)}`, { sticky:true });
       m.on('click', ev => { L.DomEvent.stopPropagation(ev); showActiveThreatCard(f); });
+      watchlistGroup.addLayer(m);
+    });
+    ignitions.forEach(ig => {
+      const icon = fireBadgeIcon('🆕', '#ff9d1a');
+      const m = L.marker([ig.lat, ig.lon], { icon, pane: 'markerPane' });
+      m.bindTooltip(`<b>🆕 ${esc(ig.name)} Fire, ${ig.state}</b><br>New in the last 24h · ${ig.acres.toFixed(0)} ac`, { sticky:true });
+      m.on('click', ev => { L.DomEvent.stopPropagation(ev); showIgnitionCard(ig); });
       watchlistGroup.addLayer(m);
     });
     emerging.forEach(e => {
@@ -7465,8 +7475,8 @@ async function loadFireWatchlist() {
 
     const ageH = (Date.now() - Date.parse(data.generated_utc)) / 3.6e6;
     const stale = ageH > 36 ? ' · outdated' : '';
-    note.textContent = (active.length || emerging.length)
-      ? `${active.length} active · ${emerging.length} watching${stale}`
+    note.textContent = (active.length || ignitions.length || emerging.length)
+      ? `${active.length} active · ${ignitions.length} new · ${emerging.length} watching${stale}`
       : 'nothing meets the bar today';
   } catch(e) {
     console.error('loadFireWatchlist:', e);
@@ -7509,6 +7519,33 @@ function showActiveThreatCard(f) {
       <div style="margin-top:10px;font-size:10px;color:#7a8699;border-top:1px solid #ffffff1a;padding-top:8px">
         Source: NIFC active-incident feed (ICS-209 fields) · wind read: StormWatch's own mechanism classifier.
         ${f.mirrored ? 'NIFC primary feed was down today — shown from the Esri mirror (reduced fields).' : ''}<br>
+        Generated ${esc(watchlistData?.generated_utc || '')}
+      </div>
+    </div>`;
+  document.getElementById('detail').style.display = 'flex';
+}
+
+function showIgnitionCard(ig) {
+  ensureDetStandard();
+  ['det-area-row','det-dates-row','det-hl-wrap','det-instr-wrap','det-zoom','det-desc-row']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  document.getElementById('det-event').textContent = `🆕 ${ig.name} Fire — ${ig.state}`;
+  document.getElementById('det-event').style.color = '#ff9d1a';
+  document.getElementById('det-chips').innerHTML = '';
+  document.getElementById('det-sev-desc').textContent = (ig.county ? `${ig.county} County, ${ig.state}` : ig.state) + ' · discovered within the last 24h';
+
+  const facts = [['Acres', ig.acres.toFixed(1)]];
+  if (ig.pct_contained != null) facts.push(['Contained', ig.pct_contained + '%']);
+  if (ig.cause) facts.push(['Cause', ig.cause]);
+
+  const custom = document.getElementById('det-custom');
+  custom.style.display = 'block';
+  custom.innerHTML = `
+    <div style="padding:10px 0 4px;font-size:12px;color:#dce6f2;line-height:1.65">
+      ${fbFactsStrip(facts)}
+      <div>${mdBold(ig.narrative)}</div>
+      <div style="margin-top:10px;font-size:10px;color:#7a8699;border-top:1px solid #ffffff1a;padding-top:8px">
+        Source: NIFC new-incident feed (last 24h) — not yet in a full ICS-209 report.<br>
         Generated ${esc(watchlistData?.generated_utc || '')}
       </div>
     </div>`;

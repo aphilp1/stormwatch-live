@@ -4,7 +4,7 @@ fire_watchlist.py
 
 StormWatch Fire Briefing (spec: Storm_info/fable_specs/06_fire_watchlist.md, v2).
 
-A daily WRITTEN briefing, not a ranked list of index numbers. Two sections:
+A daily WRITTEN briefing, not a ranked list of index numbers. Three sections:
 
   Active Threats     -- real, currently-burning NIFC wildfires, ranked by the
                          incident team's own reported structures-threatened count
@@ -14,10 +14,21 @@ A daily WRITTEN briefing, not a ranked list of index numbers. Two sections:
                          wind is expected to do to it (via the repo's own
                          mechanism_classifier -- what KIND of wind event, not just
                          a number).
+  New Ignitions       -- fires NIFC discovered in the last 24 hours (a real,
+                         observed ignition, not a prediction) that are already
+                         near people. Too fresh for a full incident report or a
+                         structures-threatened count, but worth flagging before
+                         they either fizzle or grow into an Active Threat.
   Emerging Conditions -- places with NO fire yet but where an official trigger
                          (Red Flag / SPC outlook / NIFC 7-day potential) sits over
                          dry fuels and people. Grouped into regional paragraphs
                          instead of a town-by-town wall of near-duplicates.
+
+Live lightning-strike detection was investigated and left out: NOAA's public
+nowCOAST lightning API was deprecated in 2023 and the remaining live sources are
+commercial/subscription-only -- no free, CORS-open, point-queryable feed was
+found. SPC's own dry-lightning forecast polygons (already folded into Emerging
+Conditions) remain the only lightning-related signal here.
 
 Every fact quoted is an agency value shown as-served (NIFC ICS-209 fields, USGS
 fire danger, Census population) -- the narrative sentences are deterministic
@@ -47,6 +58,8 @@ UA = {"User-Agent": "StormWatchLive-FireBriefing/2.0 (github.com/aphilp1/stormwa
 
 NIFC_INCIDENTS_BASE = ("https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/"
                        "EGP_Active_Incidents_Prod_Public_View/FeatureServer/0/query")
+NIFC_NEW_IGNITIONS_BASE = ("https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/"
+                          "WFIGS_Incident_Locations_Last24h/FeatureServer/0/query")
 MIRROR_INCIDENTS_BASE = ("https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/"
                          "USA_Wildfires_v1/FeatureServer/0/query")
 SPC_FWX = "https://mapservices.weather.noaa.gov/vector/rest/services/fire_weather/SPC_firewx/MapServer"
@@ -57,6 +70,7 @@ USGS_BASE = "https://dmsdata.cr.usgs.gov/geoserver"
 
 MIN_FIRE_ACRES = 100          # floor for an "active threat" candidate
 MAX_ACTIVE_THREATS = 8        # detailed paragraphs in the briefing
+MAX_NEW_IGNITIONS = 5         # freshly-discovered (<24h) fires shown
 CANDIDATE_CAP = 60            # emerging-condition places scored for fuels
 CLASSIFIER_CAP_ACTIVE = 12    # active fires run through the wind classifier
 EMERGING_CLUSTER_DEG = (3.0, 4.0)   # lat, lon bin size for regional grouping
@@ -223,6 +237,57 @@ def fetch_active_fires():
             "lat": g["y"], "lon": g["x"], "mirrored": mirrored,
         })
     return fires
+
+
+def fetch_new_ignitions():
+    """Fires NIFC discovered in the last 24h -- a real, observed ignition (not a
+    forecast). Too fresh for ICS-209 fields (structures threatened, personnel),
+    so these get a lighter-weight entry than Active Threats."""
+    fields = ("IncidentName,IncidentTypeCategory,FireDiscoveryDateTime,IncidentSize,"
+              "POOState,POOCounty,PercentContained,FireCauseGeneral")
+    url = (f"{NIFC_NEW_IGNITIONS_BASE}?where=IncidentTypeCategory%3D%27WF%27&outFields={fields}"
+           "&outSR=4326&returnGeometry=true&f=json&resultRecordCount=2000")
+    try:
+        d = _get_json(url, timeout=40)
+        if "error" in d:
+            raise RuntimeError(d["error"])
+    except Exception as e:                # noqa: BLE001
+        print(f"warn: NIFC new-ignitions feed failed: {e}", file=sys.stderr)
+        return []
+
+    out = []
+    for f in d.get("features", []):
+        a = f["attributes"]
+        g = f.get("geometry")
+        if not g:
+            continue
+        acres = a.get("IncidentSize") or 0
+        out.append({
+            "name": (a.get("IncidentName") or "Unnamed Fire").title(),
+            "state": (a.get("POOState") or "").replace("US-", ""),
+            "county": a.get("POOCounty"), "acres": acres,
+            "pct_contained": a.get("PercentContained"),
+            "cause": a.get("FireCauseGeneral"),
+            "lat": g["y"], "lon": g["x"],
+        })
+    return out
+
+
+def ignition_paragraph(fire, nearby):
+    where = ", ".join(x for x in (fire["county"] and f"{fire['county']} County", fire["state"]) if x)
+    lead = f"A new fire, the {fire['name']} Fire"
+    if where:
+        lead += f", was just discovered in {where}"
+    lead += f" within the last 24 hours."
+    acres_txt = f" Currently {fire['acres']:.1f} acres" if fire["acres"] else " Size not yet reported"
+    contain_txt = f", {fire['pct_contained']}% contained" if fire.get("pct_contained") is not None else ""
+    cause_txt = f" Cause: {fire['cause'].strip().lower()}." if fire.get("cause") else ""
+    near_txt = ""
+    if nearby:
+        d0, place0 = nearby[0]
+        near_txt = f" It's {d0:.0f} miles from {place0['n']} (pop. {place0['pop']:,})."
+    tail = " Too new for a full incident report or a structures-threatened count -- worth watching."
+    return lead + acres_txt + contain_txt + "." + near_txt + cause_txt + tail
 
 
 def nearest_places(lat, lon, places, radius_mi=NEARBY_RADIUS_MI, limit=3):
@@ -572,6 +637,26 @@ def build_briefing():
                              "peak": wind["peak_surface"]}
         active_entries.append(entry)
 
+    print("checking new ignitions (last 24h)...", file=sys.stderr)
+    ignitions = fetch_new_ignitions()
+    active_keys = {(f["name"], f["state"]) for f in fires}   # dedupe vs the full active list
+    candidates = [ig for ig in ignitions if (ig["name"], ig["state"]) not in active_keys]
+    def _ignition_score(ig):
+        near = nearest_places(ig["lat"], ig["lon"], places, limit=1)
+        pop = near[0][1]["pop"] if near else 0
+        return math.log10(max(ig["acres"], 0.1) + 1) * math.log10(max(pop, 10))
+    candidates.sort(key=lambda ig: -_ignition_score(ig))
+    top_ignitions = candidates[:MAX_NEW_IGNITIONS]
+    ignition_entries = []
+    for ig in top_ignitions:
+        nearby_raw = nearest_places(ig["lat"], ig["lon"], places)
+        nearby = [{"n": p["n"], "st": p["st"], "pop": p["pop"], "distance_mi": round(d, 1)}
+                  for d, p in nearby_raw]
+        ignition_entries.append({**ig, "nearby_places": nearby,
+                                 "narrative": ignition_paragraph(ig, nearby_raw)})
+    print(f"new starts (last 24h): {len(ignitions)}, showing top {len(ignition_entries)} near people",
+          file=sys.stderr)
+
     print("scoring emerging conditions...", file=sys.stderr)
     scored, region_counts = find_emerging_candidates(places)
     clusters = cluster_regions(scored)
@@ -602,8 +687,9 @@ def build_briefing():
         "method_version": METHOD_VERSION,
         "headline": headline,
         "counts": {"active_uncontained_fires": len(fires), "trigger_regions": region_counts,
-                  "emerging_candidates": len(scored)},
+                  "emerging_candidates": len(scored), "new_ignitions_24h": len(ignitions)},
         "active_threats": active_entries,
+        "new_ignitions": ignition_entries,
         "emerging_conditions": emerging_entries,
     }
 
@@ -626,18 +712,26 @@ def render_md(w):
             L.append(f"### {f['name']} Fire — {f['state']}")
             L.append(f['narrative'])
             L.append("")
+    if w.get("new_ignitions"):
+        L.append("## New Ignitions (last 24h)")
+        L.append("")
+        for ig in w["new_ignitions"]:
+            L.append(f"### {ig['name']} Fire — {ig['state']}")
+            L.append(ig['narrative'])
+            L.append("")
     if w["emerging_conditions"]:
         L.append("## Emerging Conditions to Watch")
         L.append("")
         for e in w["emerging_conditions"]:
             L.append(e["narrative"])
             L.append("")
-    if not w["active_threats"] and not w["emerging_conditions"]:
+    if not w["active_threats"] and not w.get("new_ignitions") and not w["emerging_conditions"]:
         L.append("Nothing meets the bar today.")
     L.append("---")
-    L.append("*Sources: NIFC (active incidents, ICS-209 fields) · NWS (alerts) · SPC (fire weather "
-             "outlooks) · NIFC Predictive Services (7-day potential) · USGS EROS (fire danger) · "
-             "US Census (ACS 2023). Wind read: StormWatch's own mechanism_classifier.*")
+    L.append("*Sources: NIFC (active incidents + last-24h new-ignition feed, ICS-209 fields) · "
+             "NWS (alerts) · SPC (fire weather outlooks) · NIFC Predictive Services (7-day potential) · "
+             "USGS EROS (fire danger) · US Census (ACS 2023). Wind read: StormWatch's own "
+             "mechanism_classifier.*")
     return "\n".join(L)
 
 
