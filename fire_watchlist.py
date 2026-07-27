@@ -2,28 +2,31 @@
 fire_watchlist.py
 =================
 
-National Fire Watchlist (spec: Storm_info/fable_specs/06_fire_watchlist.md).
+StormWatch Fire Briefing (spec: Storm_info/fable_specs/06_fire_watchlist.md, v2).
 
-Finds the CONUS communities where the three ingredients of a dangerous fire
-event converge in the next 1-7 days:
+A daily WRITTEN briefing, not a ranked list of index numbers. Two sections:
 
-  trigger  -- official fire-weather areas: NWS Red Flag Warnings / Fire Weather
-              Watches, SPC Fire Weather Outlooks (D1/D2), and NIFC Predictive
-              Services 7-Day Significant Fire Potential risk polygons
-  fuels    -- USGS fire-danger point values (WFPI index, WLFP large-fire %,
-              WFSP spread %), max of place center + ~9 km ring
-  exposure -- Census place population / housing units (data/place_exposure.json)
+  Active Threats     -- real, currently-burning NIFC wildfires, ranked by the
+                         incident team's own reported structures-threatened count
+                         (the direct, authoritative "risk to property" number),
+                         containment, and size. Each gets a real paragraph: what's
+                         burning, how big, what's at stake, and what the forecast
+                         wind is expected to do to it (via the repo's own
+                         mechanism_classifier -- what KIND of wind event, not just
+                         a number).
+  Emerging Conditions -- places with NO fire yet but where an official trigger
+                         (Red Flag / SPC outlook / NIFC 7-day potential) sits over
+                         dry fuels and people. Grouped into regional paragraphs
+                         instead of a town-by-town wall of near-duplicates.
 
-plus the repo's own wind-mechanism classifier (live_forecast.forecast_site) on
-the top candidates: what KIND of wind event, and how models tend to miss it.
-
-Every displayed ingredient is an authoritative agency value quoted as-is; the
-ranking formula is documented in the spec and embedded in the JSON output.
-Missing feeds are flagged, never guessed.
+Every fact quoted is an agency value shown as-served (NIFC ICS-209 fields, USGS
+fire danger, Census population) -- the narrative sentences are deterministic
+templates filled from real numbers, not a black-box score and not an LLM call
+(this runs unattended in a GitHub Action; no API key, no cost, no network
+dependency beyond the public data feeds it already uses).
 
 Pure standard library. Outputs:
-    python fire_watchlist.py --json > data/fire_watchlist.json
-    python fire_watchlist.py --md   > FIRE_WATCHLIST.md
+    python fire_watchlist.py --json-out=data/fire_watchlist.json --md-out=FIRE_WATCHLIST.md
 """
 
 from __future__ import annotations
@@ -32,29 +35,35 @@ import json
 import math
 import sys
 import time
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 from live_forecast import forecast_site
 
-METHOD_VERSION = "1.0"
-UA = {"User-Agent": "StormWatchLive-FireWatchlist/1.0 (github.com/aphilp1/stormwatch-live)"}
+METHOD_VERSION = "2.0"
+UA = {"User-Agent": "StormWatchLive-FireBriefing/2.0 (github.com/aphilp1/stormwatch-live)"}
 
+NIFC_INCIDENTS_BASE = ("https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/"
+                       "EGP_Active_Incidents_Prod_Public_View/FeatureServer/0/query")
+MIRROR_INCIDENTS_BASE = ("https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/"
+                         "USA_Wildfires_v1/FeatureServer/0/query")
 SPC_FWX = "https://mapservices.weather.noaa.gov/vector/rest/services/fire_weather/SPC_firewx/MapServer"
 PSP_BASE = "https://fsapps.nwcg.gov/psp/arcgis/rest/services/npsg/outlooks_forecast/MapServer"
 NWS_ALERTS = ("https://api.weather.gov/alerts/active"
               "?event=Red%20Flag%20Warning,Fire%20Weather%20Watch&status=actual")
 USGS_BASE = "https://dmsdata.cr.usgs.gov/geoserver"
 
-CANDIDATE_CAP = 60      # places scored for fuels
-CLASSIFIER_CAP = 25     # places run through the wind-mechanism classifier
-OUTPUT_CAP = 15         # final watchlist length
-DEDUPE_DEG = 0.25       # keep highest-pop place per grid cell of this size
-# Each individual request is fast (~0.5 s) -- a modest thread pool cuts the two
-# sequential-HTTP-loop stages from minutes to well under one, while staying far
-# below anything that looks like hammering a free government endpoint.
+MIN_FIRE_ACRES = 100          # floor for an "active threat" candidate
+MAX_ACTIVE_THREATS = 8        # detailed paragraphs in the briefing
+CANDIDATE_CAP = 60            # emerging-condition places scored for fuels
+CLASSIFIER_CAP_ACTIVE = 12    # active fires run through the wind classifier
+EMERGING_CLUSTER_DEG = (3.0, 4.0)   # lat, lon bin size for regional grouping
+MAX_EMERGING_REGIONS = 4
+DEDUPE_DEG = 0.25
 POOL_WORKERS = 6
+NEARBY_RADIUS_MI = 40          # how far to look for an exposed town near a fire
 
 SPC_DN = {5: "Elevated", 8: "Critical", 10: "Extreme"}
 SPC_PTS = {5: 1.0, 8: 2.0, 10: 3.0}
@@ -73,12 +82,36 @@ def _get_json(url, timeout=45, tries=3):
     raise last
 
 
+def haversine_mi(lat1, lon1, lat2, lon2):
+    R = 3958.8
+    rad = math.radians
+    dlat, dlon = rad(lat2 - lat1), rad(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(rad(lat1)) * math.cos(rad(lat2)) * math.sin(dlon / 2) ** 2
+    return 2 * R * math.asin(math.sqrt(a))
+
+
+def bearing_deg(lat1, lon1, lat2, lon2):
+    """Compass bearing FROM point 1 TOWARD point 2."""
+    rad = math.radians
+    y = math.sin(rad(lon2 - lon1)) * math.cos(rad(lat2))
+    x = math.cos(rad(lat1)) * math.sin(rad(lat2)) - math.sin(rad(lat1)) * math.cos(rad(lat2)) * math.cos(rad(lon2 - lon1))
+    return (math.degrees(math.atan2(y, x)) + 360) % 360
+
+
+def compass8(deg):
+    return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][round(deg / 45) % 8]
+
+
+def angle_diff(a, b):
+    d = abs(a - b) % 360
+    return min(d, 360 - d)
+
+
 # ---------------------------------------------------------------------------
-# Geometry: pure-python point-in-polygon with bbox prefilter
+# Geometry: pure-python point-in-polygon (reused for emerging-condition triggers)
 # ---------------------------------------------------------------------------
 
 def _rings(geom):
-    """Yield outer rings (list of [lon, lat]) from a GeoJSON (Multi)Polygon."""
     if not geom:
         return
     if geom["type"] == "Polygon":
@@ -93,7 +126,7 @@ def _rings(geom):
         return
     for poly in polys:
         if poly:
-            yield poly            # full ring list: [outer, hole1, ...]
+            yield poly
 
 
 def _pip_ring(lon, lat, ring):
@@ -112,8 +145,6 @@ def _pip_ring(lon, lat, ring):
 
 
 class Region:
-    """One trigger polygon set with a precomputed bbox for cheap rejection."""
-
     def __init__(self, geom, tag, detail):
         self.polys = list(_rings(geom))
         self.tag = tag
@@ -139,7 +170,149 @@ class Region:
 
 
 # ---------------------------------------------------------------------------
-# Trigger polygons
+# Active Threats: real, currently-burning NIFC wildfires
+# ---------------------------------------------------------------------------
+
+def _incident_acres(a):
+    return max(a.get("DailyAcres") or 0, a.get("CalculatedAcres") or 0, a.get("CALC_GISAcres") or 0)
+
+
+def fetch_active_fires():
+    where = urllib.parse.quote("Incident_Type_Kind LIKE '%WF%' AND PercentContained < 100")
+    fields = ("Name,DailyAcres,CalculatedAcres,CALC_GISAcres,PercentContained,POOState,County,"
+              "Discovery_Date,CALC_TotalStructuresThreatened,TotalIncidentPersonnel,IrwinID")
+    url = (f"{NIFC_INCIDENTS_BASE}?where={where}&outFields={fields}"
+           "&outSR=4326&returnGeometry=true&f=json&resultRecordCount=2000")
+    mirrored = False
+    try:
+        d = _get_json(url, timeout=40)
+        if "error" in d:
+            raise RuntimeError(d["error"])
+    except Exception as e:                # noqa: BLE001
+        print(f"warn: NIFC incidents failed ({e}), trying Esri mirror", file=sys.stderr)
+        mwhere = urllib.parse.quote("IncidentTypeCategory = 'WF' AND PercentContained < 100")
+        mfields = ("IncidentName,DailyAcres,CalculatedAcres,PercentContained,POOState,POOCounty,"
+                   "FireDiscoveryDateTime,TotalIncidentPersonnel,IrwinID,ResidencesDestroyed,OtherStructuresDestroyed")
+        murl = (f"{MIRROR_INCIDENTS_BASE}?where={mwhere}&outFields={mfields}"
+                "&outSR=4326&returnGeometry=true&f=json&resultRecordCount=2000")
+        d = _get_json(murl, timeout=40)
+        mirrored = True
+
+    fires = []
+    for f in d.get("features", []):
+        a = f["attributes"]
+        g = f.get("geometry")
+        if not g:
+            continue
+        if mirrored:
+            acres = max(a.get("DailyAcres") or 0, a.get("CalculatedAcres") or 0)
+            structs = None    # mirror has no "threatened" field, only destroyed-to-date
+            name, state, county = a.get("IncidentName"), a.get("POOState"), a.get("POOCounty")
+            personnel = a.get("TotalIncidentPersonnel")
+        else:
+            acres = _incident_acres(a)
+            structs = a.get("CALC_TotalStructuresThreatened")
+            name, state, county = a.get("Name"), a.get("POOState"), a.get("County")
+            personnel = a.get("TotalIncidentPersonnel")
+        if acres < MIN_FIRE_ACRES:
+            continue
+        fires.append({
+            "name": (name or "Unnamed Fire").title(), "state": (state or "").replace("US-", ""),
+            "county": county, "acres": acres, "pct_contained": a.get("PercentContained"),
+            "structures_threatened": structs, "personnel": personnel,
+            "lat": g["y"], "lon": g["x"], "mirrored": mirrored,
+        })
+    return fires
+
+
+def nearest_places(lat, lon, places, radius_mi=NEARBY_RADIUS_MI, limit=3):
+    hits = []
+    for p in places:
+        if abs(p["lat"] - lat) > 1.0 or abs(p["lon"] - lon) > 1.3:
+            continue                       # cheap bbox prefilter (~1 deg ~ 60-70 mi)
+        d = haversine_mi(lat, lon, p["lat"], p["lon"])
+        if d <= radius_mi:
+            hits.append((d, p))
+    hits.sort(key=lambda t: t[0])
+    return hits[:limit]
+
+
+def wind_narrative(wind, fire_lat, fire_lon, nearby):
+    """Prose describing the forecast wind at a fire, incl. whether it favors a nearby town."""
+    if not wind:
+        return "A forecast wind read wasn't available for this fire today."
+    pk = wind["peak_surface"]
+    mech = wind["headline_mechanism"]
+    threat = wind["threat_level"]
+    gust, sustained, rh = pk["gust_mph"], pk["sustained_mph"], pk["min_rh_pct"]
+
+    lead = {
+        "CRITICAL": f"Forecast conditions over the next 24 hours are critical for fire behavior: "
+                    f"gusts to {gust:.0f} mph with humidity dropping as low as {rh}%.",
+        "ELEVATED": f"Forecast winds will be locally gusty (up to {gust:.0f} mph, sustained near "
+                    f"{sustained:.0f}) with humidity as low as {rh}%.",
+        "BENIGN": f"Winds are expected to stay comparatively light over the next 24 hours "
+                  f"(gusts near {gust:.0f} mph), which should limit further wind-driven spread for now.",
+    }.get(threat, f"Peak forecast gust is {gust:.0f} mph, humidity as low as {rh}%.")
+
+    mech_note = {
+        "SYNOPTIC_TERRAIN": " This is a sustained, terrain-channeled wind regime — the setup "
+                            "our WindNinja terrain downscaling is built to resolve.",
+        "PBL_TRANSIENT": " A wind shift is expected during the window — the kind of transition "
+                         "that is hardest for a 3 km forecast model to time and place precisely.",
+        "CONVECTIVE_OUTFLOW": " Any thunderstorm outflow nearby could produce a sudden, "
+                              "hard-to-predict wind reversal on the fire's flank.",
+    }.get(mech, "")
+
+    toward = ""
+    if nearby and pk.get("dir_deg") is not None:
+        downwind = (pk["dir_deg"] + 180) % 360
+        d0, place0 = nearby[0]
+        bearing = bearing_deg(fire_lat, fire_lon, place0["lat"], place0["lon"])
+        if angle_diff(downwind, bearing) <= 45:
+            toward = (f" Forecast wind direction ({compass8(pk['dir_deg'])}, blowing toward the "
+                      f"{compass8(downwind)}) favors pushing the fire toward {place0['n']}, "
+                      f"{d0:.0f} miles away.")
+        else:
+            toward = (f" Forecast wind ({compass8(pk['dir_deg'])}) is not currently aligned toward "
+                      f"{place0['n']}, the nearest community of size, {d0:.0f} miles away.")
+    return lead + mech_note + toward
+
+
+def fire_paragraph(fire, wind, nearby):
+    acres_s = f"{fire['acres']:,.0f}"
+    where = ", ".join(x for x in (fire["county"] and f"{fire['county']} County", fire["state"]) if x)
+    lead = f"The {fire['name']} Fire"
+    if where:
+        lead += f" in {where}"
+    lead += f" has burned {acres_s} acres and is {fire['pct_contained']}% contained."
+
+    stakes = []
+    st = fire.get("structures_threatened")
+    if st:
+        stakes.append(f"NIFC's incident team reports **{st:,} structures threatened**.")
+    elif st == 0 and nearby:
+        d0, place0 = nearby[0]
+        stakes.append(f"No structures are currently reported threatened, though {place0['n']} "
+                      f"(pop. {place0['pop']:,}) sits {d0:.0f} miles away.")
+    if fire.get("personnel"):
+        stakes.append(f"{fire['personnel']:,} personnel are assigned.")
+    if fire.get("mirrored"):
+        stakes.append("(NIFC's primary feed was unavailable today — this record is from the "
+                      "Esri Living Atlas mirror, which does not carry a structures-threatened field.)")
+
+    wind_txt = wind_narrative(wind, fire["lat"], fire["lon"], nearby)
+    return " ".join([lead] + stakes + [wind_txt])
+
+
+def fire_threat_score(fire):
+    st = fire.get("structures_threatened") or 0
+    contained = fire.get("pct_contained") or 0
+    return math.log1p(st) * 3 + (1 - contained / 100) * 2 + math.log10(fire["acres"] + 1)
+
+
+# ---------------------------------------------------------------------------
+# Emerging Conditions: trigger x fuels x exposure, grouped into regions
 # ---------------------------------------------------------------------------
 
 def fetch_spc_regions():
@@ -160,7 +333,7 @@ def fetch_spc_regions():
 
 def fetch_psp_regions():
     regions = []
-    for lyr in range(7):                  # 0=Day1 ... 6=Day7
+    for lyr in range(7):
         try:
             d = _get_json(f"{PSP_BASE}/{lyr}/query?where=1%3D1&outFields=type"
                           "&maxAllowableOffset=0.01&geometryPrecision=3"
@@ -186,7 +359,7 @@ def fetch_redflag_regions():
     for f in d.get("features", []):
         props = f.get("properties") or {}
         kind = "warning" if props.get("event") == "Red Flag Warning" else "watch"
-        detail = {"kind": kind, "headline": props.get("headline") or props.get("event")}
+        detail = {"kind": kind}
         if f.get("geometry"):
             regions.append(Region(f["geometry"], "redflag", detail))
             continue
@@ -198,17 +371,10 @@ def fetch_redflag_regions():
                 except Exception:         # noqa: BLE001
                     geom = {}
                 zone_cache[zurl] = geom
-                time.sleep(0.1)
             if geom:
                 regions.append(Region(geom, "redflag", detail))
     return regions
 
-
-# ---------------------------------------------------------------------------
-# Fuels: USGS fire-danger GetFeatureInfo (semantics verified in spec 05)
-#   WFPI  PALETTE_INDEX 0-247 = value, >=248 mask
-#   WLFP/WFSP GRAY_INDEX = percent; >=248 mask (WLFP mask codes are x10)
-# ---------------------------------------------------------------------------
 
 def _gfi(product, lat, lon):
     name = f"{product}-forecast-1_conus_day_data"
@@ -223,40 +389,32 @@ def _gfi(product, lat, lon):
         return None
     feats = d.get("features") or []
     if not feats:
-        return None                       # outside CONUS raster
+        return None
     p = feats[0].get("properties") or {}
     v = p.get("PALETTE_INDEX", p.get("GRAY_INDEX"))
     return v if isinstance(v, (int, float)) else None
 
 
 def fuels_at(lat, lon):
-    """Max of center + 4-point ~9 km ring per product; None = no valid cell."""
-    pts = [(lat, lon), (lat + 0.08, lon), (lat - 0.08, lon),
-           (lat, lon + 0.10), (lat, lon - 0.10)]
+    pts = [(lat, lon), (lat + 0.08, lon)]
     out = {}
     for prod in ("wfpi", "wlfp", "wfsp"):
         best = None
-        for i, (la, lo) in enumerate(pts):
+        for la, lo in pts:
             v = _gfi(prod, la, lo)
             if v is not None and v < 248:
                 best = v if best is None else max(best, v)
-            if i == 0 and best is not None:
-                # center cell valid: one ring point is enough to catch a hotter edge
-                v2 = _gfi(prod, pts[1][0], pts[1][1])
-                if v2 is not None and v2 < 248:
-                    best = max(best, v2)
-                break
         out[prod] = best
     return out
 
 
-# ---------------------------------------------------------------------------
-# Scoring (formula documented in spec 06; embedded in JSON for transparency)
-# ---------------------------------------------------------------------------
-
-FORMULA = ("risk_index = trigger_pts * (1 + fuels_pct/25) * log10(population); "
-           "trigger_pts = redflag(2 warn|1 watch) + SPC(1 Elev|2 Crit|3 Extr, +0.5 dry-ltg) "
-           "+ PSP days (D1 1.5, D2-3 1.0, D4-7 0.5, cap 3) + wind(2 CRITICAL|1 ELEVATED)")
+def fuels_pct(fu):
+    probs = [v for v in (fu.get("wlfp"), fu.get("wfsp")) if v is not None]
+    if probs:
+        return max(probs), "wlfp/wfsp"
+    if fu.get("wfpi") is not None:
+        return fu["wfpi"] / 150 * 20, "wfpi"
+    return 0.0, "none"
 
 
 def trigger_points(hits):
@@ -275,31 +433,12 @@ def trigger_points(hits):
     return pts, psp_days
 
 
-def fuels_pct(fu):
-    """Authoritative probability if available, else scaled WFPI (flagged)."""
-    probs = [v for v in (fu.get("wlfp"), fu.get("wfsp")) if v is not None]
-    if probs:
-        return max(probs), "wlfp/wfsp"
-    if fu.get("wfpi") is not None:
-        return fu["wfpi"] / 150 * 20, "wfpi"
-    return 0.0, "none"
-
-
-# ---------------------------------------------------------------------------
-# Main pipeline
-# ---------------------------------------------------------------------------
-
-def build_watchlist():
-    places = json.load(open("data/place_exposure.json", encoding="utf-8"))["places"]
-
-    print("fetching trigger polygons...", file=sys.stderr)
+def find_emerging_candidates(places):
     regions = fetch_spc_regions() + fetch_psp_regions() + fetch_redflag_regions()
-    n_by = {}
+    region_counts = {}
     for r in regions:
-        n_by[r.tag] = n_by.get(r.tag, 0) + 1
-    print(f"regions: {n_by}", file=sys.stderr)
+        region_counts[r.tag] = region_counts.get(r.tag, 0) + 1
 
-    print("filtering candidates...", file=sys.stderr)
     cands = []
     for p in places:
         hits = {}
@@ -314,96 +453,158 @@ def build_watchlist():
         if hits:
             cands.append((p, hits))
 
-    # dedupe: one place (highest pop) per DEDUPE_DEG grid cell
     best = {}
     for p, hits in cands:
         key = (round(p["lat"] / DEDUPE_DEG), round(p["lon"] / DEDUPE_DEG))
         if key not in best or p["pop"] > best[key][0]["pop"]:
             best[key] = (p, hits)
-    # Cap by trigger-weighted priority, NOT raw population — a Red Flag Warning over a
-    # small town (Salmon ID, pop 3k) must beat a Day-6 potential hit at a big city.
+
     def _prio(t):
         p, hits = t
         return trigger_points(hits)[0] * math.log10(max(p["pop"], 10))
     cands = sorted(best.values(), key=lambda t: -_prio(t))[:CANDIDATE_CAP]
-    print(f"candidates after dedupe/cap: {len(cands)}", file=sys.stderr)
 
-    print(f"querying USGS fuels ({len(cands)} places, {POOL_WORKERS} workers)...", file=sys.stderr)
     def _score_one(item):
         p, hits = item
         fu = fuels_at(p["lat"], p["lon"])
         fpct, fsrc = fuels_pct(fu)
         tpts, psp_days = trigger_points(hits)
-        prelim = tpts * (1 + fpct / 25) * math.log10(max(p["pop"], 10))
-        return {"place": p, "hits": hits, "fuels": fu, "fuels_pct": round(fpct, 1),
-                "fuels_source": fsrc, "psp_days": psp_days,
-                "trigger_pts_base": tpts, "prelim": prelim}
+        return {"place": p, "hits": hits, "fuels_pct": round(fpct, 1), "fuels_source": fsrc,
+                "psp_days": psp_days, "trigger_pts": tpts}
     with ThreadPoolExecutor(max_workers=POOL_WORKERS) as ex:
         scored = list(ex.map(_score_one, cands))
-    scored.sort(key=lambda s: -s["prelim"])
+    return scored, region_counts
 
-    print(f"running wind-mechanism classifier on top {CLASSIFIER_CAP} candidates...", file=sys.stderr)
-    top = scored[:CLASSIFIER_CAP]
-    def _classify_one(s):
+
+def cluster_regions(scored):
+    """Group emerging-condition places into ~lat/lon bins so the briefing reads as a
+    handful of regional paragraphs instead of a wall of near-duplicate small towns."""
+    bins = {}
+    latbin, lonbin = EMERGING_CLUSTER_DEG
+    for s in scored:
         p = s["place"]
+        key = (round(p["lat"] / latbin), round(p["lon"] / lonbin))
+        bins.setdefault(key, []).append(s)
+
+    clusters = []
+    for members in bins.values():
+        members.sort(key=lambda s: -s["place"]["pop"])
+        total_weight = sum(m["trigger_pts"] * math.log10(max(m["place"]["pop"], 10)) for m in members)
+        clusters.append({"members": members, "weight": total_weight})
+    clusters.sort(key=lambda c: -c["weight"])
+    return clusters[:MAX_EMERGING_REGIONS]
+
+
+def region_paragraph(cluster):
+    members = cluster["members"]
+    top_names = [f"{m['place']['n']}" for m in members[:5]]
+    states = sorted({m["place"]["st"] for m in members})
+    place_str = ", ".join(top_names[:-1]) + (f", and {top_names[-1]}" if len(top_names) > 1 else top_names[0])
+    n_more = len(members) - len(top_names)
+    plural = len(members) > 1 or n_more > 0
+
+    spc_cats = [h["dn"] for m in members for h in m["hits"].get("spc", [])]
+    best_spc = SPC_DN.get(max(spc_cats)) if spc_cats else None
+    psp_days = sorted({d for m in members for d in m["psp_days"]})
+    fuels_vals = [m["fuels_pct"] for m in members if m["fuels_pct"] > 0]
+    has_redflag = any(m["hits"].get("redflag") for m in members)
+
+    lead = f"A fire-weather pattern is developing over {', '.join(states)}: {place_str}"
+    if n_more > 0:
+        lead += f" and {n_more} other communities"
+    lead += " sit under" if plural else " sits under"
+
+    trig_bits = []
+    if has_redflag:
+        trig_bits.append("an active Red Flag Warning or Watch")
+    if best_spc:
+        trig_bits.append(f"SPC's **{best_spc}** fire-weather category")
+    if psp_days:
+        trig_bits.append(f"NIFC's Significant Fire Potential outlook (day{'s' if len(psp_days)>1 else ''} "
+                         + ",".join(map(str, psp_days)) + ")")
+    lead += " " + " and ".join(trig_bits) + "."
+
+    fuels_txt = ""
+    if fuels_vals:
+        fuels_txt = (f" USGS fire-danger models put the local large-fire/spread probability as high as "
+                     f"{max(fuels_vals):.0f}% in spots.")
+
+    tail = (" No fire has been reported yet, but the combination of dry fuels and elevated fire "
+            "weather is exactly the kind that produces a fast-moving run if an ignition occurs.")
+    return lead + fuels_txt + tail
+
+
+# ---------------------------------------------------------------------------
+# Main pipeline
+# ---------------------------------------------------------------------------
+
+def build_briefing():
+    places = json.load(open("data/place_exposure.json", encoding="utf-8"))["places"]
+
+    print("fetching active fires...", file=sys.stderr)
+    fires = fetch_active_fires()
+    fires.sort(key=lambda f: -fire_threat_score(f))
+    top_fires = fires[:MAX_ACTIVE_THREATS]
+    print(f"active uncontained wildfires >= {MIN_FIRE_ACRES}ac: {len(fires)}, detailing top {len(top_fires)}",
+          file=sys.stderr)
+
+    print("running wind classifier on active fires...", file=sys.stderr)
+    classify_set = top_fires[:CLASSIFIER_CAP_ACTIVE]
+    def _classify(f):
         try:
-            return forecast_site(f'{p["n"]}, {p["st"]}', p["lat"], p["lon"], "auto", 24)
+            return forecast_site(f["name"], f["lat"], f["lon"], "auto", 24)
         except Exception as e:            # noqa: BLE001
-            print(f'warn: classifier failed for {p["n"]}: {e}', file=sys.stderr)
+            print(f'warn: classifier failed for {f["name"]}: {e}', file=sys.stderr)
             return None
     with ThreadPoolExecutor(max_workers=POOL_WORKERS) as ex:
-        winds = list(ex.map(_classify_one, top))
-    for s, wind in zip(top, winds):
-        s["wind"] = wind
+        winds = list(ex.map(_classify, classify_set))
 
-    entries = []
-    for s in scored[:CLASSIFIER_CAP]:
-        p, hits, w = s["place"], s["hits"], s.get("wind")
-        wind_pts = 0.0
-        if w:
-            wind_pts = {"CRITICAL": 2.0, "ELEVATED": 1.0}.get(w["threat_level"], 0.0)
-        tpts = s["trigger_pts_base"] + wind_pts
-        risk = tpts * (1 + s["fuels_pct"] / 25) * math.log10(max(p["pop"], 10))
-        spc_best = max((h["dn"] for h in hits.get("spc", [])), default=None)
-        entry = {
-            "rank": 0,
-            "name": p["n"], "state": p["st"], "lat": p["lat"], "lon": p["lon"],
-            "population": p["pop"], "housing_units": p["hu"],
-            "risk_index": round(risk, 1),
-            "trigger_pts": round(tpts, 1),
-            "red_flag": hits.get("redflag"),
-            "spc_category": SPC_DN.get(spc_best),
-            "spc_dry_lightning": bool(hits.get("spc_dryltg")),
-            "psp_days": s["psp_days"],
-            "fuels": {"wfpi": s["fuels"].get("wfpi"),
-                      "wlfp_pct": s["fuels"].get("wlfp"),
-                      "wfsp_pct": s["fuels"].get("wfsp"),
-                      "pct_used": s["fuels_pct"], "source": s["fuels_source"]},
-        }
-        if w:
-            entry["wind"] = {
-                "threat_level": w["threat_level"],
-                "mechanism": w["headline_mechanism"],
-                "windninja_applicability": w["windninja_applicability"],
-                "bust_axis": w["primary_bust_axis"],
-                "peak": w["peak_surface"],
-            }
-        entries.append(entry)
+    active_entries = []
+    for fire, wind in zip(top_fires, winds):
+        nearby_raw = nearest_places(fire["lat"], fire["lon"], places)
+        nearby = [{"n": p["n"], "st": p["st"], "pop": p["pop"], "distance_mi": round(d, 1)}
+                  for d, p in nearby_raw]
+        narrative = fire_paragraph(fire, wind, nearby_raw)
+        entry = {**fire, "nearby_places": nearby, "narrative": narrative}
+        if wind:
+            entry["wind"] = {"threat_level": wind["threat_level"], "mechanism": wind["headline_mechanism"],
+                             "windninja_applicability": wind["windninja_applicability"],
+                             "peak": wind["peak_surface"]}
+        active_entries.append(entry)
 
-    entries.sort(key=lambda e: -e["risk_index"])
-    entries = entries[:OUTPUT_CAP]
-    for i, e in enumerate(entries):
-        e["rank"] = i + 1
+    print("scoring emerging conditions...", file=sys.stderr)
+    scored, region_counts = find_emerging_candidates(places)
+    clusters = cluster_regions(scored)
+    emerging_entries = []
+    for c in clusters:
+        lead_place = c["members"][0]["place"]
+        emerging_entries.append({
+            "lat": lead_place["lat"], "lon": lead_place["lon"],
+            "states": sorted({m["place"]["st"] for m in c["members"]}),
+            "places": [m["place"]["n"] for m in c["members"][:8]],
+            "narrative": region_paragraph(c),
+        })
+
+    if active_entries:
+        lead = active_entries[0]
+        st_txt = f", threatening {lead['structures_threatened']:,} structures" if lead.get("structures_threatened") else ""
+        headline = (f"{len(fires)} active wildfire{'s are' if len(fires)!=1 else ' is'} burning uncontained "
+                   f"in the US today. The most serious is the {lead['name']} Fire in {lead['state']}"
+                   f"{st_txt}.")
+    elif emerging_entries:
+        headline = ("No wildfire is currently threatening a populated area. The most fire-weather-favorable "
+                   f"conditions today are over {', '.join(emerging_entries[0]['states'])}.")
+    else:
+        headline = "No active wildfire threats and no significant fire-weather convergence found today."
 
     return {
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
         "method_version": METHOD_VERSION,
-        "formula": FORMULA,
-        "coverage": "CONUS incorporated places + CDPs, population >= 1,000",
-        "note": ("Ranks where official fire-weather triggers, dry fuels, and population "
-                 "converge. Conditions ranking, not an ignition forecast."),
-        "counts": {"trigger_regions": n_by, "candidates": len(cands)},
-        "entries": entries,
+        "headline": headline,
+        "counts": {"active_uncontained_fires": len(fires), "trigger_regions": region_counts,
+                  "emerging_candidates": len(scored)},
+        "active_threats": active_entries,
+        "emerging_conditions": emerging_entries,
     }
 
 
@@ -412,58 +613,38 @@ def build_watchlist():
 # ---------------------------------------------------------------------------
 
 def render_md(w):
-    L = ["# 🎯 StormWatch Fire Watchlist",
-         "",
-         f"*Generated {w['generated_utc']} · method v{w['method_version']} · "
-         "CONUS communities where official fire-weather triggers, dry fuels, and "
-         "people converge (1-7 days). Not an ignition forecast.*",
-         ""]
-    if not w["entries"]:
-        L.append("**No convergence today** — no populated place sits inside an active "
-                 "Red Flag / SPC fire-weather / PSP significant-potential area.")
-    for e in w["entries"]:
-        L.append(f"## {e['rank']}. {e['name']}, {e['state']} — index {e['risk_index']}")
-        L.append(f"*Population {e['population']:,} · {e['housing_units']:,} housing units*")
-        trig = []
-        if e["red_flag"]:
-            trig.append(f"**Red Flag {e['red_flag']['kind'].upper()}**")
-        if e["spc_category"]:
-            trig.append(f"SPC **{e['spc_category']}**"
-                        + (" + dry lightning" if e["spc_dry_lightning"] else ""))
-        if e["psp_days"]:
-            trig.append("PSP significant potential day(s) "
-                        + ",".join(map(str, e["psp_days"])))
-        L.append("- Trigger: " + (" · ".join(trig) if trig else "wind forecast only"))
-        f = e["fuels"]
-        fu = []
-        if f["wfpi"] is not None:
-            fu.append(f"WFPI {f['wfpi']}/247")
-        if f["wlfp_pct"] is not None:
-            fu.append(f"large-fire {f['wlfp_pct']:.0f}%")
-        if f["wfsp_pct"] is not None:
-            fu.append(f"spread {f['wfsp_pct']:.0f}%")
-        L.append("- Fuels (USGS): " + (" · ".join(fu) if fu else "no valid cell"))
-        if e.get("wind"):
-            wd = e["wind"]
-            pk = wd["peak"]
-            L.append(f"- Wind: **{wd['threat_level']}** · {wd['mechanism']} · "
-                     f"peak {pk['sustained_mph']:.0f}/{pk['gust_mph']:.0f} mph, "
-                     f"RH {pk['min_rh_pct']}% · WindNinja: {wd['windninja_applicability']}")
+    L = ["# 🔥 StormWatch Fire Briefing", "",
+         f"*Generated {w['generated_utc']} · method v{w['method_version']} · CONUS. "
+         "Every fact is quoted from NIFC/SPC/USGS/Census as reported — the wind read is "
+         "StormWatch's own mechanism classifier.*", "",
+         f"**{w['headline']}**", ""]
+
+    if w["active_threats"]:
+        L.append("## Active Threats")
         L.append("")
+        for f in w["active_threats"]:
+            L.append(f"### {f['name']} Fire — {f['state']}")
+            L.append(f['narrative'])
+            L.append("")
+    if w["emerging_conditions"]:
+        L.append("## Emerging Conditions to Watch")
+        L.append("")
+        for e in w["emerging_conditions"]:
+            L.append(e["narrative"])
+            L.append("")
+    if not w["active_threats"] and not w["emerging_conditions"]:
+        L.append("Nothing meets the bar today.")
     L.append("---")
-    L.append("*Sources: NWS (alerts) · SPC (fire wx outlooks) · NIFC Predictive Services "
-             "(7-day potential) · USGS EROS (WFPI/WLFP/WFSP) · US Census (ACS 2023). "
-             f"Formula: `{w['formula']}`*")
+    L.append("*Sources: NIFC (active incidents, ICS-209 fields) · NWS (alerts) · SPC (fire weather "
+             "outlooks) · NIFC Predictive Services (7-day potential) · USGS EROS (fire danger) · "
+             "US Census (ACS 2023). Wind read: StormWatch's own mechanism_classifier.*")
     return "\n".join(L)
 
 
 def main(argv):
-    # --json-out/--md-out write BOTH files from one computed result (the pipeline is
-    # expensive -- ~60 sequential USGS calls + ~25 Open-Meteo calls, no concurrency by
-    # design to stay polite to free government endpoints -- never run it twice per day).
     json_out = next((a.split("=", 1)[1] for a in argv if a.startswith("--json-out=")), None)
     md_out = next((a.split("=", 1)[1] for a in argv if a.startswith("--md-out=")), None)
-    w = build_watchlist()
+    w = build_briefing()
     if json_out or md_out:
         if json_out:
             with open(json_out, "w", encoding="utf-8") as f:

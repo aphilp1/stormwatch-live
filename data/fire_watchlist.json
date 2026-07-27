@@ -1,633 +1,435 @@
 {
- "generated_utc": "2026-07-27T21:42Z",
- "method_version": "1.0",
- "formula": "risk_index = trigger_pts * (1 + fuels_pct/25) * log10(population); trigger_pts = redflag(2 warn|1 watch) + SPC(1 Elev|2 Crit|3 Extr, +0.5 dry-ltg) + PSP days (D1 1.5, D2-3 1.0, D4-7 0.5, cap 3) + wind(2 CRITICAL|1 ELEVATED)",
- "coverage": "CONUS incorporated places + CDPs, population >= 1,000",
- "note": "Ranks where official fire-weather triggers, dry fuels, and population converge. Conditions ranking, not an ignition forecast.",
+ "generated_utc": "2026-07-27T22:21Z",
+ "method_version": "2.0",
+ "headline": "151 active wildfires are burning uncontained in the US today. The most serious is the 0494 Akawa Butte Fire in OR, threatening 4,812 structures.",
  "counts": {
+  "active_uncontained_fires": 151,
   "trigger_regions": {
    "spc": 1,
    "psp": 33,
    "redflag": 2
   },
-  "candidates": 60
+  "emerging_candidates": 60
  },
- "entries": [
+ "active_threats": [
   {
-   "rank": 1,
-   "name": "Salmon city",
-   "state": "ID",
-   "lat": 45.1744,
-   "lon": -113.8948,
-   "population": 3196,
-   "housing_units": 1687,
-   "risk_index": 44.2,
-   "trigger_pts": 5.5,
-   "red_flag": {
-    "kind": "warning",
-    "headline": "Red Flag Warning issued July 27 at 12:34AM MDT until July 27 at 9:00PM MDT by NWS Pocatello ID"
-   },
-   "spc_category": "Elevated",
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1
+   "name": "0494 Akawa Butte",
+   "state": "OR",
+   "county": "Jefferson",
+   "acres": 27307,
+   "pct_contained": 5,
+   "structures_threatened": 4812,
+   "personnel": 1668,
+   "lat": 44.47236699999999,
+   "lon": -121.45316700000001,
+   "mirrored": false,
+   "nearby_places": [
+    {
+     "n": "Crooked River Ranch CDP",
+     "st": "OR",
+     "pop": 4681,
+     "distance_mi": 9.4
+    },
+    {
+     "n": "Culver city",
+     "st": "OR",
+     "pop": 2211,
+     "distance_mi": 12.4
+    },
+    {
+     "n": "Sisters city",
+     "st": "OR",
+     "pop": 3018,
+     "distance_mi": 13.4
+    }
    ],
-   "fuels": {
-    "wfpi": 91,
-    "wlfp_pct": 4.360570907592773,
-    "wfsp_pct": 32.34022903442383,
-    "pct_used": 32.3,
-    "source": "wlfp/wfsp"
-   },
+   "narrative": "The 0494 Akawa Butte Fire in Jefferson County, OR has burned 27,307 acres and is 5% contained. NIFC's incident team reports **4,812 structures threatened**. 1,668 personnel are assigned. Forecast winds will be locally gusty (up to 30 mph, sustained near 16) with humidity as low as 21%. A wind shift is expected during the window \u2014 the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind direction (W, blowing toward the E) favors pushing the fire toward Crooked River Ranch CDP, 9 miles away.",
    "wind": {
     "threat_level": "ELEVATED",
     "mechanism": "PBL_TRANSIENT",
     "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
+    "peak": {
+     "time": "2026-07-27T20:00",
+     "sustained_mph": 15.7,
+     "gust_mph": 30.0,
+     "dir_deg": 292,
+     "temp_c": 20.9,
+     "rh_pct": 37,
+     "min_rh_pct": 21
+    }
+   }
+  },
+  {
+   "name": "0433 Brewer",
+   "state": "OR",
+   "county": "Jefferson",
+   "acres": 51308,
+   "pct_contained": 5,
+   "structures_threatened": 1878,
+   "personnel": 995,
+   "lat": 44.588568,
+   "lon": -120.907094,
+   "mirrored": false,
+   "nearby_places": [
+    {
+     "n": "Madras city",
+     "st": "OR",
+     "pop": 7596,
+     "distance_mi": 13.5
+    },
+    {
+     "n": "Culver city",
+     "st": "OR",
+     "pop": 2211,
+     "distance_mi": 15.6
+    },
+    {
+     "n": "Prineville city",
+     "st": "OR",
+     "pop": 11187,
+     "distance_mi": 20.2
+    }
+   ],
+   "narrative": "The 0433 Brewer Fire in Jefferson County, OR has burned 51,308 acres and is 5% contained. NIFC's incident team reports **1,878 structures threatened**. 995 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 19 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window \u2014 the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (N) is not currently aligned toward Madras city, the nearest community of size, 13 miles away.",
+   "wind": {
+    "threat_level": "BENIGN",
+    "mechanism": "PBL_TRANSIENT",
+    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
+    "peak": {
+     "time": "2026-07-27T19:00",
+     "sustained_mph": 12.5,
+     "gust_mph": 18.6,
+     "dir_deg": 3,
+     "temp_c": 24.2,
+     "rh_pct": 29,
+     "min_rh_pct": 19
+    }
+   }
+  },
+  {
+   "name": "Second Flat",
+   "state": "OR",
+   "county": "Harney",
+   "acres": 85379,
+   "pct_contained": 5,
+   "structures_threatened": 1721,
+   "personnel": 219,
+   "lat": 43.60866699999999,
+   "lon": -119.43916699999998,
+   "mirrored": false,
+   "nearby_places": [
+    {
+     "n": "Hines city",
+     "st": "OR",
+     "pop": 1629,
+     "distance_mi": 18.2
+    },
+    {
+     "n": "Burns city",
+     "st": "OR",
+     "pop": 2736,
+     "distance_mi": 19.0
+    }
+   ],
+   "narrative": "The Second Flat Fire in Harney County, OR has burned 85,379 acres and is 5% contained. NIFC's incident team reports **1,721 structures threatened**. 219 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 24 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window \u2014 the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (NW) is not currently aligned toward Hines city, the nearest community of size, 18 miles away.",
+   "wind": {
+    "threat_level": "BENIGN",
+    "mechanism": "PBL_TRANSIENT",
+    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
     "peak": {
      "time": "2026-07-27T21:00",
-     "sustained_mph": 9.6,
-     "gust_mph": 25.1,
-     "dir_deg": 3,
-     "temp_c": 28.9,
-     "rh_pct": 18,
-     "min_rh_pct": 13
+     "sustained_mph": 13.0,
+     "gust_mph": 23.7,
+     "dir_deg": 336,
+     "temp_c": 22.0,
+     "rh_pct": 21,
+     "min_rh_pct": 12
     }
    }
   },
   {
-   "rank": 2,
-   "name": "Perryton city",
-   "state": "TX",
-   "lat": 36.3929,
-   "lon": -100.7977,
-   "population": 8625,
-   "housing_units": 3719,
-   "risk_index": 33.4,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
+   "name": "Pocket",
+   "state": "AZ",
+   "county": "Yavapai",
+   "acres": 27393,
+   "pct_contained": 95,
+   "structures_threatened": 3570,
+   "personnel": 1,
+   "lat": 34.967211999999996,
+   "lon": -111.787421,
+   "mirrored": false,
+   "nearby_places": [
+    {
+     "n": "Sedona city",
+     "st": "AZ",
+     "pop": 9770,
+     "distance_mi": 7.5
+    },
+    {
+     "n": "Kachina Village CDP",
+     "st": "AZ",
+     "pop": 3212,
+     "distance_mi": 10.1
+    },
+    {
+     "n": "Village of Oak Creek (Big Park) CDP",
+     "st": "AZ",
+     "pop": 6340,
+     "distance_mi": 12.9
+    }
    ],
-   "fuels": {
-    "wfpi": 101,
-    "wlfp_pct": 3.3403072357177734,
-    "wfsp_pct": 28.09495735168457,
-    "pct_used": 28.1,
-    "source": "wlfp/wfsp"
-   },
+   "narrative": "The Pocket Fire in Yavapai County, AZ has burned 27,393 acres and is 95% contained. NIFC's incident team reports **3,570 structures threatened**. 1 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 15 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window \u2014 the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (S) is not currently aligned toward Sedona city, the nearest community of size, 8 miles away.",
    "wind": {
-    "threat_level": "ELEVATED",
+    "threat_level": "BENIGN",
     "mechanism": "PBL_TRANSIENT",
     "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
     "peak": {
-     "time": "2026-07-27T08:00",
-     "sustained_mph": 13.7,
-     "gust_mph": 29.5,
-     "dir_deg": 232,
-     "temp_c": 27.5,
-     "rh_pct": 45,
+     "time": "2026-07-27T15:00",
+     "sustained_mph": 11.4,
+     "gust_mph": 14.8,
+     "dir_deg": 178,
+     "temp_c": 26.3,
+     "rh_pct": 51,
+     "min_rh_pct": 31
+    }
+   }
+  },
+  {
+   "name": "Kaiser Canyon",
+   "state": "WA",
+   "county": "Okanogan",
+   "acres": 124089,
+   "pct_contained": 9,
+   "structures_threatened": 1566,
+   "personnel": 884,
+   "lat": 48.116777,
+   "lon": -118.95863799999998,
+   "mirrored": false,
+   "nearby_places": [
+    {
+     "n": "Coulee Dam town",
+     "st": "WA",
+     "pop": 1457,
+     "distance_mi": 10.3
+    },
+    {
+     "n": "Okanogan city",
+     "st": "WA",
+     "pop": 2477,
+     "distance_mi": 33.4
+    },
+    {
+     "n": "Omak city",
+     "st": "WA",
+     "pop": 4931,
+     "distance_mi": 33.7
+    }
+   ],
+   "narrative": "The Kaiser Canyon Fire in Okanogan County, WA has burned 124,089 acres and is 9% contained. NIFC's incident team reports **1,566 structures threatened**. 884 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 15 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (S) is not currently aligned toward Coulee Dam town, the nearest community of size, 10 miles away.",
+   "wind": {
+    "threat_level": "BENIGN",
+    "mechanism": "SYNOPTIC_TERRAIN",
+    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "peak": {
+     "time": "2026-07-27T20:00",
+     "sustained_mph": 10.0,
+     "gust_mph": 15.2,
+     "dir_deg": 200,
+     "temp_c": 27.0,
+     "rh_pct": 22,
+     "min_rh_pct": 20
+    }
+   }
+  },
+  {
+   "name": "Hagen",
+   "state": "OR",
+   "county": "Umatilla",
+   "acres": 26878.83440921,
+   "pct_contained": 0,
+   "structures_threatened": 1467,
+   "personnel": 530,
+   "lat": 45.707,
+   "lon": -118.269,
+   "mirrored": false,
+   "nearby_places": [
+    {
+     "n": "Athena city",
+     "st": "OR",
+     "pop": 1206,
+     "distance_mi": 13.0
+    },
+    {
+     "n": "Milton-Freewater city",
+     "st": "OR",
+     "pop": 7096,
+     "distance_mi": 16.7
+    },
+    {
+     "n": "Elgin city",
+     "st": "OR",
+     "pop": 1592,
+     "distance_mi": 19.5
+    }
+   ],
+   "narrative": "The Hagen Fire in Umatilla County, OR has burned 26,879 acres and is 0% contained. NIFC's incident team reports **1,467 structures threatened**. 530 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 11 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (N) is not currently aligned toward Athena city, the nearest community of size, 13 miles away.",
+   "wind": {
+    "threat_level": "BENIGN",
+    "mechanism": "SYNOPTIC_TERRAIN",
+    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "peak": {
+     "time": "2026-07-27T20:00",
+     "sustained_mph": 3.4,
+     "gust_mph": 11.2,
+     "dir_deg": 349,
+     "temp_c": 22.0,
+     "rh_pct": 28,
+     "min_rh_pct": 23
+    }
+   }
+  },
+  {
+   "name": "E Evans Creek Rd 18000",
+   "state": "OR",
+   "county": "Jackson",
+   "acres": 15580,
+   "pct_contained": 66,
+   "structures_threatened": 2347,
+   "personnel": 1194,
+   "lat": 42.60394999999999,
+   "lon": -123.00183333000001,
+   "mirrored": false,
+   "nearby_places": [
+    {
+     "n": "Shady Cove city",
+     "st": "OR",
+     "pop": 3083,
+     "distance_mi": 9.3
+    },
+    {
+     "n": "Gold Hill city",
+     "st": "OR",
+     "pop": 1264,
+     "distance_mi": 11.9
+    },
+    {
+     "n": "Eagle Point city",
+     "st": "OR",
+     "pop": 9783,
+     "distance_mi": 13.9
+    }
+   ],
+   "narrative": "The E Evans Creek Rd 18000 Fire in Jackson County, OR has burned 15,580 acres and is 66% contained. NIFC's incident team reports **2,347 structures threatened**. 1,194 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 19 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (N) is not currently aligned toward Shady Cove city, the nearest community of size, 9 miles away.",
+   "wind": {
+    "threat_level": "BENIGN",
+    "mechanism": "SYNOPTIC_TERRAIN",
+    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "peak": {
+     "time": "2026-07-27T20:00",
+     "sustained_mph": 10.8,
+     "gust_mph": 18.6,
+     "dir_deg": 343,
+     "temp_c": 24.7,
+     "rh_pct": 37,
      "min_rh_pct": 16
     }
    }
   },
   {
-   "rank": 3,
-   "name": "Guymon city",
-   "state": "OK",
-   "lat": 36.6901,
-   "lon": -101.477,
-   "population": 12596,
-   "housing_units": 4839,
-   "risk_index": 33.1,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
-   ],
-   "fuels": {
-    "wfpi": 87,
-    "wlfp_pct": 1.5198595523834229,
-    "wfsp_pct": 25.495166778564453,
-    "pct_used": 25.5,
-    "source": "wlfp/wfsp"
-   },
+   "name": "Big Grass",
+   "state": "OR",
+   "county": "Malheur",
+   "acres": 280000,
+   "pct_contained": 5,
+   "structures_threatened": 918,
+   "personnel": 69,
+   "lat": 42.64979999999999,
+   "lon": -117.30335,
+   "mirrored": false,
+   "nearby_places": [],
+   "narrative": "The Big Grass Fire in Malheur County, OR has burned 280,000 acres and is 5% contained. NIFC's incident team reports **918 structures threatened**. 69 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 20 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window \u2014 the kind of transition that is hardest for a 3 km forecast model to time and place precisely.",
    "wind": {
-    "threat_level": "ELEVATED",
+    "threat_level": "BENIGN",
     "mechanism": "PBL_TRANSIENT",
     "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
     "peak": {
-     "time": "2026-07-27T09:00",
-     "sustained_mph": 15.2,
-     "gust_mph": 27.1,
-     "dir_deg": 233,
-     "temp_c": 30.3,
-     "rh_pct": 41,
-     "min_rh_pct": 17
+     "time": "2026-07-27T16:00",
+     "sustained_mph": 7.8,
+     "gust_mph": 20.4,
+     "dir_deg": 319,
+     "temp_c": 31.2,
+     "rh_pct": 12,
+     "min_rh_pct": 8
     }
    }
-  },
+  }
+ ],
+ "emerging_conditions": [
   {
-   "rank": 4,
-   "name": "Dumas city",
-   "state": "TX",
-   "lat": 35.862,
-   "lon": -101.965,
-   "population": 14362,
-   "housing_units": 5638,
-   "risk_index": 27.7,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
-   ],
-   "fuels": {
-    "wfpi": 94,
-    "wlfp_pct": 3.0597524642944336,
-    "wfsp_pct": 16.569400787353516,
-    "pct_used": 16.6,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T09:00",
-     "sustained_mph": 14.5,
-     "gust_mph": 27.1,
-     "dir_deg": 233,
-     "temp_c": 28.0,
-     "rh_pct": 47,
-     "min_rh_pct": 19
-    }
-   }
-  },
-  {
-   "rank": 5,
-   "name": "Amarillo city",
-   "state": "TX",
    "lat": 35.1981,
    "lon": -101.8331,
-   "population": 200945,
-   "housing_units": 88394,
-   "risk_index": 27.3,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
+   "states": [
+    "OK",
+    "TX"
    ],
-   "fuels": {
-    "wfpi": 76,
-    "wlfp_pct": 2.0387020111083984,
-    "wfsp_pct": 7.17832612991333,
-    "pct_used": 7.2,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T04:00",
-     "sustained_mph": 16.4,
-     "gust_mph": 33.8,
-     "dir_deg": 209,
-     "temp_c": 26.4,
-     "rh_pct": 47,
-     "min_rh_pct": 17
-    }
-   }
+   "places": [
+    "Amarillo city",
+    "Lawton city",
+    "Altus city",
+    "Pampa city",
+    "Canyon city",
+    "Dumas city",
+    "Guymon city",
+    "Borger city"
+   ],
+   "narrative": "A fire-weather pattern is developing over OK, TX: Amarillo city, Lawton city, Altus city, Pampa city, and Canyon city and 21 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2,3,5). USGS fire-danger models put the local large-fire/spread probability as high as 28% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
   },
   {
-   "rank": 6,
-   "name": "Woodward city",
-   "state": "OK",
-   "lat": 36.4248,
-   "lon": -99.4047,
-   "population": 11976,
-   "housing_units": 5832,
-   "risk_index": 27.1,
-   "trigger_pts": 3.5,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    2,
-    3,
-    5
+   "lat": 32.4545,
+   "lon": -99.7381,
+   "states": [
+    "TX"
    ],
-   "fuels": {
-    "wfpi": 53,
-    "wlfp_pct": 1.0637946128845215,
-    "wfsp_pct": 22.47682762145996,
-    "pct_used": 22.5,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T04:00",
-     "sustained_mph": 17.9,
-     "gust_mph": 26.2,
-     "dir_deg": 204,
-     "temp_c": 28.1,
-     "rh_pct": 42,
-     "min_rh_pct": 20
-    }
-   }
+   "places": [
+    "Abilene city",
+    "Wichita Falls city",
+    "Sweetwater city",
+    "Vernon city",
+    "Graham city",
+    "Iowa Park city",
+    "Childress city",
+    "Breckenridge city"
+   ],
+   "narrative": "A fire-weather pattern is developing over TX: Abilene city, Wichita Falls city, Sweetwater city, Vernon city, and Graham city and 20 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2,3,5). USGS fire-danger models put the local large-fire/spread probability as high as 8% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
   },
   {
-   "rank": 7,
-   "name": "Spearman city",
-   "state": "TX",
-   "lat": 36.1982,
-   "lon": -101.1943,
-   "population": 2809,
-   "housing_units": 1300,
-   "risk_index": 25.7,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
-   ],
-   "fuels": {
-    "wfpi": 90,
-    "wlfp_pct": 2.5169498920440674,
-    "wfsp_pct": 21.46796417236328,
-    "pct_used": 21.5,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T00:00",
-     "sustained_mph": 16.6,
-     "gust_mph": 27.5,
-     "dir_deg": 185,
-     "temp_c": 31.2,
-     "rh_pct": 31,
-     "min_rh_pct": 16
-    }
-   }
-  },
-  {
-   "rank": 8,
-   "name": "Beaver town",
-   "state": "OK",
-   "lat": 36.8151,
-   "lon": -100.5235,
-   "population": 1625,
-   "housing_units": 707,
-   "risk_index": 24.2,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
-   ],
-   "fuels": {
-    "wfpi": 68,
-    "wlfp_pct": 0.90853351354599,
-    "wfsp_pct": 22.22545623779297,
-    "pct_used": 22.2,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T09:00",
-     "sustained_mph": 11.0,
-     "gust_mph": 27.3,
-     "dir_deg": 243,
-     "temp_c": 30.0,
-     "rh_pct": 42,
-     "min_rh_pct": 18
-    }
-   }
-  },
-  {
-   "rank": 9,
-   "name": "Pampa city",
-   "state": "TX",
-   "lat": 35.5479,
-   "lon": -100.965,
-   "population": 16735,
-   "housing_units": 8528,
-   "risk_index": 23.3,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
-   ],
-   "fuels": {
-    "wfpi": 79,
-    "wlfp_pct": 2.5650908946990967,
-    "wfsp_pct": 9.501078605651855,
-    "pct_used": 9.5,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T08:00",
-     "sustained_mph": 12.8,
-     "gust_mph": 29.1,
-     "dir_deg": 235,
-     "temp_c": 26.0,
-     "rh_pct": 49,
-     "min_rh_pct": 19
-    }
-   }
-  },
-  {
-   "rank": 10,
-   "name": "Hereford city",
-   "state": "TX",
    "lat": 34.8226,
    "lon": -102.4002,
-   "population": 14874,
-   "housing_units": 5556,
-   "risk_index": 23.1,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
+   "states": [
+    "TX"
    ],
-   "fuels": {
-    "wfpi": 88,
-    "wlfp_pct": 2.5914390087127686,
-    "wfsp_pct": 9.578054428100586,
-    "pct_used": 9.6,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T04:00",
-     "sustained_mph": 14.0,
-     "gust_mph": 30.4,
-     "dir_deg": 207,
-     "temp_c": 25.4,
-     "rh_pct": 48,
-     "min_rh_pct": 18
-    }
-   }
+   "places": [
+    "Hereford city",
+    "Dalhart city",
+    "Dimmitt city",
+    "Friona city",
+    "Cactus city",
+    "Bushland CDP",
+    "Bovina city",
+    "Stratford city"
+   ],
+   "narrative": "A fire-weather pattern is developing over TX: Hereford city, Dalhart city, Dimmitt city, Friona city, and Cactus city and 3 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2,3). USGS fire-danger models put the local large-fire/spread probability as high as 16% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
   },
   {
-   "rank": 11,
-   "name": "Hooker city",
-   "state": "OK",
-   "lat": 36.8613,
-   "lon": -101.2162,
-   "population": 1553,
-   "housing_units": 744,
-   "risk_index": 22.8,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
+   "lat": 45.1744,
+   "lon": -113.8948,
+   "states": [
+    "ID"
    ],
-   "fuels": {
-    "wfpi": 67,
-    "wlfp_pct": 0.7097621560096741,
-    "wfsp_pct": 19.62657928466797,
-    "pct_used": 19.6,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T09:00",
-     "sustained_mph": 14.3,
-     "gust_mph": 28.2,
-     "dir_deg": 230,
-     "temp_c": 30.1,
-     "rh_pct": 39,
-     "min_rh_pct": 17
-    }
-   }
-  },
-  {
-   "rank": 12,
-   "name": "Canyon city",
-   "state": "TX",
-   "lat": 34.9903,
-   "lon": -101.919,
-   "population": 15398,
-   "housing_units": 6001,
-   "risk_index": 22.6,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
+   "places": [
+    "Salmon city"
    ],
-   "fuels": {
-    "wfpi": 87,
-    "wlfp_pct": 2.8788375854492188,
-    "wfsp_pct": 8.690328598022461,
-    "pct_used": 8.7,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T04:00",
-     "sustained_mph": 12.2,
-     "gust_mph": 30.6,
-     "dir_deg": 208,
-     "temp_c": 25.0,
-     "rh_pct": 49,
-     "min_rh_pct": 17
-    }
-   }
-  },
-  {
-   "rank": 13,
-   "name": "Canadian city",
-   "state": "TX",
-   "lat": 35.9097,
-   "lon": -100.3839,
-   "population": 2314,
-   "housing_units": 1073,
-   "risk_index": 21.4,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
-   ],
-   "fuels": {
-    "wfpi": 80,
-    "wlfp_pct": 2.685049533843994,
-    "wfsp_pct": 14.662490844726562,
-    "pct_used": 14.7,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T00:00",
-     "sustained_mph": 18.0,
-     "gust_mph": 26.2,
-     "dir_deg": 186,
-     "temp_c": 29.7,
-     "rh_pct": 38,
-     "min_rh_pct": 20
-    }
-   }
-  },
-  {
-   "rank": 14,
-   "name": "Borger city",
-   "state": "TX",
-   "lat": 35.6594,
-   "lon": -101.4024,
-   "population": 12398,
-   "housing_units": 6112,
-   "risk_index": 21.0,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
-   ],
-   "fuels": {
-    "wfpi": 53,
-    "wlfp_pct": 0.9124011397361755,
-    "wfsp_pct": 6.983369827270508,
-    "pct_used": 7.0,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T00:00",
-     "sustained_mph": 17.5,
-     "gust_mph": 32.7,
-     "dir_deg": 182,
-     "temp_c": 30.8,
-     "rh_pct": 32,
-     "min_rh_pct": 17
-    }
-   }
-  },
-  {
-   "rank": 15,
-   "name": "Stratford city",
-   "state": "TX",
-   "lat": 36.3376,
-   "lon": -102.076,
-   "population": 1321,
-   "housing_units": 625,
-   "risk_index": 20.3,
-   "trigger_pts": 4.0,
-   "red_flag": null,
-   "spc_category": null,
-   "spc_dry_lightning": false,
-   "psp_days": [
-    1,
-    2,
-    3
-   ],
-   "fuels": {
-    "wfpi": 75,
-    "wlfp_pct": 1.0571441650390625,
-    "wfsp_pct": 15.675735473632812,
-    "pct_used": 15.7,
-    "source": "wlfp/wfsp"
-   },
-   "wind": {
-    "threat_level": "ELEVATED",
-    "mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "peak": {
-     "time": "2026-07-27T08:00",
-     "sustained_mph": 11.9,
-     "gust_mph": 27.7,
-     "dir_deg": 221,
-     "temp_c": 25.1,
-     "rh_pct": 52,
-     "min_rh_pct": 19
-    }
-   }
+   "narrative": "A fire-weather pattern is developing over ID: Salmon city sits under an active Red Flag Warning or Watch and SPC's **Elevated** fire-weather category and NIFC's Significant Fire Potential outlook (day 1). USGS fire-danger models put the local large-fire/spread probability as high as 17% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
   }
  ]
 }

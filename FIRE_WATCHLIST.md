@@ -1,96 +1,44 @@
-# 🎯 StormWatch Fire Watchlist
+# 🔥 StormWatch Fire Briefing
 
-*Generated 2026-07-27T21:42Z · method v1.0 · CONUS communities where official fire-weather triggers, dry fuels, and people converge (1-7 days). Not an ignition forecast.*
+*Generated 2026-07-27T22:21Z · method v2.0 · CONUS. Every fact is quoted from NIFC/SPC/USGS/Census as reported — the wind read is StormWatch's own mechanism classifier.*
 
-## 1. Salmon city, ID — index 44.2
-*Population 3,196 · 1,687 housing units*
-- Trigger: **Red Flag WARNING** · SPC **Elevated** · PSP significant potential day(s) 1
-- Fuels (USGS): WFPI 91/247 · large-fire 4% · spread 32%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 10/25 mph, RH 13% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+**151 active wildfires are burning uncontained in the US today. The most serious is the 0494 Akawa Butte Fire in OR, threatening 4,812 structures.**
 
-## 2. Perryton city, TX — index 33.4
-*Population 8,625 · 3,719 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 101/247 · large-fire 3% · spread 28%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 14/30 mph, RH 16% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+## Active Threats
 
-## 3. Guymon city, OK — index 33.1
-*Population 12,596 · 4,839 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 87/247 · large-fire 2% · spread 25%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 15/27 mph, RH 17% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+### 0494 Akawa Butte Fire — OR
+The 0494 Akawa Butte Fire in Jefferson County, OR has burned 27,307 acres and is 5% contained. NIFC's incident team reports **4,812 structures threatened**. 1,668 personnel are assigned. Forecast winds will be locally gusty (up to 30 mph, sustained near 16) with humidity as low as 21%. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind direction (W, blowing toward the E) favors pushing the fire toward Crooked River Ranch CDP, 9 miles away.
 
-## 4. Dumas city, TX — index 27.7
-*Population 14,362 · 5,638 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 94/247 · large-fire 3% · spread 17%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 14/27 mph, RH 19% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+### 0433 Brewer Fire — OR
+The 0433 Brewer Fire in Jefferson County, OR has burned 51,308 acres and is 5% contained. NIFC's incident team reports **1,878 structures threatened**. 995 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 19 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (N) is not currently aligned toward Madras city, the nearest community of size, 13 miles away.
 
-## 5. Amarillo city, TX — index 27.3
-*Population 200,945 · 88,394 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 76/247 · large-fire 2% · spread 7%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 16/34 mph, RH 17% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+### Second Flat Fire — OR
+The Second Flat Fire in Harney County, OR has burned 85,379 acres and is 5% contained. NIFC's incident team reports **1,721 structures threatened**. 219 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 24 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (NW) is not currently aligned toward Hines city, the nearest community of size, 18 miles away.
 
-## 6. Woodward city, OK — index 27.1
-*Population 11,976 · 5,832 housing units*
-- Trigger: PSP significant potential day(s) 2,3,5
-- Fuels (USGS): WFPI 53/247 · large-fire 1% · spread 22%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 18/26 mph, RH 20% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+### Pocket Fire — AZ
+The Pocket Fire in Yavapai County, AZ has burned 27,393 acres and is 95% contained. NIFC's incident team reports **3,570 structures threatened**. 1 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 15 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (S) is not currently aligned toward Sedona city, the nearest community of size, 8 miles away.
 
-## 7. Spearman city, TX — index 25.7
-*Population 2,809 · 1,300 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 90/247 · large-fire 3% · spread 21%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 17/28 mph, RH 16% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+### Kaiser Canyon Fire — WA
+The Kaiser Canyon Fire in Okanogan County, WA has burned 124,089 acres and is 9% contained. NIFC's incident team reports **1,566 structures threatened**. 884 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 15 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (S) is not currently aligned toward Coulee Dam town, the nearest community of size, 10 miles away.
 
-## 8. Beaver town, OK — index 24.2
-*Population 1,625 · 707 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 68/247 · large-fire 1% · spread 22%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 11/27 mph, RH 18% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+### Hagen Fire — OR
+The Hagen Fire in Umatilla County, OR has burned 26,879 acres and is 0% contained. NIFC's incident team reports **1,467 structures threatened**. 530 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 11 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (N) is not currently aligned toward Athena city, the nearest community of size, 13 miles away.
 
-## 9. Pampa city, TX — index 23.3
-*Population 16,735 · 8,528 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 79/247 · large-fire 3% · spread 10%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 13/29 mph, RH 19% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+### E Evans Creek Rd 18000 Fire — OR
+The E Evans Creek Rd 18000 Fire in Jackson County, OR has burned 15,580 acres and is 66% contained. NIFC's incident team reports **2,347 structures threatened**. 1,194 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 19 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (N) is not currently aligned toward Shady Cove city, the nearest community of size, 9 miles away.
 
-## 10. Hereford city, TX — index 23.1
-*Population 14,874 · 5,556 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 88/247 · large-fire 3% · spread 10%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 14/30 mph, RH 18% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+### Big Grass Fire — OR
+The Big Grass Fire in Malheur County, OR has burned 280,000 acres and is 5% contained. NIFC's incident team reports **918 structures threatened**. 69 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 20 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely.
 
-## 11. Hooker city, OK — index 22.8
-*Population 1,553 · 744 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 67/247 · large-fire 1% · spread 20%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 14/28 mph, RH 17% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+## Emerging Conditions to Watch
 
-## 12. Canyon city, TX — index 22.6
-*Population 15,398 · 6,001 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 87/247 · large-fire 3% · spread 9%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 12/31 mph, RH 17% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+A fire-weather pattern is developing over OK, TX: Amarillo city, Lawton city, Altus city, Pampa city, and Canyon city and 21 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2,3,5). USGS fire-danger models put the local large-fire/spread probability as high as 28% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
 
-## 13. Canadian city, TX — index 21.4
-*Population 2,314 · 1,073 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 80/247 · large-fire 3% · spread 15%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 18/26 mph, RH 20% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+A fire-weather pattern is developing over TX: Abilene city, Wichita Falls city, Sweetwater city, Vernon city, and Graham city and 20 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2,3,5). USGS fire-danger models put the local large-fire/spread probability as high as 8% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
 
-## 14. Borger city, TX — index 21.0
-*Population 12,398 · 6,112 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 53/247 · large-fire 1% · spread 7%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 18/33 mph, RH 17% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+A fire-weather pattern is developing over TX: Hereford city, Dalhart city, Dimmitt city, Friona city, and Cactus city and 3 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2,3). USGS fire-danger models put the local large-fire/spread probability as high as 16% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
 
-## 15. Stratford city, TX — index 20.3
-*Population 1,321 · 625 housing units*
-- Trigger: PSP significant potential day(s) 1,2,3
-- Fuels (USGS): WFPI 75/247 · large-fire 1% · spread 16%
-- Wind: **ELEVATED** · PBL_TRANSIENT · peak 12/28 mph, RH 19% · WindNinja: PARTIAL - snapshot before & after the shift; cannot model the transition
+A fire-weather pattern is developing over ID: Salmon city sits under an active Red Flag Warning or Watch and SPC's **Elevated** fire-weather category and NIFC's Significant Fire Potential outlook (day 1). USGS fire-danger models put the local large-fire/spread probability as high as 17% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
 
 ---
-*Sources: NWS (alerts) · SPC (fire wx outlooks) · NIFC Predictive Services (7-day potential) · USGS EROS (WFPI/WLFP/WFSP) · US Census (ACS 2023). Formula: `risk_index = trigger_pts * (1 + fuels_pct/25) * log10(population); trigger_pts = redflag(2 warn|1 watch) + SPC(1 Elev|2 Crit|3 Extr, +0.5 dry-ltg) + PSP days (D1 1.5, D2-3 1.0, D4-7 0.5, cap 3) + wind(2 CRITICAL|1 ELEVATED)`*
+*Sources: NIFC (active incidents, ICS-209 fields) · NWS (alerts) · SPC (fire weather outlooks) · NIFC Predictive Services (7-day potential) · USGS EROS (fire danger) · US Census (ACS 2023). Wind read: StormWatch's own mechanism_classifier.*
