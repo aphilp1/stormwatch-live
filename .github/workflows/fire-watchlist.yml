@@ -1,0 +1,46 @@
+name: Fire Watchlist
+
+# Daily national watchlist: finds CONUS places where an active fire-weather
+# trigger (Red Flag / SPC outlook / NIFC 7-day potential), dry fuels (USGS
+# WFPI/WLFP/WFSP), and population converge. See Storm_info/fable_specs/06.
+on:
+  schedule:
+    - cron: "45 13 * * *"   # 13:45 UTC daily -- after SPC's 13z fire-wx issuance
+  workflow_dispatch:         # allow manual runs from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fire-watchlist
+  cancel-in-progress: false
+
+jobs:
+  watchlist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Generate fire watchlist
+        run: |
+          mkdir -p data
+          python fire_watchlist.py --json-out=data/fire_watchlist.json --md-out=FIRE_WATCHLIST.md
+          echo "----- watchlist preview -----"
+          cat FIRE_WATCHLIST.md
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "stormwatch-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/fire_watchlist.json FIRE_WATCHLIST.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Fire watchlist ($(date -u +%Y-%m-%d))"
+            git pull --rebase
+            git push
+          fi

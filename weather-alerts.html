@@ -1382,6 +1382,20 @@ canvas.velocity-overlay{pointer-events:none!important}
           </div>
 
           <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-watchlist" onchange="toggleLayer('watchlist',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">🎯 Fire Watchlist</span>
+            <span class="layer-note" id="watchlist-note">off</span>
+          </div>
+          <div class="usgs-key" id="watchlist-key" style="display:none">
+            <div class="usgs-key-hdr">Where trigger + fuels + people converge · Daily</div>
+            <div style="font-size:10px;color:#8a94a3;line-height:1.5;padding:2px 0 4px">
+              Ranked 1–15: active Red Flag / SPC outlook / NIFC 7-day potential
+              &times; USGS fire danger &times; Census population. Conditions ranking,
+              not an ignition forecast.
+            </div>
+          </div>
+
+          <div class="layer-row">
             <label class="toggle"><input type="checkbox" id="lyr-fire-probe" onchange="toggleLayer('fire-probe',this.checked)"><span class="toggle-slider"></span></label>
             <span class="layer-label">Fire Risk at a Point</span>
             <span class="layer-note" id="fire-probe-note">off</span>
@@ -2665,6 +2679,7 @@ let nhdGroup = null, nhdEnabled = false, nhdOpacity = 0.75, nhdLoadTimer = null;
 let fireIncidentsEnabled = false, fireIncidentsGroup = null, fireIncidentsLoaded = false;
 let firePerimEnabled = false, firePerimGroup = null, firePerimLoaded = false, firePerimRetries = 0, firePerimLoading = false;
 let pspGroup = null, pspEnabled = false, pspDay = 1;
+let watchlistGroup = null, watchlistEnabled = false, watchlistLoaded = false, watchlistData = null;
 let dailyPerimGroup = null, dailyPerimEnabled = false, dailyPerimLoaded = false, dailyPerimRetries = 0, dailyPerimLoading = false;
 let frpEnabled = false, frpRect = null, frpMarker = null, frpSeq = 0;
 let smokeLayer = null, smokeEnabled = false, smokeOpacity = 0.80;
@@ -2770,6 +2785,7 @@ function initMap() {
   firePerimGroup     = L.layerGroup();      // NIFC fire perimeters
   dailyPerimGroup    = L.layerGroup();      // WFIGS daily ops perimeters (fresh IR/GPS shapes)
   pspGroup           = L.layerGroup();      // Predictive Services 7-day fire potential
+  watchlistGroup     = L.layerGroup();      // National Fire Watchlist (trigger x fuels x exposure)
   fwxD1Group   = L.layerGroup();           // SPC fire weather outlook Day 1
   fwxD2Group   = L.layerGroup();           // SPC fire weather outlook Day 2
   rawsGroup    = L.layerGroup();           // RAWS weather stations
@@ -3831,6 +3847,16 @@ async function toggleLayer(name, on) {
     } else {
       pspGroup.remove();
       document.getElementById('psp-note').textContent = 'off';
+    }
+  } else if (name === 'watchlist') {
+    watchlistEnabled = on;
+    document.getElementById('watchlist-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      watchlistGroup.addTo(map);
+      if (!watchlistLoaded) loadFireWatchlist();
+    } else {
+      watchlistGroup.remove();
+      document.getElementById('watchlist-note').textContent = 'off';
     }
   } else if (name === 'fire-probe') {
     frpEnabled = on;
@@ -7383,6 +7409,99 @@ function setPspDay(day) {
   document.querySelectorAll('#psp-day-row .viirs-day-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.day) === day));
   if (pspEnabled) loadPspOutlook(day);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// NATIONAL FIRE WATCHLIST (trigger × fuels × exposure convergence)
+// ═══════════════════════════════════════════════════════════════════
+// Same-origin static JSON, refreshed daily by the fire-watchlist.yml Action —
+// no MCP/localhost dependency, works identically on the public site.
+const WATCHLIST_COLORS = ['#ff1a00','#ff1a00','#ff1a00','#ff6600','#ff6600','#ff6600',
+                          '#ff8c00','#ff8c00','#ff8c00','#e6a800','#e6a800',
+                          '#e6a800','#e6a800','#e6a800','#e6a800'];  // rank 1-15, hottest first
+
+async function loadFireWatchlist() {
+  const note = document.getElementById('watchlist-note');
+  note.textContent = 'loading…';
+  watchlistGroup.clearLayers();
+  try {
+    const data = await fetchJson('data/fire_watchlist.json?v=' + Date.now(), 15000);
+    watchlistData = data;
+    const entries = data?.entries ?? [];
+    for (const e of entries) {
+      const col = WATCHLIST_COLORS[e.rank - 1] || '#e6a800';
+      const marker = L.divIcon({
+        className: 'watchlist-badge',
+        html: `<div style="background:${col};color:#1a1300;font-weight:800;font-size:12px;` +
+              `width:24px;height:24px;border-radius:50%;display:flex;align-items:center;` +
+              `justify-content:center;border:2px solid #1a1300cc;box-shadow:0 1px 4px #0008">${e.rank}</div>`,
+        iconSize: [24, 24], iconAnchor: [12, 12],
+      });
+      const m = L.marker([e.lat, e.lon], { icon: marker, pane: 'markerPane' });
+      m.bindTooltip(`<b>#${e.rank} ${esc(e.name)}, ${e.state}</b><br>risk index ${e.risk_index}`, { sticky:true });
+      m.on('click', ev => { L.DomEvent.stopPropagation(ev); showWatchlistCard(e); });
+      watchlistGroup.addLayer(m);
+    }
+    const ageH = (Date.now() - Date.parse(data.generated_utc)) / 3.6e6;
+    const stale = ageH > 36 ? ' · outdated' : '';
+    note.textContent = entries.length ? `${entries.length} places${stale}` : 'no convergence today';
+  } catch(e) {
+    console.error('loadFireWatchlist:', e);
+    note.textContent = 'unavailable';
+  } finally { watchlistLoaded = true; }
+}
+
+function showWatchlistCard(e) {
+  ensureDetStandard();
+  ['det-area-row','det-dates-row','det-hl-wrap','det-instr-wrap','det-zoom','det-desc-row']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  document.getElementById('det-event').textContent = `#${e.rank} ${e.name}, ${e.state}`;
+  const wlCol = WATCHLIST_COLORS[e.rank - 1] || '#e6a800';
+  document.getElementById('det-event').style.color = wlCol;
+  document.getElementById('det-chips').innerHTML =
+    `<div class="det-chip" style="background:${wlCol}14;border-color:${wlCol}44;color:${wlCol}">` +
+    `<span class="chip-lbl">Risk Index</span><span class="chip-val">${e.risk_index}</span></div>`;
+  document.getElementById('det-sev-desc').textContent =
+    `Population ${e.population.toLocaleString()} · ${e.housing_units.toLocaleString()} housing units`;
+
+  const trig = [];
+  if (e.red_flag) trig.push(`<b>Red Flag ${esc(e.red_flag.kind.toUpperCase())}</b> (NWS)`);
+  if (e.spc_category) trig.push(`SPC Fire Wx: <b>${esc(e.spc_category)}</b>` + (e.spc_dry_lightning ? ' + dry lightning' : ''));
+  if (e.psp_days?.length) trig.push(`NIFC 7-Day Potential: day${e.psp_days.length>1?'s':''} ${e.psp_days.join(', ')}`);
+  const f = e.fuels;
+  const fuels = [];
+  if (f.wfpi != null) fuels.push(`Fire Potential Index (WFPI): ${f.wfpi}/247`);
+  if (f.wlfp_pct != null) fuels.push(`Chance of a large fire (≥500 ac): <b>${f.wlfp_pct.toFixed(0)}%</b>`);
+  if (f.wfsp_pct != null) fuels.push(`Chance an existing fire spreads: <b>${f.wfsp_pct.toFixed(0)}%</b>`);
+  let windHtml = '';
+  if (e.wind) {
+    const w = e.wind, pk = w.peak;
+    windHtml = `
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid #ffffff1a">
+        <div style="font-size:11px;font-weight:700;color:#cfe0f2;margin-bottom:4px">Wind mechanism (24h, StormWatch classifier)</div>
+        <div style="font-size:11px;color:#b8c4d4;line-height:1.6">
+          Threat: <b>${esc(w.threat_level)}</b> · ${esc(w.mechanism.replace(/_/g,' '))}<br>
+          Peak ${pk.sustained_mph.toFixed(0)}/${pk.gust_mph.toFixed(0)} mph, RH ${pk.min_rh_pct}%<br>
+          WindNinja: ${esc(w.windninja_applicability)}
+        </div>
+      </div>`;
+  }
+  const custom = document.getElementById('det-custom');
+  custom.style.display = 'block';
+  custom.innerHTML = `
+    <div style="padding:10px 0 4px;font-size:11px;color:#b8c4d4;line-height:1.7">
+      <div style="font-size:11px;font-weight:700;color:#cfe0f2;margin-bottom:4px">Trigger (NWS/SPC/NIFC)</div>
+      ${trig.length ? trig.join('<br>') : 'No active alert — wind forecast only'}
+      <div style="font-size:11px;font-weight:700;color:#cfe0f2;margin:10px 0 4px;padding-top:8px;border-top:1px solid #ffffff1a">Fuels (USGS EROS)</div>
+      ${fuels.length ? fuels.join('<br>') : 'No valid cell (outside CONUS raster or masked)'}
+      ${windHtml}
+      <div style="margin-top:10px;font-size:10px;color:#7a8699;border-top:1px solid #ffffff1a;padding-top:8px">
+        risk_index = trigger × (1 + fuels%/25) × log10(population) — every value above is
+        an agency figure quoted as-is, not a homemade score.<br>
+        Generated ${esc(watchlistData?.generated_utc || '')}
+      </div>
+    </div>`;
+  document.getElementById('detail').style.display = 'flex';
 }
 
 // ═══════════════════════════════════════════════════════════════════
