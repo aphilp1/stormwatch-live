@@ -4,6 +4,24 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-07-27 — NATIONAL FIRE WATCHLIST SHIPPED + THREE FIRE-LAYER BUGS FIXED:** User
+> goal: predict WHERE dangerous fire events will occur (high risk to property/life), not
+> just where fire weather is bad. Built `fire_watchlist.py` (spec `Storm_info/fable_specs/
+> 06_fire_watchlist.md`): ranks CONUS places where an active trigger (Red Flag Warning /
+> SPC fire-wx outlook / NIFC 7-day significant potential), USGS fuels (WFPI/WLFP/WFSP),
+> and Census population (`data/place_exposure.json`, 15,485 places) converge; runs the
+> repo's own wind-mechanism classifier on top candidates. Documented formula, no opaque
+> composite score. Daily Action `fire-watchlist.yml` (13:45 UTC). App: "🎯 Fire Watchlist"
+> toggle, ranked 1-15 markers, browser-verified real click (`bdce457`).
+> ⚠️ Perf lesson: first run took 25 min — root cause was running the whole pipeline TWICE
+> (once per output format) with no concurrency, not a slow endpoint (USGS: 0.5s/call).
+> Fixed: single computed result writes both outputs, 6-worker thread pool → **69s**.
+> Also fixed same session (`4e6c991`, user-reported): Fire/Fresh Perimeters "NIFC busy" →
+> auto-fallback to Esri Living Atlas mirror (separate quota) when NIFC's shared quota is
+> exhausted; HMS Smoke Plumes moved off localhost:3456 to the public NESDIS ArcGIS feed
+> (now works on the public site too); SPC Fire Wx D1/D2 no longer counts SPC's dn:0
+> null-geometry placeholder rows as a real zone.
+>
 > **2026-07-25 later — FIRE PERIMETERS 8 MB PAYLOAD + RETRY ROLLOUT:** Fire Perimeters
 > layer froze the tab minutes per successful load (8+ MB full-res geometry) → ~10 m
 > simplification added (`8688482`), 480 perimeters now render in seconds (live-verified).
