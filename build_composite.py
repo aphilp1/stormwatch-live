@@ -36,15 +36,33 @@ OUT = os.path.join("data", "composite_model.json")
 # Headline hazards grouped into FAMILIES. The composite takes the max surprise
 # within each family before summing, so one weather regime (e.g. heat+fire, or
 # severe+tornado) counts once per family instead of multiplying correlated alerts.
+#
+# Widened 2026-07-27 (user request): the original 7 families only listed the
+# single marquee Warning-tier product per hazard type, so a genuinely
+# record-breaking ADVISORY (Small Craft Advisory, Coastal Flood Advisory) was
+# invisible to the National Threat badge even at "top ~0.1%, all-time record"
+# levels -- it just wasn't a member of any family. Every hazard type added
+# below has a real 18-year baseline in data/baseline_model.json (verified
+# against its 90-hazard-type coverage list); hazard types with NO baseline
+# yet (Air Quality Alert, Special Weather Statement, Beach Hazards Statement,
+# Special Marine Warning) are still left out -- adding them would silently
+# imply model coverage that doesn't exist.
 FAMILIES = {
     "severe": ["Tornado Warning", "Tornado Watch", "Severe Thunderstorm Warning",
                "Severe Thunderstorm Watch"],
-    "flood": ["Flash Flood Warning", "Flood Warning"],
-    "wind": ["High Wind Warning", "Wind Advisory"],
+    "flood": ["Flash Flood Warning", "Flood Warning", "Flood Advisory", "Flood Watch",
+              "Areal Flood Warning", "Coastal Flood Warning", "Coastal Flood Watch",
+              "Coastal Flood Advisory", "Coastal Flood Statement", "Lakeshore Flood Warning",
+              "Lakeshore Flood Advisory", "Lakeshore Flood Statement"],
+    "wind": ["High Wind Warning", "High Wind Watch", "Wind Advisory", "Small Craft Advisory",
+             "Gale Warning", "Gale Watch", "Storm Warning", "Hazardous Seas Warning",
+             "Lake Wind Advisory", "Brisk Wind Advisory"],
     "fire": ["Red Flag Warning", "Fire Weather Watch"],
     "heat": ["Extreme Heat Warning", "Heat Advisory"],
     "winter": ["Winter Storm Warning", "Blizzard Warning", "Ice Storm Warning"],
     "tropical": ["Hurricane Warning", "Tropical Storm Warning"],
+    "coastal": ["Dense Fog Advisory", "High Surf Warning", "High Surf Advisory",
+                "Rip Current Statement", "Tsunami Warning", "Tsunami Advisory"],
 }
 HEADLINE = [h for fam in FAMILIES.values() for h in fam]
 
