@@ -711,6 +711,13 @@ def render_md(w):
         for f in w["active_threats"]:
             L.append(f"### {f['name']} Fire — {f['state']}")
             L.append(f['narrative'])
+            wn = f.get("windninja")
+            if wn:
+                st = wn["stats"]
+                L.append(f"\n**Terrain-resolved wind (WindNinja, {wn['radius_mi']}-mi domain, "
+                        f"{wn['vegetation']} cover):** input {wn['input_speed_mph']} mph → "
+                        f"{st['min']}–{st['max']} mph across the domain (mean {st['mean']}). "
+                        f"{wn['narrative']}")
             L.append("")
     if w.get("new_ignitions"):
         L.append("## New Ignitions (last 24h)")

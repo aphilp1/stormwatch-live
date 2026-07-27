@@ -7510,12 +7510,28 @@ function showActiveThreatCard(f) {
   if (f.structures_threatened != null) facts.push(['Structures threatened', f.structures_threatened.toLocaleString()]);
   if (f.personnel) facts.push(['Personnel', f.personnel.toLocaleString()]);
 
+  let wnHtml = '';
+  const wn = f.windninja;
+  if (wn) {
+    wnHtml = `
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid #ffffff1a">
+        <div style="font-size:11px;font-weight:700;color:#8ec8ff;margin-bottom:4px">
+          🌀 Terrain-resolved wind (WindNinja, ${wn.radius_mi}-mi domain, ${esc(wn.vegetation)} cover)
+        </div>
+        <div style="font-size:11px;color:#b8c4d4;line-height:1.6">
+          Input ${wn.input_speed_mph} mph → <b>${wn.stats.min}–${wn.stats.max} mph</b> across the domain
+          (mean ${wn.stats.mean})<br>${mdBold(wn.narrative)}
+        </div>
+      </div>`;
+  }
+
   const custom = document.getElementById('det-custom');
   custom.style.display = 'block';
   custom.innerHTML = `
     <div style="padding:10px 0 4px;font-size:12px;color:#dce6f2;line-height:1.65">
       ${fbFactsStrip(facts)}
       <div>${mdBold(f.narrative)}</div>
+      ${wnHtml}
       <div style="margin-top:10px;font-size:10px;color:#7a8699;border-top:1px solid #ffffff1a;padding-top:8px">
         Source: NIFC active-incident feed (ICS-209 fields) · wind read: StormWatch's own mechanism classifier.
         ${f.mirrored ? 'NIFC primary feed was down today — shown from the Esri mirror (reduced fields).' : ''}<br>
