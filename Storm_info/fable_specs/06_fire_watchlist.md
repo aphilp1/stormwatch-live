@@ -1,7 +1,60 @@
-# Spec 06 — National Fire Watchlist (trigger × fuels × exposure)
+# Spec 06 — StormWatch Fire Briefing (v2)
 
-*Written 2026-07-27. Goal set by Alex: predict WHERE interesting wildland fire events
-will occur, where "interesting" = **high risk to property and human life**.*
+*Written 2026-07-27, rewritten same day. Goal set by Alex: predict WHERE interesting
+wildland fire events will occur, where "interesting" = **high risk to property and
+human life**.*
+
+## ⚠️ v1 REJECTED same day — read this before touching the design
+
+The first version (kept below for the record) ranked CONUS places purely by a
+forward-looking trigger×fuels×exposure **formula** — Red Flag/SPC/PSP polygons ×
+USGS fuels × Census population, output as a numbered list with an abstract "risk
+index." Alex's verdict: **"stupid and of little value... not connected to real
+fires."** It never looked at the fires StormWatch already tracks (Active Incidents,
+Perimeters), so it could never surface an actual fire bearing down on a town — the
+single most obviously "interesting" thing this feature could show.
+
+**v2 (current, `fire_watchlist.py` v2.0) fixes this with two written sections, not a
+ranked list of index numbers:**
+
+1. **Active Threats** — real, currently-burning uncontained NIFC wildfires
+   (`EGP_Active_Incidents_Prod_Public_View`, `PercentContained < 100`, wildfire only,
+   ≥100 ac), led by the incident team's own reported **structures-threatened** count
+   (`CALC_TotalStructuresThreatened` — an ICS-209 field, authoritative, not estimated).
+   Each fire gets a genuine prose paragraph (not chips): size, containment,
+   personnel, and a plain-language wind read from the repo's own
+   `mechanism_classifier` (via `live_forecast.forecast_site`), including whether the
+   forecast wind is aligned to push the fire toward the nearest sizeable town
+   (bearing-from-fire vs. downwind-direction check, ±45°). Falls back to the Esri
+   Living Atlas incident mirror (`USA_Wildfires_v1/FeatureServer/0`) if NIFC's feed
+   is down — mirror lacks the structures-threatened field, noted in the text.
+2. **Emerging Conditions** — the v1 trigger×fuels×exposure signal survives, but
+   demoted below real fires and **grouped into ~4 regional paragraphs** (lat/lon
+   binned, ~3°×4°) instead of a town-by-town wall of near-duplicates (v1's Texas/
+   Oklahoma panhandle list was 8 of 15 entries for one weather system).
+
+Narrative sentences are deterministic Python templates filled from real fields —
+not an LLM call (this runs unattended in a GitHub Action, no API key/cost) and not
+a black-box score. Every number quoted is agency-sourced and shown in both the
+prose and a compact facts strip (acres/contained/structures/personnel).
+
+App: 🔥 red flame markers for active threats, 👁 amber eye markers for watch
+regions; click card shows the prose + facts strip (`showActiveThreatCard` /
+`showEmergingCard` in `weather-alerts.html`), not the old chip-row layout.
+
+**Natural next steps** (not started, ask before building): AK/HI coverage
+(SPC firewx + USGS fire danger are CONUS-only — would need substitute fuels/trigger
+sources there); ERC/dead-fuel-moisture as a deeper fuels term (WFAS only serves PNG
+maps, no point API found; the one queryable ArcGIS ERC/BI service found,
+`NFDRS_ERC_and_BI_Daily_Interpolated_Hexagons`, covers only the CA/NV/AZ/OR
+quadrant — not usable as a national source); a real ignition-likelihood signal
+(lightning detection/new-starts feed); running the top active fires through the
+full HRRR→WindNinja pipeline instead of the Open-Meteo classifier for
+terrain-resolved wind.
+
+---
+
+## v1 (SUPERSEDED — kept for the record, do not resurrect without a reason)
 
 ## The idea
 
