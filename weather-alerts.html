@@ -2424,6 +2424,39 @@ const NIFC_DAILY_PERIMS = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/
   + '&returnGeometry=true&maxAllowableOffset=0.0001&geometryPrecision=5'
   + '&orderByFields=' + encodeURIComponent('poly_DateCurrent DESC')
   + '&f=geojson&resultRecordCount=2000';
+// Esri Living Atlas copy of the same WFIGS current-fire shapes (different ArcGIS org =
+// separate request-unit quota; updates within minutes of NIFC). Carries only the poly-side
+// fields (no containment/cost/cause) — used as an automatic fallback when NIFC's shared
+// public quota is exhausted (429s that can persist for many minutes in peak season).
+const ESRI_MIRROR_BASE = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/USA_Wildfires_v1/FeatureServer/1/query';
+const ESRI_MIRROR_FIELDS = 'IncidentName,GISAcres,DateCurrent,PolygonDateTime,MapMethod,IRWINID,FeatureCategory';
+const MIRROR_PERIMETERS = ESRI_MIRROR_BASE
+  + '?where=' + encodeURIComponent("GISAcres >= 100 AND IncidentTypeCategory = 'WF' AND FeatureCategory <> 'Prescribed Fire'")
+  + '&outFields=' + ESRI_MIRROR_FIELDS
+  + '&returnGeometry=true&maxAllowableOffset=0.0001&geometryPrecision=5'
+  + '&orderByFields=' + encodeURIComponent('GISAcres DESC')
+  + '&f=geojson&resultRecordCount=2000';
+const MIRROR_DAILY_PERIMS = ESRI_MIRROR_BASE
+  + '?where=' + encodeURIComponent("DateCurrent >= CURRENT_TIMESTAMP - 3 AND IncidentTypeCategory = 'WF'")
+  + '&outFields=' + ESRI_MIRROR_FIELDS
+  + '&returnGeometry=true&maxAllowableOffset=0.0001&geometryPrecision=5'
+  + '&orderByFields=' + encodeURIComponent('DateCurrent DESC')
+  + '&f=geojson&resultRecordCount=2000';
+// The mirror drops the poly_/attr_ prefixes — map its names onto the WFIGS ones the
+// render loops and detail cards read, so the same code paths work for both sources.
+function mirrorToWfigs(features) {
+  for (const f of features) {
+    const p = f.properties || (f.properties = {});
+    p.poly_IncidentName    = p.poly_IncidentName    ?? p.IncidentName;
+    p.poly_GISAcres        = p.poly_GISAcres        ?? p.GISAcres;
+    p.poly_DateCurrent     = p.poly_DateCurrent     ?? p.DateCurrent;
+    p.poly_PolygonDateTime = p.poly_PolygonDateTime ?? p.PolygonDateTime;
+    p.poly_MapMethod       = p.poly_MapMethod       ?? p.MapMethod;
+    p.poly_IRWINID         = p.poly_IRWINID         ?? p.IRWINID;
+    p.poly_FeatureCategory = p.poly_FeatureCategory ?? p.FeatureCategory;
+  }
+  return features;
+}
 const RAWS_URL        = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/PublicView_RAWS/FeatureServer/1/query?where=1%3D1&outFields=StationName,StationID,Latitude,Longitude,Elevation,State,Agency,Status,AirTempStandPlace,WindSpeedMPH,WindDirDegrees,WindSpeedPeak,RelativeHumidity,FuelMoisture,FuelTemp,ObservedDate,MesoWestURL,NOAA_URL&returnGeometry=true&f=geojson&resultRecordCount=5000';
 const KBDI_TILES      = 'https://www.ncei.noaa.gov/pub/data/nidis/tile/ncsu-meas-kbdi/{z}/{x}/{y}.png';
 // IEM ASOS URL built dynamically at fetch time (needs current timestamps)
@@ -7018,7 +7051,17 @@ async function loadFirePerimeters() {
   note.textContent = 'loading…';
   firePerimGroup.clearLayers();
   try {
-    const data = await fetchJson(NIFC_PERIMETERS, 25000);
+    let data, mirrored = false;
+    try {
+      data = await fetchJson(NIFC_PERIMETERS, 25000);
+    } catch (nifcErr) {
+      // NIFC quota 429s re-exhaust every minute in peak season — fall straight through
+      // to the Esri Living Atlas copy instead of leaving the layer empty for minutes.
+      console.warn('loadFirePerimeters: NIFC failed, trying Esri mirror:', nifcErr);
+      data = await fetchJson(MIRROR_PERIMETERS, 25000);
+      mirrorToWfigs(data?.features ?? []);
+      mirrored = true;
+    }
     const features = data?.features ?? [];
     let count = 0;
     for (const feat of features) {
@@ -7045,7 +7088,7 @@ async function loadFirePerimeters() {
     }
     firePerimLoaded = true;
     firePerimRetries = 0;
-    note.textContent = count ? `${count} active perimeters` : 'none active';
+    note.textContent = count ? `${count} active perimeters${mirrored ? ' · Esri mirror' : ''}` : 'none active';
   } catch(e) {
     console.error('loadFirePerimeters:', e);
     // Same transient-NIFC handling as Fresh Perimeters: quota resets each minute, so retry.
@@ -7076,7 +7119,15 @@ async function loadDailyPerims() {
   note.textContent = 'loading…';
   dailyPerimGroup.clearLayers();
   try {
-    const data = await fetchJson(NIFC_DAILY_PERIMS, 25000);
+    let data, mirrored = false;
+    try {
+      data = await fetchJson(NIFC_DAILY_PERIMS, 25000);
+    } catch (nifcErr) {
+      console.warn('loadDailyPerims: NIFC failed, trying Esri mirror:', nifcErr);
+      data = await fetchJson(MIRROR_DAILY_PERIMS, 25000);
+      mirrorToWfigs(data?.features ?? []);
+      mirrored = true;
+    }
     const seen = new Set();
     let count = 0;
     for (const feat of (data?.features ?? [])) {
@@ -7112,7 +7163,7 @@ async function loadDailyPerims() {
     }
     dailyPerimLoaded = true;
     dailyPerimRetries = 0;
-    note.textContent = count ? `${count} fresh shapes` : 'none in last 72 h';
+    note.textContent = count ? `${count} fresh shapes${mirrored ? ' · Esri mirror' : ''}` : 'none in last 72 h';
   } catch(e) {
     console.error('loadDailyPerims:', e);
     // NIFC outages are transient (org quota resets every minute; 503s clear when load drops) —
@@ -7251,7 +7302,7 @@ async function loadSPCFireWx(day) {
     if (catRes.status === 'fulfilled') {
       for (const feat of (catRes.value?.features || [])) {
         const s = FWX_DN[feat.properties?.dn];
-        if (!s) continue;
+        if (!s || !feat.geometry) continue;
         L.geoJSON(feat, { style:{ color:s.c, fillColor:s.f, weight:s.w, opacity:0.85, fillOpacity:s.fo } })
          .bindTooltip(`Day ${day} Fire Weather: ${s.label}`, { sticky:true })
          .addTo(grp);
@@ -7260,6 +7311,9 @@ async function loadSPCFireWx(day) {
     }
     if (dtRes.status === 'fulfilled') {
       for (const feat of (dtRes.value?.features || [])) {
+        // SPC ships a dn:0, null-geometry placeholder row when no area is issued —
+        // don't count it (it made the note claim zones while nothing drew on the map).
+        if (!feat.geometry || !(feat.properties?.dn > 0)) continue;
         const s = FWX_DT;
         L.geoJSON(feat, { style:{ color:s.c, fillColor:s.f, weight:s.w, opacity:0.85, fillOpacity:s.fo } })
          .bindTooltip(`Day ${day} Dry Thunderstorm Risk`, { sticky:true })
@@ -7267,7 +7321,7 @@ async function loadSPCFireWx(day) {
         count++;
       }
     }
-    document.getElementById(noteId).textContent = count ? `${count} zones` : 'none issued';
+    document.getElementById(noteId).textContent = count ? `${count} zone${count === 1 ? '' : 's'}` : 'none issued';
   } catch(e) {
     document.getElementById(noteId).textContent = 'unavailable';
   }
@@ -7779,91 +7833,59 @@ function showAirnowCard(p) {
 // NOAA HMS SMOKE PLUMES
 // ═══════════════════════════════════════════════════════════════════
 
-function parseHmsKml(text) {
-  const doc = new DOMParser().parseFromString(text, 'application/xml');
-  const results = [];
-  for (const pm of doc.querySelectorAll('Placemark')) {
-    const desc = pm.querySelector('description')?.textContent || '';
-    const styleUrl = pm.querySelector('styleUrl')?.textContent || '';
-
-    // Density: text label primary ("Density: Light/Medium/Heavy"),
-    // styleUrl fallback (#Smoke_Light_style), then numeric legacy format
-    let density = null;
-    const densTextMatch = desc.match(/Density:\s*(Light|Medium|Heavy)/i);
-    const styleMatch    = styleUrl.match(/Smoke_(Light|Medium|Heavy)_style/i);
-    const densNumMatch  = desc.match(/Density:\s*(\d+)/i);
-    if (densTextMatch) {
-      const lbl = densTextMatch[1].toLowerCase();
-      density = lbl === 'heavy' ? 27 : lbl === 'medium' ? 16 : 5;
-    } else if (styleMatch) {
-      const lbl = styleMatch[1].toLowerCase();
-      density = lbl === 'heavy' ? 27 : lbl === 'medium' ? 16 : 5;
-    } else if (densNumMatch) {
-      density = parseInt(densNumMatch[1]);
-    } else {
-      density = 5;
-    }
-
-    // Start time: convert Julian-day format "2026147 1200UTC" → "May 27, 2026 12:00 UTC"
-    let startTime = '';
-    const stMatch = desc.match(/Start Time:\s*([^\n<]+)/i);
-    if (stMatch) {
-      const raw = stMatch[1].trim();
-      const jm = raw.match(/^(\d{4})(\d{3})\s+(\d{2})(\d{2})UTC$/i);
-      if (jm) {
-        const d = new Date(Date.UTC(parseInt(jm[1]), 0, parseInt(jm[2])));
-        startTime = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric', timeZone:'UTC' })
-          + ` ${jm[3]}:${jm[4]} UTC`;
-      } else {
-        startTime = raw;
-      }
-    }
-
-    const s = HMS_STYLE[density] || HMS_STYLE[5];
-    for (const polyEl of pm.querySelectorAll('Polygon')) {
-      const coordEl = polyEl.querySelector('outerBoundaryIs LinearRing coordinates') ||
-                      polyEl.querySelector('coordinates');
-      if (!coordEl) continue;
-      const coords = coordEl.textContent.trim().split(/\s+/).map(c => {
-        const p = c.split(',');
-        const lng = parseFloat(p[0]), lat = parseFloat(p[1]);
-        return (!isNaN(lat) && !isNaN(lng)) ? [lat, lng] : null;
-      }).filter(Boolean);
-      if (coords.length >= 3) results.push({ density, startTime, s, coords });
-    }
-  }
-  return results;
+// HMS timestamps come as Julian-day strings "2026208 1200" → "Jul 27, 2026 12:00".
+function hmsTimeLabel(raw) {
+  if (!raw) return '';
+  const jm = String(raw).trim().match(/^(\d{4})(\d{3})\s+(\d{2})(\d{2})/);
+  if (!jm) return String(raw);
+  const d = new Date(Date.UTC(parseInt(jm[1]), 0, parseInt(jm[2])));
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric', timeZone:'UTC' })
+    + ` ${jm[3]}:${jm[4]}`;
 }
+
+// Official NESDIS-hosted copy of the daily HMS smoke analysis (ArcGIS, CORS-open).
+// Replaces the old localhost:3456 KML proxy — the layer now works on the public site too.
+const HMS_SMOKE_URL = 'https://services2.arcgis.com/C8EMgrsFcRFL6LrL/arcgis/rest/services/'
+  + 'NOAA_Satellite_Smoke_Detection_(v1)/FeatureServer/0/query'
+  + '?where=1%3D1&outFields=Satellite,Start,End_,Density&returnGeometry=true&f=geojson';
 
 async function loadHMSSmoke() {
   const note = document.getElementById('hms-note');
-  if (!MCP_LOCAL) { if (note) note.textContent = 'local only'; return; }
   note.textContent = 'loading…';
   hmsGroup.clearLayers();
   try {
-    const res = await fetch('http://localhost:3456/hms-smoke', { cache:'no-cache' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    const features = parseHmsKml(text);
-    let counts = { 5:0, 16:0, 27:0 };
-    for (const f of features) {
-      const poly = L.polygon(f.coords, {
-        color: f.s.color,
-        fillColor: f.s.fillColor,
-        weight: f.s.weight,
-        opacity: 0.85,
-        fillOpacity: f.s.baseFill * hmsOpacity,
-        hmsDensity: f.density,
-      });
-      poly.bindTooltip(
-        `<b>HMS Smoke · ${f.s.label}</b>${f.startTime ? '<br>'+f.startTime+' UTC' : ''}`,
-        { sticky: true, className: 'leaflet-tooltip' }
-      );
-      poly.on('click', () => showHmsCard(f));
-      poly.addTo(hmsGroup);
-      counts[f.density] = (counts[f.density] || 0) + 1;
+    const data = await fetchJson(HMS_SMOKE_URL, 20000);
+    let total = 0;
+    for (const feat of (data?.features ?? [])) {
+      const g = feat.geometry;
+      if (!g) continue;
+      const p = feat.properties || {};
+      const lbl = String(p.Density || 'Light').toLowerCase();
+      const density = lbl === 'heavy' ? 27 : lbl === 'medium' ? 16 : 5;
+      const s = HMS_STYLE[density] || HMS_STYLE[5];
+      const f = { density, startTime: hmsTimeLabel(p.Start), s };
+      // GeoJSON rings are [lng,lat] — flip to Leaflet order; keep MultiPolygon parts separate.
+      const parts = g.type === 'MultiPolygon' ? g.coordinates : [g.coordinates];
+      for (const rings of parts) {
+        const latlngs = (rings || []).map(ring => ring.map(([lng, lat]) => [lat, lng]));
+        if (!latlngs.length || latlngs[0].length < 3) continue;
+        const poly = L.polygon(latlngs, {
+          color: s.color,
+          fillColor: s.fillColor,
+          weight: s.weight,
+          opacity: 0.85,
+          fillOpacity: s.baseFill * hmsOpacity,
+          hmsDensity: density,
+        });
+        poly.bindTooltip(
+          `<b>HMS Smoke · ${s.label}</b>${f.startTime ? '<br>'+f.startTime+' UTC' : ''}`,
+          { sticky: true, className: 'leaflet-tooltip' }
+        );
+        poly.on('click', () => showHmsCard(f));
+        poly.addTo(hmsGroup);
+        total++;
+      }
     }
-    const total = features.length;
     note.textContent = total ? `${total} plumes` : 'none today';
   } catch(e) {
     note.textContent = 'unavailable';
@@ -8435,7 +8457,7 @@ function makeDraggable(elId) {
 
 // Initialise draggable legends after page loads
 // ── Public-web mode (graceful degradation for the GitHub Pages site) ──────────
-// The agents (Nowcast/Fire/Flood/Combined), WindNinja, and the HMS-smoke / AirNow
+// The agents (Nowcast/Fire/Flood/Combined), WindNinja, and the AirNow
 // layers reach a local analysis server at localhost:3456 that only exists when the
 // app runs on your own machine. On the public site we detect that and disable just
 // those features with a clear note — every other layer talks to public weather
@@ -8463,7 +8485,8 @@ function initPublicMode() {
     const badge = card && card.querySelector('.agent-card-badge');
     if (badge) { badge.textContent = '◐ Local app'; badge.classList.remove('live'); badge.title = 'Available in the local StormWatch app only'; }
   });
-  ['windninja-note','hms-note','airnow-note'].forEach(id => {
+  // HMS smoke moved to the public NESDIS ArcGIS feed 2026-07-27 — no longer local-only.
+  ['windninja-note','airnow-note'].forEach(id => {
     const n = document.getElementById(id); if (n) n.textContent = 'local only';
   });
 }
