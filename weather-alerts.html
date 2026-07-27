@@ -954,7 +954,7 @@ canvas.velocity-overlay{pointer-events:none!important}
           <div id="ew-gauge" class="ew-gauge"></div>
           <button id="ew-map-toggle" class="ew-map-toggle" onclick="toggleAnomalyMap()">🗺️ Show on map</button>
           <div class="ew-about">
-            <p class="ew-intro">The <b>National Threat System (NTS)</b> reads every active U.S. weather alert every 15 minutes and asks one question: <i>is anything statistically unusual right now, compared with the last 18 years?</i> It ranks each hazard against its own history for this time of year and time of day, then sums how many hazard families are unusually elevated into a single level — Normal, Elevated, High, or Extreme.</p>
+            <p class="ew-intro">The <b>National Threat System (NTS)</b> checks the national alert feed every 15 minutes and asks: <i>are multiple SEVERE hazard families simultaneously unusual right now, compared with the last 18 years?</i> It only tracks the highest-severity warning-tier hazards — tornado, severe thunderstorm, flash flood, high wind, fire weather, extreme heat, winter storm, hurricane — grouped into 7 families; a family counts only when its most-active hazard is itself at record/near-record levels. This is a deliberately narrow, high-bar signal: an advisory-level hazard (marine, coastal, air quality) can be individually record-breaking in the "Unusual Right Now" list below without moving this badge, because it isn't one of the tracked severe families. The <b>State Activity Anomaly map</b> (below) measures something different — a state's TOTAL alert volume of every type versus its own history — so the two can legitimately disagree.</p>
             <details>
               <summary>Method &amp; sources</summary>
               <p><b>Method.</b> Each hazard's current nationwide count is compared with the distribution of that hazard's counts at the same month and 6-hour window across 2008–present. The result is an empirical exceedance percentile (a "surprise" score); <b>Extraordinary</b> means roughly the top 0.1% — or a new 18-year record — for that calendar slot. A magnitude filter keeps rare-but-tiny anomalies (a lone off-season winter alert) from raising the level. The threat level counts how many of seven hazard families (severe, flood, wind, fire, heat, winter, tropical) are elevated at once.</p>
@@ -6296,7 +6296,7 @@ function anomLegendHTML() {
     ? `Now: <b class="an-x">${counts.Extraordinary}</b> extraordinary · <b class="an-s">${counts.Significant}</b> significant · <b class="an-e">${counts.Elevated}</b> elevated`
     : 'All states near their seasonal norm right now') + '</div>';
   return '<div class="anom-legend-t">State Activity Anomaly</div>' +
-    '<div class="anom-legend-sub">How unusual each state’s current alert load is <b>versus its own 18-year history</b> for this time of year.</div>' +
+    '<div class="anom-legend-sub">How unusual each state’s current TOTAL alert count (every type — warnings, advisories, statements) is <b>versus its own 18-year history</b> for this time of year. This counts all alert types, unlike the National Threat badge above, which only tracks 7 severe-warning families — a state can show Extraordinary here from a surge of lower-severity alerts (marine, coastal, air quality) even when National Threat says Normal.</div>' +
     ramp + rows + live +
     '<div class="anom-legend-foot">Percentile vs. 2008–2025 NWS/CAP climatology · updates live</div>';
 }
