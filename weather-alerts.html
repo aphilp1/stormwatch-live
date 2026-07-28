@@ -64,15 +64,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #sidebar.collapsed{width:0;overflow:hidden}
 
 .tab-bar{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
-/* 8 tabs in a 6-col grid wrap onto row 2 as items 7-8. A single 1fr column is
-   too narrow for "Event Watch"/"Fire Winds" (longer than "Alerts"/"Stats"),
-   so text-align:left alone let it overflow past the column at narrower
-   widths (cut off on the left -- overflow:hidden on an ancestor was clipping
-   it, not just spilling visibly). Give each item real room: span 3 columns
-   each so the text always fits, with "E" of Event starting flush under "A"
-   of Alerts (column 1) regardless of window width. */
-.tab-bar .tab:nth-child(7){grid-column:1/4;text-align:left}
-.tab-bar .tab:nth-child(8){grid-column:4/7;text-align:left}
+/* Event Watch / Fire Winds live in their own row, NOT the 6-col grid, so their
+   alignment can't depend on grid-column math or font-width measurements that
+   behave differently across browsers/zoom levels (that dependency was the
+   actual bug in three earlier attempts). Both this row and .tab-bar are plain
+   block children of #sidebar with zero horizontal padding on either the
+   container or the buttons, so "Event Watch"'s first character starts at
+   exactly the same x as "Alerts"'s first character -- geometry, not math. */
+.tab-bar-row2{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab-bar-row2 .tab{flex:0 0 auto;text-align:left;padding-left:0;padding-right:16px}
 .tab{position:relative;padding:8px 0;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center;white-space:nowrap}
 .tab.active{color:var(--text)}
 .tab.active::after{content:'';position:absolute;left:12px;right:12px;bottom:-2px;height:2px;background:var(--accent);border-radius:2px}
@@ -937,6 +937,8 @@ canvas.velocity-overlay{pointer-events:none!important}
       <button class="tab" onclick="showTab('models')">Models</button>
       <button class="tab" onclick="showTab('maps')">Maps</button>
       <button class="tab" onclick="showTab('agents')">Agents</button>
+    </div>
+    <div class="tab-bar-row2">
       <button class="tab" onclick="showTab('eventwatch')">Event Watch</button>
       <button class="tab" onclick="showTab('experiments')">Fire Winds</button>
     </div>
@@ -3269,7 +3271,7 @@ function renderStats() {
   for (const [st,cnt] of topStates) {
     const label = REGION_LABELS[st] || st;
     stEl.innerHTML+=`<div class="stat-row">
-      <span class="stat-label" style="color:#aab" title="${st}">${label}</span>
+      <span class="stat-label" title="${st}">${label}</span>
       <div class="stat-bar-wrap"><div class="stat-bar" style="width:${(cnt/maxSt*100).toFixed(0)}%;background:#5566aa"></div></div>
       <span class="stat-count">${cnt}</span></div>`;
   }
@@ -3290,7 +3292,7 @@ function updateCounts() {
     if (!tally[s]) continue;
     const cfg=SEV_FB[s];
     const el=document.createElement('span'); el.className='chip';
-    el.style.cssText=`color:${cfg.f};background:${cfg.f}22;border-color:${cfg.c}`;
+    el.style.cssText=`color:${cfg.c};background:${cfg.f}22;border-color:${cfg.c}`;
     el.textContent=`${tally[s]} ${s}`;
     bar.appendChild(el);
   }
