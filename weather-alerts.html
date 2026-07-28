@@ -1482,6 +1482,71 @@ canvas.velocity-overlay{pointer-events:none!important}
             <div class="usgs-key-row"><div class="usgs-dot" style="background:#cc2200;border-color:#881100"></div>20+ mph</div>
           </div>
 
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-lightning" onchange="toggleLayer('lightning',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Lightning Strike Density</span>
+            <span class="layer-note" id="lightning-note">off</span>
+          </div>
+          <div class="opacity-row" id="lightning-opacity-row" style="display:none">
+            <input type="range" min="10" max="100" value="75" oninput="setLightningOpacity(this.value)">
+            <span id="lightning-opacity-val">75%</span>
+          </div>
+          <div class="usgs-key" id="lightning-key" style="display:none">
+            <div class="usgs-key-hdr">NOAA/NWS/NCEP OPC · ground-based NLDN + GLD360 networks · updates ~15 min</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ffec78;border-color:#aa9000"></div>Low (0.1–0.9 strikes/km²/min)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ffa400;border-color:#a34400"></div>Moderate (1–10)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff0000;border-color:#8f0f00"></div>High (10–50)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff00ff;border-color:#800080"></div>Extreme (50+)</div>
+          </div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-dry-ltg-outlook" onchange="toggleLayer('dry-ltg-outlook',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Dry Thunderstorm Outlook</span>
+            <span class="layer-note" id="dry-ltg-outlook-note">off</span>
+          </div>
+          <div id="dry-ltg-outlook-day-row" style="display:none;padding-left:44px;margin-top:-4px;margin-bottom:6px">
+            <div class="usgs-key-hdr" style="margin-bottom:5px">Forecast Day</div>
+            <div style="display:flex;gap:3px;flex-wrap:wrap">
+              <button class="viirs-day-btn active" data-day="1" onclick="setDryLtgOutlookDay(1)">D1</button>
+              <button class="viirs-day-btn" data-day="2" onclick="setDryLtgOutlookDay(2)">D2</button>
+              <button class="viirs-day-btn" data-day="3" onclick="setDryLtgOutlookDay(3)">D3</button>
+              <button class="viirs-day-btn" data-day="4" onclick="setDryLtgOutlookDay(4)">D4</button>
+              <button class="viirs-day-btn" data-day="5" onclick="setDryLtgOutlookDay(5)">D5</button>
+              <button class="viirs-day-btn" data-day="6" onclick="setDryLtgOutlookDay(6)">D6</button>
+              <button class="viirs-day-btn" data-day="7" onclick="setDryLtgOutlookDay(7)">D7</button>
+              <button class="viirs-day-btn" data-day="8" onclick="setDryLtgOutlookDay(8)">D8</button>
+            </div>
+          </div>
+          <div class="usgs-key" id="dry-ltg-outlook-key" style="display:none">
+            <div class="usgs-key-hdr">SPC · Dry Thunderstorm Outlook · official categories</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#732600;border-color:#4d2600"></div>Isolated (Day 1-2)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#ff0000;border-color:#990000"></div>Scattered (Day 1-2)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:transparent;border-color:#734c00;border-width:2px"></div>Marginal 10% (Day 3-8)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:transparent;border-color:#0070ff;border-width:2px"></div>Critical 40% (Day 3-8)</div>
+          </div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-wind-rh-outlook" onchange="toggleLayer('wind-rh-outlook',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Critical Fire Weather (Wind/RH)</span>
+            <span class="layer-note" id="wind-rh-outlook-note">off</span>
+          </div>
+          <div id="wind-rh-outlook-day-row" style="display:none;padding-left:44px;margin-top:-4px;margin-bottom:6px">
+            <div class="usgs-key-hdr" style="margin-bottom:5px">Forecast Day</div>
+            <div style="display:flex;gap:3px;flex-wrap:wrap">
+              <button class="viirs-day-btn active" data-day="3" onclick="setWindRhOutlookDay(3)">D3</button>
+              <button class="viirs-day-btn" data-day="4" onclick="setWindRhOutlookDay(4)">D4</button>
+              <button class="viirs-day-btn" data-day="5" onclick="setWindRhOutlookDay(5)">D5</button>
+              <button class="viirs-day-btn" data-day="6" onclick="setWindRhOutlookDay(6)">D6</button>
+              <button class="viirs-day-btn" data-day="7" onclick="setWindRhOutlookDay(7)">D7</button>
+              <button class="viirs-day-btn" data-day="8" onclick="setWindRhOutlookDay(8)">D8</button>
+            </div>
+          </div>
+          <div class="usgs-key" id="wind-rh-outlook-key" style="display:none">
+            <div class="usgs-key-hdr">SPC · Critical Fire Weather Outlook (wind + low RH) · Day 3-8 · official categories</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:transparent;border-color:#ffaa00;border-width:2px"></div>Marginal 40%</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:transparent;border-color:#e60000;border-width:2px"></div>Critical 70%</div>
+          </div>
+
         </div>
 
         <div class="layer-group">
@@ -2579,6 +2644,31 @@ const FWX_DN = {
   10: { label:'Extreme',         c:'#990066', f:'#E600A9', fo:0.38, w:2.5 },
 };
 const FWX_DT = { label:'Dry Thunderstorm', c:'#4433aa', f:'#7766ee', fo:0.15, w:1.5 };
+// SPC Dry Thunderstorm Outlook, official symbology pulled from the service's own renderer.
+// Day 1-2 classify by "dn" (Isolated/Scattered, solid fill); Day 3-8 classify by "label"
+// (Marginal/Critical, outline-only — that's the real official style for the extended range,
+// not a rendering bug).
+const DRY_LTG_LAYER_ID = { 1:2, 2:5, 3:7, 4:10, 5:13, 6:16, 7:19, 8:22 };
+const DRY_LTG_DN = {
+  5: { label:'Isolated',  c:'#4d2600', f:'#732600' },
+  8: { label:'Scattered', c:'#990000', f:'#ff0000' },
+};
+// Day 3-8 features carry the raw threshold ("0.10"/"0.40") in their `label` field, not
+// the renderer's display text — confirmed against a live query, not assumed from the schema.
+const DRY_LTG_LABEL = {
+  '0.10': { label:'Marginal (10%)', c:'#734c00' },
+  '0.40': { label:'Critical (40%)', c:'#0070ff' },
+};
+// SPC Critical Fire Weather (wind + low relative humidity) Outlook — a separate hazard
+// from dry lightning, Day 3-8 only (Day 1-2's wind/RH risk is folded into the general
+// Elevated/Critical/Extreme categories already shown by the SPC Day 1/2 Outlook layer).
+// Official colors from the service's own renderer; `label` field holds the raw threshold
+// string ("0.40"/"0.70"), same gotcha as the dry-thunderstorm layer above.
+const WIND_RH_LAYER_ID = { 3:8, 4:11, 5:14, 6:17, 7:20, 8:23 };
+const WIND_RH_LABEL = {
+  '0.40': { label:'Marginal (40%)', c:'#ffaa00' },
+  '0.70': { label:'Critical (70%)', c:'#e60000' },
+};
 // Predictive Services 7-day outlook — field semantics from the official PSP viewer:
 // drynesscode 1/2/3 = fuel dryness base fill (official colors); type CRITICAL/IGNITION
 // = the actual Significant Fire Potential risk polygons, drawn on top.
@@ -2725,9 +2815,12 @@ const hydLegendOpen = { usgs: true, mrms: true, fema: true, usgsflow: true };
 let refreshTimer = null;
 let currentTab = 'alerts';
 let alertsLoading = false;
+let _alertsPhase1Resolve = null;  // lets boot()/manualRefresh() stop blocking on the slow zone-fetch tail
 
 let fwxD1Group = null, fwxD1Enabled = false;
 let fwxD2Group = null, fwxD2Enabled = false;
+let dryLtgOutlookGroup = null, dryLtgOutlookEnabled = false, dryLtgOutlookDay = 1;
+let windRhOutlookGroup = null, windRhOutlookEnabled = false, windRhOutlookDay = 3;
 let rawsGroup = null, rawsEnabled = false, rawsLoaded = false;
 let windsGroup = null, windsEnabled = false, windsFeatures = null, _windsMoveTimer = null;
 let windFlowLayer = null, windFlowEnabled = false;
@@ -2736,6 +2829,7 @@ let dryLtgGroup = null, dryLtgEnabled = false, dryLtgLoaded = false;
 let hmsGroup = null, hmsEnabled = false, hmsOpacity = 0.80;
 let airnowGroup = null, airnowEnabled = false, airnowLoaded = false;
 let naqfcLayer = null, naqfcEnabled = false, naqfcOpacity = 0.70, naqfcForecastHours = 0;
+let lightningLayer = null, lightningEnabled = false, lightningOpacity = 0.75, lightningRefreshTimer = null;
 let windninjaGroup = L.layerGroup(), windninjaEnabled = false;
 let redFlagGroup = null, redFlagEnabled = false;
 let fwxWatchGroup = null, fwxWatchEnabled = false;
@@ -2803,6 +2897,8 @@ function initMap() {
   watchlistGroup     = L.layerGroup();      // National Fire Watchlist (trigger x fuels x exposure)
   fwxD1Group   = L.layerGroup();           // SPC fire weather outlook Day 1
   fwxD2Group   = L.layerGroup();           // SPC fire weather outlook Day 2
+  dryLtgOutlookGroup = L.layerGroup();     // SPC Dry Thunderstorm Outlook, Day 1-8
+  windRhOutlookGroup = L.layerGroup();     // SPC Critical Fire Weather (Wind/RH) Outlook, Day 3-8
   rawsGroup    = L.layerGroup();           // RAWS weather stations
   windsGroup   = L.layerGroup();           // Observed surface wind arrows
   redFlagGroup = L.layerGroup();           // Red Flag Warnings (from NWS alerts)
@@ -2922,6 +3018,7 @@ async function loadAlerts() {
     for (const a of alerts) { if (a.geometry) geomCache[a.id] = a.geometry; }
     renderAlerts(); renderSidebar(); renderStats(); updateCounts();
     setDot('ok'); setMsg(`Updated ${new Date().toLocaleTimeString()} · ${alerts.length} alerts`);
+    if (_alertsPhase1Resolve) { _alertsPhase1Resolve(); _alertsPhase1Resolve = null; }
 
     // Phase 2: fetch all zone geometries (no cap), re-render after each batch
     await fetchZones();
@@ -2929,6 +3026,7 @@ async function loadAlerts() {
     renderAlerts();
   } catch(e) {
     setDot('err'); setMsg(`Alert fetch failed: ${e.message}`);
+    if (_alertsPhase1Resolve) { _alertsPhase1Resolve(); _alertsPhase1Resolve = null; }
   } finally {
     alertsLoading = false;
   }
@@ -3941,6 +4039,28 @@ async function toggleLayer(name, on) {
       if (naqfcLayer) { naqfcLayer.remove(); naqfcLayer = null; }
       document.getElementById('naqfc-note').textContent = 'off';
     }
+  } else if (name === 'lightning') {
+    lightningEnabled = on;
+    document.getElementById('lightning-opacity-row').style.display = on ? 'flex' : 'none';
+    document.getElementById('lightning-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      lightningLayer = L.tileLayer.wms(
+        'https://nowcoast.noaa.gov/geoserver/observations/lightning_detection/ows',
+        { layers:'ldn_lightning_strike_density', format:'image/png', transparent:true,
+          version:'1.3.0', TIME:lightningTimeStr(), opacity:lightningOpacity, zIndex:151,
+          attribution:'NOAA/NWS/NCEP Lightning Strike Density' }
+      );
+      lightningLayer.addTo(map);
+      updateLightningNote();
+      lightningRefreshTimer = setInterval(() => {
+        if (lightningLayer) lightningLayer.setParams({ TIME: lightningTimeStr() });
+        updateLightningNote();
+      }, 5 * 60000);
+    } else {
+      if (lightningLayer) { lightningLayer.remove(); lightningLayer = null; }
+      if (lightningRefreshTimer) { clearInterval(lightningRefreshTimer); lightningRefreshTimer = null; }
+      document.getElementById('lightning-note').textContent = 'off';
+    }
   } else if (name === 'airnow') {
     airnowEnabled = on;
     document.getElementById('airnow-key').style.display = on ? 'block' : 'none';
@@ -3998,6 +4118,28 @@ async function toggleLayer(name, on) {
     document.getElementById('fwx-legend').style.display = (on || d1on) ? 'block' : 'none';
     if (on) { fwxD2Group.addTo(map); loadSPCFireWx(2); }
     else { fwxD2Group.remove(); document.getElementById('fwx-d2-note').textContent = '–'; }
+  } else if (name === 'dry-ltg-outlook') {
+    dryLtgOutlookEnabled = on;
+    document.getElementById('dry-ltg-outlook-day-row').style.display = on ? 'block' : 'none';
+    document.getElementById('dry-ltg-outlook-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      dryLtgOutlookGroup.addTo(map);
+      loadDryLtgOutlook(dryLtgOutlookDay);
+    } else {
+      dryLtgOutlookGroup.remove();
+      document.getElementById('dry-ltg-outlook-note').textContent = 'off';
+    }
+  } else if (name === 'wind-rh-outlook') {
+    windRhOutlookEnabled = on;
+    document.getElementById('wind-rh-outlook-day-row').style.display = on ? 'block' : 'none';
+    document.getElementById('wind-rh-outlook-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      windRhOutlookGroup.addTo(map);
+      loadWindRhOutlook(windRhOutlookDay);
+    } else {
+      windRhOutlookGroup.remove();
+      document.getElementById('wind-rh-outlook-note').textContent = 'off';
+    }
   } else if (name === 'raws') {
     rawsEnabled = on;
     document.getElementById('raws-key').style.display = on ? 'block' : 'none';
@@ -4375,8 +4517,13 @@ async function loadSPCDay(day) {
 function setBase(name) {
   Object.values(baseLayers).forEach(l=>{ if(l && map.hasLayer(l)) l.remove(); });
   baseLayers[name].addTo(map);
-  // Keep overlay groups on top
-  [hmsGroup,fwxD2Group,fwxD1Group,spc2Group,spc1Group,firePerimGroup,metarGroup,mtGroup,rawsGroup,usgsFlowGroup,usgsGroup,inundationGroup,fimGroup,fireIncidentsGroup,airnowGroup,redFlagGroup,fwxWatchGroup,torWarnGroup,torWatchGroup,svrTstmGroup,flfWarnGroup,winStmGroup,blizzGroup,redFlagAlrtGroup,otherAlvGroup,alertGroup].forEach(g=>{ if(map.hasLayer(g)) g.bringToFront(); });
+  // Keep overlay groups on top. These are plain L.layerGroup()s, which (unlike
+  // L.featureGroup) has no bringToFront() — remove+re-add achieves the same result.
+  [hmsGroup,fwxD2Group,fwxD1Group,dryLtgOutlookGroup,windRhOutlookGroup,spc2Group,spc1Group,firePerimGroup,metarGroup,mtGroup,rawsGroup,usgsFlowGroup,usgsGroup,inundationGroup,fimGroup,fireIncidentsGroup,airnowGroup,redFlagGroup,fwxWatchGroup,torWarnGroup,torWatchGroup,svrTstmGroup,flfWarnGroup,winStmGroup,blizzGroup,redFlagAlrtGroup,otherAlvGroup,alertGroup].forEach(g=>{
+    if (!map.hasLayer(g)) return;
+    if (typeof g.bringToFront === 'function') g.bringToFront();
+    else { map.removeLayer(g); map.addLayer(g); }
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -6122,7 +6269,9 @@ function downloadSnapshot(kind) {
 async function manualRefresh() {
   clearInterval(refreshTimer);
   showLoading(true,'Refreshing all data…');
-  const jobs = [loadAlerts(), loadSPC()];
+  const phase1Ready = new Promise(res => { _alertsPhase1Resolve = res; });
+  loadAlerts();
+  const jobs = [phase1Ready, loadSPC()];
   if (radarEnabled) jobs.push(initRadar().then(() => showRadarFrame(radarFrames.length - 1)));
   if (satEnabled) initSat();
   if (hrrrEnabled) {
@@ -7368,6 +7517,79 @@ async function loadSPCFireWx(day) {
   }
 }
 
+// SPC Dry Thunderstorm Outlook, Day 1-8 — same service as the Fire Weather Outlook above.
+async function loadDryLtgOutlook(day) {
+  const note = document.getElementById('dry-ltg-outlook-note');
+  note.textContent = 'loading…';
+  dryLtgOutlookGroup.clearLayers();
+  const layerId = DRY_LTG_LAYER_ID[day];
+  try {
+    const data = await fetchJson(`${SPC_FWX_BASE}/${layerId}/query?where=1%3D1&outFields=dn,label,valid,expire&f=geojson`, 12000);
+    let count = 0;
+    for (const feat of (data.features || [])) {
+      if (!feat.geometry) continue;
+      const p = feat.properties || {};
+      let style, label;
+      if (day <= 2) {
+        const s = DRY_LTG_DN[p.dn];
+        if (!s || !(p.dn > 0)) continue;
+        style = { color:s.c, fillColor:s.f, weight:1, opacity:0.9, fillOpacity:0.55 };
+        label = s.label;
+      } else {
+        const s = DRY_LTG_LABEL[p.label];
+        if (!s) continue;
+        style = { color:s.c, fill:false, weight:2, opacity:0.9 };
+        label = s.label;
+      }
+      L.geoJSON(feat, { style })
+       .bindTooltip(`Day ${day} Dry Thunderstorm: ${label}`, { sticky:true })
+       .addTo(dryLtgOutlookGroup);
+      count++;
+    }
+    note.textContent = count ? `${count} zone${count === 1 ? '' : 's'}` : 'none issued';
+  } catch(e) {
+    note.textContent = 'unavailable';
+  }
+}
+
+function setDryLtgOutlookDay(day) {
+  dryLtgOutlookDay = day;
+  document.querySelectorAll('#dry-ltg-outlook-day-row .viirs-day-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.day) === day));
+  if (dryLtgOutlookEnabled) loadDryLtgOutlook(day);
+}
+
+// SPC Critical Fire Weather (wind + low RH) Outlook, Day 3-8 — same service, separate hazard.
+async function loadWindRhOutlook(day) {
+  const note = document.getElementById('wind-rh-outlook-note');
+  note.textContent = 'loading…';
+  windRhOutlookGroup.clearLayers();
+  const layerId = WIND_RH_LAYER_ID[day];
+  try {
+    const data = await fetchJson(`${SPC_FWX_BASE}/${layerId}/query?where=1%3D1&outFields=dn,label,valid,expire&f=geojson`, 12000);
+    let count = 0;
+    for (const feat of (data.features || [])) {
+      if (!feat.geometry) continue;
+      const s = WIND_RH_LABEL[feat.properties?.label];
+      if (!s) continue;
+      L.geoJSON(feat, { style:{ color:s.c, fill:false, weight:2, opacity:0.9 } })
+       .bindTooltip(`Day ${day} Critical Fire Weather: ${s.label}`, { sticky:true })
+       .addTo(windRhOutlookGroup);
+      count++;
+    }
+    note.textContent = count ? `${count} zone${count === 1 ? '' : 's'}` : 'none issued';
+  } catch(e) {
+    note.textContent = 'unavailable';
+  }
+}
+
+function setWindRhOutlookDay(day) {
+  windRhOutlookDay = day;
+  document.querySelectorAll('#wind-rh-outlook-day-row .viirs-day-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.day) === day));
+  if (windRhOutlookEnabled) loadWindRhOutlook(day);
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // PREDICTIVE SERVICES 7-DAY FIRE POTENTIAL
 // ═══════════════════════════════════════════════════════════════════
@@ -8125,6 +8347,36 @@ function getNaqfcTimeStr(offsetHours) {
   t.setHours(t.getUTCHours() + offsetHours);
   t.setMinutes(0, 0, 0);
   return t.toISOString().slice(0, 19) + 'Z';
+}
+
+function setLightningOpacity(val) {
+  lightningOpacity = val / 100;
+  document.getElementById('lightning-opacity-val').textContent = val + '%';
+  if (lightningLayer) lightningLayer.setOpacity(lightningOpacity);
+}
+
+// Server snaps TIME to the nearest available 15-min product (WMS dimension nearestValue=1),
+// so passing the current instant always resolves to the latest strike-density grid.
+// The product publishes on a 15-min cadence with a real lag (~20-25 min): asking for
+// "now" often lands on a bucket NOAA hasn't published yet, and despite the server
+// advertising nearest-time snapping, an unpublished instant comes back fully transparent
+// instead of falling back to the latest real frame. Round down to the last confirmed
+// published bucket instead of trusting the server to snap forward-looking requests.
+function lightningTimeStr() {
+  const t = new Date();
+  const flooredMin = Math.floor(t.getUTCMinutes() / 15) * 15;
+  t.setUTCMinutes(flooredMin - 15, 0, 0);
+  return t.toISOString().slice(0, 19) + 'Z';
+}
+
+// The tile shown is always the confirmed-published 15-min window returned by
+// lightningTimeStr(), which trails real time by ~20-40 min (publish lag + bucket width) —
+// surface it explicitly so it's never mistaken for "right now."
+function updateLightningNote() {
+  const start = new Date(lightningTimeStr());
+  const end = new Date(start.getTime() + 15 * 60000);
+  const fmt = d => d.toISOString().slice(11, 16) + 'Z';
+  document.getElementById('lightning-note').textContent = `${fmt(start)}–${fmt(end)}`;
 }
 
 function setNaqfcTime(hours) {
@@ -9681,7 +9933,15 @@ async function boot() {
   initMap();
   startClock();
   showLoading(true,'Loading StormWatch Live…');
-  await Promise.allSettled([loadAlerts(), loadSPC()]);
+  // Don't gate the overlay on loadAlerts()'s full completion — its phase-2 zone-geometry
+  // fetch (fetchZones) can run to hundreds of sequential requests on high-alert-count days
+  // and take well over a minute, during which the overlay would mask every other layer
+  // (VIIRS included) even though they're rendering correctly underneath. Clear the overlay
+  // as soon as the fast initial render (phase 1) + SPC outlooks are ready; zone geometries
+  // keep filling in and re-rendering in the background exactly as before.
+  const phase1Ready = new Promise(res => { _alertsPhase1Resolve = res; });
+  loadAlerts();
+  await Promise.allSettled([phase1Ready, loadSPC()]);
   showLoading(false);
   scheduleRefresh();
   setInterval(loadSPC, SPC_REFRESH_MS);

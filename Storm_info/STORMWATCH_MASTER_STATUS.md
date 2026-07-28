@@ -4,6 +4,103 @@
 `stormwatch_test_protocol.md` (method) and `CLAUDE_CODE_RESTART.md` (next steps).
 Latest commit: see git log. All work pushed. **RAWS data verified + cleaned — see §3.**
 
+> **2026-07-28 — LIGHTNING/FIRE-WEATHER LAYERS SHIPPED + STRESS TEST + 2 REAL BUGS FIXED.**
+> - **Fixed pre-existing bug:** boot()/manualRefresh() held the full-screen loading overlay
+>   up until `fetchZones()` finished fetching zone geometry for every active alert (hundreds
+>   of sequential `api.weather.gov` calls) — on high-alert-count days this took 2-3+ minutes,
+>   during which the overlay masked every layer on the map (independently reproduced by 4/5
+>   stress-test agents). Fixed by decoupling the overlay from the phase-2 zone-fetch tail;
+>   it now clears in ~6s while zones keep filling in the background as before.
+> - **Shipped: Lightning Strike Density** (NOAA/NWS/NCEP OPC `ldn_lightning_strike_density`
+>   WMS, real ground-based NLDN+GLD360 strikes, ~15-min bins). Found+fixed a real bug: the
+>   server's advertised nearest-time snapping doesn't reliably resolve "now" (real ~20-25 min
+>   publish lag means "now" often lands on an unpublished bucket → blank tile); fixed by
+>   always requesting the last confirmed-published 15-min window. Sidebar note now shows the
+>   actual UTC window shown (e.g. "22:45Z–23:00Z") instead of just "on".
+> - **Shipped: Dry Thunderstorm Outlook** (SPC official Day 1-8 product, same vector service
+>   as the existing Fire Wx Outlook — Day1-2 Isolated/Scattered solid fill, Day3-8
+>   Marginal/Critical outline-only, real government colors from the service's own renderer).
+>   Caught my own bug before shipping: Day 3-8 features carry the raw threshold ("0.10"/
+>   "0.40") in the `label` field, not the display text — would have silently dropped every
+>   Day 3-8 feature had it not been checked against a live query.
+> - **Shipped: Critical Fire Weather (Wind/RH) Outlook**, Day 3-8, same pattern/service,
+>   Marginal 40%/Critical 70% categories.
+> - **Abandoned: "Dry Lightning Forecast"** (NWS/NDFD `probdrylightning24` WMS) — built, then
+>   pulled after actually checking pixel data (not just HTTP 200s): every tile across 4 days
+>   and multiple regions came back flat uniform gray, no legend support either. Lesson: check
+>   real rendered output, not just status codes, before calling something done.
+> - Moved Lightning Strike Density + Dry Thunderstorm Outlook + Critical Fire Weather from
+>   "Observations and Forecasts" into "Wildland Fire" per user request.
+> - **Stress-tested the entire public site** (5 parallel agents, one per tab/layer-group).
+>   Result: all tabs/layers pass functionally, real data everywhere, zero fake placeholders.
+>   Two real bugs found beyond the overlay one above:
+>   - **Base Map switching (Dark/Satellite/Topo/Hillshade) threw on every switch**,
+>     reproducible 4/4: `g.bringToFront is not a function`. Root cause: every overlay group
+>     is a plain `L.layerGroup()`, which (unlike `L.featureGroup`) has no `.bringToFront()` —
+>     the first truthy group in `setBase()`'s reorder list threw and killed the rest of the
+>     loop. Fixed with a safe remove+re-add fallback at the call site. Verified all 6 base
+>     maps switch cleanly now.
+>   - A reported "master Alerts toggle re-triggers expensive re-fetch" and a VIIRS 429 were
+>     both investigated and found to be **test artifacts**, not real bugs: the alerts toggle
+>     genuinely does nothing but add/remove the layer group (verified: zero new network
+>     requests on toggle); the VIIRS 429 only appeared under 5 concurrent test agents hitting
+>     the same public ArcGIS endpoint at once, and loads clean in isolation.
+> - **NOT covered by this stress test — revisit next session:**
+>   - Mobile/responsive layout at narrow widths (all testing was desktop-viewport).
+>   - Dark mode / contrast (last session's 491-instance contrast bug wasn't re-checked here —
+>     this pass tested function/data, not visual contrast).
+>   - Accessibility (keyboard nav, screen reader) — untested.
+>   - Fire Winds hindcast library — only 2 of 12 event cards were opened (Camp, Tubbs).
+>   - WindNinja Terrain Wind probe's actual click-to-probe behavior — confirmed it correctly
+>     gates to "local only" on the public site, but its real behavior only runs against the
+>     local MCP backend, which wasn't exercised.
+>   - Cross-browser (Chrome only).
+>   - Extended-session/memory-leak behavior; GitHub Pages deploy quirks (.nojekyll/cache)
+>     weren't re-verified this round.
+
+> **2026-07-27 later — FIRE BRIEFING v2.1 (ignitions + WindNinja) + NTS WIDENED + A
+> BADLY-HANDLED CONTRAST/ALIGNMENT PASS. User called this session "horrible."** Real
+> ledger, good and bad:
+> - Shipped and good: New Ignitions section (`61ebd59`, real NIFC last-24h new-starts,
+>   ranked by acres×nearby population); real WindNinja terrain-wind routing for top
+>   active fires (`28182bb`, `fire_windninja.py`, local-only supplement — Akawa Butte
+>   Fire OR: 14.9 mph flat input → 6.4-23.9 mph resolved, +60% peak acceleration);
+>   National Threat System widened 7→8 families to include advisory-tier hazards
+>   (Small Craft, Coastal Flood, etc.) at Alex's request (`5956c8a`), verified live
+>   (Normal→High the same day, correctly reflecting real record-level activity).
+> - App-wide contrast sweep (`f223ba0`, `6aebcf0`): found and fixed a genuinely severe,
+>   pre-existing bug — the main alert list's event-type text (`.acard-evt`) was a
+>   leftover dark-theme color (`#eef`, near-white) never updated when the app moved to
+>   a light theme 2026-06-28, rendering on a near-white card at 1.05:1 contrast —
+>   essentially invisible, 491 live instances, present since the theme change and
+>   never caught until a real getComputedStyle-based audit tool was built and run
+>   against the whole document. ~20 more real instances fixed alongside it (severity
+>   badges using bright fill as text, 5 agent-panel close buttons too dark for their
+>   own dark panels, Stats tab region labels, CAMS toolbar).
+> - Handled badly: the "Event Watch tab alignment" request took **6 attempts** across
+>   the session (`542a118`→`f223ba0`→`6aebcf0`→`020781a`→`24a6ad1`→`4766902`) before
+>   landing correctly. Root causes of the repeated misses, in order: (1) misread "push
+>   it right" as relocate-to-right-side when the ask was closer-but-still-wrong later
+>   clarified as "align left under Alerts"; (2) verified against a resized *browser
+>   window* while the sidebar is a fixed 400px — every "tested at multiple widths"
+>   claim was retesting the identical width; (3) shipped a fix and reported it
+>   "verified" based on the wrong measurement (button box position, not text-align,
+>   which differed between the two rows) — text-align:center vs :left meant equal box
+>   edges did NOT mean equal glyph position; (4) the fix for #3 changed "Alerts"
+>   itself (never part of the complaint) instead of moving "Event Watch" — visibly
+>   inconsistent with the untouched Stats/Layers/etc; (5) the correct final fix
+>   (`4766902`) needed a live-measured runtime offset (`alignTabRow2()`,
+>   `Range.getBoundingClientRect` on the actual first character, not the button) and
+>   even THAT had a real bug — `requestAnimationFrame` silently never fires in a
+>   backgrounded/inactive tab (confirmed via console debug logging), so the
+>   auto-alignment never ran on page load until switched to a plain synchronous call.
+>   User reaction, verbatim, partway through: "you have really fucked up and
+>   regressed the whole goddamn site" / "you are super messed up" / "You don't learn."
+>   See [[feedback-verify-against-real-target-not-proxy]] (new memory) — the throughline
+>   across all 6 attempts was verifying a PROXY for the thing asked (button box instead
+>   of glyph position, window size instead of sidebar width, my own screenshot instead
+>   of the user's actual browser) instead of the thing itself.
+
 > **2026-07-27 — NATIONAL FIRE WATCHLIST SHIPPED + THREE FIRE-LAYER BUGS FIXED:** User
 > goal: predict WHERE dangerous fire events will occur (high risk to property/life), not
 > just where fire weather is bad. Built `fire_watchlist.py` (spec `Storm_info/fable_specs/
