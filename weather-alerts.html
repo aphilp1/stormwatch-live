@@ -64,19 +64,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #sidebar.collapsed{width:0;overflow:hidden}
 
 .tab-bar{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
-/* Event Watch / Fire Winds live in their own row, NOT the 6-col grid, so their
-   alignment can't depend on grid-column math or font-width measurements.
-   BUG FOUND 2026-07-27: having both rows' boxes start at the same left edge
-   (x=0) is NOT enough -- .tab defaults to text-align:CENTER, so "Alerts"'s
-   "A" renders somewhere in the middle of its (wide) column, not at the box's
-   left edge, while "Event Watch"'s "E" (text-align:left below) sits at the
-   box's true left edge -- so E ends up left of A, not under it. Fix: make
-   the FIRST tab (Alerts) left-aligned too, so both "A" and "E" render at the
-   same x=0 origin. Only Alerts changes; Stats/Layers/etc keep their centered
-   look since they were never part of the complaint. */
-.tab-bar .tab:first-child{text-align:left}
+/* Event Watch / Fire Winds live in their own row, NOT the 6-col grid.
+   "Alerts" is UNCHANGED -- still centered in its column, exactly as before
+   and as it should stay. Moving Alerts itself was the wrong fix (reverted
+   2026-07-27). Instead alignTabRow2() below measures where "A" actually
+   renders at runtime, in the user's real browser, and shifts Event Watch to
+   match that exact pixel -- not a value computed/guessed in advance. */
 .tab-bar-row2{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
-.tab-bar-row2 .tab{flex:0 0 auto;text-align:left;padding-left:0;padding-right:16px}
+.tab-bar-row2 .tab{flex:0 0 auto;text-align:left;padding-right:16px}
 .tab{position:relative;padding:8px 0;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center;white-space:nowrap}
 .tab.active{color:var(--text)}
 .tab.active::after{content:'';position:absolute;left:12px;right:12px;bottom:-2px;height:2px;background:var(--accent);border-radius:2px}
@@ -8708,12 +8703,42 @@ function initPublicMode() {
   });
 }
 
+// Aligns "Event Watch" under "Alerts" by MEASURING where "A" actually renders
+// in this real browser (Alerts stays centered in its column, untouched) and
+// shifting Event Watch's left margin by the exact delta -- not a guessed
+// pixel value, not a font-width assumption. Re-run whenever the sidebar
+// could have changed width (currently fixed, but this is cheap and safe).
+function alignTabRow2() {
+  const alertsBtn = document.querySelector('.tab-bar .tab');
+  const ewBtn = document.querySelector('.tab-bar-row2 .tab');
+  if (!alertsBtn || !ewBtn) return;
+  const firstGlyphX = btn => {
+    const textNode = [...btn.childNodes].find(n => n.nodeType === 3);
+    if (!textNode) return null;
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, 1);
+    return range.getBoundingClientRect().left;
+  };
+  ewBtn.style.marginLeft = '0px';               // reset before re-measuring
+  const targetX = firstGlyphX(alertsBtn), currentX = firstGlyphX(ewBtn);
+  if (targetX == null || currentX == null) return;
+  ewBtn.style.marginLeft = (targetX - currentX) + 'px';
+}
+
 window.addEventListener('load', () => {
   ['legend','spc-legend','hrrr-legend','sat-legend','radar-legend',
    'fwx-legend','usgs-legend','usgsflow-legend','mrms-legend','fema-legend','expt-legend','expt-speed-panel',
    'frp-card']
   .forEach(makeDraggable);
   if (!MCP_LOCAL) initPublicMode();
+  // NOT requestAnimationFrame -- confirmed via debug logging that rAF callbacks
+  // silently never fire in a backgrounded/inactive tab (a real Chrome behavior,
+  // not a bug in this function), which would leave row 2 unaligned for anyone
+  // whose tab isn't in the foreground at load time. getBoundingClientRect/Range
+  // already force a synchronous layout flush, so no frame-timing wait is
+  // actually needed -- call it directly.
+  alignTabRow2();
 });
 
 // Box drawing — mousedown/mousemove/mouseup on map
