@@ -65,12 +65,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .tab-bar{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
 /* Event Watch / Fire Winds live in their own row, NOT the 6-col grid, so their
-   alignment can't depend on grid-column math or font-width measurements that
-   behave differently across browsers/zoom levels (that dependency was the
-   actual bug in three earlier attempts). Both this row and .tab-bar are plain
-   block children of #sidebar with zero horizontal padding on either the
-   container or the buttons, so "Event Watch"'s first character starts at
-   exactly the same x as "Alerts"'s first character -- geometry, not math. */
+   alignment can't depend on grid-column math or font-width measurements.
+   BUG FOUND 2026-07-27: having both rows' boxes start at the same left edge
+   (x=0) is NOT enough -- .tab defaults to text-align:CENTER, so "Alerts"'s
+   "A" renders somewhere in the middle of its (wide) column, not at the box's
+   left edge, while "Event Watch"'s "E" (text-align:left below) sits at the
+   box's true left edge -- so E ends up left of A, not under it. Fix: make
+   the FIRST tab (Alerts) left-aligned too, so both "A" and "E" render at the
+   same x=0 origin. Only Alerts changes; Stats/Layers/etc keep their centered
+   look since they were never part of the complaint. */
+.tab-bar .tab:first-child{text-align:left}
 .tab-bar-row2{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
 .tab-bar-row2 .tab{flex:0 0 auto;text-align:left;padding-left:0;padding-right:16px}
 .tab{position:relative;padding:8px 0;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all 0.15s;text-align:center;white-space:nowrap}
