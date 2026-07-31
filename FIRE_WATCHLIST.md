@@ -1,61 +1,44 @@
 # 🔥 StormWatch Fire Briefing
 
-*Generated 2026-07-30T15:43Z · method v2.0 · CONUS. Every fact is quoted from NIFC/SPC/USGS/Census as reported — the wind read is StormWatch's own mechanism classifier.*
+*Generated 2026-07-31T15:49Z · method v2.0 · CONUS. Every fact is quoted from NIFC/SPC/USGS/Census as reported — the wind read is StormWatch's own mechanism classifier.*
 
-**147 active wildfires are burning uncontained in the US today. The most serious is the 0494 Akawa Butte Fire in OR, threatening 4,812 structures.**
+**119 active wildfires are burning uncontained in the US today. The most serious is the Coleman Creek Fire in OR.**
 
 ## Active Threats
 
-### 0494 Akawa Butte Fire — OR
-The 0494 Akawa Butte Fire in Jefferson County, OR has burned 27,428 acres and is 19% contained. NIFC's incident team reports **4,812 structures threatened**. 1,232 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 12 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind direction (NW, blowing toward the SE) favors pushing the fire toward Crooked River Ranch CDP, 9 miles away.
-
-### Second Flat Fire — OR
-The Second Flat Fire in Harney County, OR has burned 102,765 acres and is 18% contained. NIFC's incident team reports **2,859 structures threatened**. 208 personnel are assigned. Forecast winds will be locally gusty (up to 25 mph, sustained near 16) with humidity as low as 14%. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (NE) is not currently aligned toward Hines city, the nearest community of size, 18 miles away.
-
-### Grasshopper Fire — OR
-The Grasshopper Fire in Wasco County, OR has burned 18,135 acres and is 0% contained. NIFC's incident team reports **2,887 structures threatened**. 373 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 25 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (NW) is not currently aligned toward Mount Hood Villages CDP, the nearest community of size, 24 miles away.
-
-### Pocket Fire — AZ
-The Pocket Fire in Yavapai County, AZ has burned 27,393 acres and is 95% contained. NIFC's incident team reports **3,570 structures threatened**. 1 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 18 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (SW) is not currently aligned toward Sedona city, the nearest community of size, 8 miles away.
+### Coleman Creek Fire — OR
+The Coleman Creek Fire in Harney County, OR has burned 212,189 acres and is 0% contained. 164 personnel are assigned. (NIFC's primary feed was unavailable today — this record is from the Esri Living Atlas mirror, which does not carry a structures-threatened field.) Winds are expected to stay comparatively light over the next 24 hours (gusts near 17 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind direction (E, blowing toward the W) favors pushing the fire toward Burns city, 38 miles away.
 
 ### Big Grass Fire — OR
-The Big Grass Fire in Malheur County, OR has burned 301,572 acres and is 15% contained. NIFC's incident team reports **1,437 structures threatened**. 363 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 18 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve.
+The Big Grass Fire in Malheur County, OR has burned 303,285 acres and is 21% contained. 551 personnel are assigned. (NIFC's primary feed was unavailable today — this record is from the Esri Living Atlas mirror, which does not carry a structures-threatened field.) Winds are expected to stay comparatively light over the next 24 hours (gusts near 24 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely.
 
-### Bench Fire — OR
-The Bench Fire in Jefferson County, OR has burned 64,406 acres and is 22% contained. NIFC's incident team reports **1,674 structures threatened**. 802 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 14 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (NE) is not currently aligned toward Madras city, the nearest community of size, 10 miles away.
+### Second Flat Fire — OR
+The Second Flat Fire in Harney County, OR has burned 102,926 acres and is 18% contained. 278 personnel are assigned. (NIFC's primary feed was unavailable today — this record is from the Esri Living Atlas mirror, which does not carry a structures-threatened field.) A forecast wind read wasn't available for this fire today.
+
+### 0587 Shingle Fire — OR
+The 0587 Shingle Fire in Wheeler County, OR has burned 64,493 acres and is 10% contained. 590 personnel are assigned. (NIFC's primary feed was unavailable today — this record is from the Esri Living Atlas mirror, which does not carry a structures-threatened field.) Winds are expected to stay comparatively light over the next 24 hours (gusts near 16 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely.
+
+### Kaiser Canyon Fire — WA
+The Kaiser Canyon Fire in Okanogan County, WA has burned 129,678 acres and is 29% contained. 1,079 personnel are assigned. (NIFC's primary feed was unavailable today — this record is from the Esri Living Atlas mirror, which does not carry a structures-threatened field.) Winds are expected to stay comparatively light over the next 24 hours (gusts near 10 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (SW) is not currently aligned toward Coulee Dam town, the nearest community of size, 10 miles away.
+
+### 0445 Crosswhite Fire — OR
+The 0445 Crosswhite Fire in Wheeler County, OR has burned 184,669 acres and is 38% contained. 39 personnel are assigned. (NIFC's primary feed was unavailable today — this record is from the Esri Living Atlas mirror, which does not carry a structures-threatened field.) Winds are expected to stay comparatively light over the next 24 hours (gusts near 20 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve.
 
 ### Hagen Fire — OR
-The Hagen Fire in Umatilla County, OR has burned 33,504 acres and is 3% contained. NIFC's incident team reports **1,467 structures threatened**. 682 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 10 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (NW) is not currently aligned toward Athena city, the nearest community of size, 13 miles away.
+The Hagen Fire in Umatilla County, OR has burned 35,432 acres and is 3% contained. 678 personnel are assigned. (NIFC's primary feed was unavailable today — this record is from the Esri Living Atlas mirror, which does not carry a structures-threatened field.) Winds are expected to stay comparatively light over the next 24 hours (gusts near 8 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (NW) is not currently aligned toward Athena city, the nearest community of size, 13 miles away.
 
-### E Evans Creek Rd 18000 Fire — OR
-The E Evans Creek Rd 18000 Fire in Jackson County, OR has burned 15,580 acres and is 78% contained. NIFC's incident team reports **2,347 structures threatened**. 914 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 18 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime — the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (N) is not currently aligned toward Shady Cove city, the nearest community of size, 9 miles away.
-
-## New Ignitions (last 24h)
-
-### Emery Fire — MT
-A new fire, the Emery Fire, was just discovered in Custer County, MT within the last 24 hours. Currently 500.0 acres. It's 8 miles from Miles City city (pop. 8,412). Too new for a full incident report or a structures-threatened count -- worth watching.
-
-### Taylor Fire — WY
-A new fire, the Taylor Fire, was just discovered in Campbell County, WY within the last 24 hours. Currently 60.0 acres. It's 16 miles from Gillette city (pop. 33,278). Too new for a full incident report or a structures-threatened count -- worth watching.
-
-### Cinder Fire — ID
-A new fire, the Cinder Fire, was just discovered in Elmore County, ID within the last 24 hours. Currently 153.0 acres. It's 10 miles from Mountain Home AFB CDP (pop. 3,198). Too new for a full incident report or a structures-threatened count -- worth watching.
-
-### Estrella Fire — CA
-A new fire, the Estrella Fire, was just discovered in San Luis Obispo County, CA within the last 24 hours. Currently 35.0 acres. It's 6 miles from El Paso de Robles (Paso Robles) city (pop. 31,399). Too new for a full incident report or a structures-threatened count -- worth watching.
-
-### Crow Rock - Custer Fire — MT
-A new fire, the Crow Rock - Custer Fire, was just discovered in Custer County, MT within the last 24 hours. Currently 58.3 acres. It's 18 miles from Miles City city (pop. 8,412). Too new for a full incident report or a structures-threatened count -- worth watching.
+### Bald Mountain Fire — OR
+The Bald Mountain Fire in Harney County, OR has burned 85,119 acres and is 26% contained. 180 personnel are assigned. (NIFC's primary feed was unavailable today — this record is from the Esri Living Atlas mirror, which does not carry a structures-threatened field.) Winds are expected to stay comparatively light over the next 24 hours (gusts near 21 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window — the kind of transition that is hardest for a 3 km forecast model to time and place precisely.
 
 ## Emerging Conditions to Watch
 
-A fire-weather pattern is developing over TX: Dallas city, Fort Worth city, Arlington city, Plano city, and Frisco city and 15 other communities sit under NIFC's Significant Fire Potential outlook (days 2,3). USGS fire-danger models put the local large-fire/spread probability as high as 2% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
+A fire-weather pattern is developing over ID, MT, WA: Spokane city, Spokane Valley city, Missoula city, Coeur d'Alene city, and Post Falls city and 19 other communities sit under an active Red Flag Warning or Watch and SPC's **Extreme** fire-weather category and NIFC's Significant Fire Potential outlook (days 2,3). USGS fire-danger models put the local large-fire/spread probability as high as 11% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
 
-A fire-weather pattern is developing over ID, MT, WA: Spokane city, Spokane Valley city, Missoula city, Coeur d'Alene city, and Post Falls city and 8 other communities sit under an active Red Flag Warning or Watch and NIFC's Significant Fire Potential outlook (days 3,4). USGS fire-danger models put the local large-fire/spread probability as high as 13% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
+A fire-weather pattern is developing over WA: Wenatchee city, Moses Lake city, Othello city, Ephrata city, and Quincy city and 14 other communities sit under an active Red Flag Warning or Watch and SPC's **Extreme** fire-weather category and NIFC's Significant Fire Potential outlook (day 2). USGS fire-danger models put the local large-fire/spread probability as high as 31% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
 
-A fire-weather pattern is developing over CA: Hollister city, El Paso de Robles (Paso Robles) city, Atascadero city, King City city, and Taft city and 2 other communities sit under NIFC's Significant Fire Potential outlook (days 2,3,4). USGS fire-danger models put the local large-fire/spread probability as high as 8% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
+A fire-weather pattern is developing over MT: Great Falls city, Helena city, Shelby city, Cut Bank city, and North Browning CDP sit under an active Red Flag Warning or Watch and SPC's **Critical** fire-weather category and NIFC's Significant Fire Potential outlook (days 2,3). USGS fire-danger models put the local large-fire/spread probability as high as 17% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
 
-A fire-weather pattern is developing over CA: Rancho Calaveras CDP, Sonora city, Copperopolis CDP, and Phoenix Lake CDP sit under NIFC's Significant Fire Potential outlook (days 2,3,4). USGS fire-danger models put the local large-fire/spread probability as high as 3% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
+A fire-weather pattern is developing over ID, WA: Lewiston city, Orofino city, Dayton city, and Pomeroy city sit under an active Red Flag Warning or Watch and SPC's **Extreme** fire-weather category and NIFC's Significant Fire Potential outlook (days 2,3). No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs.
 
 ---
 *Sources: NIFC (active incidents + last-24h new-ignition feed, ICS-209 fields) · NWS (alerts) · SPC (fire weather outlooks) · NIFC Predictive Services (7-day potential) · USGS EROS (fire danger) · US Census (ACS 2023). Wind read: StormWatch's own mechanism_classifier.*
