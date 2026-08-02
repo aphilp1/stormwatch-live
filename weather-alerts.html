@@ -8344,8 +8344,8 @@ function setNaqfcOpacity(val) {
 
 function getNaqfcTimeStr(offsetHours) {
   const t = new Date();
-  t.setHours(t.getUTCHours() + offsetHours);
-  t.setMinutes(0, 0, 0);
+  t.setUTCHours(t.getUTCHours() + offsetHours);
+  t.setUTCMinutes(0, 0, 0);
   return t.toISOString().slice(0, 19) + 'Z';
 }
 
@@ -8578,10 +8578,13 @@ async function enableWindFlow() {
       maxVelocity: 15,               // saturate the color scale sooner so light winds still read
       velocityScale: 0.005,          // slower, more natural pace (fast winds no longer zip)
       particleAge: 110,              // shorter trails read cleaner at the slower pace
-      lineWidth: 1.9,
+      lineWidth: 2.6,
       particleMultiplier: 1 / 170,   // denser field
       frameRate: 20,
-      colorScale: ['#7d93ab', '#4aa6c9', '#3fa34d', '#e0b400', '#e8720c', '#d23b2e'],
+      // calm-wind bucket was a washed-out slate blue that all but vanished against the
+      // light basemap at low per-frame alpha; swapped for a more saturated blue so light
+      // winds (the most common condition) still read.
+      colorScale: ['#2f6fb0', '#2f8fc9', '#3fa34d', '#e0b400', '#e8720c', '#d23b2e'],
     });
     windFlowLayer.addTo(map);
     note.textContent = 'live · from station obs';
