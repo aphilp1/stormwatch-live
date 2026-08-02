@@ -104,10 +104,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* Layers tab */
 #layers-tab{padding:14px 20px;gap:12px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
-#layers-tab::-webkit-scrollbar,#stats-tab::-webkit-scrollbar,#tab-models::-webkit-scrollbar,#tab-maps::-webkit-scrollbar,#tab-agents::-webkit-scrollbar,#tab-experiments::-webkit-scrollbar,#mp-table-area::-webkit-scrollbar{width:7px}
-#layers-tab::-webkit-scrollbar-track,#stats-tab::-webkit-scrollbar-track,#tab-models::-webkit-scrollbar-track,#tab-maps::-webkit-scrollbar-track,#tab-agents::-webkit-scrollbar-track,#tab-experiments::-webkit-scrollbar-track,#mp-table-area::-webkit-scrollbar-track{background:transparent}
-#layers-tab::-webkit-scrollbar-thumb,#stats-tab::-webkit-scrollbar-thumb,#tab-models::-webkit-scrollbar-thumb,#tab-maps::-webkit-scrollbar-thumb,#tab-agents::-webkit-scrollbar-thumb,#tab-experiments::-webkit-scrollbar-thumb,#mp-table-area::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
-#layers-tab::-webkit-scrollbar-thumb:hover,#stats-tab::-webkit-scrollbar-thumb:hover,#tab-models::-webkit-scrollbar-thumb:hover,#tab-maps::-webkit-scrollbar-thumb:hover,#tab-agents::-webkit-scrollbar-thumb:hover,#tab-experiments::-webkit-scrollbar-thumb:hover,#mp-table-area::-webkit-scrollbar-thumb:hover{background:#aab}
+#layers-tab::-webkit-scrollbar,#stats-tab::-webkit-scrollbar,#tab-models::-webkit-scrollbar,#tab-maps::-webkit-scrollbar,#tab-agents::-webkit-scrollbar,#tab-experiments::-webkit-scrollbar,#tab-fire48::-webkit-scrollbar,#mp-table-area::-webkit-scrollbar{width:7px}
+#layers-tab::-webkit-scrollbar-track,#stats-tab::-webkit-scrollbar-track,#tab-models::-webkit-scrollbar-track,#tab-maps::-webkit-scrollbar-track,#tab-agents::-webkit-scrollbar-track,#tab-experiments::-webkit-scrollbar-track,#tab-fire48::-webkit-scrollbar-track,#mp-table-area::-webkit-scrollbar-track{background:transparent}
+#layers-tab::-webkit-scrollbar-thumb,#stats-tab::-webkit-scrollbar-thumb,#tab-models::-webkit-scrollbar-thumb,#tab-maps::-webkit-scrollbar-thumb,#tab-agents::-webkit-scrollbar-thumb,#tab-experiments::-webkit-scrollbar-thumb,#tab-fire48::-webkit-scrollbar-thumb,#mp-table-area::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
+#layers-tab::-webkit-scrollbar-thumb:hover,#stats-tab::-webkit-scrollbar-thumb:hover,#tab-models::-webkit-scrollbar-thumb:hover,#tab-maps::-webkit-scrollbar-thumb:hover,#tab-agents::-webkit-scrollbar-thumb:hover,#tab-experiments::-webkit-scrollbar-thumb:hover,#tab-fire48::-webkit-scrollbar-thumb:hover,#mp-table-area::-webkit-scrollbar-thumb:hover{background:#aab}
 .layer-group{margin-bottom:14px}
 .layer-group-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text);font-weight:700;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px}
 .type-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;flex-shrink:0;vertical-align:middle;margin-top:-1px}
@@ -543,6 +543,76 @@ canvas.velocity-overlay{pointer-events:none!important}
 .expt-leg-badge.nails{background:rgba(50,200,160,0.15);color:#32d4a8;border:1px solid rgba(50,200,160,0.3)}
 .expt-leg-badge.control{background:rgba(120,150,200,0.12);color:#8090c0;border:1px solid rgba(120,150,200,0.28)}
 .expt-leg-badge.inprog{background:rgba(160,130,50,0.15);color:#c4a050;border:1px solid rgba(160,130,50,0.35)}
+
+/* ── 48 FIRE FORECAST TAB ─────────────────────────────────────────── */
+#tab-fire48{padding:16px 20px 24px;overflow-y:auto;gap:0;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent;background:#0b0d10;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+.f48-hdr{margin-bottom:16px}
+.f48-hdr-title{font-size:19px;font-weight:800;color:#fff8f0;letter-spacing:0.2px;margin-bottom:4px}
+.f48-hdr-sub{font-size:12.5px;color:#a8b0bc;line-height:1.6}
+.f48-section{margin-bottom:20px}
+.f48-section-hdr{font-size:11.5px;text-transform:uppercase;letter-spacing:0.8px;color:#ffb454;font-weight:800;margin-bottom:10px;padding-left:9px;border-left:3px solid #ff8c30}
+.f48-section-hdr.f48-collapsible{cursor:pointer;user-select:none;color:#8a94a8;border-left-color:#4a5468}
+.f48-section-hdr.f48-collapsible:hover{color:#b0bacc}
+.f48-risk-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.f48-risk-card{flex:1;min-width:130px;background:#181c22;border:1px solid #2a2f38;border-radius:8px;padding:12px 14px}
+.f48-risk-card-lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#8a94a8;font-weight:700;margin-bottom:6px;line-height:1.4}
+.f48-risk-card-val{font-size:24px;font-weight:800;color:#fff8f0;font-variant-numeric:tabular-nums}
+.f48-risk-card-val.na{color:#454b56}
+.f48-pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.f48-pill{padding:5px 13px;border-radius:5px;border:1px solid #363c48;background:#161a20;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.15s;color:#8a94a8}
+.f48-pill:hover{border-color:#4a5468;color:#c8d0dc}
+.f48-pill.active{background:#ff8c30;border-color:#ff8c30;color:#1a1006}
+.f48-imgwrap{position:relative;background:#000;border-radius:8px;overflow:hidden;margin-bottom:8px;min-height:160px;display:flex;align-items:center;justify-content:center;cursor:zoom-in}
+.f48-imgwrap img{width:100%;display:block}
+.f48-imgwrap-lg{min-height:220px}
+.f48-img-error{color:#ff9070;font-size:13px;padding:28px 14px;text-align:center;line-height:1.7;cursor:default}
+.f48-img-error a{color:#ffb090;font-weight:700}
+.f48-caption{font-size:12px;color:#8a94a8;line-height:1.6;margin-bottom:16px}
+.f48-caption a{color:#ff8c30;font-weight:700}
+.f48-play-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.f48-play-btn{background:#ff8c30;border:none;color:#1a1006;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:800;flex-shrink:0;transition:background 0.15s}
+.f48-play-btn:hover{background:#ffa354}
+.f48-scrubber{flex:1;accent-color:#ff8c30}
+.f48-frame-ts{font-size:11px;color:#8a94a8;white-space:nowrap;min-width:70px;text-align:right;font-variant-numeric:tabular-nums}
+.f48-zone-row{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:#c8d0dc;padding:7px 0;border-bottom:1px solid #22262e}
+.f48-zone-row:last-child{border-bottom:none}
+.f48-zone-lbl{color:#8a94a8}
+.f48-zone-val{font-weight:800;color:#fff8f0;font-variant-numeric:tabular-nums}
+/* SPC discussion panel */
+.f48-discussion{background:#181c22;border:1px solid #2a2f38;border-radius:8px;padding:16px 18px}
+.f48-disc-loading, .f48-disc-error{font-size:13px;color:#8a94a8;font-style:italic}
+.f48-disc-error a{color:#ff8c30;font-weight:700}
+.f48-disc-headline{display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:0.3px;padding:4px 11px;border-radius:5px;margin-bottom:10px;text-transform:uppercase}
+.f48-disc-headline.crit{background:rgba(255,40,40,0.18);color:#ff5050;border:1px solid rgba(255,60,60,0.4)}
+.f48-disc-headline.elevated{background:rgba(255,160,50,0.18);color:#ffa532;border:1px solid rgba(255,160,50,0.4)}
+.f48-disc-headline.clear{background:rgba(70,200,120,0.16);color:#4fd47a;border:1px solid rgba(70,200,120,0.35)}
+.f48-disc-meta{font-size:11.5px;color:#6a7488;margin-bottom:12px;font-variant-numeric:tabular-nums}
+.f48-disc-body p{font-size:14px;color:#e4e8ee;line-height:1.75;margin-bottom:12px}
+.f48-disc-body p:last-child{margin-bottom:0}
+.f48-disc-section-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#ffb454;margin:14px 0 6px}
+.f48-disc-section-title:first-child{margin-top:0}
+.f48-disc-sig{font-size:11.5px;color:#6a7488;margin-top:10px;font-style:italic}
+.f48-disc-link{display:inline-block;margin-top:12px;font-size:12px;color:#ff8c30;font-weight:700;text-decoration:none}
+.f48-disc-link:hover{text-decoration:underline}
+.f48-imgwrap-white{background:#fff}
+/* On-map floating layer-control panel */
+#f48-map-legend{display:none;position:absolute;top:70px;left:10px;background:rgba(14,10,8,0.94);border:1px solid rgba(255,140,48,0.3);border-radius:9px;padding:11px 14px;z-index:750;min-width:250px;backdrop-filter:blur(6px);box-shadow:0 3px 14px rgba(0,0,0,0.6);cursor:move;user-select:none}
+#f48-map-legend button{cursor:pointer}
+#f48-map-leg-title{font-size:11px;font-weight:800;color:#ffd8b0;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+#f48-map-leg-close{background:none;border:none;color:#a88860;font-size:16px;line-height:1;padding:0 0 0 10px;flex-shrink:0}
+#f48-map-leg-close:hover{color:#ffd8b0}
+.f48-map-leg-divider{border-top:1px solid rgba(255,140,48,0.18);margin:8px 0}
+.f48-map-leg-row{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.f48-map-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,0.3)}
+.f48-map-leg-lbl{font-size:11.5px;color:#d8c8b8;flex:1}
+.f48-map-leg-count{font-size:11px;font-weight:800;color:#ffd8b0;font-variant-numeric:tabular-nums;min-width:14px;text-align:right}
+.f48-map-leg-btn{background:rgba(255,140,48,0.12);border:1px solid rgba(255,140,48,0.3);color:#e0a870;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;transition:all 0.15s;flex-shrink:0}
+.f48-map-leg-btn:hover{background:rgba(255,140,48,0.22)}
+.f48-map-leg-toggle{min-width:32px;text-align:center}
+.f48-map-leg-toggle.active{background:#ff8c30;border-color:#ff8c30;color:#1a1006}
+.f48-map-leg-toggle:not(.active){background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.15);color:#6a7488}
+.f48-map-goes-play-row{display:flex;align-items:center;gap:8px;margin-top:2px}
+.f48-map-goes-ts{font-size:10px;color:#a88860;white-space:nowrap;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
 /* ── SPEED COMPARISON PANEL ──────────────────────────────────────── */
 #expt-speed-panel{display:none;position:absolute;top:70px;right:10px;z-index:750;background:rgba(8,12,24,0.93);border:1px solid rgba(80,130,190,0.3);border-radius:9px;min-width:440px;max-width:600px;box-shadow:0 4px 16px rgba(0,0,0,0.6);backdrop-filter:blur(6px);user-select:none}
 #expt-spd-hdr{padding:9px 12px;cursor:move;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(80,130,190,0.2)}
@@ -940,6 +1010,7 @@ canvas.velocity-overlay{pointer-events:none!important}
     <div class="tab-bar-row2">
       <button class="tab" onclick="showTab('eventwatch')">Event Watch</button>
       <button class="tab" onclick="showTab('experiments')">Fire Winds</button>
+      <button class="tab" onclick="showTab('fire48')">48 Fire Forecast</button>
     </div>
 
     <!-- ALERTS TAB -->
@@ -1901,6 +1972,116 @@ canvas.velocity-overlay{pointer-events:none!important}
 
     </div>
 
+    <!-- 48 FIRE FORECAST TAB -->
+    <div id="tab-fire48" class="tab-content">
+
+      <div class="f48-hdr">
+        <div class="f48-hdr-title">48-Hour Fire Forecast</div>
+        <div class="f48-hdr-sub">The Storm Prediction Center's actual Day 1–2 fire weather discussion, plus live satellite, risk zones, and station obs</div>
+      </div>
+
+      <!-- SPC forecaster discussion — the headline "clear statement" -->
+      <div class="f48-section">
+        <div class="f48-section-hdr">SPC Fire Weather Discussion</div>
+        <div class="f48-pill-row" id="f48-disc-day-row">
+          <button class="f48-pill active" data-day="1" onclick="f48SetDiscussionDay(1)">Day 1 (Today)</button>
+          <button class="f48-pill" data-day="2" onclick="f48SetDiscussionDay(2)">Day 2 (Tomorrow)</button>
+        </div>
+        <div class="f48-discussion" id="f48-discussion">
+          <div class="f48-disc-loading">Loading SPC discussion…</div>
+        </div>
+      </div>
+
+      <!-- Risk summary -->
+      <div class="f48-section">
+        <div class="f48-section-hdr">48-Hour Risk Summary</div>
+        <div class="f48-risk-row" id="f48-risk-summary">
+          <div class="f48-risk-card"><div class="f48-risk-card-lbl">Fire Wx + Dry T-storm Zones (D1+D2)</div><div class="f48-risk-card-val na" id="f48-stat-fwx">—</div></div>
+          <div class="f48-risk-card"><div class="f48-risk-card-lbl">Red Flag Warnings</div><div class="f48-risk-card-val na" id="f48-stat-rfw">—</div></div>
+          <div class="f48-risk-card"><div class="f48-risk-card-lbl">Fire Wx Watches</div><div class="f48-risk-card-val na" id="f48-stat-fww">—</div></div>
+          <div class="f48-risk-card"><div class="f48-risk-card-lbl">RAWS RH&lt;15%</div><div class="f48-risk-card-val na" id="f48-stat-raws">—</div></div>
+        </div>
+      </div>
+
+      <!-- GOES satellite -->
+      <div class="f48-section">
+        <div class="f48-section-hdr">GOES Satellite Loop</div>
+        <div class="f48-caption" style="margin-bottom:8px">GOES-East IR is also draped directly on the map (auto-refreshes ~5 min), georeferenced. The animated loop below is NOAA's Fire Temperature / GeoColor imagery, with real play/pause/scrub controls.</div>
+        <div class="f48-pill-row" id="f48-sector-row">
+          <button class="f48-pill" data-sector="east" onclick="f48SetSector('east')">East (GOES-16)</button>
+          <button class="f48-pill active" data-sector="west" onclick="f48SetSector('west')">West (GOES-18)</button>
+        </div>
+        <div class="f48-pill-row" id="f48-product-row">
+          <button class="f48-pill" data-product="GEOCOLOR" onclick="f48SetProduct('GEOCOLOR')">GeoColor</button>
+          <button class="f48-pill active" data-product="FireTemperature" onclick="f48SetProduct('FireTemperature')">Fire Temperature</button>
+        </div>
+        <div class="f48-imgwrap f48-imgwrap-lg">
+          <img id="f48-goes-img" alt="GOES fire detection imagery" onclick="if(this.src) window.open(this.src,'_blank')" title="Click to view full size">
+          <div class="f48-img-error" id="f48-goes-error" style="display:none">Image unavailable — NOAA CDN did not return this sector/product.<br><a id="f48-goes-error-link" href="https://www.star.nesdis.noaa.gov/GOES/" target="_blank" rel="noopener">Check source directly →</a></div>
+        </div>
+        <div class="f48-play-row">
+          <button class="f48-play-btn" id="f48-goes-play-btn" onclick="f48ToggleGoesPlay()">▶ Play</button>
+          <input type="range" class="f48-scrubber" id="f48-goes-scrubber" min="0" max="0" value="0" oninput="f48ScrubGoes(this.value)">
+          <span class="f48-frame-ts" id="f48-goes-frame-ts">—</span>
+        </div>
+        <div class="f48-caption" id="f48-goes-caption">Loading…</div>
+      </div>
+
+      <!-- Extended Outlook D3-8 (SPC Experimental) -->
+      <div class="f48-section">
+        <div class="f48-section-hdr">Extended Outlook — Day 3–8 (SPC Experimental)</div>
+        <div class="f48-caption" style="margin-bottom:10px">SPC's experimental extended-range fire weather outlook: dry thunderstorm risk and critical fire weather (wind + low RH) probabilities, Day 3 through Day 8.</div>
+        <div class="f48-discussion" id="f48-ext-discussion" style="margin-bottom:14px">
+          <div class="f48-disc-loading">Loading SPC Day 3–8 discussion…</div>
+        </div>
+        <div class="f48-pill-row" id="f48-ext-day-row">
+          <button class="f48-pill active" data-day="3" onclick="f48SetExtDay(3)">D3</button>
+          <button class="f48-pill" data-day="4" onclick="f48SetExtDay(4)">D4</button>
+          <button class="f48-pill" data-day="5" onclick="f48SetExtDay(5)">D5</button>
+          <button class="f48-pill" data-day="6" onclick="f48SetExtDay(6)">D6</button>
+          <button class="f48-pill" data-day="7" onclick="f48SetExtDay(7)">D7</button>
+          <button class="f48-pill" data-day="8" onclick="f48SetExtDay(8)">D8</button>
+        </div>
+        <div id="f48-ext-zone-detail"></div>
+      </div>
+
+      <!-- SPC synoptic context — collapsed by default; a real technical NOAA product, not a polished graphic -->
+      <div class="f48-section">
+        <div class="f48-section-hdr f48-collapsible" onclick="f48ToggleSynoptic()">
+          <span id="f48-synoptic-toggle-icon">▸</span> Raw NOAA Surface/Upper-Air Analysis (technical, optional)
+        </div>
+        <div id="f48-synoptic-body" style="display:none">
+          <div class="f48-caption" style="margin:6px 0 10px">This is SPC's unprocessed objective analysis chart — dense station-model plots meant for trained meteorologists, shown here as-is (not redesigned). Use the Discussion above for a plain-language read.</div>
+          <div class="f48-pill-row" id="f48-level-row">
+            <button class="f48-pill active" data-level="sfc" onclick="f48SetLevel('sfc')">Surface</button>
+            <button class="f48-pill" data-level="850" onclick="f48SetLevel('850')">850mb</button>
+            <button class="f48-pill" data-level="700" onclick="f48SetLevel('700')">700mb</button>
+            <button class="f48-pill" data-level="more" onclick="f48ToggleMoreLevels()">+ more</button>
+          </div>
+          <div class="f48-pill-row" id="f48-level-row-more" style="display:none">
+            <button class="f48-pill" data-level="925" onclick="f48SetLevel('925')">925mb</button>
+            <button class="f48-pill" data-level="500" onclick="f48SetLevel('500')">500mb</button>
+            <button class="f48-pill" data-level="300" onclick="f48SetLevel('300')">300mb</button>
+            <button class="f48-pill" data-level="250" onclick="f48SetLevel('250')">250mb</button>
+          </div>
+          <div class="f48-imgwrap f48-imgwrap-lg f48-imgwrap-white">
+            <img id="f48-synoptic-img" alt="SPC surface/upper-air analysis" onclick="if(this.src) window.open(this.src,'_blank')" title="Click to view full size">
+            <div class="f48-img-error" id="f48-synoptic-error" style="display:none">No recent analysis available for this level.</div>
+          </div>
+          <div class="f48-caption" id="f48-synoptic-caption">
+            Loading… Source: <a href="https://www.spc.noaa.gov/obswx/maps/" target="_blank" rel="noopener">SPC Objective Analysis</a> (opens full resolution)
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone detail (reused SPC/RAWS data) -->
+      <div class="f48-section">
+        <div class="f48-section-hdr">Zone Detail</div>
+        <div id="f48-zone-detail"></div>
+      </div>
+
+    </div>
+
   </div>
 
   <div id="right-col">
@@ -1911,6 +2092,49 @@ canvas.velocity-overlay{pointer-events:none!important}
     <div id="north-arrow" style="position:absolute;bottom:80px;right:12px;z-index:800;background:rgba(8,15,28,0.82);border:1px solid rgba(80,130,190,0.35);border-radius:50%;width:36px;height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;backdrop-filter:blur(4px)">
       <svg width="16" height="20" viewBox="0 0 16 20"><polygon points="8,0 12,12 8,9 4,12" fill="#d0e8ff"/><polygon points="8,20 12,12 8,15 4,12" fill="#4a6a88"/></svg>
       <span style="font-size:8px;font-weight:800;color:#d0e8ff;line-height:1;margin-top:-1px">N</span>
+    </div>
+
+    <!-- 48 FIRE FORECAST MAP LEGEND — per-layer toggle + zoom-to -->
+    <div id="f48-map-legend" style="display:none">
+      <div id="f48-map-leg-title">48-Hour Fire Layers <button id="f48-map-leg-close" onclick="document.getElementById('f48-map-legend').style.display='none'" title="Close">✕</button></div>
+      <div class="f48-map-leg-row">
+        <span class="f48-map-leg-dot" style="background:#FF0000"></span>
+        <span class="f48-map-leg-lbl">Fire Wx Outlook (D1+D2)</span>
+        <span class="f48-map-leg-count" id="f48-map-leg-count-fwx">—</span>
+        <button class="f48-map-leg-btn" onclick="f48ZoomToLayer('fwx')" title="Zoom to">⌖</button>
+        <button class="f48-map-leg-btn f48-map-leg-toggle active" id="f48-map-leg-toggle-fwx" onclick="f48ToggleMapLayer('fwx')">ON</button>
+      </div>
+      <div class="f48-map-leg-row">
+        <span class="f48-map-leg-dot" style="background:#e91e8c"></span>
+        <span class="f48-map-leg-lbl">Red Flag Warnings</span>
+        <span class="f48-map-leg-count" id="f48-map-leg-count-redflag">—</span>
+        <button class="f48-map-leg-btn" onclick="f48ZoomToLayer('redflag')" title="Zoom to">⌖</button>
+        <button class="f48-map-leg-btn f48-map-leg-toggle active" id="f48-map-leg-toggle-redflag" onclick="f48ToggleMapLayer('redflag')">ON</button>
+      </div>
+      <div class="f48-map-leg-row">
+        <span class="f48-map-leg-dot" style="background:#e67e22"></span>
+        <span class="f48-map-leg-lbl">Fire Weather Watches</span>
+        <span class="f48-map-leg-count" id="f48-map-leg-count-fwxwatch">—</span>
+        <button class="f48-map-leg-btn" onclick="f48ZoomToLayer('fwxwatch')" title="Zoom to">⌖</button>
+        <button class="f48-map-leg-btn f48-map-leg-toggle active" id="f48-map-leg-toggle-fwxwatch" onclick="f48ToggleMapLayer('fwxwatch')">ON</button>
+      </div>
+      <div class="f48-map-leg-row">
+        <span class="f48-map-leg-dot" style="background:#ff2020"></span>
+        <span class="f48-map-leg-lbl">Critical RAWS (RH&lt;15%)</span>
+        <span class="f48-map-leg-count" id="f48-map-leg-count-raws">—</span>
+        <button class="f48-map-leg-btn" onclick="f48ZoomToLayer('raws')" title="Zoom to">⌖</button>
+        <button class="f48-map-leg-btn f48-map-leg-toggle active" id="f48-map-leg-toggle-raws" onclick="f48ToggleMapLayer('raws')">ON</button>
+      </div>
+      <div class="f48-map-leg-divider"></div>
+      <div class="f48-map-leg-row">
+        <span class="f48-map-leg-lbl">GOES-IR Satellite (live loop)</span>
+        <button class="f48-map-leg-btn f48-map-leg-toggle active" id="f48-map-leg-toggle-goes" onclick="f48ToggleMapLayerGoes()">ON</button>
+      </div>
+      <div class="f48-map-goes-play-row">
+        <button class="f48-map-leg-btn" id="f48-map-goes-play-btn" onclick="f48ToggleMapGoesPlay()">▶</button>
+        <input type="range" class="f48-scrubber" id="f48-map-goes-scrubber" min="0" max="0" value="0" oninput="f48ScrubMapGoes(this.value)">
+        <span class="f48-map-goes-ts" id="f48-map-goes-ts">—</span>
+      </div>
     </div>
 
     <!-- EXPERIMENTS MAP LEGEND -->
@@ -2846,6 +3070,24 @@ let mtGroup = null, mtEnabled = false, mtLoaded = false;
 let viirsDaysBack = 1;
 let fwxLegendOpen = true;
 
+// 48 Fire Forecast tab state
+let f48Active = false;
+let f48PriorState = {};
+let f48GoesTimer = null;
+let f48Sector = 'west', f48Product = 'FireTemperature';
+let f48Level = 'sfc';
+let f48SynopticTimer = null;
+let f48Stats = { fwx: {}, redFlag: null, fwxWatch: null, rawsCritRh: null, dryLtgExt: {}, windRhExt: {} };
+let f48CriticalRawsGroup = null;
+let f48ExtDay = 3;
+let f48MapLayerOn = { fwx:true, redflag:true, fwxwatch:true, raws:true };
+let f48MapGoesOn = true;
+let f48MapGoesFrames = [];
+let f48MapGoesLayerCache = {};
+let f48MapGoesIdx = 0;
+let f48MapGoesPlaying = false;
+let f48MapGoesPlayTimer = null;
+
 // ═══════════════════════════════════════════════════════════════════
 // MAP INIT
 // ═══════════════════════════════════════════════════════════════════
@@ -2900,6 +3142,7 @@ function initMap() {
   dryLtgOutlookGroup = L.layerGroup();     // SPC Dry Thunderstorm Outlook, Day 1-8
   windRhOutlookGroup = L.layerGroup();     // SPC Critical Fire Weather (Wind/RH) Outlook, Day 3-8
   rawsGroup    = L.layerGroup();           // RAWS weather stations
+  f48CriticalRawsGroup = L.layerGroup();   // 48 Fire Forecast: RAWS stations RH<15% only (signal, not 2000-dot noise)
   windsGroup   = L.layerGroup();           // Observed surface wind arrows
   redFlagGroup = L.layerGroup();           // Red Flag Warnings (from NWS alerts)
   fwxWatchGroup = L.layerGroup();          // Fire Weather Watches (from NWS alerts)
@@ -4533,7 +4776,7 @@ function setBase(name) {
 function showTab(name) {
   currentTab = name;
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    const names=['alerts','stats','layers','models','maps','agents','eventwatch','experiments'];
+    const names=['alerts','stats','layers','models','maps','agents','eventwatch','experiments','fire48'];
     t.classList.toggle('active',names[i]===name);
   });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
@@ -4565,9 +4808,11 @@ function showTab(name) {
   const legend = document.getElementById('legend');
   const hrrrLegend = document.getElementById('hrrr-legend');
   const openExpts = name === 'experiments';
-  if (legend) legend.style.display = (hideForTab || openExpts) ? 'none' : '';
-  if (hrrrLegend) hrrrLegend.style.display = (hideForTab || openExpts || !hrrrEnabled) ? 'none' : 'block';
+  const openFire48 = name === 'fire48';
+  if (legend) legend.style.display = (hideForTab || openExpts || openFire48) ? 'none' : '';
+  if (hrrrLegend) hrrrLegend.style.display = (hideForTab || openExpts || openFire48 || !hrrrEnabled) ? 'none' : 'block';
   if (openExpts) { activateExptMode(); } else { deactivateExptMode(); }
+  if (openFire48) { activate48FireMode(); } else { deactivate48FireMode(); }
 
   if (openMod && modLastLat === null && map) {
     const c = map.getCenter();
@@ -7512,8 +7757,10 @@ async function loadSPCFireWx(day) {
       }
     }
     document.getElementById(noteId).textContent = count ? `${count} zone${count === 1 ? '' : 's'}` : 'none issued';
+    f48Stats.fwx[day] = count; renderF48RiskSummary();
   } catch(e) {
     document.getElementById(noteId).textContent = 'unavailable';
+    f48Stats.fwx[day] = null; renderF48RiskSummary();
   }
 }
 
@@ -7547,8 +7794,10 @@ async function loadDryLtgOutlook(day) {
       count++;
     }
     note.textContent = count ? `${count} zone${count === 1 ? '' : 's'}` : 'none issued';
+    f48Stats.dryLtgExt[day] = count; renderF48ExtZoneDetail();
   } catch(e) {
     note.textContent = 'unavailable';
+    f48Stats.dryLtgExt[day] = null; renderF48ExtZoneDetail();
   }
 }
 
@@ -7578,8 +7827,10 @@ async function loadWindRhOutlook(day) {
       count++;
     }
     note.textContent = count ? `${count} zone${count === 1 ? '' : 's'}` : 'none issued';
+    f48Stats.windRhExt[day] = count; renderF48ExtZoneDetail();
   } catch(e) {
     note.textContent = 'unavailable';
+    f48Stats.windRhExt[day] = null; renderF48ExtZoneDetail();
   }
 }
 
@@ -8038,6 +8289,7 @@ function renderFireAlertLayers() {
       addAlertPolygon(a, g, redFlagGroup); n++;
     }
     document.getElementById('red-flag-note').textContent = n ? `${n} active` : 'none active';
+    f48Stats.redFlag = n; renderF48RiskSummary();
   }
   if (fwxWatchEnabled) {
     fwxWatchGroup.clearLayers();
@@ -8048,6 +8300,7 @@ function renderFireAlertLayers() {
       addAlertPolygon(a, g, fwxWatchGroup); n++;
     }
     document.getElementById('fwx-watch-note').textContent = n ? `${n} active` : 'none active';
+    f48Stats.fwxWatch = n; renderF48RiskSummary();
   }
 }
 
@@ -8598,11 +8851,13 @@ async function loadRAWS() {
   const note = document.getElementById('raws-note');
   note.textContent = 'loading…';
   rawsGroup.clearLayers();
+  if (f48CriticalRawsGroup) f48CriticalRawsGroup.clearLayers();
   const canvas = L.canvas({ padding: 0.5, pane: 'markerLayerPane' });
   try {
     const data = await fetchJson(RAWS_URL, 30000);
     const features = data?.features ?? [];
     let count = 0;
+    let critRhCount = 0;
     for (const feat of features) {
       const coords = feat.geometry?.coordinates;
       if (!coords) continue;
@@ -8614,7 +8869,7 @@ async function loadRAWS() {
       const rhStr = (p.RelativeHumidity || '').replace(/[^0-9.]/g, '');
       const rh = parseFloat(rhStr);
       let fill, stroke;
-      if (!isNaN(rh) && rh < 15)       { fill='#ff2020'; stroke='#cc0000'; }
+      if (!isNaN(rh) && rh < 15)       { fill='#ff2020'; stroke='#cc0000'; critRhCount++; }
       else if (!isNaN(rh) && rh < 25)  { fill='#ff8800'; stroke='#cc4400'; }
       else if (!isNaN(rh) && rh < 40)  { fill='#ffcc00'; stroke='#aa8800'; }
       else                              { fill='#44aadd'; stroke='#2277aa'; }
@@ -8634,12 +8889,30 @@ async function loadRAWS() {
       marker.on('click', e => { L.DomEvent.stopPropagation(e); showRawsCard(p, lat, lon); });
       rawsGroup.addLayer(marker);
       count++;
+
+      // 48 Fire Forecast: a separate, small, high-signal marker set — only
+      // critically dry stations — instead of dumping all 2000 raw dots on
+      // the map for this tab.
+      if (f48CriticalRawsGroup && !isNaN(rh) && rh < 15) {
+        const critMarker = L.circleMarker([lat, lon], {
+          radius:3.5, color:'#7a0000', weight:1, fillColor:'#ff2020', fillOpacity:0.75,
+        });
+        critMarker.bindTooltip(
+          `<b>${esc(p.StationName||'RAWS')}</b> — CRITICALLY DRY<br>` +
+          `RH: ${esc(p.RelativeHumidity||'—')} · Wind: ${esc(p.WindSpeedMPH||'—')}`,
+          { sticky:true }
+        );
+        critMarker.on('click', e => { L.DomEvent.stopPropagation(e); showRawsCard(p, lat, lon); });
+        f48CriticalRawsGroup.addLayer(critMarker);
+      }
     }
     rawsLoaded = true;
     note.textContent = count ? `${count} stations` : 'none found';
+    f48Stats.rawsCritRh = critRhCount; renderF48RiskSummary();
   } catch(e) {
     console.error('loadRAWS:', e);
     note.textContent = 'unavailable';
+    f48Stats.rawsCritRh = null; renderF48RiskSummary();
   }
 }
 
@@ -8984,7 +9257,7 @@ function alignTabRow2() {
 window.addEventListener('load', () => {
   ['legend','spc-legend','hrrr-legend','sat-legend','radar-legend',
    'fwx-legend','usgs-legend','usgsflow-legend','mrms-legend','fema-legend','expt-legend','expt-speed-panel',
-   'frp-card']
+   'frp-card','f48-map-legend']
   .forEach(makeDraggable);
   if (!MCP_LOCAL) initPublicMode();
   // NOT requestAnimationFrame -- confirmed via debug logging that rAF callbacks
@@ -10660,6 +10933,654 @@ function deactivateExptMode() {
   const chk = document.getElementById('expt-toggle-chk');
   if (chk) chk.checked = false;
   document.querySelectorAll('.expt-card').forEach(c => { c.style.outline = 'none'; c.classList.remove('loading'); });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 48 FIRE FORECAST TAB
+// ═══════════════════════════════════════════════════════════════════
+
+function activate48FireMode() {
+  if (f48Active || typeof map === 'undefined') return;
+  f48Active = true;
+  // Snapshot which shared layers (Layers-tab checkboxes) were already on.
+  // deactivate48FireMode() restores this EXACT state symmetrically (adds
+  // back OR removes as needed) regardless of any in-tab toggling done via
+  // the map legend panel below -- never leaves a layer's checkbox out of
+  // sync with what's actually on the map.
+  f48PriorState = { fwxD1: fwxD1Enabled, fwxD2: fwxD2Enabled,
+                    redFlag: redFlagEnabled, fwxWatch: fwxWatchEnabled };
+  if (!fwxD1Enabled && fwxD1Group) fwxD1Group.addTo(map);
+  loadSPCFireWx(1);
+  if (!fwxD2Enabled && fwxD2Group) fwxD2Group.addTo(map);
+  loadSPCFireWx(2);
+  if (!redFlagEnabled  && redFlagGroup)  { redFlagEnabled  = true; redFlagGroup.addTo(map); }
+  if (!fwxWatchEnabled && fwxWatchGroup) { fwxWatchEnabled = true; fwxWatchGroup.addTo(map); }
+  renderFireAlertLayers();
+
+  // Day 3-8 extended outlook (shares SPC_FWX_BASE with the D1/D2 layers above)
+  loadDryLtgOutlook(f48ExtDay);
+  loadWindRhOutlook(f48ExtDay);
+  f48LoadExtendedDiscussion();
+
+  // RAWS: don't dump all ~2000 station dots on the map -- only the
+  // critically-dry (RH<15%) subset is actual fire-risk signal.
+  if (f48CriticalRawsGroup) f48CriticalRawsGroup.addTo(map);
+  if (!rawsLoaded) loadRAWS(); else renderF48RiskSummary();
+
+  // Reset the on-map legend panel to all-on every time the tab opens
+  // (discards any in-tab toggle-off from a previous visit).
+  f48MapLayerOn = { fwx:true, redflag:true, fwxwatch:true, raws:true };
+  document.querySelectorAll('#f48-map-legend .f48-map-leg-toggle').forEach(b => { b.textContent = 'ON'; b.classList.add('active'); });
+  const mapLegend = document.getElementById('f48-map-legend');
+  if (mapLegend) mapLegend.style.display = 'block';
+
+  // Real animated GOES-IR on the main map (NOAA nowCoast time-enabled WMS,
+  // properly georeferenced -- not the flat CONUS sector JPGs used for the
+  // sidebar loop, which aren't safely reprojectable onto a Leaflet map).
+  f48MapGoesOn = true;
+  f48InitMapGoes();
+
+  // Orient the map to CONUS by default rather than whatever ocean-heavy
+  // view was left over from another tab.
+  map.fitBounds([[24.5,-125],[49.5,-66.5]]);
+
+  // Bring the risk polygons + critical stations above the satellite/base
+  // layers so this reads as a real risk product, not a buried thin outline.
+  // (bringToFront lives on individual vector layers, not L.LayerGroup itself;
+  // delayed since the polygons above are populated by async fetches.)
+  setTimeout(() => {
+    if (!f48Active) return;
+    [fwxD1Group, fwxD2Group, redFlagGroup, fwxWatchGroup, f48CriticalRawsGroup].forEach(g => {
+      if (g && g.eachLayer) g.eachLayer(child => { if (child.bringToFront) child.bringToFront(); });
+    });
+  }, 1500);
+
+  f48LoadGoesFrames();
+  if (f48GoesTimer) clearInterval(f48GoesTimer);
+  f48GoesTimer = setInterval(f48LoadGoesFrames, 300000);
+
+  f48RenderDiscussion();
+  if (!f48DiscussionCache[1]) f48LoadDiscussion(1);
+  if (!f48DiscussionCache[2]) f48LoadDiscussion(2);
+
+  renderF48RiskSummary();
+}
+
+function deactivate48FireMode() {
+  if (!f48Active) return;
+  f48Active = false;
+  // Symmetric restore: end in exactly the pre-tab state (add back OR
+  // remove, whichever it takes), regardless of any in-tab toggling done
+  // via the map legend panel.
+  fwxD1Enabled = f48PriorState.fwxD1;
+  if (fwxD1Group) { const on = map.hasLayer(fwxD1Group); if (f48PriorState.fwxD1 && !on) fwxD1Group.addTo(map); if (!f48PriorState.fwxD1 && on) fwxD1Group.remove(); }
+  fwxD2Enabled = f48PriorState.fwxD2;
+  if (fwxD2Group) { const on = map.hasLayer(fwxD2Group); if (f48PriorState.fwxD2 && !on) fwxD2Group.addTo(map); if (!f48PriorState.fwxD2 && on) fwxD2Group.remove(); }
+  redFlagEnabled = f48PriorState.redFlag;
+  if (redFlagGroup) { const on = map.hasLayer(redFlagGroup); if (f48PriorState.redFlag && !on) redFlagGroup.addTo(map); if (!f48PriorState.redFlag && on) redFlagGroup.remove(); }
+  fwxWatchEnabled = f48PriorState.fwxWatch;
+  if (fwxWatchGroup) { const on = map.hasLayer(fwxWatchGroup); if (f48PriorState.fwxWatch && !on) fwxWatchGroup.addTo(map); if (!f48PriorState.fwxWatch && on) fwxWatchGroup.remove(); }
+
+  if (f48CriticalRawsGroup) f48CriticalRawsGroup.remove();
+  if (f48GoesTimer) { clearInterval(f48GoesTimer); f48GoesTimer = null; }
+  f48StopGoesPlay();
+  f48TeardownMapGoes();
+  const mapLegend = document.getElementById('f48-map-legend');
+  if (mapLegend) mapLegend.style.display = 'none';
+}
+
+// ── GOES satellite loop — a real frame-array animation (not a single static
+// frame): NOAA STAR's CDN exposes a directory of individually timestamped
+// frames per sector/product, so this fetches the listing, keeps the most
+// recent ~1 hour, and drives play/pause/scrub the same way the app's radar
+// player does (setTimeout-driven stepping, manual scrub input). ──
+const F48_GOES_SAT = { east: 16, west: 18 };
+const F48_GOES_FRAME_COUNT = 12; // ~1 hour at 5-min cadence
+let f48GoesFrames = [];
+let f48GoesIdx = 0;
+let f48GoesPlaying = false;
+let f48GoesPlayTimer = null;
+
+function f48GoesDirUrl(sector, product) {
+  return `https://cdn.star.nesdis.noaa.gov/GOES${F48_GOES_SAT[sector]}/ABI/CONUS/${product}/`;
+}
+
+function f48ParseGoesFrameTime(fname) {
+  const m = fname.match(/^(\d{4})(\d{3})(\d{2})(\d{2})_/);
+  if (!m) return null;
+  const [, yyyy, ddd, hh, mm] = m;
+  const d = new Date(Date.UTC(parseInt(yyyy), 0, 1));
+  d.setUTCDate(d.getUTCDate() + parseInt(ddd) - 1);
+  d.setUTCHours(parseInt(hh), parseInt(mm), 0, 0);
+  return d;
+}
+
+async function f48LoadGoesFrames() {
+  const sector = f48Sector, product = f48Product;
+  const sat = F48_GOES_SAT[sector];
+  const dirUrl = f48GoesDirUrl(sector, product);
+  const img = document.getElementById('f48-goes-img');
+  const errDiv = document.getElementById('f48-goes-error');
+  const caption = document.getElementById('f48-goes-caption');
+  try {
+    const resp = await fetch(dirUrl);
+    const body = await resp.text();
+    if (sector !== f48Sector || product !== f48Product) return; // stale response, pills changed mid-fetch
+    const re = new RegExp(`href="(\\d{11}_GOES${sat}-ABI-CONUS-${product}-625x375\\.jpg)"`, 'g');
+    const names = [];
+    let m;
+    while ((m = re.exec(body))) names.push(m[1]);
+    if (!names.length) throw new Error('no frames listed');
+    f48GoesFrames = names.slice(-F48_GOES_FRAME_COUNT)
+      .map(name => ({ url: dirUrl + name, time: f48ParseGoesFrameTime(name) }))
+      .filter(f => f.time);
+    if (!f48GoesFrames.length) throw new Error('no parseable frames');
+    const scrubber = document.getElementById('f48-goes-scrubber');
+    if (scrubber) scrubber.max = f48GoesFrames.length - 1;
+    if (errDiv) errDiv.style.display = 'none';
+    if (img) img.style.display = '';
+    f48ShowGoesFrame(f48GoesFrames.length - 1);
+  } catch(e) {
+    f48GoesFrames = [];
+    if (img) img.style.display = 'none';
+    if (errDiv) errDiv.style.display = 'block';
+    if (caption) caption.textContent = 'Unavailable';
+  }
+}
+
+function f48ShowGoesFrame(idx) {
+  if (!f48GoesFrames.length) return;
+  idx = Math.max(0, Math.min(idx, f48GoesFrames.length - 1));
+  f48GoesIdx = idx;
+  const frame = f48GoesFrames[idx];
+  const img = document.getElementById('f48-goes-img');
+  const caption = document.getElementById('f48-goes-caption');
+  const ts = document.getElementById('f48-goes-frame-ts');
+  const scrubber = document.getElementById('f48-goes-scrubber');
+  if (img) img.src = frame.url;
+  if (scrubber) scrubber.value = idx;
+  if (ts) ts.textContent = frame.time.toISOString().slice(11,16) + 'Z';
+  if (caption) {
+    const sectorLabel = f48Sector === 'east' ? 'GOES-16 East' : 'GOES-18 West';
+    const productLabel = f48Product === 'GEOCOLOR' ? 'GeoColor' : 'Fire Temperature RGB';
+    caption.textContent = `${sectorLabel} · ${productLabel} · frame ${idx+1}/${f48GoesFrames.length} · ${frame.time.toISOString().slice(0,16).replace('T',' ')}Z`;
+  }
+}
+
+function f48ScrubGoes(val) {
+  f48StopGoesPlay();
+  f48ShowGoesFrame(parseInt(val));
+}
+
+function f48StepGoes() {
+  if (!f48GoesPlaying) return;
+  let next = f48GoesIdx + 1;
+  if (next >= f48GoesFrames.length) next = 0;
+  f48ShowGoesFrame(next);
+  f48GoesPlayTimer = setTimeout(f48StepGoes, 500);
+}
+
+function f48ToggleGoesPlay() {
+  const btn = document.getElementById('f48-goes-play-btn');
+  if (f48GoesPlaying) { f48StopGoesPlay(); return; }
+  f48GoesPlaying = true;
+  if (btn) btn.textContent = '⏸ Pause';
+  f48StepGoes();
+}
+
+function f48StopGoesPlay() {
+  f48GoesPlaying = false;
+  const btn = document.getElementById('f48-goes-play-btn');
+  if (btn) btn.textContent = '▶ Play';
+  if (f48GoesPlayTimer) { clearTimeout(f48GoesPlayTimer); f48GoesPlayTimer = null; }
+}
+
+function f48SetSector(sector) {
+  f48Sector = sector;
+  document.querySelectorAll('#f48-sector-row .f48-pill').forEach(b => b.classList.toggle('active', b.dataset.sector === sector));
+  f48StopGoesPlay();
+  f48LoadGoesFrames();
+}
+
+function f48SetProduct(product) {
+  f48Product = product;
+  document.querySelectorAll('#f48-product-row .f48-pill').forEach(b => b.classList.toggle('active', b.dataset.product === product));
+  f48StopGoesPlay();
+  f48LoadGoesFrames();
+}
+
+// ── On-map layer legend: per-layer show/hide + zoom-to, independent of the
+// Layers-tab checkboxes (deactivate48FireMode's symmetric restore is what
+// keeps this from ever leaving a checkbox out of sync with the map). ──
+const F48_MAP_LAYER_GROUPS = {
+  fwx:      () => [fwxD1Group, fwxD2Group],
+  redflag:  () => [redFlagGroup],
+  fwxwatch: () => [fwxWatchGroup],
+  raws:     () => [f48CriticalRawsGroup],
+};
+
+function f48ToggleMapLayer(key) {
+  const groups = F48_MAP_LAYER_GROUPS[key] ? F48_MAP_LAYER_GROUPS[key]() : [];
+  f48MapLayerOn[key] = !f48MapLayerOn[key];
+  const on = f48MapLayerOn[key];
+  groups.forEach(g => { if (!g) return; if (on) g.addTo(map); else g.remove(); });
+  const btn = document.getElementById('f48-map-leg-toggle-' + key);
+  if (btn) { btn.textContent = on ? 'ON' : 'OFF'; btn.classList.toggle('active', on); }
+}
+
+function f48ZoomToLayer(key) {
+  const groups = F48_MAP_LAYER_GROUPS[key] ? F48_MAP_LAYER_GROUPS[key]() : [];
+  let bounds = null;
+  groups.forEach(g => {
+    if (!g || !g.eachLayer) return;
+    g.eachLayer(l => {
+      const b = l.getBounds ? l.getBounds() : (l.getLatLng ? L.latLngBounds([l.getLatLng(), l.getLatLng()]) : null);
+      if (!b || !b.isValid()) return;
+      bounds = bounds ? bounds.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast());
+    });
+  });
+  if (bounds && bounds.isValid()) map.fitBounds(bounds, { padding:[40,40], maxZoom:9 });
+}
+
+// ── Animated GOES-IR on the actual Leaflet map — a real time-enabled WMS
+// (NOAA nowCoast), not the flat CDN sector JPGs used for the sidebar loop
+// (those aren't in a simple lat/lng-linear projection, so they can't be
+// safely draped with L.imageOverlay). Follows the same frame-cache +
+// opacity-swap pattern as the app's existing radar/HRRR players. ──
+const F48_MAP_GOES_WMS = 'https://nowcoast.noaa.gov/geoserver/satellite/ows';
+const F48_MAP_GOES_FRAME_COUNT = 12;
+
+function f48BuildMapGoesFrames() {
+  const frames = [];
+  const stepMs = 5*60*1000;
+  const base = Math.floor(Date.now() / stepMs) * stepMs - 10*60*1000; // ~10min lag for availability
+  for (let i = F48_MAP_GOES_FRAME_COUNT - 1; i >= 0; i--) {
+    frames.push(new Date(base - i*stepMs).toISOString().replace(/\.\d{3}Z$/, 'Z'));
+  }
+  return frames;
+}
+
+function f48EnsureMapGoesLayer(idx) {
+  if (f48MapGoesLayerCache[idx]) return f48MapGoesLayerCache[idx];
+  const lyr = L.tileLayer.wms(F48_MAP_GOES_WMS, {
+    layers: 'goes_longwave_imagery', format: 'image/png', transparent: true,
+    opacity: 0, zIndex: 140, attribution: 'NOAA nowCoast GOES-IR',
+    time: f48MapGoesFrames[idx],
+  }).addTo(map);
+  f48MapGoesLayerCache[idx] = lyr;
+  return lyr;
+}
+
+function f48ShowMapGoesFrame(idx) {
+  if (!f48MapGoesFrames.length) return;
+  idx = Math.max(0, Math.min(idx, f48MapGoesFrames.length - 1));
+  const prevIdx = f48MapGoesIdx;
+  f48MapGoesIdx = idx;
+  const newLyr = f48EnsureMapGoesLayer(idx);
+  newLyr.setOpacity(0.85);
+  if (prevIdx !== idx && f48MapGoesLayerCache[prevIdx]) f48MapGoesLayerCache[prevIdx].setOpacity(0);
+  [idx-1, idx+1].forEach(i => { if (i >= 0 && i < f48MapGoesFrames.length) f48EnsureMapGoesLayer(i); });
+  const scrubber = document.getElementById('f48-map-goes-scrubber');
+  if (scrubber) scrubber.value = idx;
+  const ts = document.getElementById('f48-map-goes-ts');
+  if (ts && f48MapGoesFrames[idx]) ts.textContent = f48MapGoesFrames[idx].slice(11,16) + 'Z';
+}
+
+function f48ScrubMapGoes(val) {
+  f48StopMapGoesPlay();
+  f48ShowMapGoesFrame(parseInt(val));
+}
+
+function f48StepMapGoes() {
+  if (!f48MapGoesPlaying) return;
+  let next = f48MapGoesIdx + 1;
+  if (next >= f48MapGoesFrames.length) next = 0;
+  f48ShowMapGoesFrame(next);
+  f48MapGoesPlayTimer = setTimeout(f48StepMapGoes, 600);
+}
+
+function f48ToggleMapGoesPlay() {
+  const btn = document.getElementById('f48-map-goes-play-btn');
+  if (f48MapGoesPlaying) { f48StopMapGoesPlay(); return; }
+  if (!f48MapGoesFrames.length) return;
+  f48MapGoesPlaying = true;
+  if (btn) btn.textContent = '⏸';
+  f48StepMapGoes();
+}
+
+function f48StopMapGoesPlay() {
+  f48MapGoesPlaying = false;
+  const btn = document.getElementById('f48-map-goes-play-btn');
+  if (btn) btn.textContent = '▶';
+  if (f48MapGoesPlayTimer) { clearTimeout(f48MapGoesPlayTimer); f48MapGoesPlayTimer = null; }
+}
+
+function f48InitMapGoes() {
+  f48MapGoesFrames = f48BuildMapGoesFrames();
+  const scrubber = document.getElementById('f48-map-goes-scrubber');
+  if (scrubber) scrubber.max = f48MapGoesFrames.length - 1;
+  f48ShowMapGoesFrame(f48MapGoesFrames.length - 1);
+}
+
+function f48TeardownMapGoes() {
+  f48StopMapGoesPlay();
+  Object.values(f48MapGoesLayerCache).forEach(lyr => { if (lyr && map.hasLayer(lyr)) lyr.remove(); });
+  f48MapGoesLayerCache = {};
+  f48MapGoesFrames = [];
+  f48MapGoesIdx = 0;
+}
+
+function f48ToggleMapLayerGoes() {
+  f48MapGoesOn = !f48MapGoesOn;
+  const btn = document.getElementById('f48-map-leg-toggle-goes');
+  if (f48MapGoesOn) { f48InitMapGoes(); } else { f48TeardownMapGoes(); }
+  if (btn) { btn.textContent = f48MapGoesOn ? 'ON' : 'OFF'; btn.classList.toggle('active', f48MapGoesOn); }
+}
+
+// ── SPC obswx synoptic-context strip — static analysis GIFs. This is SPC's
+// own raw technical product (dense station-model plots); it's kept collapsed
+// by default and lazy-loaded on first expand rather than fetched unconditionally.
+// Rather than guess SPC's exact posting schedule, walk candidate cycles
+// newest-first and let the browser's own onerror event (a real 404) decide --
+// this can never surface a broken image, worst case it truthfully says
+// unavailable. ──
+const F48_LEVEL_LABEL = { sfc:'Surface', '925':'925mb', '850':'850mb', '700':'700mb', '500':'500mb', '300':'300mb', '250':'250mb' };
+let f48SynopticLoadedOnce = false;
+
+function f48ToggleSynoptic() {
+  const body = document.getElementById('f48-synoptic-body');
+  const icon = document.getElementById('f48-synoptic-toggle-icon');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (icon) icon.textContent = isOpen ? '▸' : '▾';
+  if (!isOpen && !f48SynopticLoadedOnce) { f48SynopticLoadedOnce = true; f48TrySynoptic(0); }
+}
+
+function f48SetLevel(level) {
+  f48Level = level;
+  document.querySelectorAll('#f48-level-row .f48-pill, #f48-level-row-more .f48-pill').forEach(b => b.classList.toggle('active', b.dataset.level === level));
+  f48TrySynoptic(0);
+}
+
+function f48ToggleMoreLevels() {
+  const row = document.getElementById('f48-level-row-more');
+  if (row) row.style.display = (row.style.display === 'none' || !row.style.display) ? 'flex' : 'none';
+}
+
+function f48SynopticCandidates() {
+  const cands = [];
+  // Start ~2h in the past (SPC's cycles take up to ~1h to post) and step
+  // back in 12h increments; f48TrySynoptic's onerror walk-back is what
+  // actually guarantees correctness if a given cycle isn't posted yet --
+  // this ordering just avoids an unnecessary first miss.
+  let t = Date.now() - 2*3600*1000;
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(t);
+    const hh = d.getUTCHours() >= 12 ? 12 : 0;
+    const yy = String(d.getUTCFullYear()).slice(2);
+    const mm = String(d.getUTCMonth()+1).padStart(2,'0');
+    const dd = String(d.getUTCDate()).padStart(2,'0');
+    const label = `${hh}Z ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'})}`;
+    cands.push({ yy, mm, dd, hh: String(hh).padStart(2,'0'), label });
+    t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), hh, 0, 0) - 1;
+  }
+  return cands;
+}
+
+function f48TrySynoptic(candidateIdx) {
+  const img = document.getElementById('f48-synoptic-img');
+  const errDiv = document.getElementById('f48-synoptic-error');
+  const caption = document.getElementById('f48-synoptic-caption');
+  if (!img) return;
+  const cands = f48SynopticCandidates();
+  if (candidateIdx >= cands.length) {
+    img.style.display = 'none';
+    if (errDiv) errDiv.style.display = 'block';
+    if (caption) caption.innerHTML = 'No recent analysis available. Source: <a href="https://www.spc.noaa.gov/obswx/maps/" target="_blank" rel="noopener">SPC Objective Analysis</a>';
+    return;
+  }
+  const c = cands[candidateIdx];
+  img.onerror = () => f48TrySynoptic(candidateIdx + 1);
+  img.onload = () => {
+    if (errDiv) errDiv.style.display = 'none';
+    img.style.display = '';
+    const levelLabel = F48_LEVEL_LABEL[f48Level] || f48Level;
+    if (caption) caption.innerHTML = `${levelLabel} analysis · ${c.label} · Source: <a href="https://www.spc.noaa.gov/obswx/maps/" target="_blank" rel="noopener">SPC Objective Analysis</a>`;
+  };
+  img.src = `https://www.spc.noaa.gov/obswx/maps/${f48Level}_${c.yy}${c.mm}${c.dd}_${c.hh}.gif`;
+}
+
+// ── SPC Fire Weather Discussion — the actual forecaster-written narrative
+// (not the graphic), fetched and parsed straight from SPC's own page. This
+// is the "clear statement" the tab leads with. ──
+let f48DiscussionDay = 1;
+let f48DiscussionCache = {};
+
+function f48SetDiscussionDay(day) {
+  f48DiscussionDay = day;
+  document.querySelectorAll('#f48-disc-day-row .f48-pill').forEach(b => b.classList.toggle('active', parseInt(b.dataset.day) === day));
+  f48RenderDiscussion();
+  if (!f48DiscussionCache[day]) f48LoadDiscussion(day);
+}
+
+async function f48LoadDiscussion(day) {
+  const url = `https://www.spc.noaa.gov/products/fire_wx/fwdy${day}.html`;
+  try {
+    const resp = await fetch(url);
+    const html = await resp.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const pre = doc.querySelector('pre');
+    if (!pre) throw new Error('no discussion text found on page');
+    f48DiscussionCache[day] = { ok:true, parsed: f48ParseDiscussion(pre.textContent), url };
+  } catch(e) {
+    f48DiscussionCache[day] = { ok:false, url };
+  }
+  if (f48DiscussionDay === day) f48RenderDiscussion();
+}
+
+function f48ParseDiscussion(raw) {
+  const lines = raw.split('\n').map(l => l.trim());
+  const validIdx = lines.findIndex(l => /^Valid\s+\d{6}Z/.test(l));
+  let valid = '';
+  if (validIdx >= 0) {
+    const m = lines[validIdx].match(/Valid\s+(\d{6}Z\s*-\s*\d{6}Z)/);
+    if (m) valid = m[1];
+  }
+  let headline = '';
+  const headlineMatch = raw.match(/\.\.\.([A-Z][A-Z0-9 ,\/\-]{2,70}?)\.\.\./);
+  if (headlineMatch) headline = headlineMatch[1].trim();
+
+  const startIdx = validIdx >= 0 ? validIdx + 1 : 0;
+  let endIdx = lines.length;
+  for (let i = startIdx; i < lines.length; i++) {
+    if (/^\.\.[A-Za-z][A-Za-z\-]+\.\.\s*\d{2}\/\d{2}\/\d{4}/.test(lines[i]) || /PREV DISCUSSION/i.test(lines[i])) {
+      endIdx = i;
+      break;
+    }
+  }
+  const bodyLines = lines.slice(startIdx, endIdx);
+  const paragraphs = [];
+  let cur = [];
+  for (const l of bodyLines) {
+    if (!l) { if (cur.length) { paragraphs.push(cur.join(' ')); cur = []; } continue; }
+    if (/^\.\.\.[A-Z]/.test(l) && l.replace(/\.\.\./g,'').trim() === headline) continue; // skip the bare headline line
+    cur.push(l);
+  }
+  if (cur.length) paragraphs.push(cur.join(' '));
+
+  let sig = '';
+  const sigLine = lines.slice(startIdx).find(l => /^\.\.[A-Za-z][A-Za-z\-]+\.\.\s*\d{2}\/\d{2}\/\d{4}/.test(l));
+  if (sigLine) sig = sigLine.replace(/\.\./g, '').trim();
+
+  return { valid, headline, paragraphs: paragraphs.filter(p => p.length), sig };
+}
+
+function f48HeadlineClass(headline) {
+  const h = (headline || '').toUpperCase();
+  if (!h) return 'clear';
+  if (/NO CRITICAL|NO AREAS|NONE/.test(h)) return 'clear';
+  if (/EXTREME|CRITICAL/.test(h)) return 'crit';
+  return 'elevated';
+}
+
+function f48RenderDiscussion() {
+  const el = document.getElementById('f48-discussion');
+  if (!el) return;
+  const entry = f48DiscussionCache[f48DiscussionDay];
+  if (!entry) { el.innerHTML = '<div class="f48-disc-loading">Loading SPC discussion…</div>'; return; }
+  if (!entry.ok) {
+    el.innerHTML = `<div class="f48-disc-error">Could not load the SPC discussion directly. <a href="${entry.url}" target="_blank" rel="noopener">Read it on spc.noaa.gov →</a></div>`;
+    return;
+  }
+  const p = entry.parsed;
+  const cls = f48HeadlineClass(p.headline);
+  let html = '';
+  if (p.headline) html += `<div class="f48-disc-headline ${cls}">${esc(p.headline)}</div>`;
+  if (p.valid) html += `<div class="f48-disc-meta">Valid ${esc(p.valid)}</div>`;
+  html += '<div class="f48-disc-body">' + p.paragraphs.map(par => `<p>${esc(par)}</p>`).join('') + '</div>';
+  if (p.sig) html += `<div class="f48-disc-sig">— ${esc(p.sig)}, SPC forecaster</div>`;
+  html += `<a class="f48-disc-link" href="${esc(entry.url)}" target="_blank" rel="noopener">View official SPC product →</a>`;
+  el.innerHTML = html;
+}
+
+// ── Extended Outlook (Day 3-8) — reuses the app's existing D1-8 dry-lightning
+// and D3-8 wind/RH loaders (loadDryLtgOutlook/loadWindRhOutlook), scoped to
+// this tab's own day selector rather than the Layers-tab checkboxes' day row. ──
+function f48SetExtDay(day) {
+  f48ExtDay = day;
+  document.querySelectorAll('#f48-ext-day-row .f48-pill').forEach(b => b.classList.toggle('active', parseInt(b.dataset.day) === day));
+  loadDryLtgOutlook(day);
+  loadWindRhOutlook(day);
+}
+
+function renderF48ExtZoneDetail() {
+  const el = document.getElementById('f48-ext-zone-detail');
+  if (!el) return;
+  const day = f48ExtDay;
+  const dry = f48Stats.dryLtgExt[day];
+  const wind = f48Stats.windRhExt[day];
+  const rows = [
+    [`Day ${day} Dry Thunderstorm zones`, dry],
+    [`Day ${day} Critical Fire Weather (Wind/RH) zones`, wind],
+  ];
+  el.innerHTML = rows.map(([lbl,val]) =>
+    `<div class="f48-zone-row"><span class="f48-zone-lbl">${esc(lbl)}</span><span class="f48-zone-val">${val==null?'—':val}</span></div>`
+  ).join('');
+}
+
+// SPC's Day 3-8 discussion is a multi-section synoptic writeup (Synopsis,
+// then a subsection per notable risk area/period) rather than a single
+// categorical headline like the Day1/2 discussion -- parsed differently:
+// every "...Section Title..." marker becomes a subheading, not a risk badge.
+let f48ExtDiscussionCache = null;
+
+async function f48LoadExtendedDiscussion() {
+  const url = 'https://www.spc.noaa.gov/products/exper/fire_wx/';
+  try {
+    const resp = await fetch(url);
+    const html = await resp.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const pre = doc.querySelector('pre');
+    if (!pre) throw new Error('no discussion text found on page');
+    f48ExtDiscussionCache = { ok:true, parsed: f48ParseExtendedDiscussion(pre.textContent), url };
+  } catch(e) {
+    f48ExtDiscussionCache = { ok:false, url };
+  }
+  f48RenderExtendedDiscussion();
+}
+
+function f48ParseExtendedDiscussion(raw) {
+  const lines = raw.split('\n').map(l => l.trim());
+  const validIdx = lines.findIndex(l => /^Valid\s+\d{6}Z/.test(l));
+  let valid = '';
+  if (validIdx >= 0) {
+    const m = lines[validIdx].match(/Valid\s+(\d{6}Z\s*-\s*\d{6}Z)/);
+    if (m) valid = m[1];
+  }
+  const startIdx = validIdx >= 0 ? validIdx + 1 : 0;
+  let endIdx = lines.length;
+  for (let i = startIdx; i < lines.length; i++) {
+    if (/^\.\.[A-Za-z][A-Za-z\-]+\.\.\s*\d{2}\/\d{2}\/\d{4}/.test(lines[i])) { endIdx = i; break; }
+  }
+  const bodyLines = lines.slice(startIdx, endIdx);
+
+  const sections = [];
+  let curTitle = null, curParas = [], curLines = [];
+  const flushPara = () => { if (curLines.length) { curParas.push(curLines.join(' ')); curLines = []; } };
+  const flushSection = () => { flushPara(); if (curParas.length) sections.push({ title: curTitle, paras: curParas }); curParas = []; };
+  for (const l of bodyLines) {
+    const sectionMatch = l.match(/^\.\.\.([A-Za-z][^.]*?)\.\.\.$/);
+    if (sectionMatch) { flushSection(); curTitle = sectionMatch[1].trim(); continue; }
+    if (!l) { flushPara(); continue; }
+    curLines.push(l);
+  }
+  flushSection();
+
+  let sig = '';
+  const sigLine = lines.slice(startIdx).find(l => /^\.\.[A-Za-z][A-Za-z\-]+\.\.\s*\d{2}\/\d{2}\/\d{4}/.test(l));
+  if (sigLine) sig = sigLine.replace(/\.\./g, '').trim();
+
+  return { valid, sections, sig };
+}
+
+function f48RenderExtendedDiscussion() {
+  const el = document.getElementById('f48-ext-discussion');
+  if (!el) return;
+  const entry = f48ExtDiscussionCache;
+  if (!entry) { el.innerHTML = '<div class="f48-disc-loading">Loading SPC Day 3–8 discussion…</div>'; return; }
+  if (!entry.ok) {
+    el.innerHTML = `<div class="f48-disc-error">Could not load the SPC Day 3–8 discussion directly. <a href="${entry.url}" target="_blank" rel="noopener">Read it on spc.noaa.gov →</a></div>`;
+    return;
+  }
+  const p = entry.parsed;
+  let html = '';
+  if (p.valid) html += `<div class="f48-disc-meta">Valid ${esc(p.valid)}</div>`;
+  html += '<div class="f48-disc-body">';
+  p.sections.forEach(sec => {
+    if (sec.title) html += `<div class="f48-disc-section-title">${esc(sec.title)}</div>`;
+    sec.paras.forEach(par => { html += `<p>${esc(par)}</p>`; });
+  });
+  html += '</div>';
+  if (p.sig) html += `<div class="f48-disc-sig">— ${esc(p.sig)}, SPC forecaster</div>`;
+  html += `<a class="f48-disc-link" href="${esc(entry.url)}" target="_blank" rel="noopener">View official SPC Day 3–8 product →</a>`;
+  el.innerHTML = html;
+}
+
+// ── Risk summary + zone detail — reads only values already computed by the
+// existing loaders above (via the one-line f48Stats hooks added to each). ──
+function renderF48RiskSummary() {
+  const setStat = (id, val) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (val == null) { el.textContent = '—'; el.classList.add('na'); }
+    else { el.textContent = val; el.classList.remove('na'); }
+  };
+  const fwxTotal = (f48Stats.fwx[1] == null && f48Stats.fwx[2] == null) ? null : (f48Stats.fwx[1]||0) + (f48Stats.fwx[2]||0);
+  setStat('f48-stat-fwx', fwxTotal);
+  setStat('f48-stat-rfw', f48Stats.redFlag);
+  setStat('f48-stat-fww', f48Stats.fwxWatch);
+  setStat('f48-stat-raws', f48Stats.rawsCritRh);
+
+  const setLegCount = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val == null ? '—' : val; };
+  setLegCount('f48-map-leg-count-fwx', fwxTotal);
+  setLegCount('f48-map-leg-count-redflag', f48Stats.redFlag);
+  setLegCount('f48-map-leg-count-fwxwatch', f48Stats.fwxWatch);
+  setLegCount('f48-map-leg-count-raws', f48Stats.rawsCritRh);
+
+  const zoneEl = document.getElementById('f48-zone-detail');
+  if (zoneEl) {
+    const rows = [
+      ['Day 1 Fire Wx + Dry T-storm zones', f48Stats.fwx[1]],
+      ['Day 2 Fire Wx + Dry T-storm zones', f48Stats.fwx[2]],
+      ['Active Red Flag Warnings', f48Stats.redFlag],
+      ['Active Fire Weather Watches', f48Stats.fwxWatch],
+      ['RAWS stations reporting RH &lt; 15%', f48Stats.rawsCritRh],
+    ];
+    zoneEl.innerHTML = rows.map(([lbl,val]) =>
+      `<div class="f48-zone-row"><span class="f48-zone-lbl">${lbl}</span><span class="f48-zone-val">${val==null?'—':val}</span></div>`
+    ).join('');
+  }
 }
 
 function clearExptContext() {
