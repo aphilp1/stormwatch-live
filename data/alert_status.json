@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-08T15:06:25Z",
-  "total_active": 181,
-  "hazard_types": 16,
-  "history_rows": 535,
+  "updated": "2026-08-08T15:47:20Z",
+  "total_active": 186,
+  "hazard_types": 17,
+  "history_rows": 536,
   "model_built": "2026-06-28T23:50:49Z",
   "model_coverage": [
     "2008-01-01T00:00Z",
@@ -97,36 +97,6 @@
   ],
   "briefing": null,
   "states": {
-    "AR": {
-      "count": 2,
-      "typical": 1,
-      "surprise": 0.44,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Flash Flood Warning",
-          1
-        ],
-        [
-          "Heat Advisory",
-          1
-        ]
-      ]
-    },
-    "KY": {
-      "count": 1,
-      "typical": 0,
-      "surprise": 0.65,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Special Weather Statement",
-          1
-        ]
-      ]
-    },
     "WV": {
       "count": 1,
       "typical": 0,
@@ -140,13 +110,17 @@
         ]
       ]
     },
-    "NE": {
-      "count": 1,
+    "PA": {
+      "count": 3,
       "typical": 0,
-      "surprise": 0.48,
+      "surprise": 1.1,
       "tier": "Normal",
       "record": false,
       "top": [
+        [
+          "Heat Advisory",
+          2
+        ],
         [
           "Special Weather Statement",
           1
@@ -154,9 +128,9 @@
       ]
     },
     "TX": {
-      "count": 5,
+      "count": 6,
       "typical": 2,
-      "surprise": 0.6,
+      "surprise": 0.7,
       "tier": "Normal",
       "record": false,
       "top": [
@@ -165,21 +139,80 @@
           4
         ],
         [
+          "Special Weather Statement",
+          1
+        ],
+        [
           "Flood Warning",
           1
         ]
       ]
     },
     "OK": {
-      "count": 5,
+      "count": 6,
       "typical": 0,
-      "surprise": 1.3,
+      "surprise": 1.44,
       "tier": "Elevated",
       "record": false,
       "top": [
         [
           "Heat Advisory",
           5
+        ],
+        [
+          "Special Weather Statement",
+          1
+        ]
+      ]
+    },
+    "NE": {
+      "count": 2,
+      "typical": 0,
+      "surprise": 0.65,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Special Weather Statement",
+          2
+        ]
+      ]
+    },
+    "AR": {
+      "count": 3,
+      "typical": 1,
+      "surprise": 0.58,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Flood Advisory",
+          1
+        ],
+        [
+          "Flash Flood Warning",
+          1
+        ],
+        [
+          "Heat Advisory",
+          1
+        ]
+      ]
+    },
+    "CO": {
+      "count": 13,
+      "typical": 0,
+      "surprise": 3.52,
+      "tier": "Extraordinary",
+      "record": true,
+      "top": [
+        [
+          "Air Quality Alert",
+          7
+        ],
+        [
+          "Heat Advisory",
+          6
         ]
       ]
     },
@@ -311,23 +344,6 @@
         ]
       ]
     },
-    "WA": {
-      "count": 8,
-      "typical": 0,
-      "surprise": 2.0,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Red Flag Warning",
-          4
-        ],
-        [
-          "Air Quality Alert",
-          4
-        ]
-      ]
-    },
     "OR": {
       "count": 14,
       "typical": 0,
@@ -349,20 +365,20 @@
         ]
       ]
     },
-    "CO": {
-      "count": 12,
+    "WA": {
+      "count": 8,
       "typical": 0,
-      "surprise": 3.52,
-      "tier": "Extraordinary",
-      "record": true,
+      "surprise": 2.0,
+      "tier": "Significant",
+      "record": false,
       "top": [
         [
-          "Heat Advisory",
-          6
+          "Red Flag Warning",
+          4
         ],
         [
           "Air Quality Alert",
-          6
+          4
         ]
       ]
     },
@@ -405,19 +421,6 @@
         ]
       ]
     },
-    "KS": {
-      "count": 2,
-      "typical": 0,
-      "surprise": 0.53,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Extreme Heat Watch",
-          2
-        ]
-      ]
-    },
     "MO": {
       "count": 3,
       "typical": 1,
@@ -431,6 +434,19 @@
         ]
       ]
     },
+    "KS": {
+      "count": 2,
+      "typical": 0,
+      "surprise": 0.53,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Extreme Heat Watch",
+          2
+        ]
+      ]
+    },
     "IL": {
       "count": 1,
       "typical": 0,
@@ -441,19 +457,6 @@
         [
           "Extreme Heat Watch",
           1
-        ]
-      ]
-    },
-    "PA": {
-      "count": 2,
-      "typical": 0,
-      "surprise": 1.0,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Heat Advisory",
-          2
         ]
       ]
     },
@@ -577,19 +580,19 @@
       "record": true,
       "surprise": 3.52,
       "tier": "Extraordinary",
-      "delta_1h": 1,
-      "delta_6h": 0,
+      "delta_1h": 0,
+      "delta_6h": 1,
       "material": true
     },
     "Air Quality Alert": {
-      "count": 43,
+      "count": 44,
       "expected": null,
       "typical_high": null,
       "record": false,
       "surprise": null,
       "tier": "Unmodeled",
-      "delta_1h": -28,
-      "delta_6h": -28,
+      "delta_1h": -31,
+      "delta_6h": -27,
       "material": false
     },
     "Extreme Heat Warning": {
@@ -610,8 +613,8 @@
       "record": false,
       "surprise": 0.44,
       "tier": "Normal",
-      "delta_1h": 1,
-      "delta_6h": 5,
+      "delta_1h": 0,
+      "delta_6h": 2,
       "material": false
     },
     "Red Flag Warning": {
@@ -637,25 +640,25 @@
       "material": true
     },
     "Special Weather Statement": {
-      "count": 3,
+      "count": 5,
+      "expected": null,
+      "typical_high": null,
+      "record": false,
+      "surprise": null,
+      "tier": "Unmodeled",
+      "delta_1h": 2,
+      "delta_6h": 1,
+      "material": false
+    },
+    "Marine Weather Statement": {
+      "count": 4,
       "expected": null,
       "typical_high": null,
       "record": false,
       "surprise": null,
       "tier": "Unmodeled",
       "delta_1h": 1,
-      "delta_6h": 2,
-      "material": false
-    },
-    "Marine Weather Statement": {
-      "count": 3,
-      "expected": null,
-      "typical_high": null,
-      "record": false,
-      "surprise": null,
-      "tier": "Unmodeled",
-      "delta_1h": 0,
-      "delta_6h": 2,
+      "delta_6h": 3,
       "material": false
     },
     "Gale Warning": {
@@ -710,6 +713,17 @@
       "surprise": 3.14,
       "tier": "Extraordinary",
       "delta_1h": 0,
+      "delta_6h": 0,
+      "material": false
+    },
+    "Flood Advisory": {
+      "count": 1,
+      "expected": 7.14,
+      "typical_high": 29,
+      "record": false,
+      "surprise": 0.0,
+      "tier": "Normal",
+      "delta_1h": 1,
       "delta_6h": 0,
       "material": false
     },
