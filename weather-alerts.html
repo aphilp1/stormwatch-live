@@ -1119,6 +1119,12 @@ canvas.velocity-overlay{pointer-events:none!important}
             <span class="layer-note" id="spc2-note">–</span>
           </div>
 
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-mcd" onchange="toggleLayer('mcd',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">SPC Mesoscale Discussion</span>
+            <span class="layer-note" id="mcd-note">off</span>
+          </div>
+
         </div>
 
         <div class="layer-group">
@@ -1167,6 +1173,29 @@ canvas.velocity-overlay{pointer-events:none!important}
           <div class="opacity-row" id="mrms-opacity-row" style="display:none">
             <input type="range" min="10" max="100" value="70" oninput="setMrmsOpacity(this.value)">
             <span id="mrms-opacity-val">70%</span>
+          </div>
+
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-ero" onchange="toggleLayer('ero',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Excessive Rainfall Outlook</span>
+            <span class="layer-note" id="ero-note">off</span>
+          </div>
+          <div id="ero-day-row" style="display:none;padding-left:44px;margin-top:-4px;margin-bottom:6px">
+            <div class="usgs-key-hdr" style="margin-bottom:5px">Forecast Day</div>
+            <div style="display:flex;gap:3px;flex-wrap:wrap">
+              <button class="viirs-day-btn active" data-day="1" onclick="setEroDay(1)">D1</button>
+              <button class="viirs-day-btn" data-day="2" onclick="setEroDay(2)">D2</button>
+              <button class="viirs-day-btn" data-day="3" onclick="setEroDay(3)">D3</button>
+              <button class="viirs-day-btn" data-day="4" onclick="setEroDay(4)">D4</button>
+              <button class="viirs-day-btn" data-day="5" onclick="setEroDay(5)">D5</button>
+            </div>
+          </div>
+          <div class="usgs-key" id="ero-key" style="display:none">
+            <div class="usgs-key-hdr">WPC · Excessive Rainfall Outlook · official categories</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#58b06a"></div>Marginal (≥5%)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#f4d64e"></div>Slight (≥15%)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#f08a3c"></div>Moderate (≥40%)</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#e0483c"></div>High (≥70%)</div>
           </div>
 
           <div class="layer-row">
@@ -2468,6 +2497,9 @@ const NWS_ALERTS  = 'https://api.weather.gov/alerts/active?status=actual';
 const RAINVIEWER  = 'https://api.rainviewer.com/public/weather-maps.json';
 const SPC_D1      = 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/1/query?where=1%3D1&outFields=*&f=geojson';
 const SPC_D2      = 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/9/query?where=1%3D1&outFields=*&f=geojson';
+const SPC_MCD     = 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/spc_mesoscale_discussion/MapServer/0/query?where=1%3D1&outFields=*&f=geojson';
+// WPC Excessive Rainfall Outlook — layers 0-4 = Day 1-5.
+const WPC_ERO_BASE = 'https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer';
 
 const ALERT_REFRESH_MS  = 120_000;
 const RADAR_REFRESH_MS  = 300_000;
@@ -2821,6 +2853,8 @@ let fwxD1Group = null, fwxD1Enabled = false;
 let fwxD2Group = null, fwxD2Enabled = false;
 let dryLtgOutlookGroup = null, dryLtgOutlookEnabled = false, dryLtgOutlookDay = 1;
 let windRhOutlookGroup = null, windRhOutlookEnabled = false, windRhOutlookDay = 3;
+let mcdGroup = null, mcdEnabled = false;
+let eroGroup = null, eroEnabled = false, eroDay = 1;
 let rawsGroup = null, rawsEnabled = false, rawsLoaded = false;
 let windsGroup = null, windsEnabled = false, windsFeatures = null, _windsMoveTimer = null;
 let windFlowLayer = null, windFlowEnabled = false;
@@ -2899,6 +2933,8 @@ function initMap() {
   fwxD2Group   = L.layerGroup();           // SPC fire weather outlook Day 2
   dryLtgOutlookGroup = L.layerGroup();     // SPC Dry Thunderstorm Outlook, Day 1-8
   windRhOutlookGroup = L.layerGroup();     // SPC Critical Fire Weather (Wind/RH) Outlook, Day 3-8
+  mcdGroup = L.layerGroup();               // SPC Mesoscale Discussions
+  eroGroup = L.layerGroup();               // WPC Excessive Rainfall Outlook, Day 1-5
   rawsGroup    = L.layerGroup();           // RAWS weather stations
   windsGroup   = L.layerGroup();           // Observed surface wind arrows
   redFlagGroup = L.layerGroup();           // Red Flag Warnings (from NWS alerts)
@@ -3888,6 +3924,26 @@ async function toggleLayer(name, on) {
     on ? spc2Group.addTo(map) : spc2Group.remove();
     if (!document.getElementById('lyr-spc1').checked)
       document.getElementById('spc-legend').style.display = on ? 'block' : 'none';
+  } else if (name === 'mcd') {
+    mcdEnabled = on;
+    if (on) {
+      mcdGroup.addTo(map);
+      loadMCD();
+    } else {
+      mcdGroup.remove();
+      document.getElementById('mcd-note').textContent = 'off';
+    }
+  } else if (name === 'ero') {
+    eroEnabled = on;
+    document.getElementById('ero-day-row').style.display = on ? 'block' : 'none';
+    document.getElementById('ero-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      eroGroup.addTo(map);
+      loadERO(eroDay);
+    } else {
+      eroGroup.remove();
+      document.getElementById('ero-note').textContent = 'off';
+    }
   } else if (name === 'winds') {
     windsEnabled = on;
     document.getElementById('winds-key').style.display = on ? 'block' : 'none';
@@ -4511,6 +4567,74 @@ async function loadSPCDay(day) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// SPC MESOSCALE DISCUSSIONS
+// ═══════════════════════════════════════════════════════════════════
+
+async function loadMCD() {
+  const note = document.getElementById('mcd-note');
+  note.textContent = 'loading…';
+  mcdGroup.clearLayers();
+  try {
+    const data = await fetchJson(SPC_MCD, 12000);
+    let count = 0;
+    for (const feat of (data.features || [])) {
+      if (!feat.geometry) continue;
+      const p = feat.properties || {};
+      const name = p.name || 'Mesoscale Discussion';
+      L.geoJSON(feat, { style: { color:'#c026d3', fill:false, weight:2, opacity:0.9, dashArray:'5,3' } })
+       .bindPopup(`<div class="anom-pop"><b>${name}</b>${p.folderpath ? `<br>${p.folderpath}` : ''}${p.popupinfo ? `<br><a href="${p.popupinfo}" target="_blank" rel="noopener">Full discussion →</a>` : ''}</div>`)
+       .addTo(mcdGroup);
+      count++;
+    }
+    note.textContent = count ? `${count} active` : 'none active';
+  } catch(e) {
+    note.textContent = 'unavailable';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// WPC EXCESSIVE RAINFALL OUTLOOK
+// ═══════════════════════════════════════════════════════════════════
+
+const ERO_STYLES = {
+  'Marginal': '#58b06a',
+  'Slight':   '#f4d64e',
+  'Moderate': '#f08a3c',
+  'High':     '#e0483c',
+};
+
+async function loadERO(day) {
+  const note = document.getElementById('ero-note');
+  note.textContent = 'loading…';
+  eroGroup.clearLayers();
+  try {
+    const data = await fetchJson(`${WPC_ERO_BASE}/${day - 1}/query?where=1%3D1&outFields=*&f=geojson`, 12000);
+    let count = 0;
+    for (const feat of (data.features || [])) {
+      if (!feat.geometry) continue;
+      const p = feat.properties || {};
+      const tier = Object.keys(ERO_STYLES).find(k => (p.outlook || '').startsWith(k));
+      if (!tier) continue;
+      const c = ERO_STYLES[tier];
+      L.geoJSON(feat, { style: { color:c, fillColor:c, weight:1.5, opacity:0.85, fillOpacity:0.4 } })
+       .bindTooltip(`Day ${day} Excessive Rainfall: ${p.outlook || tier}`, { sticky:true })
+       .addTo(eroGroup);
+      count++;
+    }
+    note.textContent = count ? `${count} zone${count === 1 ? '' : 's'}` : 'none issued';
+  } catch(e) {
+    note.textContent = 'unavailable';
+  }
+}
+
+function setEroDay(day) {
+  eroDay = day;
+  document.querySelectorAll('#ero-day-row .viirs-day-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.day) === day));
+  if (eroEnabled) loadERO(day);
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // BASE MAP TOGGLE
 // ═══════════════════════════════════════════════════════════════════
 
@@ -4519,7 +4643,7 @@ function setBase(name) {
   baseLayers[name].addTo(map);
   // Keep overlay groups on top. These are plain L.layerGroup()s, which (unlike
   // L.featureGroup) has no bringToFront() — remove+re-add achieves the same result.
-  [hmsGroup,fwxD2Group,fwxD1Group,dryLtgOutlookGroup,windRhOutlookGroup,spc2Group,spc1Group,firePerimGroup,metarGroup,mtGroup,rawsGroup,usgsFlowGroup,usgsGroup,inundationGroup,fimGroup,fireIncidentsGroup,airnowGroup,redFlagGroup,fwxWatchGroup,torWarnGroup,torWatchGroup,svrTstmGroup,flfWarnGroup,winStmGroup,blizzGroup,redFlagAlrtGroup,otherAlvGroup,alertGroup].forEach(g=>{
+  [hmsGroup,fwxD2Group,fwxD1Group,dryLtgOutlookGroup,windRhOutlookGroup,mcdGroup,eroGroup,spc2Group,spc1Group,firePerimGroup,metarGroup,mtGroup,rawsGroup,usgsFlowGroup,usgsGroup,inundationGroup,fimGroup,fireIncidentsGroup,airnowGroup,redFlagGroup,fwxWatchGroup,torWarnGroup,torWatchGroup,svrTstmGroup,flfWarnGroup,winStmGroup,blizzGroup,redFlagAlrtGroup,otherAlvGroup,alertGroup].forEach(g=>{
     if (!map.hasLayer(g)) return;
     if (typeof g.bringToFront === 'function') g.bringToFront();
     else { map.removeLayer(g); map.addLayer(g); }
