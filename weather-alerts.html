@@ -8947,11 +8947,23 @@ function mcpAgentNotice(panelId, bodyId) {
 
 // On the public site, label the local-only features up front so it's clear before clicking.
 function initPublicMode() {
-  ['agent-card-nowcast','agent-card-fire','agent-card-flood','agent-card-combined'].forEach(id => {
+  ['agent-card-nowcast','agent-card-flood','agent-card-combined'].forEach(id => {
     const card = document.getElementById(id);
     const badge = card && card.querySelector('.agent-card-badge');
     if (badge) { badge.textContent = '◐ Local app'; badge.classList.remove('live'); badge.title = 'Available in the local StormWatch app only'; }
   });
+  // Fire Forecast: point-mode now runs on the public site via the Cloud Worker
+  // (stormwatch-cloud/); only the regional box-draw mode still needs the local
+  // MCP server, so the card itself stays "Live" but the Area button is disabled.
+  const fireBadge = document.querySelector('#agent-card-fire .agent-card-badge');
+  if (fireBadge) { fireBadge.title = 'Point analysis is live on the public site. Regional (box) analysis needs the local app.'; }
+  const boxBtn = document.getElementById('fw-box-btn');
+  if (boxBtn) {
+    boxBtn.disabled = true;
+    boxBtn.title = 'Regional analysis is available in the local app only';
+    boxBtn.style.opacity = '0.4';
+    boxBtn.style.cursor = 'not-allowed';
+  }
   // HMS smoke moved to the public NESDIS ArcGIS feed 2026-07-27 — no longer local-only.
   ['windninja-note','airnow-note'].forEach(id => {
     const n = document.getElementById(id); if (n) n.textContent = 'local only';
@@ -9287,26 +9299,40 @@ function fwPanelDragMove(e) {
 }
 function fwPanelDragEnd() { _fwDrag = null; document.removeEventListener('mousemove', fwPanelDragMove); document.removeEventListener('mouseup', fwPanelDragEnd); }
 
+// Point-mode fire risk runs everywhere via the Cloud Worker (stormwatch-cloud/);
+// regional box-draw analysis (5-point sampling) stays local-only — the cloud
+// endpoint doesn't implement it. See stormwatch-cloud/src/worker.js.
+const CLOUD_FIRE_AGENT_BASE = 'https://stormwatch.stormwatch-live.workers.dev/fire-agent';
+
 async function runFireAgent(lat, lon, bounds) {
-  if (!MCP_LOCAL) return mcpAgentNotice('fire-panel', 'fire-body');
   const panel = document.getElementById('fire-panel');
-  panel.style.display = 'block';
   const body = document.getElementById('fire-body');
+  panel.style.display = 'block';
+  if (bounds && !MCP_LOCAL) {
+    body.innerHTML = '<div class="fw-hint">Regional (box) analysis runs in the local StormWatch app only.<br><small style="color:#7a3a18">Click a single point instead — that works here.</small></div>';
+    return;
+  }
   body.scrollTop = 0;
   const areaMode = bounds != null;
   body.innerHTML = `<div class="fw-loading">${areaMode ? 'Analyzing regional fire weather — sampling area…' : 'Analyzing fire weather environment…'}</div>`;
   try {
-    let url = `http://localhost:3456/fire-agent?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
-    if (bounds) {
-      url += `&minLat=${bounds.getSouth().toFixed(4)}&maxLat=${bounds.getNorth().toFixed(4)}` +
-             `&minLon=${bounds.getWest().toFixed(4)}&maxLon=${bounds.getEast().toFixed(4)}`;
+    let url;
+    if (MCP_LOCAL) {
+      url = `http://localhost:3456/fire-agent?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
+      if (bounds) {
+        url += `&minLat=${bounds.getSouth().toFixed(4)}&maxLat=${bounds.getNorth().toFixed(4)}` +
+               `&minLon=${bounds.getWest().toFixed(4)}&maxLon=${bounds.getEast().toFixed(4)}`;
+      }
+    } else {
+      url = `${CLOUD_FIRE_AGENT_BASE}?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
     }
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Server error ${res.status}`);
     const data = await res.json();
     renderFireAgent(data, bounds);
   } catch (err) {
-    body.innerHTML = `<div class="fw-hint">Could not get fire weather data.<br><small style="color:#7a3a18">${err.message}</small><br><small style="color:#4a2010">Is the MCP server running?</small></div>`;
+    const hint = MCP_LOCAL ? 'Is the MCP server running?' : 'The cloud fire-weather service may be temporarily unavailable.';
+    body.innerHTML = `<div class="fw-hint">Could not get fire weather data.<br><small style="color:#7a3a18">${err.message}</small><br><small style="color:#4a2010">${hint}</small></div>`;
   }
 }
 
