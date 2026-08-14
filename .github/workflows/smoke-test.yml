@@ -1,0 +1,41 @@
+name: Layer Smoke Test
+
+# Loads weather-alerts.html in a headless browser, cycles every top-level tab
+# and every layer toggle, and fails the run if any real JS error fires
+# (generic network-load noise like a momentarily-down feed is filtered out —
+# see Storm_info/smoketest_layers.js). Catches JS-crash-class regressions
+# before they reach the public site; does NOT catch silent-wrong-output bugs.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "weather-alerts.html"
+  workflow_dispatch:   # allow manual runs from the Actions tab
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: UTC/local Date-mixing lint
+        run: node Storm_info/lint_utc_mixing.js weather-alerts.html
+
+      - name: Install Playwright
+        working-directory: Storm_info
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Serve the app
+        run: |
+          python3 -m http.server 8123 &
+          sleep 1
+
+      - name: Run smoke test
+        working-directory: Storm_info
+        run: node smoketest_layers.js http://localhost:8123/weather-alerts.html
