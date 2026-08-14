@@ -2,6 +2,8 @@
 
 **A research toolkit for forecasting the erratic, terrain-driven winds that drive explosive wildfire behavior — and a live hazard map that puts the science in front of people.**
 
+🔴 **Live site:** [aphilp1.github.io/stormwatch-live](https://aphilp1.github.io/stormwatch-live/)
+
 The core idea, in one sentence: use **synoptic models** to predict *when* dangerous winds arrive, then use **terrain downscaling** (WindNinja) to predict *where* on the landscape they'll be worst — but only for the events where that physics is actually valid. Knowing *when not to trust the model* is half the work.
 
 ---
@@ -39,9 +41,13 @@ The classifier is **rule-based, not ML** — N is tiny, the physics is known, an
 | `confidence_field.py` | Per-station confidence labels from a 25-member WindNinja ensemble. |
 | `hindcast_event_library.md` | The 22-event catalogue with mechanism tags and station anchors. |
 | `weather-alerts.html` | The StormWatch Live web app (NWS alerts, SPC outlooks, fire weather, hazard layers). |
-| `mcp-server/` | Node.js MCP server (v5) exposing ~14 weather/hazard tools (alerts, SPC, fire weather, gauges, tropical, AQI, aviation, earthquakes, compound briefings). |
+| `mcp-server/` | Node.js MCP server (v5) exposing ~14 weather/hazard tools (alerts, SPC, fire weather, gauges, tropical, AQI, aviation, earthquakes, compound briefings). Powers the app locally; see `stormwatch-cloud/` for the public-site equivalent. |
+| `stormwatch-cloud/` | Cloudflare Worker backend — brings a subset of the local MCP server's agents (currently the Fire Weather agent) to the public site, which can't reach your laptop. |
 | `reconstruction_case*.md` | Per-event scientific write-ups. |
 | `CLAUDE_CODE_HANDOFF.md` | Detailed developer handoff for the analysis backbone. |
+| `STORMWATCH_PROJECT_MAP.md` | Front-door map of every project piece (product + research halves) and where to read more. |
+| `Storm_info/fable_specs/` | Feature specs for the web app's fire-data layers (perimeters, danger WMS, InciWeb/IMSR/AirNow, Snapshot, Fire Risk probe). |
+| `PICKUP_TOMORROW.md` / `RECOVERY.md` | Session hand-off notes and full from-scratch rebuild steps. |
 
 ## Live fire-wind outlook (`live_forecast.py`)
 
