@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StormWatch Cloud — Fire Agent (local test)</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 system-ui, sans-serif; background:#0f1420; color:#e8edf5;
+         display:flex; flex-direction:column; align-items:center; padding:24px 16px 60px; }
+  h1 { font-size:20px; margin:0 0 2px; }
+  .sub { color:#94a3b8; font-size:13px; margin:0 0 20px; text-align:center; }
+  .badge { display:inline-block; background:#1e293b; color:#7dd3fc; border:1px solid #334155;
+           border-radius:999px; padding:2px 10px; font-size:12px; margin-bottom:18px; }
+  .cities { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:20px; max-width:520px; }
+  button { background:#1e40af; color:#fff; border:0; border-radius:8px; padding:9px 14px;
+           font-size:14px; cursor:pointer; }
+  button:hover { background:#2563eb; }
+  button:disabled { opacity:.5; cursor:wait; }
+  .card { width:100%; max-width:520px; background:#151b28; border:1px solid #263149;
+          border-radius:14px; padding:22px; min-height:120px; }
+  .place { font-size:15px; color:#cbd5e1; margin-bottom:6px; }
+  .scorewrap { display:flex; align-items:baseline; gap:12px; margin-bottom:4px; }
+  .score { font-size:44px; font-weight:800; line-height:1; }
+  .of10 { color:#64748b; font-size:16px; }
+  .rating { font-weight:700; font-size:15px; letter-spacing:.3px; }
+  .headline { color:#cbd5e1; font-size:14px; margin:10px 0 14px; }
+  .factors { list-style:none; padding:0; margin:0; }
+  .factors li { padding:6px 0 6px 22px; position:relative; font-size:14px; border-top:1px solid #212b3f; }
+  .factors li:before { content:"▸"; position:absolute; left:2px; color:#f59e0b; }
+  .metrics { display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; font-size:13px; color:#94a3b8; }
+  .metrics b { color:#e2e8f0; font-weight:600; }
+  .muted { color:#64748b; }
+  .foot { margin-top:22px; color:#475569; font-size:12px; text-align:center; max-width:520px; }
+  /* rating colors */
+  .r-EXTREME,.r-VERYHIGH { color:#f87171; } .r-HIGH { color:#fb923c; }
+  .r-MODERATE { color:#fbbf24; } .r-LOWMODERATE,.r-LOW { color:#4ade80; }
+</style>
+</head>
+<body>
+  <h1>🔥 StormWatch — Fire Risk</h1>
+  <p class="sub">This is the <b>cloud version</b> of your Fire tool, running as a live test on your own machine.</p>
+  <span class="badge" id="src">connecting to local test server…</span>
+
+  <div class="cities">
+    <button data-lat="34.05"  data-lon="-118.25">Los Angeles</button>
+    <button data-lat="33.45"  data-lon="-112.07">Phoenix</button>
+    <button data-lat="39.74"  data-lon="-104.99">Denver</button>
+    <button data-lat="47.61"  data-lon="-122.33">Seattle</button>
+    <button data-lat="25.76"  data-lon="-80.19">Miami</button>
+    <button data-lat="39.81"  data-lon="-121.44">Paradise (Camp Fire)</button>
+  </div>
+
+  <div class="card" id="card">
+    <p class="muted">Pick a city above to ask the cloud tool for its fire-weather risk.</p>
+  </div>
+
+  <p class="foot">Under the hood: the page calls <code>http://127.0.0.1:8787/fire-agent</code> — the exact
+  same tool that runs on your laptop, but packaged for the cloud. When it goes online, only that address changes.</p>
+
+<script>
+const API = "http://127.0.0.1:8787";
+const card = document.getElementById("card");
+const src  = document.getElementById("src");
+
+fetch(API + "/health").then(r => r.json())
+  .then(h => src.textContent = "✓ local test server: " + h.server + " v" + h.version)
+  .catch(() => src.textContent = "✗ local test server not running (start: npx wrangler dev)");
+
+document.querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {
+  const btns = document.querySelectorAll("button");
+  btns.forEach(x => x.disabled = true);
+  card.innerHTML = '<p class="muted">Asking the cloud tool… (fetching live NOAA + Open-Meteo data)</p>';
+  try {
+    const d = await (await fetch(`${API}/fire-agent?lat=${b.dataset.lat}&lon=${b.dataset.lon}`)).json();
+    const rk = "r-" + (d.riskRating || "").replace(/[^A-Z]/g, "");
+    const e = d.environment || {};
+    card.innerHTML = `
+      <div class="place">${d.location?.name ?? "location"}</div>
+      <div class="scorewrap">
+        <span class="score ${rk}">${d.riskScore}</span><span class="of10">/ 10</span>
+        <span class="rating ${rk}">${d.riskRating}</span>
+      </div>
+      <div class="headline">${d.headline ?? ""}</div>
+      ${(d.factors?.length ? `<ul class="factors">${d.factors.map(f=>`<li>${f}</li>`).join("")}</ul>` : '<p class="muted">No elevated fire-weather factors right now.</p>')}
+      <div class="metrics">
+        ${e.rh!=null?`<span><b>${e.rh}%</b> humidity</span>`:""}
+        ${e.gusts!=null?`<span><b>${e.gusts}</b> mph gusts</span>`:""}
+        ${e.total90!=null?`<span><b>${e.total90}"</b> rain (90 days)</span>`:""}
+        ${e.sinceRain!=null?`<span><b>${e.sinceRain}</b> days since rain</span>`:""}
+      </div>`;
+  } catch (err) {
+    card.innerHTML = `<p class="muted">Couldn't reach the local test server. Make sure it's running.<br>(${err.message})</p>`;
+  }
+  btns.forEach(x => x.disabled = false);
+}));
+</script>
+</body>
+</html>

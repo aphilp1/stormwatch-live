@@ -1,0 +1,8 @@
+# StormWatch Cloud — Cloudflare Worker config
+# The public-web backend. Kept entirely separate from mcp-server (local/Claude Desktop).
+name = "stormwatch"
+main = "src/worker.js"
+compatibility_date = "2025-01-01"
+
+# Local testing:   npx wrangler dev      (runs on 127.0.0.1:8787, no account needed)
+# Go live (later): npx wrangler deploy   (needs a free Cloudflare account + login)
