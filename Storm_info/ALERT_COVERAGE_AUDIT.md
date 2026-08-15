@@ -33,6 +33,51 @@ An obscure type like Avalanche Warning that has no entry in `ESTYLES` still
 gets colored by NWS's real assessment of how severe *that specific alert*
 is, not a generic default.
 
+### Confirmed: `severity` is used verbatim, no reinterpretation
+
+Checked every call site in `weather-alerts.html` (2026-08-15). `p.severity`
+(the raw NWS value) is passed straight through with zero remapping:
+
+- `getStyle(p.event, p.severity)` — drives map/legend coloring
+- `SEV_ORDER[a.properties.severity]` — drives sort order everywhere the app
+  ranks alerts (list, map draw order — worst alerts render on top)
+- `const sev = p.severity || 'Unknown'` — the only fallback is when NWS omits
+  the field entirely, not a reinterpretation of what NWS did send
+
+StormWatch's severity handling is fully consistent with the NWS API's own
+classification.
+
+## 5. Is CAP actually an "international standard"?
+
+The map legend (`weather-alerts.html:2138`) labels the Severity section
+"Common Alerting Protocol · international standard." Verified 2026-08-15 —
+**this claim is accurate, not a stretch:**
+
+- **CAP** (Common Alerting Protocol) is an XML-based data format for
+  exchanging public-warning messages across all hazard types and all
+  dissemination systems (broadcast, cell, web, siren networks, etc.) so a
+  single alert authored once can flow through many different channels
+  without hand-translation.
+- Originated via the Partnership for Public Warning (2002), submitted to
+  **OASIS** (a global standards body), and adopted as **OASIS Standard CAP
+  1.0** in 2004; CAP 1.2 is the current version.
+- In 2007 the **ITU** — a United Nations specialized agency — formally
+  adopted CAP as **ITU-T Recommendation X.1303**, which is what makes it a
+  genuine international standard rather than a US-only convention.
+- Globally used beyond NWS: the World Meteorological Organization (WMO), the
+  International Federation of Red Cross and Red Crescent Societies (IFRC),
+  and the UN Office for Disaster Risk Reduction (UNDRR) all use CAP as their
+  baseline alerting format.
+- NWS's `api.weather.gov/alerts` feed is CAP under the hood (delivered as
+  GeoJSON here, but the `severity`/`urgency`/`certainty`/`event` fields are
+  straight out of the CAP schema) — the same three-value-plus severity model
+  other countries' weather/emergency services use for their own CAP feeds.
+
+**Bottom line:** the app's legend text is factually correct. `severity` isn't
+an NWS-specific quirk StormWatch happens to key off of — it's part of a
+standard so the same alert-severity concept generalizes to any CAP-compliant
+feed, not just NWS.
+
 ## 2. Explicitly-styled alert types (58, `ESTYLES`, `weather-alerts.html:2612-2671`)
 
 **Tornado / Severe Storms:** Tornado Warning, Tornado Emergency, Tornado
