@@ -1125,6 +1125,28 @@ canvas.velocity-overlay{pointer-events:none!important}
             <span class="layer-note" id="mcd-note">off</span>
           </div>
 
+          <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-lsr" onchange="toggleLayer('lsr',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">Local Storm Reports</span>
+            <span class="layer-note" id="lsr-note">off</span>
+          </div>
+          <div id="lsr-hours-row" style="display:none;padding-left:44px;margin-top:-4px;margin-bottom:6px">
+            <div class="usgs-key-hdr" style="margin-bottom:5px">Lookback Window</div>
+            <div style="display:flex;gap:3px;flex-wrap:wrap">
+              <button class="viirs-day-btn" data-hours="3" onclick="setLsrHours(3)">3h</button>
+              <button class="viirs-day-btn active" data-hours="6" onclick="setLsrHours(6)">6h</button>
+              <button class="viirs-day-btn" data-hours="12" onclick="setLsrHours(12)">12h</button>
+              <button class="viirs-day-btn" data-hours="24" onclick="setLsrHours(24)">24h</button>
+            </div>
+          </div>
+          <div class="usgs-key" id="lsr-key" style="display:none">
+            <div class="usgs-key-hdr">NWS Local Storm Reports · via IEM</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#e0362c"></div>Tornado</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#3060e0"></div>Wind</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#1f8a51"></div>Hail</div>
+            <div class="usgs-key-row"><div class="usgs-dot" style="background:#8a8a8a"></div>Other (flood, funnel cloud, etc.)</div>
+          </div>
+
         </div>
 
         <div class="layer-group">
@@ -2855,6 +2877,7 @@ let dryLtgOutlookGroup = null, dryLtgOutlookEnabled = false, dryLtgOutlookDay = 
 let windRhOutlookGroup = null, windRhOutlookEnabled = false, windRhOutlookDay = 3;
 let mcdGroup = null, mcdEnabled = false;
 let eroGroup = null, eroEnabled = false, eroDay = 1;
+let lsrGroup = null, lsrEnabled = false, lsrHours = 6;
 let rawsGroup = null, rawsEnabled = false, rawsLoaded = false;
 let windsGroup = null, windsEnabled = false, windsFeatures = null, _windsMoveTimer = null;
 let windFlowLayer = null, windFlowEnabled = false;
@@ -2935,6 +2958,7 @@ function initMap() {
   windRhOutlookGroup = L.layerGroup();     // SPC Critical Fire Weather (Wind/RH) Outlook, Day 3-8
   mcdGroup = L.layerGroup();               // SPC Mesoscale Discussions
   eroGroup = L.layerGroup();               // WPC Excessive Rainfall Outlook, Day 1-5
+  lsrGroup = L.layerGroup();               // Local Storm Reports, rolling lookback window
   rawsGroup    = L.layerGroup();           // RAWS weather stations
   windsGroup   = L.layerGroup();           // Observed surface wind arrows
   redFlagGroup = L.layerGroup();           // Red Flag Warnings (from NWS alerts)
@@ -3944,6 +3968,17 @@ async function toggleLayer(name, on) {
       eroGroup.remove();
       document.getElementById('ero-note').textContent = 'off';
     }
+  } else if (name === 'lsr') {
+    lsrEnabled = on;
+    document.getElementById('lsr-hours-row').style.display = on ? 'block' : 'none';
+    document.getElementById('lsr-key').style.display = on ? 'block' : 'none';
+    if (on) {
+      lsrGroup.addTo(map);
+      loadLSR(lsrHours);
+    } else {
+      lsrGroup.remove();
+      document.getElementById('lsr-note').textContent = 'off';
+    }
   } else if (name === 'winds') {
     windsEnabled = on;
     document.getElementById('winds-key').style.display = on ? 'block' : 'none';
@@ -4635,6 +4670,59 @@ function setEroDay(day) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// LOCAL STORM REPORTS (via Iowa Environmental Mesonet)
+// ═══════════════════════════════════════════════════════════════════
+
+const LSR_STYLES = {
+  T: { color:'#e0362c', label:'Tornado' },
+  G: { color:'#3060e0', label:'Wind' },   // TSTM WND GST
+  D: { color:'#3060e0', label:'Wind' },   // TSTM WND DMG
+  H: { color:'#1f8a51', label:'Hail' },
+};
+const LSR_OTHER = { color:'#8a8a8a', label:'Other' };
+
+async function loadLSR(hours) {
+  const note = document.getElementById('lsr-note');
+  note.textContent = 'loading…';
+  lsrGroup.clearLayers();
+  const ets = new Date();
+  const sts = new Date(ets.getTime() - hours * 3600000);
+  const fmt = d => d.toISOString().replace(/\.\d+Z$/, 'Z');
+  try {
+    const data = await fetchJson(`https://mesonet.agron.iastate.edu/geojson/lsr.php?wfo=all&sts=${fmt(sts)}&ets=${fmt(ets)}`, 15000);
+    let count = 0;
+    for (const feat of (data.features || [])) {
+      if (!feat.geometry) continue;
+      const p = feat.properties || {};
+      const s = LSR_STYLES[p.type] || LSR_OTHER;
+      const mag = p.magnitude ? `${p.magnitude}${p.unit ? ' ' + p.unit : ''}` : '';
+      const when = p.valid ? p.valid.replace('T', ' ').replace('Z', ' UTC') : '';
+      const marker = L.circleMarker([p.lat, p.lon], {
+        radius: 5, color: s.color, weight: 1.5, fillColor: s.color, fillOpacity: 0.7,
+      });
+      marker.bindPopup(
+        `<div class="anom-pop"><b>${p.typetext || s.label}</b>${mag ? ` — ${mag}` : ''}<br>` +
+        `${p.city || ''}${p.county ? ', ' + p.county + ' Co' : ''}${p.state ? ', ' + p.state : ''}<br>` +
+        `<span style="opacity:0.75">${when}</span>` +
+        `${p.remark ? `<br><span style="opacity:0.75">${p.remark}</span>` : ''}</div>`
+      );
+      marker.addTo(lsrGroup);
+      count++;
+    }
+    note.textContent = count ? `${count} report${count === 1 ? '' : 's'}` : 'none in window';
+  } catch(e) {
+    note.textContent = 'unavailable';
+  }
+}
+
+function setLsrHours(hours) {
+  lsrHours = hours;
+  document.querySelectorAll('#lsr-hours-row .viirs-day-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.hours) === hours));
+  if (lsrEnabled) loadLSR(hours);
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // BASE MAP TOGGLE
 // ═══════════════════════════════════════════════════════════════════
 
@@ -4643,7 +4731,7 @@ function setBase(name) {
   baseLayers[name].addTo(map);
   // Keep overlay groups on top. These are plain L.layerGroup()s, which (unlike
   // L.featureGroup) has no bringToFront() — remove+re-add achieves the same result.
-  [hmsGroup,fwxD2Group,fwxD1Group,dryLtgOutlookGroup,windRhOutlookGroup,mcdGroup,eroGroup,spc2Group,spc1Group,firePerimGroup,metarGroup,mtGroup,rawsGroup,usgsFlowGroup,usgsGroup,inundationGroup,fimGroup,fireIncidentsGroup,airnowGroup,redFlagGroup,fwxWatchGroup,torWarnGroup,torWatchGroup,svrTstmGroup,flfWarnGroup,winStmGroup,blizzGroup,redFlagAlrtGroup,otherAlvGroup,alertGroup].forEach(g=>{
+  [hmsGroup,fwxD2Group,fwxD1Group,dryLtgOutlookGroup,windRhOutlookGroup,mcdGroup,eroGroup,lsrGroup,spc2Group,spc1Group,firePerimGroup,metarGroup,mtGroup,rawsGroup,usgsFlowGroup,usgsGroup,inundationGroup,fimGroup,fireIncidentsGroup,airnowGroup,redFlagGroup,fwxWatchGroup,torWarnGroup,torWatchGroup,svrTstmGroup,flfWarnGroup,winStmGroup,blizzGroup,redFlagAlrtGroup,otherAlvGroup,alertGroup].forEach(g=>{
     if (!map.hasLayer(g)) return;
     if (typeof g.bringToFront === 'function') g.bringToFront();
     else { map.removeLayer(g); map.addLayer(g); }
