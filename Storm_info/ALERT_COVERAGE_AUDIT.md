@@ -18,6 +18,21 @@ alert type without a custom style still renders, via a generic severity-color
 fallback (`SEV_FB`: Extreme/Severe/Moderate/Minor/Unknown,
 `weather-alerts.html:2678`).
 
+### NWS's own severity field
+
+Confirmed live against `api.weather.gov/alerts/active` (2026-08-15): every
+NWS alert carries a `severity` property as part of the underlying CAP
+(Common Alerting Protocol) standard — `Extreme`, `Severe`, `Moderate`,
+`Minor`, `Unknown` — plus separate `urgency` and `certainty` fields. Sample
+alert pulled live: `event: "Special Weather Statement"`, `severity:
+"Moderate"`, `certainty: "Observed"`, `urgency: "Expected"`.
+
+This means `SEV_FB`'s fallback isn't an arbitrary guess for un-styled types —
+it reads NWS's own official severity classification straight from the feed.
+An obscure type like Avalanche Warning that has no entry in `ESTYLES` still
+gets colored by NWS's real assessment of how severe *that specific alert*
+is, not a generic default.
+
 ## 2. Explicitly-styled alert types (58, `ESTYLES`, `weather-alerts.html:2612-2671`)
 
 **Tornado / Severe Storms:** Tornado Warning, Tornado Emergency, Tornado
