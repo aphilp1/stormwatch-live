@@ -2225,7 +2225,7 @@ canvas.velocity-overlay{pointer-events:none!important}
         <div class="leg"><div class="lsw" style="background:#dddd00"></div>Deep convection (~−65°C)</div>
         <div class="leg"><div class="lsw" style="background:#ff0000"></div>Intense tops (&lt;−75°C)</div>
       </div>
-      <div id="sat-leg-note">NOAA GOES-East · Ch13 IR · 4km<br>Colors = enhanced cold cloud tops</div>
+      <div id="sat-leg-note">NOAA GOES-East (CONUS) + GOES-West (Hawaii/Pacific) · Ch13 IR · 4km<br>Colors = enhanced cold cloud tops</div>
     </div>
 
     <div id="radar-legend">
@@ -2820,7 +2820,7 @@ let baseLayers = {};
 let modVar = 'precip', modDays = 4, modView = 'chart';
 let modChartInst = null, modLastLat = null, modLastLon = null, modMarker = null;
 
-let satLayer = null, satRefreshTimer = null;
+let satLayer = null, satHiLayer = null, satRefreshTimer = null;
 let satEnabled = false, satOpacity = 0.80;
 
 let nexradStationsEnabled = false;
@@ -3555,18 +3555,31 @@ function setSatOpacity(val) {
   satOpacity = val/100;
   document.getElementById('sat-opacity-val').textContent = val+'%';
   if (satEnabled && satLayer) satLayer.setOpacity(satOpacity);
+  if (satEnabled && satHiLayer) satHiLayer.setOpacity(satOpacity);
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // GOES IR SATELLITE (IEM current tile, auto-refreshes every 5 min)
 // ═══════════════════════════════════════════════════════════════════
+// Two layers: the CONUS tile (GOES-East) covers the mainland; GOES-West's
+// wide Pacific-sector WMS product (west_ir_4km, distinct from IEM's narrow
+// CONUS-cropped goes_west_ir) additionally reaches Hawaii and the Pacific
+// approach, which the CONUS-only tile never did. Their bboxes overlap a bit
+// over the West Coast -- the Hawaii layer sits one zIndex below so the
+// higher-fidelity CONUS tile wins there.
 
 function initSat() {
   if (satLayer) { satLayer.remove(); satLayer = null; }
+  if (satHiLayer) { satHiLayer.remove(); satHiLayer = null; }
   const t = Math.floor(Date.now() / 300000); // changes every 5 min to bust cache
   satLayer = L.tileLayer(
     `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/conus-goes-ir-4km/{z}/{x}/{y}.png?t=${t}`,
     {opacity: satOpacity, zIndex: 150, attribution: 'NOAA GOES-East IR via IEM'}
+  ).addTo(map);
+  satHiLayer = L.tileLayer.wms(
+    'https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi',
+    { layers: 'west_ir_4km', format: 'image/png', transparent: true, version: '1.1.1',
+      opacity: satOpacity, zIndex: 149, t, attribution: 'NOAA GOES-West IR via IEM' }
   ).addTo(map);
   document.getElementById('sat-status-note').textContent = '~5 min delay';
 }
@@ -3907,6 +3920,7 @@ async function toggleLayer(name, on) {
     } else {
       clearInterval(satRefreshTimer);
       if (satLayer) { satLayer.remove(); satLayer = null; }
+      if (satHiLayer) { satHiLayer.remove(); satHiLayer = null; }
       document.getElementById('sat-status-note').textContent = 'off';
     }
   } else if (name === 'hrrr') {
