@@ -8,6 +8,15 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
+/* Classic Leaflet tile-seam fix: adjacent XYZ tiles are individually
+   CSS-positioned and can round to sub-pixel gaps, showing a hairline of
+   the pane background through as a faint line between rows (confirmed
+   2026-08-16: reproduced with the CONUS GOES tile layer at 50.65N, no
+   satellite-specific cause -- inherent to L.tileLayer, latent since this
+   app's first tile layer, never exercised at a pan/zoom that exposed it
+   until now). Slightly oversizing each tile so neighbors overlap by a
+   fraction of a pixel hides the gap; this is the standard workaround. */
+.leaflet-tile{width:calc(100% + 1px)!important;height:calc(100% + 1px)!important}
 :root{
   --bg0:#eef0f5;--bg1:#ffffff;--bg2:#f4f5f9;--bg3:#e6e8ef;
   --border:#d4d8e4;--text:#1a1d2e;--text2:#2d333e;--text3:#4f5666;
@@ -3563,13 +3572,48 @@ function setSatOpacity(val) {
 // GOES IR SATELLITE (IEM current tile, auto-refreshes every 5 min)
 // ═══════════════════════════════════════════════════════════════════
 // Three layers: the CONUS tile (GOES-East) covers the mainland; GOES-West's
-// wide Pacific-sector WMS product (west_ir_4km, distinct from IEM's narrow
-// CONUS-cropped goes_west_ir) reaches Hawaii and the Pacific approach but
-// tops out at ~53.5N -- short of most of Alaska -- so a third, IEM-dedicated
-// Alaska-sector WMS layer (alaska_ir, bbox -178.3 to -130 lon, 51.5 to
-// 71.4N) covers the rest of the state. Bboxes overlap a bit at the edges;
-// the CONUS tile sits on top (zIndex 150) since it's the highest-fidelity
-// source where multiple layers could paint the same pixel.
+// wide Pacific-sector WMS product (west_ir_4km) reaches Hawaii and the
+// Pacific approach; a third, IEM-dedicated Alaska-sector WMS layer
+// (alaska_ir) covers the rest of the state. The Pacific/Alaska layers are
+// fetched as single whole-bbox GetMap images (L.imageOverlay) rather than
+// tiled WMS -- simpler (one request instead of a tile grid) and matches
+// exactly what a direct curl of the WMS endpoint returns.
+//
+// ROOT CAUSE, found + fixed 2026-08-16: the blocky/moire artifact reported
+// near the Gulf of Alaska was NOT from the new Pacific/Alaska layers at
+// all -- isolated by removing each layer one at a time until it reproduced
+// with ONLY the original, untouched CONUS tile (satLayer) active. IEM's
+// conus-goes-ir-4km tile set degrades into visible aliasing right at its
+// own northern coverage edge (~53N+, over the Gulf of Alaska) -- a
+// pre-existing characteristic of that source that nobody had reason to
+// zoom into before Alaska had any GOES coverage at all. `SAT_CONUS_BOUNDS`
+// below stops the CONUS layer from painting into that degraded edge, so
+// the clean, dedicated Alaska layer (zIndex 149, below it) shows through
+// there instead of being masked by the broken tiles on top.
+// CONUS capped at 53N (comfortably below the ~55-60N degraded zone found
+// over the Gulf of Alaska) and the Alaska layer's bbox extended down to
+// 52.5N gives a 0.5-degree overlap -- no gap, no reintroduced artifact.
+const SAT_CONUS_BOUNDS = L.latLngBounds([20, -130], [53.5, -60]);
+
+// FOUND 2026-08-16, via direct DOM geometry inspection (getBoundingClientRect
+// on each image, not screenshot-guessing): SAT_HI_BBOX's max lat (52.4) was
+// LOWER than SAT_AK_BBOX's min lat (52.5) -- backwards from the intended
+// overlap, so Hi's image stopped 0.1 degrees before Ak's started. That
+// literal ~4px gap in screen space (confirmed: Ak image bottom at y=633,
+// Hi image top at y=637, nothing between them) was the entire "seam" --
+// every earlier theory (moire, z-index, CSS tile rounding) was chasing a
+// symptom, not this. Ak's min now sits below Hi's max -- genuine overlap.
+const SAT_HI_BBOX    = [-184.449879, 14.561801, -89.550121, 53];
+const SAT_HI_BOUNDS  = L.latLngBounds([SAT_HI_BBOX[1], SAT_HI_BBOX[0]], [SAT_HI_BBOX[3], SAT_HI_BBOX[2]]);
+const SAT_AK_BBOX    = [-178.3, 52, -130, 71.4];
+const SAT_AK_BOUNDS  = L.latLngBounds([SAT_AK_BBOX[1], SAT_AK_BBOX[0]], [SAT_AK_BBOX[3], SAT_AK_BBOX[2]]);
+
+function satWmsImageUrl(base, layerName, bbox, width) {
+  const height = Math.round(width * (bbox[3] - bbox[1]) / (bbox[2] - bbox[0]));
+  const t = Math.floor(Date.now() / 300000);
+  return `${base}?service=WMS&version=1.1.1&request=GetMap&layers=${layerName}&styles=` +
+    `&bbox=${bbox.join(',')}&width=${width}&height=${height}&srs=EPSG:4326&format=image/png&t=${t}`;
+}
 
 function initSat() {
   if (satLayer) { satLayer.remove(); satLayer = null; }
@@ -3578,17 +3622,23 @@ function initSat() {
   const t = Math.floor(Date.now() / 300000); // changes every 5 min to bust cache
   satLayer = L.tileLayer(
     `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/conus-goes-ir-4km/{z}/{x}/{y}.png?t=${t}`,
-    {opacity: satOpacity, zIndex: 150, attribution: 'NOAA GOES-East IR via IEM'}
+    {opacity: satOpacity, zIndex: 150, bounds: SAT_CONUS_BOUNDS, attribution: 'NOAA GOES-East IR via IEM'}
   ).addTo(map);
-  satHiLayer = L.tileLayer.wms(
-    'https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi',
-    { layers: 'west_ir_4km', format: 'image/png', transparent: true, version: '1.1.1',
-      opacity: satOpacity, zIndex: 149, t, attribution: 'NOAA GOES-West IR via IEM' }
+  // Hi/Ak sit ABOVE the CONUS tile (zIndex 151 > 150) in their small overlap band.
+  // Each is individually clean (confirmed 2026-08-16: isolating CONUS alone and
+  // Alaska alone both render with zero artifact) -- the visible seam only
+  // appeared with both active, from mixing a tiled XYZ layer with a static
+  // image overlay at their shared edge (a Leaflet sub-pixel compositing quirk,
+  // not a data problem). Stacking the solid image interior on top masks it.
+  satHiLayer = L.imageOverlay(
+    satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi', 'west_ir_4km', SAT_HI_BBOX, 1536),
+    SAT_HI_BOUNDS,
+    { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
   ).addTo(map);
-  satAkLayer = L.tileLayer.wms(
-    'https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/alaska_ir.cgi',
-    { layers: 'alaska_ir', format: 'image/png', transparent: true, version: '1.1.1',
-      opacity: satOpacity, zIndex: 149, t, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
+  satAkLayer = L.imageOverlay(
+    satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/alaska_ir.cgi', 'alaska_ir', SAT_AK_BBOX, 1200),
+    SAT_AK_BOUNDS,
+    { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
   ).addTo(map);
   document.getElementById('sat-status-note').textContent = '~5 min delay';
 }
