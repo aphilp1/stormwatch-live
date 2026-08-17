@@ -3579,21 +3579,23 @@ function setSatOpacity(val) {
 // tiled WMS -- simpler (one request instead of a tile grid) and matches
 // exactly what a direct curl of the WMS endpoint returns.
 //
-// ROOT CAUSE, found + fixed 2026-08-16: the blocky/moire artifact reported
-// near the Gulf of Alaska was NOT from the new Pacific/Alaska layers at
-// all -- isolated by removing each layer one at a time until it reproduced
-// with ONLY the original, untouched CONUS tile (satLayer) active. IEM's
+// ROOT CAUSE, found 2026-08-16: the blocky/moire artifact reported near
+// the Gulf of Alaska was NOT from the new Pacific/Alaska layers at all --
+// isolated by removing each layer one at a time until it reproduced with
+// ONLY the original, untouched CONUS tile (satLayer) active. IEM's
 // conus-goes-ir-4km tile set degrades into visible aliasing right at its
-// own northern coverage edge (~53N+, over the Gulf of Alaska) -- a
-// pre-existing characteristic of that source that nobody had reason to
-// zoom into before Alaska had any GOES coverage at all. `SAT_CONUS_BOUNDS`
-// below stops the CONUS layer from painting into that degraded edge, so
-// the clean, dedicated Alaska layer (zIndex 149, below it) shows through
-// there instead of being masked by the broken tiles on top.
-// CONUS capped at 53N (comfortably below the ~55-60N degraded zone found
-// over the Gulf of Alaska) and the Alaska layer's bbox extended down to
-// 52.5N gives a 0.5-degree overlap -- no gap, no reintroduced artifact.
-const SAT_CONUS_BOUNDS = L.latLngBounds([20, -130], [53.5, -60]);
+// own northern coverage edge (~53N+, over the Gulf of Alaska), a
+// pre-existing characteristic of that source nobody had reason to zoom
+// into before Alaska had any GOES coverage at all.
+//
+// First attempt restricted satLayer's own `bounds` to avoid that edge --
+// wrong move, confirmed 2026-08-17: it silently cut off real CONUS/
+// Atlantic/Caribbean content the unrestricted layer had always rendered
+// fine, well beyond the -130/-60/20/53.5 box guessed at the time. Reverted
+// to fully unrestricted, matching this layer's original always-worked
+// behavior for the project's whole history. The Alaska layer (zIndex 151,
+// ABOVE satLayer's 150) already covers the actual trouble spot and masks
+// the degraded tiles from on top -- no CONUS-side restriction needed.
 
 // FOUND 2026-08-16, via direct DOM geometry inspection (getBoundingClientRect
 // on each image, not screenshot-guessing): SAT_HI_BBOX's max lat (52.4) was
@@ -3622,7 +3624,7 @@ function initSat() {
   const t = Math.floor(Date.now() / 300000); // changes every 5 min to bust cache
   satLayer = L.tileLayer(
     `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/conus-goes-ir-4km/{z}/{x}/{y}.png?t=${t}`,
-    {opacity: satOpacity, zIndex: 150, bounds: SAT_CONUS_BOUNDS, attribution: 'NOAA GOES-East IR via IEM'}
+    {opacity: satOpacity, zIndex: 150, attribution: 'NOAA GOES-East IR via IEM'}
   ).addTo(map);
   // Hi/Ak sit ABOVE the CONUS tile (zIndex 151 > 150) in their small overlap band.
   // Each is individually clean (confirmed 2026-08-16: isolating CONUS alone and
