@@ -3637,12 +3637,17 @@ function initSat() {
     `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/conus-goes-ir-4km/{z}/{x}/{y}.png?t=${t}`,
     {opacity: satOpacity, zIndex: 150, attribution: 'NOAA GOES-East IR via IEM'}
   ).addTo(map);
-  // Hi/Ak sit ABOVE the CONUS tile (zIndex 151 > 150) in their small overlap band.
-  // Each is individually clean (confirmed 2026-08-16: isolating CONUS alone and
-  // Alaska alone both render with zero artifact) -- the visible seam only
-  // appeared with both active, from mixing a tiled XYZ layer with a static
-  // image overlay at their shared edge (a Leaflet sub-pixel compositing quirk,
-  // not a data problem). Stacking the solid image interior on top masks it.
+  // REAL ROOT CAUSE, found 2026-08-18 by directly comparing the two WMS
+  // sources pixel-for-pixel over the same lat/lon box: west_ir_4km (Hi) has
+  // a genuine internal no-data region in the Gulf of Alaska / far-north
+  // Pacific -- a real diagonal edge of GOES-West's Pacific-sector scan,
+  // rendered as solid opaque white (not transparent, not the "clear sky"
+  // legend color -- confirmed by direct RGBA sampling). alaska_ir (Ak) has
+  // full real data across that same box. Compositing Ak over Hi (verified
+  // with PIL, not guessed) fully masks the gap. Hi and Ak were previously
+  // tied at the same zIndex (151), leaving their relative paint order to
+  // DOM-insertion-order chance instead of guaranteeing it -- Ak now sits
+  // strictly above Hi (152 > 151) so it reliably covers Hi's real gap.
   satHiLayer = L.imageOverlay(
     satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi', 'west_ir_4km', SAT_HI_BBOX, 1536),
     SAT_HI_BOUNDS,
@@ -3651,7 +3656,7 @@ function initSat() {
   satAkLayer = L.imageOverlay(
     satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/alaska_ir.cgi', 'alaska_ir', SAT_AK_BBOX, 1200),
     SAT_AK_BOUNDS,
-    { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
+    { opacity: satOpacity, zIndex: 152, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
   ).addTo(map);
   document.getElementById('sat-status-note').textContent = '~5 min delay';
 }
