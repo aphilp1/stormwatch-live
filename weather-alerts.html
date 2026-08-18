@@ -3628,7 +3628,48 @@ function satWmsImageUrl(base, layerName, bbox, width) {
     `&bbox=${bbox.join(',')}&width=${width}&height=${height}&srs=EPSG:4326&format=image/png&t=${t}`;
 }
 
-function initSat() {
+// GENUINE ROOT CAUSE, found 2026-08-18: west_ir_4km (Hi) and alaska_ir (Ak)
+// each have real internal no-data regions -- confirmed at two SEPARATE
+// locations (Gulf of Alaska in Hi; also reproduced over the central US,
+// where Hi's requested bbox extends past its real usable coverage). Every
+// no-data pixel sampled was exactly opaque (255,255,255,255), while the
+// lightest genuine cloud/clear-sky pixel found in known-good regions was
+// (250,250,250) -- a real, if narrow, margin. Because these regions render
+// OPAQUE white rather than transparent, and Hi/Ak sit above the CONUS tile
+// in the stack, they were masking CONUS's real, correct data underneath
+// wherever their own oversized requested bbox ran past their true coverage
+// -- not just at one spot, but potentially anywhere in their bbox. Chasing
+// each location individually (Gulf of Alaska z-index fix, this commit)
+// doesn't generalize -- fixing the mechanism instead: chroma-key near-white
+// pixels (all channels >= 254) to fully transparent via canvas before
+// using the image, so wherever either source's real data runs out, the
+// layer(s) beneath show through automatically, at any location.
+function chromaKeyWhiteToTransparent(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const px = data.data;
+        for (let i = 0; i < px.length; i += 4) {
+          if (px[i] >= 254 && px[i + 1] >= 254 && px[i + 2] >= 254) px[i + 3] = 0;
+        }
+        ctx.putImageData(data, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) { reject(e); }
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+async function initSat() {
   if (satLayer) { satLayer.remove(); satLayer = null; }
   if (satHiLayer) { satHiLayer.remove(); satHiLayer = null; }
   if (satAkLayer) { satAkLayer.remove(); satAkLayer = null; }
@@ -3637,27 +3678,28 @@ function initSat() {
     `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/conus-goes-ir-4km/{z}/{x}/{y}.png?t=${t}`,
     {opacity: satOpacity, zIndex: 150, attribution: 'NOAA GOES-East IR via IEM'}
   ).addTo(map);
-  // REAL ROOT CAUSE, found 2026-08-18 by directly comparing the two WMS
-  // sources pixel-for-pixel over the same lat/lon box: west_ir_4km (Hi) has
-  // a genuine internal no-data region in the Gulf of Alaska / far-north
-  // Pacific -- a real diagonal edge of GOES-West's Pacific-sector scan,
-  // rendered as solid opaque white (not transparent, not the "clear sky"
-  // legend color -- confirmed by direct RGBA sampling). alaska_ir (Ak) has
-  // full real data across that same box. Compositing Ak over Hi (verified
-  // with PIL, not guessed) fully masks the gap. Hi and Ak were previously
-  // tied at the same zIndex (151), leaving their relative paint order to
-  // DOM-insertion-order chance instead of guaranteeing it -- Ak now sits
-  // strictly above Hi (152 > 151) so it reliably covers Hi's real gap.
-  satHiLayer = L.imageOverlay(
-    satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi', 'west_ir_4km', SAT_HI_BBOX, 1536),
-    SAT_HI_BOUNDS,
-    { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
-  ).addTo(map);
-  satAkLayer = L.imageOverlay(
-    satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/alaska_ir.cgi', 'alaska_ir', SAT_AK_BBOX, 1200),
-    SAT_AK_BOUNDS,
-    { opacity: satOpacity, zIndex: 152, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
-  ).addTo(map);
+  try {
+    const [hiDataUrl, akDataUrl] = await Promise.all([
+      chromaKeyWhiteToTransparent(satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi', 'west_ir_4km', SAT_HI_BBOX, 1536)),
+      chromaKeyWhiteToTransparent(satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/alaska_ir.cgi', 'alaska_ir', SAT_AK_BBOX, 1200)),
+    ]);
+    satHiLayer = L.imageOverlay(hiDataUrl, SAT_HI_BOUNDS,
+      { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
+    ).addTo(map);
+    satAkLayer = L.imageOverlay(akDataUrl, SAT_AK_BOUNDS,
+      { opacity: satOpacity, zIndex: 152, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
+    ).addTo(map);
+  } catch (e) {
+    console.error('GOES-West chroma-key failed, falling back to raw images:', e);
+    satHiLayer = L.imageOverlay(
+      satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi', 'west_ir_4km', SAT_HI_BBOX, 1536),
+      SAT_HI_BOUNDS, { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
+    ).addTo(map);
+    satAkLayer = L.imageOverlay(
+      satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/alaska_ir.cgi', 'alaska_ir', SAT_AK_BBOX, 1200),
+      SAT_AK_BOUNDS, { opacity: satOpacity, zIndex: 152, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
+    ).addTo(map);
+  }
   document.getElementById('sat-status-note').textContent = '~5 min delay';
 }
 
