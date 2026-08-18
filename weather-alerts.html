@@ -8,15 +8,18 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-/* Classic Leaflet tile-seam fix: adjacent XYZ tiles are individually
-   CSS-positioned and can round to sub-pixel gaps, showing a hairline of
-   the pane background through as a faint line between rows (confirmed
-   2026-08-16: reproduced with the CONUS GOES tile layer at 50.65N, no
-   satellite-specific cause -- inherent to L.tileLayer, latent since this
-   app's first tile layer, never exercised at a pan/zoom that exposed it
-   until now). Slightly oversizing each tile so neighbors overlap by a
-   fraction of a pixel hides the gap; this is the standard workaround. */
-.leaflet-tile{width:calc(100% + 1px)!important;height:calc(100% + 1px)!important}
+/* REMOVED 2026-08-17 -- this rule (width/height: calc(100% + 1px) !important
+   on .leaflet-tile) was a severe, site-wide regression. Leaflet sizes tiles
+   via inline pixel styles, not a percentage of a sized parent; forcing a
+   percentage-based width/height with no real percentage basis collapsed
+   EVERY tile on the map -- base map, radar, HRRR, all of it -- to ~1x1px,
+   rendering the entire map blank. Confirmed via direct DOM measurement on
+   the live site: every .leaflet-tile img had getBoundingClientRect() width
+   and height of 1. The theory this rule was meant to fix (a sub-pixel tile
+   gap) turned out to be wrong anyway -- the real seam cause, found later
+   the same night, was an unrelated coordinate mistake in the GOES Hi/Ak
+   bbox math (see initSat() below), fixed independently. This rule was
+   never actually needed and should not be re-added. */
 :root{
   --bg0:#eef0f5;--bg1:#ffffff;--bg2:#f4f5f9;--bg3:#e6e8ef;
   --border:#d4d8e4;--text:#1a1d2e;--text2:#2d333e;--text3:#4f5666;
@@ -3600,14 +3603,22 @@ function setSatOpacity(val) {
 // FOUND 2026-08-16, via direct DOM geometry inspection (getBoundingClientRect
 // on each image, not screenshot-guessing): SAT_HI_BBOX's max lat (52.4) was
 // LOWER than SAT_AK_BBOX's min lat (52.5) -- backwards from the intended
-// overlap, so Hi's image stopped 0.1 degrees before Ak's started. That
-// literal ~4px gap in screen space (confirmed: Ak image bottom at y=633,
-// Hi image top at y=637, nothing between them) was the entire "seam" --
-// every earlier theory (moire, z-index, CSS tile rounding) was chasing a
-// symptom, not this. Ak's min now sits below Hi's max -- genuine overlap.
-const SAT_HI_BBOX    = [-184.449879, 14.561801, -89.550121, 53];
+// overlap, so Hi's image stopped 0.1 degrees before Ak's started -- the
+// entire "seam" at that zoom level.
+//
+// WIDENED 2026-08-17: a hairline ~1deg overlap turned out to still risk a
+// visible gap at other zoom levels/pan positions (reported by the user at
+// zoom 3), where sub-pixel rounding of two independently-CSS-positioned
+// image overlays can round apart instead of together. Rather than chase
+// the exact rounding behavior at every zoom, both bboxes now overlap by a
+// full ~11 degrees (47-58N) -- comfortably past either source's own real
+// data edge (Hi's real coverage ends ~53.5N, Ak's real coverage starts
+// ~51.5N per each WMS source's own GetCapabilities), so at any zoom or
+// pan, at least one image has real content across the whole seam band,
+// not a hairline-precise overlap that only just barely closes the gap.
+const SAT_HI_BBOX    = [-184.449879, 14.561801, -89.550121, 58];
 const SAT_HI_BOUNDS  = L.latLngBounds([SAT_HI_BBOX[1], SAT_HI_BBOX[0]], [SAT_HI_BBOX[3], SAT_HI_BBOX[2]]);
-const SAT_AK_BBOX    = [-178.3, 52, -130, 71.4];
+const SAT_AK_BBOX    = [-178.3, 47, -130, 71.4];
 const SAT_AK_BOUNDS  = L.latLngBounds([SAT_AK_BBOX[1], SAT_AK_BBOX[0]], [SAT_AK_BBOX[3], SAT_AK_BBOX[2]]);
 
 function satWmsImageUrl(base, layerName, bbox, width) {
