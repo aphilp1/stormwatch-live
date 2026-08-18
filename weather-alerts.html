@@ -3621,11 +3621,34 @@ const SAT_HI_BOUNDS  = L.latLngBounds([SAT_HI_BBOX[1], SAT_HI_BBOX[0]], [SAT_HI_
 const SAT_AK_BBOX    = [-178.3, 47, -130, 71.4];
 const SAT_AK_BOUNDS  = L.latLngBounds([SAT_AK_BBOX[1], SAT_AK_BBOX[0]], [SAT_AK_BBOX[3], SAT_AK_BBOX[2]]);
 
+// Web Mercator (EPSG:3857) conversion -- matches exactly what Leaflet renders in.
+// Earlier requests used srs=EPSG:4326 (plain lat/lon, linear/equirectangular).
+// Leaflet's imageOverlay places a static image across four lat/lng corners by
+// stretching it linearly, but Web Mercator's vertical scale is NOT linear with
+// latitude -- it stretches increasingly toward the poles. An EPSG:4326-sourced
+// image spanning 40+ degrees of latitude (SAT_HI_BBOX: 14.5N-58N) shown against
+// a true Web Mercator basemap/tile layer therefore misaligns, worse the further
+// from the image's vertical center -- confirmed 2026-08-18 from a user screenshot
+// showing a visible geographic step (coastline/cloud features not lining up)
+// where the image met the Web-Mercator-tiled CONUS layer. Requesting in
+// EPSG:3857 instead (confirmed supported via this WMS source's own
+// GetCapabilities) makes the fetched image already Web-Mercator-projected, so
+// stretching it linearly across Leaflet's own Web-Mercator-computed corner
+// positions is mathematically exact, not an approximation.
+const MERCATOR_R = 6378137;
+function toMercator(lon, lat) {
+  const x = MERCATOR_R * lon * Math.PI / 180;
+  const y = MERCATOR_R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+  return [x, y];
+}
+
 function satWmsImageUrl(base, layerName, bbox, width) {
-  const height = Math.round(width * (bbox[3] - bbox[1]) / (bbox[2] - bbox[0]));
+  const [minX, minY] = toMercator(bbox[0], bbox[1]);
+  const [maxX, maxY] = toMercator(bbox[2], bbox[3]);
+  const height = Math.round(width * (maxY - minY) / (maxX - minX));
   const t = Math.floor(Date.now() / 300000);
   return `${base}?service=WMS&version=1.1.1&request=GetMap&layers=${layerName}&styles=` +
-    `&bbox=${bbox.join(',')}&width=${width}&height=${height}&srs=EPSG:4326&format=image/png&t=${t}`;
+    `&bbox=${minX},${minY},${maxX},${maxY}&width=${width}&height=${height}&srs=EPSG:3857&format=image/png&t=${t}`;
 }
 
 // GENUINE ROOT CAUSE, found 2026-08-18: west_ir_4km (Hi) and alaska_ir (Ak)
