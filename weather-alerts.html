@@ -2834,6 +2834,7 @@ let modChartInst = null, modLastLat = null, modLastLon = null, modMarker = null;
 
 let satLayer = null, satHiLayer = null, satAkLayer = null, satRefreshTimer = null;
 let satEnabled = false, satOpacity = 0.80;
+let satInitToken = 0; // guards against overlapping async initSat() runs interleaving
 
 let nexradStationsEnabled = false;
 let nexradMarkersGroup = null, nexradStations = [];
@@ -3647,8 +3648,18 @@ function satWmsImageUrl(base, layerName, bbox, width) {
   const [maxX, maxY] = toMercator(bbox[2], bbox[3]);
   const height = Math.round(width * (maxY - minY) / (maxX - minX));
   const t = Math.floor(Date.now() / 300000);
+  // transparent=TRUE: WMS 1.1.1 defaults TRANSPARENT=FALSE, so without this
+  // the server fills its own no-data regions with opaque white -- previously
+  // only removed client-side by chromaKeyWhiteToTransparent(). If that ever
+  // fails (CORS header change, canvas error), the fallback path in initSat()
+  // built the raw image with no transparency handling at all, reinstating
+  // the original white-patch bug. Requesting server-side transparency makes
+  // BOTH the chroma-key path and the fallback path correct. Verified
+  // 2026-08-18: the same no-data box that was 599/600 opaque white is now
+  // 599/600 transparent, while a known-good real-data box stays 800/800
+  // opaque -- real data is untouched.
   return `${base}?service=WMS&version=1.1.1&request=GetMap&layers=${layerName}&styles=` +
-    `&bbox=${minX},${minY},${maxX},${maxY}&width=${width}&height=${height}&srs=EPSG:3857&format=image/png&t=${t}`;
+    `&bbox=${minX},${minY},${maxX},${maxY}&width=${width}&height=${height}&srs=EPSG:3857&format=image/png&transparent=TRUE&t=${t}`;
 }
 
 // GENUINE ROOT CAUSE, found 2026-08-18: west_ir_4km (Hi) and alaska_ir (Ak)
@@ -3696,6 +3707,12 @@ async function initSat() {
   if (satLayer) { satLayer.remove(); satLayer = null; }
   if (satHiLayer) { satHiLayer.remove(); satHiLayer = null; }
   if (satAkLayer) { satAkLayer.remove(); satAkLayer = null; }
+  const myToken = ++satInitToken; // overlapping initSat() runs (e.g. rapid toggle
+  // + the 5-min refresh timer firing close together) can interleave across the
+  // await below -- run B's remove() can fire before run A's addTo(map), leaving
+  // an overlay attached to the map with no variable referencing it, which can
+  // then never be removed or have its opacity changed. Every addTo(map) below
+  // that follows an await is guarded so a superseded run becomes a no-op.
   const t = Math.floor(Date.now() / 300000); // changes every 5 min to bust cache
   satLayer = L.tileLayer(
     `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/conus-goes-ir-4km/{z}/{x}/{y}.png?t=${t}`,
@@ -3706,6 +3723,7 @@ async function initSat() {
       chromaKeyWhiteToTransparent(satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi', 'west_ir_4km', SAT_HI_BBOX, 1536)),
       chromaKeyWhiteToTransparent(satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/alaska_ir.cgi', 'alaska_ir', SAT_AK_BBOX, 1200)),
     ]);
+    if (myToken !== satInitToken) return; // superseded by a newer run
     satHiLayer = L.imageOverlay(hiDataUrl, SAT_HI_BOUNDS,
       { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
     ).addTo(map);
@@ -3714,6 +3732,7 @@ async function initSat() {
     ).addTo(map);
   } catch (e) {
     console.error('GOES-West chroma-key failed, falling back to raw images:', e);
+    if (myToken !== satInitToken) return; // superseded by a newer run
     satHiLayer = L.imageOverlay(
       satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi', 'west_ir_4km', SAT_HI_BBOX, 1536),
       SAT_HI_BOUNDS, { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
@@ -3723,7 +3742,9 @@ async function initSat() {
       SAT_AK_BOUNDS, { opacity: satOpacity, zIndex: 152, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
     ).addTo(map);
   }
-  document.getElementById('sat-status-note').textContent = '~5 min delay';
+  if (myToken === satInitToken) {
+    document.getElementById('sat-status-note').textContent = '~5 min delay';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
