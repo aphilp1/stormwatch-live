@@ -3,12 +3,12 @@
     "site": "Camp Fire / Jarbo Gap, CA",
     "lat": 39.76,
     "lon": -121.37,
-    "generated_utc": "2026-08-20T13:51Z",
+    "generated_utc": "2026-08-21T13:50Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
-    "headline_mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "primary_bust_axis": "timing + direction (when the shift arrives, and the veer)",
+    "headline_mechanism": "SYNOPTIC_TERRAIN",
+    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "primary_bust_axis": "speed (terrain amplification under-resolved by 3km input)",
     "evidence_fraction": {
       "synoptic_terrain": 0.65,
       "pbl_transient": 0.46,
@@ -16,41 +16,43 @@
       "fire_generated": 0.0
     },
     "scores": {
-      "synoptic_terrain": 0.23,
+      "synoptic_terrain": 0.77,
       "pbl_transient": 0.33,
       "convective_outflow": 0.0,
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-08-20T14:00",
-      "sustained_mph": 9.1,
-      "gust_mph": 12.5,
-      "dir_deg": 237,
-      "temp_c": 31.7,
-      "rh_pct": 15,
+      "time": "2026-08-21T14:00",
+      "sustained_mph": 9.7,
+      "gust_mph": 14.5,
+      "dir_deg": 241,
+      "temp_c": 31.0,
+      "rh_pct": 16,
       "min_rh_pct": 14
     },
     "drivers": {
-      "w700_max_ms": 10.5,
+      "w700_max_ms": 16.45,
       "max_cape": 0.0,
-      "low_level_lapse_ckm": 7.19,
+      "low_level_lapse_ckm": 7.44,
       "max_wind_shift_deg": 6.0,
-      "max_gust_ratio": 1.73
+      "max_gust_ratio": 2.05
     },
     "reasons_for_headline": [
-      "shift not driven by convection"
+      "strong 700hPa flow (driver present)",
+      "forcing sustained over window (regime, not transient)",
+      "no active convection (clean terrain regime)"
     ]
   },
   {
     "site": "Tubbs / Mayacamas, CA",
     "lat": 38.55,
     "lon": -122.62,
-    "generated_utc": "2026-08-20T13:51Z",
+    "generated_utc": "2026-08-21T13:50Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
-    "headline_mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "primary_bust_axis": "timing + direction (when the shift arrives, and the veer)",
+    "headline_mechanism": "SYNOPTIC_TERRAIN",
+    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "primary_bust_axis": "speed (terrain amplification under-resolved by 3km input)",
     "evidence_fraction": {
       "synoptic_terrain": 0.65,
       "pbl_transient": 0.46,
@@ -58,36 +60,38 @@
       "fire_generated": 0.0
     },
     "scores": {
-      "synoptic_terrain": 0.23,
+      "synoptic_terrain": 0.77,
       "pbl_transient": 0.33,
       "convective_outflow": 0.0,
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-08-20T17:00",
-      "sustained_mph": 11.1,
-      "gust_mph": 13.6,
+      "time": "2026-08-21T17:00",
+      "sustained_mph": 11.9,
+      "gust_mph": 15.4,
       "dir_deg": 227,
-      "temp_c": 23.9,
-      "rh_pct": 45,
-      "min_rh_pct": 37
+      "temp_c": 25.2,
+      "rh_pct": 41,
+      "min_rh_pct": 35
     },
     "drivers": {
-      "w700_max_ms": 10.7,
+      "w700_max_ms": 16.32,
       "max_cape": 0.0,
-      "low_level_lapse_ckm": 7.58,
-      "max_wind_shift_deg": 4.0,
-      "max_gust_ratio": 1.44
+      "low_level_lapse_ckm": 6.51,
+      "max_wind_shift_deg": 7.0,
+      "max_gust_ratio": 1.63
     },
     "reasons_for_headline": [
-      "shift not driven by convection"
+      "strong 700hPa flow (driver present)",
+      "forcing sustained over window (regime, not transient)",
+      "no active convection (clean terrain regime)"
     ]
   },
   {
     "site": "Thomas / Santa Ynez, CA",
     "lat": 34.52,
     "lon": -119.3,
-    "generated_utc": "2026-08-20T13:51Z",
+    "generated_utc": "2026-08-21T13:50Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
     "headline_mechanism": "SYNOPTIC_TERRAIN",
@@ -106,20 +110,20 @@
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-08-20T16:00",
+      "time": "2026-08-21T15:00",
       "sustained_mph": 8.3,
       "gust_mph": 8.5,
       "dir_deg": 193,
-      "temp_c": 29.0,
-      "rh_pct": 33,
-      "min_rh_pct": 23
+      "temp_c": 30.0,
+      "rh_pct": 28,
+      "min_rh_pct": 21
     },
     "drivers": {
-      "w700_max_ms": 7.95,
+      "w700_max_ms": 6.1,
       "max_cape": 0.0,
-      "low_level_lapse_ckm": 8.02,
+      "low_level_lapse_ckm": 8.66,
       "max_wind_shift_deg": null,
-      "max_gust_ratio": 1.04
+      "max_gust_ratio": 1.1
     },
     "reasons_for_headline": [
       "no active convection (clean terrain regime)"
@@ -129,51 +133,93 @@
     "site": "Woolsey / Santa Monica Mts",
     "lat": 34.1,
     "lon": -118.75,
-    "generated_utc": "2026-08-20T13:51Z",
+    "generated_utc": "2026-08-21T13:50Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
-    "headline_mechanism": "SYNOPTIC_TERRAIN",
-    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
-    "primary_bust_axis": "speed (terrain amplification under-resolved by 3km input)",
+    "headline_mechanism": "PBL_TRANSIENT",
+    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
+    "primary_bust_axis": "timing + direction (when the shift arrives, and the veer)",
     "evidence_fraction": {
       "synoptic_terrain": 0.65,
-      "pbl_transient": 0.15,
+      "pbl_transient": 0.46,
       "convective_outflow": 0.21,
       "fire_generated": 0.0
     },
     "scores": {
       "synoptic_terrain": 0.23,
-      "pbl_transient": 1.0,
+      "pbl_transient": 0.33,
       "convective_outflow": 0.0,
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-08-20T11:00",
-      "sustained_mph": 12.1,
-      "gust_mph": 13.0,
-      "dir_deg": 167,
-      "temp_c": 30.3,
-      "rh_pct": 39,
-      "min_rh_pct": 21
+      "time": "2026-08-21T14:00",
+      "sustained_mph": 10.4,
+      "gust_mph": 11.4,
+      "dir_deg": 187,
+      "temp_c": 36.5,
+      "rh_pct": 21,
+      "min_rh_pct": 20
     },
     "drivers": {
-      "w700_max_ms": 9.63,
+      "w700_max_ms": 7.14,
       "max_cape": 0.0,
-      "low_level_lapse_ckm": 8.31,
-      "max_wind_shift_deg": null,
-      "max_gust_ratio": 1.41
+      "low_level_lapse_ckm": 8.6,
+      "max_wind_shift_deg": 4.0,
+      "max_gust_ratio": 1.39
     },
     "reasons_for_headline": [
-      "no active convection (clean terrain regime)"
+      "shift not driven by convection"
     ]
   },
   {
     "site": "Marshall / Boulder Co, CO",
     "lat": 39.94,
     "lon": -105.18,
-    "generated_utc": "2026-08-20T13:51Z",
+    "generated_utc": "2026-08-21T13:50Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
+    "headline_mechanism": "PBL_TRANSIENT",
+    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
+    "primary_bust_axis": "timing + direction (when the shift arrives, and the veer)",
+    "evidence_fraction": {
+      "synoptic_terrain": 0.65,
+      "pbl_transient": 0.46,
+      "convective_outflow": 0.21,
+      "fire_generated": 0.0
+    },
+    "scores": {
+      "synoptic_terrain": 0.23,
+      "pbl_transient": 0.33,
+      "convective_outflow": 0.0,
+      "fire_generated": 0.0
+    },
+    "peak_surface": {
+      "time": "2026-08-21T14:00",
+      "sustained_mph": 12.9,
+      "gust_mph": 18.8,
+      "dir_deg": 50,
+      "temp_c": 35.2,
+      "rh_pct": 12,
+      "min_rh_pct": 12
+    },
+    "drivers": {
+      "w700_max_ms": 9.02,
+      "max_cape": 220.0,
+      "low_level_lapse_ckm": 7.96,
+      "max_wind_shift_deg": 20.0,
+      "max_gust_ratio": 1.82
+    },
+    "reasons_for_headline": [
+      "shift not driven by convection"
+    ]
+  },
+  {
+    "site": "Yarnell Hill, AZ",
+    "lat": 34.22,
+    "lon": -112.75,
+    "generated_utc": "2026-08-21T13:50Z",
+    "window_hours": 24,
+    "threat_level": "ELEVATED",
     "headline_mechanism": "PBL_TRANSIENT",
     "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
     "primary_bust_axis": "timing + direction (when the shift arrives, and the veer)",
@@ -190,65 +236,22 @@
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-08-20T13:00",
-      "sustained_mph": 10.5,
-      "gust_mph": 19.7,
-      "dir_deg": 40,
-      "temp_c": 32.2,
-      "rh_pct": 17,
-      "min_rh_pct": 12
+      "time": "2026-08-21T00:00",
+      "sustained_mph": 19.6,
+      "gust_mph": 29.5,
+      "dir_deg": 82,
+      "temp_c": 25.1,
+      "rh_pct": 47,
+      "min_rh_pct": 18
     },
     "drivers": {
-      "w700_max_ms": 14.05,
-      "max_cape": 560.0,
-      "low_level_lapse_ckm": 7.58,
-      "max_wind_shift_deg": 11.0,
-      "max_gust_ratio": 2.3
+      "w700_max_ms": 4.21,
+      "max_cape": 730.0,
+      "low_level_lapse_ckm": 9.92,
+      "max_wind_shift_deg": 32.0,
+      "max_gust_ratio": 1.63
     },
     "reasons_for_headline": [
-      "shift not driven by convection"
-    ]
-  },
-  {
-    "site": "Yarnell Hill, AZ",
-    "lat": 34.22,
-    "lon": -112.75,
-    "generated_utc": "2026-08-20T13:51Z",
-    "window_hours": 24,
-    "threat_level": "BENIGN",
-    "headline_mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "primary_bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "evidence_fraction": {
-      "synoptic_terrain": 0.65,
-      "pbl_transient": 0.46,
-      "convective_outflow": 0.21,
-      "fire_generated": 0.0
-    },
-    "scores": {
-      "synoptic_terrain": 0.23,
-      "pbl_transient": 1.0,
-      "convective_outflow": 1.0,
-      "fire_generated": 0.0
-    },
-    "peak_surface": {
-      "time": "2026-08-20T17:00",
-      "sustained_mph": 20.4,
-      "gust_mph": 34.9,
-      "dir_deg": 47,
-      "temp_c": 22.2,
-      "rh_pct": 67,
-      "min_rh_pct": 31
-    },
-    "drivers": {
-      "w700_max_ms": 6.27,
-      "max_cape": 2900.0,
-      "low_level_lapse_ckm": 8.36,
-      "max_wind_shift_deg": 105.0,
-      "max_gust_ratio": 1.91
-    },
-    "reasons_for_headline": [
-      "marked wind shift over a short window (transition)",
       "shift not driven by convection"
     ]
   },
@@ -256,7 +259,7 @@
     "site": "Labor Day / W. Cascades OR",
     "lat": 44.2,
     "lon": -122.2,
-    "generated_utc": "2026-08-20T13:51Z",
+    "generated_utc": "2026-08-21T13:50Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
     "headline_mechanism": "SYNOPTIC_TERRAIN",
@@ -269,28 +272,29 @@
       "fire_generated": 0.0
     },
     "scores": {
-      "synoptic_terrain": 0.23,
+      "synoptic_terrain": 0.54,
       "pbl_transient": 1.0,
       "convective_outflow": 0.0,
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-08-20T15:00",
-      "sustained_mph": 8.6,
-      "gust_mph": 11.9,
-      "dir_deg": 260,
-      "temp_c": 28.7,
-      "rh_pct": 25,
-      "min_rh_pct": 24
+      "time": "2026-08-21T17:00",
+      "sustained_mph": 7.6,
+      "gust_mph": 11.4,
+      "dir_deg": 242,
+      "temp_c": 24.3,
+      "rh_pct": 39,
+      "min_rh_pct": 34
     },
     "drivers": {
-      "w700_max_ms": 8.53,
-      "max_cape": 0.0,
-      "low_level_lapse_ckm": 7.45,
+      "w700_max_ms": 15.79,
+      "max_cape": 140.0,
+      "low_level_lapse_ckm": 6.31,
       "max_wind_shift_deg": null,
-      "max_gust_ratio": 1.69
+      "max_gust_ratio": 1.75
     },
     "reasons_for_headline": [
+      "strong 700hPa flow (driver present)",
       "no active convection (clean terrain regime)"
     ]
   }
