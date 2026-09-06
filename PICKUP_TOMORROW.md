@@ -1,5 +1,77 @@
 # StormWatch — Resume Anchor
 
+## 🎯 PATH TO v2.0 (pinned 2026-09-06 — read this before anything else)
+
+We are v1.0 today. This is the full punch list to get to v2.0, compiled from every
+open item across memory + a live check of current state (nothing here is guessed —
+each item below was either directly observed today or is a real unfinished item
+carried from a prior session). Nothing in this list is started unless marked.
+
+### A. Cloud parity for the agents (biggest gap — public site vs. local app)
+Only **Fire Forecast** runs live on the public site (Cloudflare Worker). Confirmed
+today (2026-09-06) by testing the live public site directly: **Severe Weather
+Nowcast**, **Flood Forecast**, and **Combined Threat** all still show "LOCAL APP"
+and correctly refuse to run for public visitors ("Runs in the local app only" —
+this is the app being honest, not a bug). Alex approved building a cloud version of
+Nowcast next — **ON HOLD, not started**, pending a careful, additive-only
+implementation (new Worker route, existing `/fire-agent` route untouched, tested
+locally before ever touching the deployed Worker or the live site). After Nowcast:
+Flood, then Combined, same pattern each time.
+1. **Severe Weather Nowcast → cloud** — ON HOLD, ready to start when told go.
+2. **Flood Forecast → cloud** — not started.
+3. **Combined Threat → cloud** — not started (depends on all three above existing).
+
+### B. Loose ends already written, never shipped
+4. `mcp-server/README.md`, `.env.example`, `claude_desktop_config.example.json`,
+   `start-stormwatch.ps1`, `RECOVERY.md` — written a long time ago, still untracked
+   locally, never pushed (public repo — needs a secrets check + Alex's OK first).
+5. **Hosting migration** (Cloudflare Pages + R2 + Workers) — plan fully written and
+   ready, never executed. Don't start without Alex explicitly saying go.
+6. **48-Hour Fire Forecast tab** — sitting finished-ish on branch `fire48-wip`
+   (never merged, not on the public site). Alex called it "needs work" once but
+   never said what's wrong with it — ask before touching, don't assume scope.
+
+### C. Fire Watchlist — deeper signal (extends an already-shipped feature)
+7. Alaska/Hawaii coverage (current watchlist is CONUS-only).
+8. ERC / dead-fuel-moisture (WFAS gridded NFDRS) as a sharper fuels term than WFPI alone.
+9. Lightning + new-starts feed as a real ignition signal, not just fuels × weather.
+10. SILVIS WUI housing-fraction per place — sharper exposure term than raw population.
+11. Route the watchlist's top 5 places through the full HRRR→WindNinja pipeline for
+    real terrain-resolved wind, instead of the current flat Open-Meteo classifier.
+
+### D. Coverage gaps — genuinely unverified, not confirmed broken
+These are real gaps in what's been checked, not known bugs — check before assuming
+either way.
+12. Mobile/responsive layout at narrow widths.
+13. Dark mode / contrast — a real 491-instance near-invisible alert bug was found
+    and fixed once; never re-verified since, and the app has changed a lot since.
+14. Accessibility — keyboard navigation, screen-reader support on alert panels,
+    colorblind-safe severity palette. A day-one vision-doc goal; never started.
+15. Cross-browser testing — every verification so far has been Chrome only.
+16. Extended-session behavior on a tab left open a long time (memory leak risk from
+    live-refreshing layers, timers, animation loops).
+17. Fire Winds hindcast library — only 2 of the 12 event cards have actually been
+    opened and checked; the other 10 are unverified.
+18. WindNinja Terrain Wind probe's real click-to-probe behavior — needs the local
+    MCP backend; the actual end-to-end click path has never been verified.
+
+### E. Bigger features from the original vision, never started
+19. **Chat Panel** — a built-in chat window inside StormWatch itself, backed by the
+    MCP server's tools, so questions can be asked without leaving the app.
+20. **NSSL CAMs verification overlays** — LSRs/warnings drawn on the 4-panel model
+    comparison viewer, so it's possible to see whether the models actually verified
+    against what happened, not just compare them to each other.
+21. Expanded MCP servers / external integrations (aviation, marine, space weather)
+    and NVIDIA-accelerated model visualization — long-range, not scoped yet.
+
+**Not on this list because they're already done:** the CARTO/Esri basemap fix,
+county boundary lines, GOES True Color, the bug-catching infra (lint +
+Playwright smoke test + GitHub Action — confirmed present on disk today, an old
+memory calling it unfinished was stale), and the original agent build-out (all
+four agents exist; A above is about cloud deployment, not building them).
+
+---
+
 **Active again 2026-07-28.** Cue to restart: Alex types
 **"resume stormwatch"** → read this file. Master overview = `STORMWATCH_PROJECT_MAP.md`.
 Full ledger for 2026-07-28 session in `Storm_info/STORMWATCH_MASTER_STATUS.md` top entry
