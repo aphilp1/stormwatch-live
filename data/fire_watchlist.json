@@ -1,14 +1,16 @@
 {
- "generated_utc": "2026-09-05T16:18Z",
+ "generated_utc": "2026-09-06T16:27Z",
  "method_version": "2.0",
- "headline": "145 active wildfires are burning uncontained in the US today. The most serious is the Grasshopper Fire in OR, threatening 2,291 structures.",
+ "headline": "142 active wildfires are burning uncontained in the US today. The most serious is the Grasshopper Fire in OR, threatening 2,291 structures.",
  "counts": {
-  "active_uncontained_fires": 145,
+  "active_uncontained_fires": 142,
   "trigger_regions": {
-   "psp": 9
+   "spc": 1,
+   "psp": 9,
+   "redflag": 1
   },
   "emerging_candidates": 60,
-  "new_ignitions_24h": 94
+  "new_ignitions_24h": 93
  },
  "active_threats": [
   {
@@ -16,9 +18,9 @@
    "state": "OR",
    "county": "Wasco",
    "acres": 93993,
-   "pct_contained": 84,
+   "pct_contained": 91,
    "structures_threatened": 2291,
-   "personnel": 333,
+   "personnel": 246,
    "lat": 45.252967,
    "lon": -121.51013299999998,
    "mirrored": false,
@@ -42,19 +44,19 @@
      "distance_mi": 28.5
     }
    ],
-   "narrative": "The Grasshopper Fire in Wasco County, OR has burned 93,993 acres and is 84% contained. NIFC's incident team reports **2,291 structures threatened**. 333 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 14 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind direction (NE, blowing toward the SW) favors pushing the fire toward Mount Hood Villages CDP, 24 miles away.",
+   "narrative": "The Grasshopper Fire in Wasco County, OR has burned 93,993 acres and is 91% contained. NIFC's incident team reports **2,291 structures threatened**. 246 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 23 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window \u2014 the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (NW) is not currently aligned toward Mount Hood Villages CDP, the nearest community of size, 24 miles away.",
    "wind": {
     "threat_level": "BENIGN",
-    "mechanism": "SYNOPTIC_TERRAIN",
-    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "mechanism": "PBL_TRANSIENT",
+    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
     "peak": {
-     "time": "2026-09-05T23:00",
-     "sustained_mph": 7.9,
-     "gust_mph": 14.5,
-     "dir_deg": 61,
-     "temp_c": 7.3,
-     "rh_pct": 63,
-     "min_rh_pct": 46
+     "time": "2026-09-06T23:00",
+     "sustained_mph": 14.2,
+     "gust_mph": 23.0,
+     "dir_deg": 301,
+     "temp_c": 5.8,
+     "rh_pct": 93,
+     "min_rh_pct": 84
     }
    }
   },
@@ -63,8 +65,8 @@
    "state": "OR",
    "county": "Umatilla",
    "acres": 61408.45851537,
-   "pct_contained": 55,
-   "structures_threatened": 1552,
+   "pct_contained": 56,
+   "structures_threatened": 1024,
    "personnel": 785,
    "lat": 45.707,
    "lon": -118.269,
@@ -89,19 +91,19 @@
      "distance_mi": 19.5
     }
    ],
-   "narrative": "The Hagen Fire in Umatilla County, OR has burned 61,408 acres and is 55% contained. NIFC's incident team reports **1,552 structures threatened**. 785 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 12 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind direction (SE, blowing toward the NW) favors pushing the fire toward Athena city, 13 miles away.",
+   "narrative": "The Hagen Fire in Umatilla County, OR has burned 61,408 acres and is 56% contained. NIFC's incident team reports **1,024 structures threatened**. 785 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 14 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (W) is not currently aligned toward Athena city, the nearest community of size, 13 miles away.",
    "wind": {
     "threat_level": "BENIGN",
     "mechanism": "SYNOPTIC_TERRAIN",
     "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
     "peak": {
-     "time": "2026-09-05T02:00",
-     "sustained_mph": 8.9,
-     "gust_mph": 11.6,
-     "dir_deg": 146,
-     "temp_c": 9.7,
-     "rh_pct": 62,
-     "min_rh_pct": 53
+     "time": "2026-09-06T22:00",
+     "sustained_mph": 7.1,
+     "gust_mph": 13.6,
+     "dir_deg": 257,
+     "temp_c": 9.4,
+     "rh_pct": 94,
+     "min_rh_pct": 59
     }
    }
   },
@@ -112,7 +114,7 @@
    "acres": 105854,
    "pct_contained": 99,
    "structures_threatened": 832,
-   "personnel": 15,
+   "personnel": 3,
    "lat": 43.60866699999999,
    "lon": -119.43916699999998,
    "mirrored": false,
@@ -130,19 +132,19 @@
      "distance_mi": 19.0
     }
    ],
-   "narrative": "The Second Flat Fire in Harney County, OR has burned 105,854 acres and is 99% contained. NIFC's incident team reports **832 structures threatened**. 15 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 16 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (SW) is not currently aligned toward Hines city, the nearest community of size, 18 miles away.",
+   "narrative": "The Second Flat Fire in Harney County, OR has burned 105,854 acres and is 99% contained. NIFC's incident team reports **832 structures threatened**. 3 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 23 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window \u2014 the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (N) is not currently aligned toward Hines city, the nearest community of size, 18 miles away.",
    "wind": {
     "threat_level": "BENIGN",
-    "mechanism": "SYNOPTIC_TERRAIN",
-    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "mechanism": "PBL_TRANSIENT",
+    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
     "peak": {
-     "time": "2026-09-05T17:00",
-     "sustained_mph": 5.5,
-     "gust_mph": 16.3,
-     "dir_deg": 235,
-     "temp_c": 16.9,
-     "rh_pct": 31,
-     "min_rh_pct": 22
+     "time": "2026-09-06T06:00",
+     "sustained_mph": 11.4,
+     "gust_mph": 22.6,
+     "dir_deg": 344,
+     "temp_c": 6.0,
+     "rh_pct": 92,
+     "min_rh_pct": 53
     }
    }
   },
@@ -171,19 +173,19 @@
      "distance_mi": 39.0
     }
    ],
-   "narrative": "The Coleman Creek Fire in Harney County, OR has burned 312,771 acres and is 99% contained. NIFC's incident team reports **616 structures threatened**. 9 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 15 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (SE) is not currently aligned toward Burns city, the nearest community of size, 38 miles away.",
+   "narrative": "The Coleman Creek Fire in Harney County, OR has burned 312,771 acres and is 99% contained. NIFC's incident team reports **616 structures threatened**. 9 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 34 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window \u2014 the kind of transition that is hardest for a 3 km forecast model to time and place precisely. Forecast wind (NW) is not currently aligned toward Burns city, the nearest community of size, 38 miles away.",
    "wind": {
     "threat_level": "BENIGN",
-    "mechanism": "SYNOPTIC_TERRAIN",
-    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "mechanism": "PBL_TRANSIENT",
+    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
     "peak": {
-     "time": "2026-09-05T15:00",
-     "sustained_mph": 6.1,
-     "gust_mph": 15.2,
-     "dir_deg": 156,
-     "temp_c": 18.7,
-     "rh_pct": 34,
-     "min_rh_pct": 29
+     "time": "2026-09-06T23:00",
+     "sustained_mph": 25.5,
+     "gust_mph": 33.6,
+     "dir_deg": 317,
+     "temp_c": 8.0,
+     "rh_pct": 81,
+     "min_rh_pct": 35
     }
    }
   },
@@ -194,7 +196,7 @@
    "acres": 55134,
    "pct_contained": 95,
    "structures_threatened": 706,
-   "personnel": 173,
+   "personnel": 167,
    "lat": 42.46949999999999,
    "lon": -121.728667,
    "mirrored": false,
@@ -218,30 +220,16 @@
      "distance_mi": 25.5
     }
    ],
-   "narrative": "The Wrights Spring Fire in Klamath County, OR has burned 55,134 acres and is 95% contained. NIFC's incident team reports **706 structures threatened**. 173 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 11 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (SW) is not currently aligned toward Klamath Falls city, the nearest community of size, 18 miles away.",
-   "wind": {
-    "threat_level": "BENIGN",
-    "mechanism": "SYNOPTIC_TERRAIN",
-    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
-    "peak": {
-     "time": "2026-09-05T17:00",
-     "sustained_mph": 2.0,
-     "gust_mph": 11.2,
-     "dir_deg": 207,
-     "temp_c": 12.9,
-     "rh_pct": 44,
-     "min_rh_pct": 44
-    }
-   }
+   "narrative": "The Wrights Spring Fire in Klamath County, OR has burned 55,134 acres and is 95% contained. NIFC's incident team reports **706 structures threatened**. 167 personnel are assigned. A forecast wind read wasn't available for this fire today."
   },
   {
    "name": "Little Giant",
    "state": "WA",
    "county": "Chelan",
-   "acres": 171161,
+   "acres": 171165,
    "pct_contained": 81,
    "structures_threatened": 327,
-   "personnel": 1078,
+   "personnel": 924,
    "lat": 48.01621699999999,
    "lon": -120.846617,
    "mirrored": false,
@@ -265,19 +253,19 @@
      "distance_mi": 37.2
     }
    ],
-   "narrative": "The Little Giant Fire in Chelan County, WA has burned 171,161 acres and is 81% contained. NIFC's incident team reports **327 structures threatened**. 1,078 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 11 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind direction (NE, blowing toward the SW) favors pushing the fire toward Leavenworth city, 30 miles away.",
+   "narrative": "The Little Giant Fire in Chelan County, WA has burned 171,165 acres and is 81% contained. NIFC's incident team reports **327 structures threatened**. 924 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 14 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (NE) is not currently aligned toward Leavenworth city, the nearest community of size, 30 miles away.",
    "wind": {
     "threat_level": "BENIGN",
     "mechanism": "SYNOPTIC_TERRAIN",
     "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
     "peak": {
-     "time": "2026-09-05T18:00",
-     "sustained_mph": 7.6,
-     "gust_mph": 10.7,
-     "dir_deg": 28,
-     "temp_c": 12.9,
-     "rh_pct": 49,
-     "min_rh_pct": 42
+     "time": "2026-09-06T23:00",
+     "sustained_mph": 1.9,
+     "gust_mph": 13.6,
+     "dir_deg": 54,
+     "temp_c": 8.5,
+     "rh_pct": 61,
+     "min_rh_pct": 31
     }
    }
   },
@@ -285,10 +273,10 @@
    "name": "Plaskett",
    "state": "CA",
    "county": "Monterey",
-   "acres": 29768,
-   "pct_contained": 23,
+   "acres": 29864,
+   "pct_contained": 31,
    "structures_threatened": 266,
-   "personnel": 2134,
+   "personnel": 2287,
    "lat": 35.90566700000001,
    "lon": -121.4125,
    "mirrored": false,
@@ -312,19 +300,19 @@
      "distance_mi": 26.6
     }
    ],
-   "narrative": "The Plaskett Fire in Monterey County, CA has burned 29,768 acres and is 23% contained. NIFC's incident team reports **266 structures threatened**. 2,134 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 12 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (E) is not currently aligned toward Fort Hunter Liggett CDP, the nearest community of size, 12 miles away.",
+   "narrative": "The Plaskett Fire in Monterey County, CA has burned 29,864 acres and is 31% contained. NIFC's incident team reports **266 structures threatened**. 2,287 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 13 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve. Forecast wind (E) is not currently aligned toward Fort Hunter Liggett CDP, the nearest community of size, 12 miles away.",
    "wind": {
     "threat_level": "BENIGN",
     "mechanism": "SYNOPTIC_TERRAIN",
     "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
     "peak": {
-     "time": "2026-09-05T07:00",
-     "sustained_mph": 8.1,
-     "gust_mph": 12.1,
-     "dir_deg": 76,
-     "temp_c": 16.6,
-     "rh_pct": 56,
-     "min_rh_pct": 43
+     "time": "2026-09-06T22:00",
+     "sustained_mph": 9.2,
+     "gust_mph": 12.8,
+     "dir_deg": 96,
+     "temp_c": 17.3,
+     "rh_pct": 47,
+     "min_rh_pct": 35
     }
    }
   },
@@ -340,172 +328,172 @@
    "lon": -119.8976,
    "mirrored": false,
    "nearby_places": [],
-   "narrative": "The 0587 Shingle Fire in Wheeler County, OR has burned 73,183 acres and is 95% contained. NIFC's incident team reports **318 structures threatened**. 27 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 12 mph), which should limit further wind-driven spread for now. This is a sustained, terrain-channeled wind regime \u2014 the setup our WindNinja terrain downscaling is built to resolve.",
+   "narrative": "The 0587 Shingle Fire in Wheeler County, OR has burned 73,183 acres and is 95% contained. NIFC's incident team reports **318 structures threatened**. 27 personnel are assigned. Winds are expected to stay comparatively light over the next 24 hours (gusts near 24 mph), which should limit further wind-driven spread for now. A wind shift is expected during the window \u2014 the kind of transition that is hardest for a 3 km forecast model to time and place precisely.",
    "wind": {
     "threat_level": "BENIGN",
-    "mechanism": "SYNOPTIC_TERRAIN",
-    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "mechanism": "PBL_TRANSIENT",
+    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
     "peak": {
-     "time": "2026-09-05T18:00",
-     "sustained_mph": 8.7,
-     "gust_mph": 12.5,
-     "dir_deg": 314,
-     "temp_c": 14.3,
-     "rh_pct": 40,
-     "min_rh_pct": 22
+     "time": "2026-09-06T19:00",
+     "sustained_mph": 14.6,
+     "gust_mph": 24.2,
+     "dir_deg": 302,
+     "temp_c": 6.1,
+     "rh_pct": 91,
+     "min_rh_pct": 62
     }
    }
   }
  ],
  "new_ignitions": [
   {
-   "name": "Bear Creek",
-   "state": "ND",
-   "county": "Billings",
-   "acres": 80,
-   "pct_contained": null,
-   "cause": null,
-   "lat": 46.714607412583796,
-   "lon": -103.51664379135981,
-   "nearby_places": [
-    {
-     "n": "Dickinson city",
-     "st": "ND",
-     "pop": 25216,
-     "distance_mi": 36.2
-    },
-    {
-     "n": "Bowman city",
-     "st": "ND",
-     "pop": 1523,
-     "distance_mi": 37.0
-    }
-   ],
-   "narrative": "A new fire, the Bear Creek Fire, was just discovered in Billings County, ND within the last 24 hours. Currently 80.0 acres. It's 36 miles from Dickinson city (pop. 25,216). Too new for a full incident report or a structures-threatened count -- worth watching."
-  },
-  {
-   "name": "306",
+   "name": "Follow",
    "state": "TX",
-   "county": "Brazoria",
-   "acres": 260,
-   "pct_contained": 100,
+   "county": "Sutton",
+   "acres": 156,
+   "pct_contained": 50,
    "cause": null,
-   "lat": 28.942955024161023,
-   "lon": -95.50482367290152,
+   "lat": 30.34028512623716,
+   "lon": -100.5506183148143,
    "nearby_places": [
-    {
-     "n": "Jones Creek village",
-     "st": "TX",
-     "pop": 2096,
-     "distance_mi": 3.1
-    },
-    {
-     "n": "Brazoria city",
-     "st": "TX",
-     "pop": 2859,
-     "distance_mi": 7.9
-    },
-    {
-     "n": "Lake Jackson city",
-     "st": "TX",
-     "pop": 27902,
-     "distance_mi": 8.1
-    }
-   ],
-   "narrative": "A new fire, the 306 Fire, was just discovered in Brazoria County, TX within the last 24 hours. Currently 260.0 acres, 100% contained. It's 3 miles from Jones Creek village (pop. 2,096). Too new for a full incident report or a structures-threatened count -- worth watching."
-  },
-  {
-   "name": "Paw",
-   "state": "TX",
-   "county": "Schleicher",
-   "acres": 202,
-   "pct_contained": 100,
-   "cause": null,
-   "lat": 30.873338555812857,
-   "lon": -100.54367501037329,
-   "nearby_places": [
-    {
-     "n": "Eldorado city",
-     "st": "TX",
-     "pop": 1793,
-     "distance_mi": 3.3
-    },
     {
      "n": "Sonora city",
      "st": "TX",
      "pop": 2746,
-     "distance_mi": 21.7
+     "distance_mi": 16.8
     },
     {
-     "n": "San Angelo city",
+     "n": "Eldorado city",
      "st": "TX",
-     "pop": 99507,
-     "distance_mi": 39.6
+     "pop": 1793,
+     "distance_mi": 36.1
     }
    ],
-   "narrative": "A new fire, the Paw Fire, was just discovered in Schleicher County, TX within the last 24 hours. Currently 202.0 acres, 100% contained. It's 3 miles from Eldorado city (pop. 1,793). Too new for a full incident report or a structures-threatened count -- worth watching."
+   "narrative": "A new fire, the Follow Fire, was just discovered in Sutton County, TX within the last 24 hours. Currently 156.0 acres, 50% contained. It's 17 miles from Sonora city (pop. 2,746). Too new for a full incident report or a structures-threatened count -- worth watching."
   },
   {
-   "name": "Neptune",
-   "state": "TX",
-   "county": "Jackson",
-   "acres": 161,
-   "pct_contained": 100,
-   "cause": "Natural",
-   "lat": 29.212846292527843,
-   "lon": -96.65484558588336,
+   "name": "El Dorado",
+   "state": "OK",
+   "county": "Pontotoc",
+   "acres": 109,
+   "pct_contained": null,
+   "cause": null,
+   "lat": 34.54139506630929,
+   "lon": -96.75722962882242,
    "nearby_places": [
     {
-     "n": "Ganado city",
-     "st": "TX",
-     "pop": 2045,
-     "distance_mi": 14.7
+     "n": "Sulphur city",
+     "st": "OK",
+     "pop": 4900,
+     "distance_mi": 13.3
     },
     {
-     "n": "Edna city",
-     "st": "TX",
-     "pop": 5994,
+     "n": "Latta CDP",
+     "st": "OK",
+     "pop": 1413,
+     "distance_mi": 14.9
+    },
+    {
+     "n": "Ada city",
+     "st": "OK",
+     "pop": 16536,
      "distance_mi": 16.4
-    },
-    {
-     "n": "El Campo city",
-     "st": "TX",
-     "pop": 12220,
-     "distance_mi": 23.1
     }
    ],
-   "narrative": "A new fire, the Neptune Fire, was just discovered in Jackson County, TX within the last 24 hours. Currently 161.0 acres, 100% contained. It's 15 miles from Ganado city (pop. 2,045). Cause: natural. Too new for a full incident report or a structures-threatened count -- worth watching."
+   "narrative": "A new fire, the El Dorado Fire, was just discovered in Pontotoc County, OK within the last 24 hours. Currently 109.0 acres. It's 13 miles from Sulphur city (pop. 4,900). Too new for a full incident report or a structures-threatened count -- worth watching."
   },
   {
-   "name": "Hypernight",
-   "state": "TX",
-   "county": "Oldham",
-   "acres": 30,
-   "pct_contained": 100,
+   "name": "Lafayette 212",
+   "state": "AR",
+   "county": "Lafayette",
+   "acres": 94,
+   "pct_contained": null,
    "cause": "Undetermined (remarks required)",
-   "lat": 35.35434592200681,
-   "lon": -102.3566460662127,
+   "lat": 33.06166092585864,
+   "lon": -93.63646772399319,
    "nearby_places": [
     {
-     "n": "Bushland CDP",
-     "st": "TX",
-     "pop": 2950,
-     "distance_mi": 19.8
+     "n": "Springhill city",
+     "st": "LA",
+     "pop": 4659,
+     "distance_mi": 10.9
     },
     {
-     "n": "Amarillo city",
-     "st": "TX",
-     "pop": 200945,
-     "distance_mi": 31.4
+     "n": "Stamps city",
+     "st": "AR",
+     "pop": 1510,
+     "distance_mi": 21.8
     },
     {
-     "n": "Rockwell Place CDP",
-     "st": "TX",
-     "pop": 1694,
-     "distance_mi": 33.5
+     "n": "Vivian town",
+     "st": "LA",
+     "pop": 3020,
+     "distance_mi": 24.2
     }
    ],
-   "narrative": "A new fire, the Hypernight Fire, was just discovered in Oldham County, TX within the last 24 hours. Currently 30.0 acres, 100% contained. It's 20 miles from Bushland CDP (pop. 2,950). Cause: undetermined (remarks required). Too new for a full incident report or a structures-threatened count -- worth watching."
+   "narrative": "A new fire, the Lafayette 212 Fire, was just discovered in Lafayette County, AR within the last 24 hours. Currently 94.0 acres. It's 11 miles from Springhill city (pop. 4,659). Cause: undetermined (remarks required). Too new for a full incident report or a structures-threatened count -- worth watching."
+  },
+  {
+   "name": "Howell",
+   "state": "OK",
+   "county": "Osage",
+   "acres": 60,
+   "pct_contained": null,
+   "cause": null,
+   "lat": 36.65435647487189,
+   "lon": -96.15187463312986,
+   "nearby_places": [
+    {
+     "n": "Pawhuska city",
+     "st": "OK",
+     "pop": 2984,
+     "distance_mi": 10.0
+    },
+    {
+     "n": "Bartlesville city",
+     "st": "OK",
+     "pop": 37559,
+     "distance_mi": 12.7
+    },
+    {
+     "n": "Dewey city",
+     "st": "OK",
+     "pop": 3388,
+     "distance_mi": 15.3
+    }
+   ],
+   "narrative": "A new fire, the Howell Fire, was just discovered in Osage County, OK within the last 24 hours. Currently 60.0 acres. It's 10 miles from Pawhuska city (pop. 2,984). Too new for a full incident report or a structures-threatened count -- worth watching."
+  },
+  {
+   "name": "State Shed",
+   "state": "ID",
+   "county": "Cassia",
+   "acres": 42,
+   "pct_contained": null,
+   "cause": null,
+   "lat": 42.572123096335616,
+   "lon": -113.50467932278544,
+   "nearby_places": [
+    {
+     "n": "Rupert city",
+     "st": "ID",
+     "pop": 6157,
+     "distance_mi": 9.2
+    },
+    {
+     "n": "Heyburn city",
+     "st": "ID",
+     "pop": 3678,
+     "distance_mi": 13.1
+    },
+    {
+     "n": "Paul city",
+     "st": "ID",
+     "pop": 1615,
+     "distance_mi": 14.4
+    }
+   ],
+   "narrative": "A new fire, the State Shed Fire, was just discovered in Cassia County, ID within the last 24 hours. Currently 42.0 acres. It's 9 miles from Rupert city (pop. 6,157). Too new for a full incident report or a structures-threatened count -- worth watching."
   }
  ],
  "emerging_conditions": [
@@ -526,7 +514,7 @@
     "Bartlesville city",
     "Muskogee city"
    ],
-   "narrative": "A fire-weather pattern is developing over AR, OK: Tulsa city, Broken Arrow city, Fayetteville city, Fort Smith city, and Springdale city and 16 other communities sit under NIFC's Significant Fire Potential outlook (days 2,3). USGS fire-danger models put the local large-fire/spread probability as high as 13% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
+   "narrative": "A fire-weather pattern is developing over AR, OK: Tulsa city, Broken Arrow city, Fayetteville city, Fort Smith city, and Springdale city and 16 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2). USGS fire-danger models put the local large-fire/spread probability as high as 12% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
   },
   {
    "lat": 34.7254,
@@ -544,7 +532,7 @@
     "Russellville city",
     "Cabot city"
    ],
-   "narrative": "A fire-weather pattern is developing over AR: Little Rock city, Jonesboro city, Conway city, Benton city, and Paragould city and 13 other communities sit under NIFC's Significant Fire Potential outlook (days 2,3). USGS fire-danger models put the local large-fire/spread probability as high as 1% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
+   "narrative": "A fire-weather pattern is developing over AR: Little Rock city, Jonesboro city, Conway city, Benton city, and Paragould city and 13 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2). USGS fire-danger models put the local large-fire/spread probability as high as 1% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
   },
   {
    "lat": 34.2116,
@@ -563,7 +551,7 @@
     "Malvern city",
     "Camden city"
    ],
-   "narrative": "A fire-weather pattern is developing over AR, MS: Pine Bluff city, Hot Springs city, Texarkana city, El Dorado city, and Clarksdale city and 6 other communities sit under NIFC's Significant Fire Potential outlook (days 2,3). USGS fire-danger models put the local large-fire/spread probability as high as 0% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
+   "narrative": "A fire-weather pattern is developing over AR, MS: Pine Bluff city, Hot Springs city, Texarkana city, El Dorado city, and Clarksdale city and 6 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2). USGS fire-danger models put the local large-fire/spread probability as high as 0% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
   },
   {
    "lat": 34.951,
@@ -581,7 +569,7 @@
     "Booneville city",
     "Senatobia city"
    ],
-   "narrative": "A fire-weather pattern is developing over AR, MS: Southaven city, Olive Branch city, Hernando city, Corinth city, and Blytheville city and 2 other communities sit under NIFC's Significant Fire Potential outlook (days 2,3). USGS fire-danger models put the local large-fire/spread probability as high as 0% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
+   "narrative": "A fire-weather pattern is developing over AR, MS: Southaven city, Olive Branch city, Hernando city, Corinth city, and Blytheville city and 2 other communities sit under NIFC's Significant Fire Potential outlook (days 1,2). USGS fire-danger models put the local large-fire/spread probability as high as 0% in spots. No fire has been reported yet, but the combination of dry fuels and elevated fire weather is exactly the kind that produces a fast-moving run if an ignition occurs."
   }
  ]
 }
