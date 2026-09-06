@@ -49,7 +49,7 @@ CHECKS = [
     ("River gauges", "https://mapservices.weather.noaa.gov/eventdriven/rest/services/water/riv_gauges/MapServer/0/query" + ARC.replace("OBJECTID", "gaugelid"), "json:features"),
     ("USGS streamflow", "https://api.waterdata.usgs.gov/ogcapi/v0/collections/latest-continuous/items?f=json&parameter_code=00060&limit=1", "json:features"),
     ("Montana Mesonet", "https://mesonet.climate.umt.edu/api/v2/stations/?type=json&active=true", "json_list"),
-    ("CARTO basemap", "https://a.basemaps.cartocdn.com/light_all/4/4/6.png", "reach"),
+    ("Basemap tiles (Esri)", "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/4/6/4", "reach"),
     ("CDN libraries", "https://cdn.jsdelivr.net/npm/leaflet-velocity@1.7.0/dist/leaflet-velocity.min.js", "reach"),
 ]
 

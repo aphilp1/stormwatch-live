@@ -203,8 +203,8 @@ const GROUPS = [
     fn: jsonCheck('https://mesonet.climate.umt.edu/api/v2/stations/?type=json&active=true', d => Array.isArray(d) && d.length > 0) },
 ]},
 { name: 'Basemaps & Libraries', checks: [
-  { t: 'CARTO basemap tiles', d: 'basemaps.cartocdn.com light_all',
-    fn: imgCheck('https://a.basemaps.cartocdn.com/light_all/4/4/6.png') },
+  { t: 'Basemap tiles (Esri)', d: 'server.arcgisonline.com Canvas/World_Light_Gray_Base',
+    fn: imgCheck('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/4/6/4') },
   { t: 'USGS topo tiles', d: 'basemap.nationalmap.gov USGSTopo',
     fn: imgCheck('https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/4/6/4') },
   { t: 'Leaflet (unpkg CDN)', d: 'unpkg.com leaflet@1.9.4',

@@ -1690,11 +1690,11 @@ canvas.velocity-overlay{pointer-events:none!important}
           <div class="layer-group-title">Base Map</div>
           <div class="layer-row">
             <label class="toggle"><input type="radio" name="base" value="light" checked onchange="setBase('light')"><span class="toggle-slider"></span></label>
-            <span class="layer-label">Light (CartoDB)</span>
+            <span class="layer-label">Light (ESRI)</span>
           </div>
           <div class="layer-row">
             <label class="toggle"><input type="radio" name="base" value="dark" onchange="setBase('dark')"><span class="toggle-slider"></span></label>
-            <span class="layer-label">Dark (CartoDB)</span>
+            <span class="layer-label">Dark (ESRI)</span>
           </div>
           <div class="layer-row">
             <label class="toggle"><input type="radio" name="base" value="satellite" onchange="setBase('satellite')"><span class="toggle-slider"></span></label>
@@ -2924,13 +2924,13 @@ function initMap() {
   map = L.map('map', {center:[38.5,-96.5],zoom:4,zoomControl:true});
 
   baseLayers.dark = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19}
+    'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    {attribution:'© Esri',maxZoom:16}
   );
 
   baseLayers.light = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19}
+    'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    {attribution:'© Esri',maxZoom:16}
   ).addTo(map);
 
   baseLayers.satellite = L.tileLayer(
@@ -5930,7 +5930,7 @@ function verifInitMap() {
     zoomControl: false, attributionControl: false,
     scrollWheelZoom: true
   });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 10, crossOrigin: true
   }).addTo(verifState.map);
   verifState.lsrLayer  = L.layerGroup().addTo(verifState.map);
