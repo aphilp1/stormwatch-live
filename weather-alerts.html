@@ -2923,15 +2923,23 @@ let fwxLegendOpen = true;
 function initMap() {
   map = L.map('map', {center:[38.5,-96.5],zoom:4,zoomControl:true});
 
-  baseLayers.dark = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    {attribution:'© Esri',maxZoom:16}
-  );
+  // Esri's Canvas basemaps ship as two stacked tile layers: "Base" (landmass/water
+  // fill only) and "Reference" (state/county boundary lines + place labels drawn as
+  // a transparent overlay). CARTO's light_all/dark_all served both in one tile, so
+  // both layers are needed here to match — Base alone renders with no boundaries.
+  baseLayers.dark = L.layerGroup([
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      {attribution:'© Esri',maxZoom:16}),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:16})
+  ]);
 
-  baseLayers.light = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    {attribution:'© Esri',maxZoom:16}
-  ).addTo(map);
+  baseLayers.light = L.layerGroup([
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      {attribution:'© Esri',maxZoom:16}),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:16})
+  ]).addTo(map);
 
   baseLayers.satellite = L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -5931,6 +5939,9 @@ function verifInitMap() {
     scrollWheelZoom: true
   });
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 10, crossOrigin: true
+  }).addTo(verifState.map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 10, crossOrigin: true
   }).addTo(verifState.map);
   verifState.lsrLayer  = L.layerGroup().addTo(verifState.map);
