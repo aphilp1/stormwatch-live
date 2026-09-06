@@ -1095,6 +1095,16 @@ canvas.velocity-overlay{pointer-events:none!important}
           </div>
 
           <div class="layer-row">
+            <label class="toggle"><input type="checkbox" id="lyr-goescolor" onchange="toggleLayer('goescolor',this.checked)"><span class="toggle-slider"></span></label>
+            <span class="layer-label">GOES True Color</span>
+            <span class="layer-note" id="goescolor-status-note">off</span>
+          </div>
+          <div class="opacity-row" id="goescolor-opacity-row" style="display:none">
+            <input type="range" min="10" max="100" value="85" oninput="setGoesColorOpacity(this.value)" id="goescolor-opacity-slider">
+            <span id="goescolor-opacity-val">85%</span>
+          </div>
+
+          <div class="layer-row">
             <label class="toggle"><input type="checkbox" id="lyr-hrrr" onchange="toggleLayer('hrrr',this.checked)"><span class="toggle-slider"></span></label>
             <span class="layer-label">HRRR Simulated Radar</span>
             <span class="layer-note" id="hrrr-note">off</span>
@@ -2835,6 +2845,8 @@ let modChartInst = null, modLastLat = null, modLastLon = null, modMarker = null;
 
 let satLayer = null, satHiLayer = null, satAkLayer = null, satRefreshTimer = null;
 let satEnabled = false, satOpacity = 0.80;
+let goesColorEast = null, goesColorWest = null;
+let goesColorEnabled = false, goesColorOpacity = 0.85;
 let satInitToken = 0; // guards against overlapping async initSat() runs interleaving
 
 let nexradStationsEnabled = false;
@@ -3583,6 +3595,39 @@ function setSatOpacity(val) {
   if (satEnabled && satAkLayer) satAkLayer.setOpacity(satOpacity);
 }
 
+function setGoesColorOpacity(val) {
+  goesColorOpacity = val/100;
+  document.getElementById('goescolor-opacity-val').textContent = val+'%';
+  if (goesColorEnabled && goesColorEast) goesColorEast.setOpacity(goesColorOpacity);
+  if (goesColorEnabled && goesColorWest) goesColorWest.setOpacity(goesColorOpacity);
+}
+
+// GOES True Color (NASA GIBS WMTS, real GOES-East/West GeoColor imagery — see
+// FireView-MCP's dashboard for the same reference implementation, confirmed
+// current against GIBS's own GetCapabilities). Unlike the IR layer above,
+// GIBS serves standard global Web Mercator tiles per satellite: each request
+// outside that satellite's real footprint 404s (Leaflet just leaves the tile
+// blank), so East + West can be plain global tile layers with no manual bbox
+// cropping/chroma-keying needed — East naturally covers CONUS/Atlantic, West
+// naturally covers Pacific/Hawaii/Alaska. GeoColor's native resolution caps
+// at WMTS level 7; requesting deeper zoom just upscales the last real tile.
+// Kept in the shared tilePane (zIndex 160/161) rather than a separate pane —
+// see the county-boundary fix above for why a new pane here would be risky.
+function initGoesColor() {
+  if (goesColorEast) { goesColorEast.remove(); goesColorEast = null; }
+  if (goesColorWest) { goesColorWest.remove(); goesColorWest = null; }
+  const tms = 'GoogleMapsCompatible_Level7';
+  goesColorEast = L.tileLayer(
+    `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_GeoColor/default/default/${tms}/{z}/{y}/{x}.png`,
+    {maxNativeZoom: 7, maxZoom: 18, opacity: goesColorOpacity, zIndex: 160, attribution: 'NASA GIBS / GOES-East GeoColor'}
+  ).addTo(map);
+  goesColorWest = L.tileLayer(
+    `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-West_ABI_GeoColor/default/default/${tms}/{z}/{y}/{x}.png`,
+    {maxNativeZoom: 7, maxZoom: 18, opacity: goesColorOpacity, zIndex: 161, attribution: 'NASA GIBS / GOES-West GeoColor'}
+  ).addTo(map);
+  document.getElementById('goescolor-status-note').textContent = 'live';
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // GOES IR SATELLITE (IEM current tile, auto-refreshes every 5 min)
 // ═══════════════════════════════════════════════════════════════════
@@ -4097,6 +4142,16 @@ async function toggleLayer(name, on) {
       if (satHiLayer) { satHiLayer.remove(); satHiLayer = null; }
       if (satAkLayer) { satAkLayer.remove(); satAkLayer = null; }
       document.getElementById('sat-status-note').textContent = 'off';
+    }
+  } else if (name === 'goescolor') {
+    goesColorEnabled = on;
+    document.getElementById('goescolor-opacity-row').style.display = on ? 'flex' : 'none';
+    if (on) {
+      initGoesColor();
+    } else {
+      if (goesColorEast) { goesColorEast.remove(); goesColorEast = null; }
+      if (goesColorWest) { goesColorWest.remove(); goesColorWest = null; }
+      document.getElementById('goescolor-status-note').textContent = 'off';
     }
   } else if (name === 'hrrr') {
     hrrrEnabled = on;
@@ -6719,6 +6774,7 @@ async function manualRefresh() {
   const jobs = [phase1Ready, loadSPC()];
   if (radarEnabled) jobs.push(initRadar().then(() => showRadarFrame(radarFrames.length - 1)));
   if (satEnabled) initSat();
+  if (goesColorEnabled) initGoesColor();
   if (hrrrEnabled) {
     Object.values(hrrrRefdCache).forEach(l => { try { l.remove(); } catch(_){} });
     Object.values(hrrrRefpCache).forEach(l => { try { l.remove(); } catch(_){} });
