@@ -2829,6 +2829,7 @@ function readableOnWhite(hex) {
 let map, alertGroup, spc1Group, spc2Group, fimGroup, inundationGroup;
 let spc1Cache = []; // {cat, geom} for location-specific SPC level lookup
 let baseLayers = {};
+let countyLayer = null, countyGeoData = null, countyLoadPromise = null;
 let modVar = 'precip', modDays = 4, modView = 'chart';
 let modChartInst = null, modLastLat = null, modLastLon = null, modMarker = null;
 
@@ -3014,6 +3015,14 @@ function initMap() {
   // canvas at z:450 was intercepting real clicks meant for the perimeter beneath it).
   map.createPane('firePerimPane');
   map.getPane('firePerimPane').style.zIndex = 460;
+
+  // County boundary reference lines — above tiles (z:200), below every alert/overlay
+  // pane (overlayPane z:400+), non-interactive so they never steal clicks meant for
+  // alert polygons drawn on top of them.
+  map.createPane('countyPane');
+  map.getPane('countyPane').style.zIndex = 350;
+  map.getPane('countyPane').style.pointerEvents = 'none';
+  ensureCountyLayer().then(l => { if (l && !map.hasLayer(l)) l.addTo(map); });
 
   map.on('click', (e) => {
     if (nowcastMode    && nowcastInputMode    === 'point') { runNowcast(e.latlng.lat, e.latlng.lng); return; }
@@ -4912,9 +4921,40 @@ function setLsrHours(hours) {
 // BASE MAP TOGGLE
 // ═══════════════════════════════════════════════════════════════════
 
+// County boundaries (Census TIGERweb, generalized) — CARTO's light_all/dark_all tiles
+// baked these in; the Esri Base+Reference swap (see initMap) does not include them at
+// any zoom, so they're restored here as a standalone reference layer instead.
+function countyStyle(mode) {
+  return { fill: false, weight: 0.6, opacity: 1,
+           color: mode === 'dark' ? '#5b6472' : '#c3c9d1' };
+}
+function ensureCountyLayer() {
+  if (countyLoadPromise) return countyLoadPromise;
+  countyLoadPromise = fetch('data/us_counties.geojson')
+    .then(r => r.ok ? r.json() : null)
+    .then(geo => {
+      if (!geo) return null;
+      countyGeoData = geo;
+      countyLayer = L.geoJSON(geo, { pane: 'countyPane', interactive: false, style: countyStyle('light') });
+      return countyLayer;
+    })
+    .catch(e => { console.warn('county boundary layer failed to load', e); return null; });
+  return countyLoadPromise;
+}
+
 function setBase(name) {
   Object.values(baseLayers).forEach(l=>{ if(l && map.hasLayer(l)) l.remove(); });
   baseLayers[name].addTo(map);
+  // County lines only make sense on the plain gray canvases — hide them under
+  // satellite imagery or the already-detailed topo/hillshade basemaps.
+  if (countyLayer) {
+    if (name === 'light' || name === 'dark') {
+      countyLayer.setStyle(countyStyle(name));
+      if (!map.hasLayer(countyLayer)) countyLayer.addTo(map);
+    } else if (map.hasLayer(countyLayer)) {
+      map.removeLayer(countyLayer);
+    }
+  }
   // Keep overlay groups on top. These are plain L.layerGroup()s, which (unlike
   // L.featureGroup) has no bringToFront() — remove+re-add achieves the same result.
   [hmsGroup,fwxD2Group,fwxD1Group,dryLtgOutlookGroup,windRhOutlookGroup,mcdGroup,eroGroup,lsrGroup,spc2Group,spc1Group,firePerimGroup,metarGroup,mtGroup,rawsGroup,usgsFlowGroup,usgsGroup,inundationGroup,fimGroup,fireIncidentsGroup,airnowGroup,redFlagGroup,fwxWatchGroup,torWarnGroup,torWatchGroup,svrTstmGroup,flfWarnGroup,winStmGroup,blizzGroup,redFlagAlrtGroup,otherAlvGroup,alertGroup].forEach(g=>{
