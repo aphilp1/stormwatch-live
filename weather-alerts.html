@@ -3016,12 +3016,6 @@ function initMap() {
   map.createPane('firePerimPane');
   map.getPane('firePerimPane').style.zIndex = 460;
 
-  // County boundary reference lines — above tiles (z:200), below every alert/overlay
-  // pane (overlayPane z:400+), non-interactive so they never steal clicks meant for
-  // alert polygons drawn on top of them.
-  map.createPane('countyPane');
-  map.getPane('countyPane').style.zIndex = 350;
-  map.getPane('countyPane').style.pointerEvents = 'none';
   ensureCountyLayer().then(l => { if (l && !map.hasLayer(l)) l.addTo(map); });
 
   map.on('click', (e) => {
@@ -4935,7 +4929,17 @@ function ensureCountyLayer() {
     .then(geo => {
       if (!geo) return null;
       countyGeoData = geo;
-      countyLayer = L.geoJSON(geo, { pane: 'countyPane', interactive: false, style: countyStyle('light') });
+      // Rendered into tilePane itself (not a separate higher pane) so it stacks
+      // between the base map tiles (default zIndex 1) and every weather-imagery
+      // overlay (GOES/HRRR/NEXRAD/etc, all 140-180) — sits just above the basemap,
+      // same as CARTO's old baked-in county lines, and never draws over satellite/
+      // radar data. L.SVG's `zIndex` option is a no-op (unlike GridLayer, the
+      // Renderer base class never applies it to the container) — set the style
+      // directly on its container once created instead.
+      const countyRenderer = L.svg({ pane: 'tilePane' });
+      countyRenderer._container ? (countyRenderer._container.style.zIndex = 50)
+                                 : countyRenderer.once('add', () => { countyRenderer._container.style.zIndex = 50; });
+      countyLayer = L.geoJSON(geo, { renderer: countyRenderer, interactive: false, style: countyStyle('light') });
       return countyLayer;
     })
     .catch(e => { console.warn('county boundary layer failed to load', e); return null; });
