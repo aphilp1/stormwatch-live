@@ -3797,20 +3797,33 @@ function goesAnimRestoreStatic(key) {
   const opac = info.opacity();
   info.layers().forEach(l => { if (l) l.setOpacity(opac); });
 }
-// Second real problem reported live: "super glitchy". Root cause: frames
-// were only ever loaded lazily (current + 2 ahead), so the first full pass
-// through the loop kept hitting not-yet-loaded frames and visibly popped in
-// tile-by-tile as they arrived -- the burst-load fix above (2026-09-07)
-// solved frames rendering incomplete WHILE VISIBLE, but every frame still
-// had to load in real time as playback reached it the first time through.
-// Fixed by priming: every frame's tiles are created and loading in parallel
-// immediately (the same request burst as before -- GIBS handled that fine
-// once already, confirmed 2026-09-07), but nothing is SHOWN until every
-// frame has actually finished loading (or hit a per-frame timeout, so one
-// genuinely broken frame can't hang the whole animation). Costs a few extra
-// seconds up front (shown as "priming Nf…"); the resulting loop is then
-// fully smooth from the very first pass, not just after it's been watched
-// once.
+// Second real problem reported live: "super glitchy", fixed once (priming
+// every frame before showing any of them) -- then, watched over a longer
+// session while panning around Hawaii, "one layer seems to freeze and it
+// attempts to cycle forward". Root cause of THAT: priming loaded every
+// frame's tiles for whatever view was active the moment Animate was
+// clicked, but all 28 tile layers (14 frames x 2 satellites) stay attached
+// to the map for the whole session -- Leaflet re-fetches tiles for ALL of
+// them on every pan/zoom, whether or not they're the one currently visible
+// (opacity 0 doesn't stop a GridLayer from tracking the map's viewport).
+// Nothing ever re-checked whether an off-screen-opacity frame's tiles still
+// matched the CURRENT view once it came back around in the loop -- so after
+// enough panning, a frame could still be showing tiles fetched for an OLD
+// map position (or a fetch that silently failed) while its label kept
+// ticking forward with everyone else, which is exactly "frozen but still
+// cycling".
+//
+// Fixed by making freshness a per-frame, per-view check instead of a
+// one-time upfront load: goesAnimPrepareFrame is now the ONE place any
+// frame's tiles get loaded -- whether that's the very first frame, a
+// background prefetch, or re-validating a frame the loop is about to show
+// again -- and it compares a "view key" (map center + zoom) against the one
+// that frame was last confirmed loaded for for, redrawing and re-awaiting
+// it if the view has moved on since. Only frame 0 blocks Animate's startup;
+// the rest prefetch in the background so the first loop is still smooth,
+// but every subsequent tick keeps re-validating against wherever the map
+// actually is now, so a frame can no longer go stale relative to the
+// current view without being caught and refreshed before it's shown again.
 function goesAnimWaitLoaded(layer, timeoutMs=8000) {
   return new Promise(res => {
     let done = false;
@@ -3819,21 +3832,72 @@ function goesAnimWaitLoaded(layer, timeoutMs=8000) {
     setTimeout(finish, timeoutMs);
   });
 }
-function goesAnimShowFrame(idx) {
-  const opac = goesAnim.key === 'geoColor' ? goesColorOpacity : satOpacity;
-  const prev = goesAnim.cache[goesAnim.idx];
-  if (prev) { prev.east.setOpacity(0); prev.west.setOpacity(0); }
-  goesAnim.idx = idx;
-  const cur = goesAnim.cache[idx];
-  cur.east.setOpacity(opac); cur.west.setOpacity(opac);
-  const d = new Date(goesAnim.stamps[idx]);
-  document.getElementById('goesanim-time-'+goesAnim.key).textContent =
-    String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
+function goesAnimViewKey() {
+  const c = map.getCenter();
+  return c.lat.toFixed(2)+','+c.lng.toFixed(2)+','+map.getZoom();
+}
+async function goesAnimPrepareFrame(anim, idx) {
+  const t = anim.stamps[idx];
+  const viewKey = goesAnimViewKey();
+  let pair = anim.cache[idx];
+  if (pair && pair.viewKey === viewKey) return pair;
+  if (!pair) {
+    pair = {
+      east: L.tileLayer(goesAnimTileURL('GOES-East', anim.product, t), {opacity:0, maxNativeZoom:anim.product.mz, maxZoom:18, zIndex:anim.product.zE, attribution:'NASA GIBS / GOES-East '+anim.product.id}).addTo(map),
+      west: L.tileLayer(goesAnimTileURL('GOES-West', anim.product, t), {opacity:0, maxNativeZoom:anim.product.mz, maxZoom:18, zIndex:anim.product.zW, attribution:'NASA GIBS / GOES-West '+anim.product.id}).addTo(map),
+    };
+    anim.cache[idx] = pair;
+    await Promise.all([goesAnimWaitLoaded(pair.east), goesAnimWaitLoaded(pair.west)]);
+  } else {
+    // Real bug found live 2026-09-08: attaching the 'load' listener AFTER
+    // calling redraw() -- redraw() can fire 'load' synchronously when every
+    // needed tile is already served from the browser's own image/HTTP
+    // cache, so a listener attached afterward misses it entirely and always
+    // falls through to goesAnimWaitLoaded's 8s timeout. That's what "one
+    // layer seems to freeze, cycles forward anyway" actually was: not a
+    // literal hang, the animation was paying the full timeout on nearly
+    // every frame once panning made re-validation kick in, crawling to
+    // roughly one frame per 8-10s instead of the intended speed. Listeners
+    // must be attached BEFORE the call that might synchronously fire them.
+    const eastLoad = goesAnimWaitLoaded(pair.east);
+    const westLoad = goesAnimWaitLoaded(pair.west);
+    pair.east.redraw(); pair.west.redraw();
+    await Promise.all([eastLoad, westLoad]);
+  }
+  pair.viewKey = viewKey; // only stamped AFTER load settles, so a concurrent view change is still caught next time
+  return pair;
+}
+async function goesAnimShowFrame(anim, idx) {
+  const pair = await goesAnimPrepareFrame(anim, idx);
+  if (goesAnim !== anim) return; // stopped/replaced while preparing
+  const opac = anim.key === 'geoColor' ? goesColorOpacity : satOpacity;
+  const prev = anim.cache[anim.idx];
+  if (prev && prev !== pair) { prev.east.setOpacity(0); prev.west.setOpacity(0); }
+  anim.idx = idx;
+  pair.east.setOpacity(opac); pair.west.setOpacity(opac);
+  const d = new Date(anim.stamps[idx]);
+  const timeEl = document.getElementById('goesanim-time-'+anim.key);
+  if (timeEl) timeEl.textContent = String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
 }
 function goesAnimTick() {
-  if (!goesAnim) return;
-  goesAnimShowFrame((goesAnim.idx+1) % goesAnim.stamps.length);
+  if (!goesAnim || goesAnim.busy) return; // don't let a slow re-validation overlap the next tick
+  const anim = goesAnim;
+  anim.busy = true;
+  goesAnimShowFrame(anim, (anim.idx+1) % anim.stamps.length).finally(() => { anim.busy = false; });
 }
+// Chrome throttles setInterval heavily in a backgrounded tab (confirmed live
+// 2026-09-08: a hidden tab's ticks slowed from 600ms to multiple seconds
+// apart) -- a real scenario, not just a testing artifact, any time the user
+// switches to another window/tab while this is playing. Rather than let it
+// crawl through however many frames were "missed" while hidden, force a
+// fresh, current-view-validated frame the moment the tab is visible again.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && goesAnim && !goesAnim.busy) {
+    const anim = goesAnim;
+    anim.busy = true;
+    goesAnimShowFrame(anim, anim.idx).finally(() => { anim.busy = false; });
+  }
+});
 function goesAnimStop() {
   if (!goesAnim) return;
   clearInterval(goesAnim.timer);
@@ -3880,17 +3944,9 @@ async function goesAnimToggle(key) {
   const good = stamps.filter((t,i) => eastOk[i] || westOk[i]).reverse(); // oldest -> newest
   if (good.length < 2) { btn.disabled = false; btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
   const hadStatic = GOES_ANIM_STATIC[key].enabled();
-  const myAnim = goesAnim = {key, product, stamps: good, cache: {}, idx: -1, timer: null, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
-  timeEl.textContent = `priming ${good.length}f…`;
-  const pairs = good.map((t,idx) => {
-    const pair = {
-      east: L.tileLayer(goesAnimTileURL('GOES-East', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id}).addTo(map),
-      west: L.tileLayer(goesAnimTileURL('GOES-West', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id}).addTo(map),
-    };
-    myAnim.cache[idx] = pair;
-    return pair;
-  });
-  await Promise.all(pairs.flatMap(p => [goesAnimWaitLoaded(p.east), goesAnimWaitLoaded(p.west)]));
+  const myAnim = goesAnim = {key, product, stamps: good, cache: {}, idx: -1, timer: null, busy: false, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
+  timeEl.textContent = 'priming…';
+  await goesAnimShowFrame(myAnim, 0); // startup only ever blocks on frame 0
   // Compare object identity, not just .key -- a Stop followed immediately by
   // a fresh Animate on the SAME key during this priming window creates a
   // second goesAnim with the same .key but a different cache; only the call
@@ -3902,9 +3958,18 @@ async function goesAnimToggle(key) {
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[key]);
   if (noteEl) noteEl.textContent = `animating (${good.length}f)`;
   if (hadStatic) goesAnimHideStatic(key);
-  goesAnimShowFrame(0);
   goesAnim.timer = setInterval(goesAnimTick, goesAnim.speedMs);
   btn.textContent = '⏸ Stop';
+  // Prefetch the rest of the loop in the background so playback rarely has
+  // to wait on a frame it hasn't reached yet -- safe even if the view
+  // changes mid-prefetch, since goesAnimPrepareFrame's own view-key check
+  // re-validates rather than trusting a stale load.
+  (async () => {
+    for (let i=1; i<good.length; i++) {
+      if (goesAnim !== myAnim) return;
+      await goesAnimPrepareFrame(myAnim, i);
+    }
+  })();
 }
 
 // ═══════════════════════════════════════════════════════════════════
