@@ -144,6 +144,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .goesanim-btn{font-size:10px;font-weight:600;color:var(--text2);background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:4px;padding:3px 8px;cursor:pointer}
 .goesanim-btn:hover{background:rgba(255,255,255,0.12)}
 .goesanim-btn:disabled{opacity:0.5;cursor:default}
+.goesanim-speed{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:2px 5px;border-radius:4px;font-size:10px}
 .goesanim-time{font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums}
 .usgs-key{padding-left:44px;margin-top:-4px;margin-bottom:8px}
 .usgs-key-hdr{font-size:8px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);font-weight:700;margin-bottom:5px}
@@ -1100,6 +1101,12 @@ canvas.velocity-overlay{pointer-events:none!important}
           </div>
           <div class="goesanim-row">
             <button class="goesanim-btn" id="goesanim-btn-ir" onclick="goesAnimToggle('ir')">▶ Animate</button>
+            <select class="goesanim-speed" id="goesanim-speed-ir" onchange="setGoesAnimSpeed('ir',this.value)">
+              <option value="1200">0.5×</option>
+              <option value="600" selected>1×</option>
+              <option value="300">2×</option>
+              <option value="150">4×</option>
+            </select>
             <span class="goesanim-time" id="goesanim-time-ir">static</span>
           </div>
 
@@ -1114,6 +1121,12 @@ canvas.velocity-overlay{pointer-events:none!important}
           </div>
           <div class="goesanim-row">
             <button class="goesanim-btn" id="goesanim-btn-geoColor" onclick="goesAnimToggle('geoColor')">▶ Animate</button>
+            <select class="goesanim-speed" id="goesanim-speed-geoColor" onchange="setGoesAnimSpeed('geoColor',this.value)">
+              <option value="1200">0.5×</option>
+              <option value="600" selected>1×</option>
+              <option value="300">2×</option>
+              <option value="150">4×</option>
+            </select>
             <span class="goesanim-time" id="goesanim-time-geoColor">static</span>
           </div>
 
@@ -3714,10 +3727,49 @@ function goesAnimProbe(sat, product, time) {
   });
 }
 const GOES_ANIM_STATUS_NOTE = {geoColor: 'goescolor-status-note', ir: 'sat-status-note'};
+// Real bug found live 2026-09-07 zoomed on the Hawaii event: creating every
+// frame's tile layers up front (both satellites x all ~13 frames at once)
+// fired a burst of hundreds of simultaneous tile requests, so the animation
+// visibly rendered as a couple of stray tile squares over an otherwise blank
+// map for the first several seconds while the rest of the burst was still in
+// flight -- not a data gap (every tile 200s with real image bytes, confirmed
+// directly against GIBS), purely a self-inflicted loading-order problem.
+// Fixed the same way this file's own RainViewer radar animation already
+// solves it (see ensureRadarLayer/showRadarFrame above): only the current
+// frame is guaranteed loaded, with a couple of frames prefetched ahead, and
+// frames already seen stay cached (removed only on Stop) so replaying past
+// frames is instant.
+function goesAnimEnsureFrame(idx) {
+  if (goesAnim.cache[idx]) return goesAnim.cache[idx];
+  const t = goesAnim.stamps[idx];
+  const product = goesAnim.product;
+  const pair = {
+    east: L.tileLayer(goesAnimTileURL('GOES-East', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id}).addTo(map),
+    west: L.tileLayer(goesAnimTileURL('GOES-West', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id}).addTo(map),
+  };
+  goesAnim.cache[idx] = pair;
+  return pair;
+}
+function goesAnimShowFrame(idx) {
+  const opac = goesAnim.key === 'geoColor' ? goesColorOpacity : satOpacity;
+  const prev = goesAnim.cache[goesAnim.idx];
+  if (prev) { prev.east.setOpacity(0); prev.west.setOpacity(0); }
+  goesAnim.idx = idx;
+  const cur = goesAnimEnsureFrame(idx);
+  cur.east.setOpacity(opac); cur.west.setOpacity(opac);
+  for (let i=1; i<=2; i++) goesAnimEnsureFrame((idx+i) % goesAnim.stamps.length); // prefetch ahead
+  const d = new Date(goesAnim.stamps[idx]);
+  document.getElementById('goesanim-time-'+goesAnim.key).textContent =
+    String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
+}
+function goesAnimTick() {
+  if (!goesAnim) return;
+  goesAnimShowFrame((goesAnim.idx+1) % goesAnim.stamps.length);
+}
 function goesAnimStop() {
   if (!goesAnim) return;
   clearInterval(goesAnim.timer);
-  goesAnim.frames.forEach(f => { map.removeLayer(f.east); map.removeLayer(f.west); });
+  Object.values(goesAnim.cache).forEach(p => { map.removeLayer(p.east); map.removeLayer(p.west); });
   const btn = document.getElementById('goesanim-btn-'+goesAnim.key);
   const timeEl = document.getElementById('goesanim-time-'+goesAnim.key);
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[goesAnim.key]);
@@ -3729,12 +3781,19 @@ function goesAnimStop() {
   if (noteEl) noteEl.textContent = (goesAnim.key === 'geoColor' ? goesColorEnabled : satEnabled) ? 'live' : 'off';
   goesAnim = null;
 }
+function setGoesAnimSpeed(key, ms) {
+  if (!goesAnim || goesAnim.key !== key) return;
+  goesAnim.speedMs = parseInt(ms, 10);
+  clearInterval(goesAnim.timer);
+  goesAnim.timer = setInterval(goesAnimTick, goesAnim.speedMs);
+}
 async function goesAnimToggle(key) {
   if (goesAnim && goesAnim.key === key) { goesAnimStop(); return; }
   if (goesAnim) goesAnimStop(); // one animation at a time
   const product = GOES_ANIM_PRODUCTS[key];
   const btn = document.getElementById('goesanim-btn-'+key);
   const timeEl = document.getElementById('goesanim-time-'+key);
+  const speedSel = document.getElementById('goesanim-speed-'+key);
   btn.disabled = true; btn.textContent = 'Loading…'; timeEl.textContent = 'probing recent frames…';
   const stamps = goesAnimStamps(14);
   const [eastOk, westOk] = await Promise.all([
@@ -3744,24 +3803,11 @@ async function goesAnimToggle(key) {
   btn.disabled = false;
   const good = stamps.filter((t,i) => eastOk[i] || westOk[i]).reverse(); // oldest -> newest
   if (good.length < 2) { btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
-  const opac = key === 'geoColor' ? goesColorOpacity : satOpacity;
-  const frames = good.map(t => ({
-    t,
-    east: L.tileLayer(goesAnimTileURL('GOES-East', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id}),
-    west: L.tileLayer(goesAnimTileURL('GOES-West', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id}),
-  }));
-  frames.forEach(f => { f.east.addTo(map); f.west.addTo(map); });
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[key]);
-  if (noteEl) noteEl.textContent = `animating (${frames.length}f)`;
-  goesAnim = {key, frames, idx:0, speedMs:600, timer:null};
-  goesAnim.tick = () => {
-    frames.forEach((f,i) => { const on = i===goesAnim.idx ? opac : 0; f.east.setOpacity(on); f.west.setOpacity(on); });
-    const d = new Date(frames[goesAnim.idx].t);
-    timeEl.textContent = String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
-    goesAnim.idx = (goesAnim.idx+1) % frames.length;
-  };
-  goesAnim.timer = setInterval(goesAnim.tick, goesAnim.speedMs);
-  goesAnim.tick();
+  if (noteEl) noteEl.textContent = `animating (${good.length}f)`;
+  goesAnim = {key, product, stamps: good, cache: {}, idx: -1, timer: null, speedMs: parseInt(speedSel?.value||'600', 10)};
+  goesAnimShowFrame(0);
+  goesAnim.timer = setInterval(goesAnimTick, goesAnim.speedMs);
   btn.textContent = '⏸ Stop';
 }
 
