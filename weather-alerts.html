@@ -140,6 +140,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #zoom-badge .zb-label{font-size:8px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.5);font-weight:700}
 #zoom-badge .zb-val{font-size:15px;font-weight:700;color:#e8ecf6;line-height:1}
 .opacity-row span{font-size:10px;color:var(--text3);width:28px}
+.goesanim-row{display:flex;align-items:center;gap:8px;padding-left:44px;margin-top:-4px;margin-bottom:8px}
+.goesanim-btn{font-size:10px;font-weight:600;color:var(--text2);background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:4px;padding:3px 8px;cursor:pointer}
+.goesanim-btn:hover{background:rgba(255,255,255,0.12)}
+.goesanim-btn:disabled{opacity:0.5;cursor:default}
+.goesanim-time{font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums}
 .usgs-key{padding-left:44px;margin-top:-4px;margin-bottom:8px}
 .usgs-key-hdr{font-size:8px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);font-weight:700;margin-bottom:5px}
 .usgs-key-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2);margin-bottom:3px}
@@ -1093,6 +1098,10 @@ canvas.velocity-overlay{pointer-events:none!important}
             <input type="range" min="10" max="100" value="80" oninput="setSatOpacity(this.value)" id="sat-opacity-slider">
             <span id="sat-opacity-val">80%</span>
           </div>
+          <div class="goesanim-row">
+            <button class="goesanim-btn" id="goesanim-btn-ir" onclick="goesAnimToggle('ir')">▶ Animate</button>
+            <span class="goesanim-time" id="goesanim-time-ir">static</span>
+          </div>
 
           <div class="layer-row">
             <label class="toggle"><input type="checkbox" id="lyr-goescolor" onchange="toggleLayer('goescolor',this.checked)"><span class="toggle-slider"></span></label>
@@ -1102,6 +1111,10 @@ canvas.velocity-overlay{pointer-events:none!important}
           <div class="opacity-row" id="goescolor-opacity-row" style="display:none">
             <input type="range" min="10" max="100" value="85" oninput="setGoesColorOpacity(this.value)" id="goescolor-opacity-slider">
             <span id="goescolor-opacity-val">85%</span>
+          </div>
+          <div class="goesanim-row">
+            <button class="goesanim-btn" id="goesanim-btn-geoColor" onclick="goesAnimToggle('geoColor')">▶ Animate</button>
+            <span class="goesanim-time" id="goesanim-time-geoColor">static</span>
           </div>
 
           <div class="layer-row">
@@ -2154,6 +2167,9 @@ canvas.velocity-overlay{pointer-events:none!important}
         <div class="leg"><div class="lsw" style="background:#00bbcc"></div>Winter Storm Warning</div>
         <div class="leg"><div class="lsw" style="background:#ff4500"></div>Blizzard Warning</div>
         <div class="leg"><div class="lsw" style="background:#ff1493"></div>Red Flag Warning</div>
+        <div class="leg"><div class="lsw" style="background:#ff0000"></div>Hurricane Warning</div>
+        <div class="leg"><div class="lsw" style="background:#00dddd"></div>Tropical Storm Warning</div>
+        <div class="leg"><div class="lsw" style="background:#0066cc"></div>High Surf Warning</div>
         <div class="leg"><div class="lsw" style="background:#778899"></div>Other / Advisory</div>
         <div id="legend-sev-hdr">
           <h3>Severity</h3>
@@ -2683,6 +2699,10 @@ const ESTYLES = {
   'Tropical Storm Watch':        {c:'#0088bb',f:'#00aadd',fo:0.18,w:1.0},
   'Storm Surge Warning':         {c:'#9900bb',f:'#bb33ee',fo:0.38,w:2.0},
   'Storm Surge Watch':           {c:'#7700aa',f:'#9922cc',fo:0.20,w:1.0},
+  'High Surf Warning':           {c:'#0044aa',f:'#0066cc',fo:0.30,w:1.5},
+  'High Surf Advisory':          {c:'#336699',f:'#4488bb',fo:0.16,w:1.0},
+  'Rip Current Statement':       {c:'#336699',f:'#4488bb',fo:0.14,w:1.0},
+  'Tropical Cyclone Local Statement': {c:'#886600',f:'#b8860b',fo:0.12,w:1.0},
   'Dense Fog Advisory':          {c:'#557766',f:'#708090',fo:0.20,w:1.0},
   'Dense Smoke Advisory':        {c:'#886644',f:'#aa8855',fo:0.20,w:1.0},
   'Dust Storm Warning':          {c:'#aa8833',f:'#ffe4b5',fo:0.35,w:2.0},
@@ -3119,7 +3139,7 @@ async function loadAlerts() {
     // Phase 2: fetch all zone geometries (no cap), re-render after each batch
     await fetchZones();
     for (const a of alerts) if (!geomCache[a.id]) geomCache[a.id] = buildGeom(a);
-    renderAlerts();
+    renderAlerts(); renderSidebar();
   } catch(e) {
     setDot('err'); setMsg(`Alert fetch failed: ${e.message}`);
     if (_alertsPhase1Resolve) { _alertsPhase1Resolve(); _alertsPhase1Resolve = null; }
@@ -3146,17 +3166,28 @@ async function fetchZones() {
     }));
     // Incrementally render newly resolved zones so the map fills in progressively
     for (const a of alerts) if (!geomCache[a.id]) geomCache[a.id] = buildGeom(a);
-    renderAlerts();
+    renderAlerts(); renderSidebar();
   }
 }
 
+// Collects Polygon/MultiPolygon coordinate rings from a geometry, recursing into
+// GeometryCollection — NWS zone endpoints (api.weather.gov/zones/county/HIC007 etc.)
+// commonly wrap a county's shape in a GeometryCollection (e.g. a MultiPolygon for the
+// mainland + a separate Polygon for an outlying piece), which used to be silently
+// dropped here since only bare Polygon/MultiPolygon were handled — real Hawaii Tornado
+// Watch confirmed to have valid zone geometry that was being discarded this way.
+function collectPolys(g, out) {
+  if (!g) return;
+  if (g.type==='Polygon') out.push(g.coordinates);
+  else if (g.type==='MultiPolygon') out.push(...g.coordinates);
+  else if (g.type==='GeometryCollection') for (const sub of g.geometries||[]) collectPolys(sub, out);
+}
 function buildGeom(alert) {
   if (alert.geometry) return alert.geometry;
   const polys=[];
   for (const z of (alert.properties.affectedZones||[])) {
     const g=zoneCache[z]; if(!g) continue;
-    if (g.type==='Polygon') polys.push(g.coordinates);
-    else if (g.type==='MultiPolygon') polys.push(...g.coordinates);
+    collectPolys(g, polys);
   }
   if (!polys.length) return null;
   return polys.length===1
@@ -3626,6 +3657,112 @@ function initGoesColor() {
     {maxNativeZoom: 7, maxZoom: 18, opacity: goesColorOpacity, zIndex: 161, attribution: 'NASA GIBS / GOES-West GeoColor'}
   ).addTo(map);
   document.getElementById('goescolor-status-note').textContent = 'live';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// GOES ANIMATION (GIBS time-dimension WMTS — GeoColor + IR)
+// ═══════════════════════════════════════════════════════════════════
+// Same East+West-both approach as the static GOES True Color layer above (no
+// lon/lat satellite picking needed — a request outside a satellite's real
+// footprint just 404s), but requests a specific historical timestamp per frame
+// instead of 'default', and only trusts a frame once a real test tile for it
+// has loaded (GIBS's 10-min steps are often missing the most recent 1-2).
+// IR here is GIBS's own Band 13 Clean Infrared product, not the enhanced-
+// palette IEM layer below — that IEM pipeline builds each frame from a
+// chroma-keyed WMS image per region, too expensive to redo per animation
+// frame, so animated IR intentionally uses GIBS's plain IR instead of trying
+// to animate that pipeline. Layered above the static layers via zIndex
+// (162/163 for GeoColor, 156/157 for IR) rather than forcing their checkboxes
+// off, so a static layer left on underneath is harmless once the animation
+// stops and its frames are removed.
+const GOES_ANIM_PRODUCTS = {
+  geoColor: {id:'ABI_GeoColor',               tms:'GoogleMapsCompatible_Level7', mz:7, zE:162, zW:163},
+  ir:       {id:'ABI_Band13_Clean_Infrared',  tms:'GoogleMapsCompatible_Level6', mz:6, zE:156, zW:157},
+};
+let goesAnim = null; // {key, frames:[{t,east,west}], idx, timer, speedMs, tick}
+function goesAnimTileURL(sat, product, time) {
+  return `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${sat}_${product.id}/default/${time}/${product.tms}/{z}/{y}/{x}.png`;
+}
+function goesAnimStamps(n) {
+  // Newest-first 10-min UTC stamps, skipping the ~20 min GIBS ingest lag.
+  const out = [];
+  const base = new Date(Date.now() - 20*60000);
+  base.setUTCMinutes(Math.floor(base.getUTCMinutes()/10)*10, 0, 0);
+  for (let i=0; i<n; i++) out.push(new Date(base.getTime()-i*600000).toISOString().slice(0,16)+':00Z');
+  return out;
+}
+// Standard slippy-map lon/lat -> tile math, used only to build a fixed probe
+// tile per satellite (CONUS center for East, Hawaii for West — this app's own
+// live-audit region) to test whether a given 10-min frame actually exists.
+function lonLatToTile4(lon, lat) {
+  const n = 16; // z=4
+  const x = Math.floor((lon+180)/360*n);
+  const latRad = lat*Math.PI/180;
+  const y = Math.floor((1 - Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n);
+  return {x: Math.max(0,Math.min(n-1,x)), y: Math.max(0,Math.min(n-1,y))};
+}
+const GOES_ANIM_PROBE_TILE = {
+  'GOES-East': lonLatToTile4(-98, 39.5),   // CONUS center
+  'GOES-West': lonLatToTile4(-157, 20),    // Hawaii
+};
+function goesAnimProbe(sat, product, time) {
+  const tile = GOES_ANIM_PROBE_TILE[sat];
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => res(true); im.onerror = () => res(false);
+    im.src = goesAnimTileURL(sat, product, time).replace('{z}/{y}/{x}', `4/${tile.y}/${tile.x}`);
+  });
+}
+const GOES_ANIM_STATUS_NOTE = {geoColor: 'goescolor-status-note', ir: 'sat-status-note'};
+function goesAnimStop() {
+  if (!goesAnim) return;
+  clearInterval(goesAnim.timer);
+  goesAnim.frames.forEach(f => { map.removeLayer(f.east); map.removeLayer(f.west); });
+  const btn = document.getElementById('goesanim-btn-'+goesAnim.key);
+  const timeEl = document.getElementById('goesanim-time-'+goesAnim.key);
+  const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[goesAnim.key]);
+  if (btn) btn.textContent = '▶ Animate';
+  if (timeEl) timeEl.textContent = 'static';
+  // Restore whatever the static layer's own toggle said before the animation
+  // note ('live'/'off') overwrote it — the animation never touches that
+  // checkbox itself, only this text.
+  if (noteEl) noteEl.textContent = (goesAnim.key === 'geoColor' ? goesColorEnabled : satEnabled) ? 'live' : 'off';
+  goesAnim = null;
+}
+async function goesAnimToggle(key) {
+  if (goesAnim && goesAnim.key === key) { goesAnimStop(); return; }
+  if (goesAnim) goesAnimStop(); // one animation at a time
+  const product = GOES_ANIM_PRODUCTS[key];
+  const btn = document.getElementById('goesanim-btn-'+key);
+  const timeEl = document.getElementById('goesanim-time-'+key);
+  btn.disabled = true; btn.textContent = 'Loading…'; timeEl.textContent = 'probing recent frames…';
+  const stamps = goesAnimStamps(14);
+  const [eastOk, westOk] = await Promise.all([
+    Promise.all(stamps.map(t => goesAnimProbe('GOES-East', product, t))),
+    Promise.all(stamps.map(t => goesAnimProbe('GOES-West', product, t))),
+  ]);
+  btn.disabled = false;
+  const good = stamps.filter((t,i) => eastOk[i] || westOk[i]).reverse(); // oldest -> newest
+  if (good.length < 2) { btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
+  const opac = key === 'geoColor' ? goesColorOpacity : satOpacity;
+  const frames = good.map(t => ({
+    t,
+    east: L.tileLayer(goesAnimTileURL('GOES-East', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id}),
+    west: L.tileLayer(goesAnimTileURL('GOES-West', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id}),
+  }));
+  frames.forEach(f => { f.east.addTo(map); f.west.addTo(map); });
+  const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[key]);
+  if (noteEl) noteEl.textContent = `animating (${frames.length}f)`;
+  goesAnim = {key, frames, idx:0, speedMs:600, timer:null};
+  goesAnim.tick = () => {
+    frames.forEach((f,i) => { const on = i===goesAnim.idx ? opac : 0; f.east.setOpacity(on); f.west.setOpacity(on); });
+    const d = new Date(frames[goesAnim.idx].t);
+    timeEl.textContent = String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
+    goesAnim.idx = (goesAnim.idx+1) % frames.length;
+  };
+  goesAnim.timer = setInterval(goesAnim.tick, goesAnim.speedMs);
+  goesAnim.tick();
+  btn.textContent = '⏸ Stop';
 }
 
 // ═══════════════════════════════════════════════════════════════════
