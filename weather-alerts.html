@@ -3752,37 +3752,80 @@ async function goesAnimFindAnchor(product) {
   return null;
 }
 const GOES_ANIM_STATUS_NOTE = {geoColor: 'goescolor-status-note', ir: 'sat-status-note'};
-// Real bug found live 2026-09-07 zoomed on the Hawaii event: creating every
-// frame's tile layers up front (both satellites x all ~13 frames at once)
-// fired a burst of hundreds of simultaneous tile requests, so the animation
-// visibly rendered as a couple of stray tile squares over an otherwise blank
-// map for the first several seconds while the rest of the burst was still in
-// flight -- not a data gap (every tile 200s with real image bytes, confirmed
-// directly against GIBS), purely a self-inflicted loading-order problem.
-// Fixed the same way this file's own RainViewer radar animation already
-// solves it (see ensureRadarLayer/showRadarFrame above): only the current
-// frame is guaranteed loaded, with a couple of frames prefetched ahead, and
-// frames already seen stay cached (removed only on Stop) so replaying past
-// frames is instant.
-function goesAnimEnsureFrame(idx) {
-  if (goesAnim.cache[idx]) return goesAnim.cache[idx];
-  const t = goesAnim.stamps[idx];
-  const product = goesAnim.product;
-  const pair = {
-    east: L.tileLayer(goesAnimTileURL('GOES-East', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id}).addTo(map),
-    west: L.tileLayer(goesAnimTileURL('GOES-West', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id}).addTo(map),
-  };
-  goesAnim.cache[idx] = pair;
-  return pair;
+// key -> the matching static layer's checkbox + the actual Leaflet layer
+// object(s) that need hiding while the animation drives that imagery instead.
+// geoColorLayers()/irLayers() are functions (not a fixed array) because
+// satLayer/satHiLayer/satAkLayer and goesColorEast/West are only created
+// once their own toggle is switched on and can be re-created later.
+const GOES_ANIM_STATIC = {
+  geoColor: {checkbox: 'lyr-goescolor', enabled: () => goesColorEnabled, opacity: () => goesColorOpacity,
+             layers: () => [goesColorEast, goesColorWest]},
+  ir:       {checkbox: 'lyr-sat', enabled: () => satEnabled, opacity: () => satOpacity,
+             layers: () => [satLayer, satHiLayer, satAkLayer]},
+};
+// Real bug found live 2026-09-08, screenshot from the Hawaii event: with the
+// static "GOES IR Satellite" layer left on and Animate also running, the two
+// rendered stacked on top of each other -- static IEM imagery (its own
+// enhanced color palette, full coverage) underneath, animated GIBS frames (a
+// different palette, only wherever that satellite/timestamp has real
+// coverage) on top, producing a visible seam/color mismatch right where the
+// animation's coverage ends. zIndex layering was never going to fix this --
+// two different data sources with different palettes can't be blended, only
+// one should render at a time.
+//
+// First fix attempt unchecked the static layer's own checkbox while
+// animating and re-checked it on Stop -- wrong move, reported back live:
+// "the [toggle] turns off even though the imagery still plays". Two real
+// problems with that approach, not one: (1) flipping the checkbox to
+// "unchecked" while satellite imagery is still genuinely on screen (via the
+// animation) is a lie the UI is telling the user; (2) it made the checkbox
+// and the animation two independently-toggleable things sharing one
+// picture -- unchecking "GOES IR Satellite" while its animation ran did NOT
+// stop the animation (they'd become separate state), so satellite imagery
+// kept playing under a checkbox that now read "off".
+//
+// Fixed properly: the checkbox is never touched. Its underlying Leaflet
+// layer(s) are hidden (opacity 0) while the animation runs and restored on
+// Stop, so the checkbox honestly stays "on" the whole time (satellite
+// imagery genuinely is on, just currently driven by the animation) --
+// and unchecking it now always stops both, in toggleLayer's off-branch below.
+function goesAnimHideStatic(key) {
+  GOES_ANIM_STATIC[key].layers().forEach(l => { if (l) l.setOpacity(0); });
+}
+function goesAnimRestoreStatic(key) {
+  const info = GOES_ANIM_STATIC[key];
+  const opac = info.opacity();
+  info.layers().forEach(l => { if (l) l.setOpacity(opac); });
+}
+// Second real problem reported live: "super glitchy". Root cause: frames
+// were only ever loaded lazily (current + 2 ahead), so the first full pass
+// through the loop kept hitting not-yet-loaded frames and visibly popped in
+// tile-by-tile as they arrived -- the burst-load fix above (2026-09-07)
+// solved frames rendering incomplete WHILE VISIBLE, but every frame still
+// had to load in real time as playback reached it the first time through.
+// Fixed by priming: every frame's tiles are created and loading in parallel
+// immediately (the same request burst as before -- GIBS handled that fine
+// once already, confirmed 2026-09-07), but nothing is SHOWN until every
+// frame has actually finished loading (or hit a per-frame timeout, so one
+// genuinely broken frame can't hang the whole animation). Costs a few extra
+// seconds up front (shown as "priming Nf…"); the resulting loop is then
+// fully smooth from the very first pass, not just after it's been watched
+// once.
+function goesAnimWaitLoaded(layer, timeoutMs=8000) {
+  return new Promise(res => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; res(); } };
+    layer.once('load', finish);
+    setTimeout(finish, timeoutMs);
+  });
 }
 function goesAnimShowFrame(idx) {
   const opac = goesAnim.key === 'geoColor' ? goesColorOpacity : satOpacity;
   const prev = goesAnim.cache[goesAnim.idx];
   if (prev) { prev.east.setOpacity(0); prev.west.setOpacity(0); }
   goesAnim.idx = idx;
-  const cur = goesAnimEnsureFrame(idx);
+  const cur = goesAnim.cache[idx];
   cur.east.setOpacity(opac); cur.west.setOpacity(opac);
-  for (let i=1; i<=2; i++) goesAnimEnsureFrame((idx+i) % goesAnim.stamps.length); // prefetch ahead
   const d = new Date(goesAnim.stamps[idx]);
   document.getElementById('goesanim-time-'+goesAnim.key).textContent =
     String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
@@ -3791,24 +3834,6 @@ function goesAnimTick() {
   if (!goesAnim) return;
   goesAnimShowFrame((goesAnim.idx+1) % goesAnim.stamps.length);
 }
-// key -> the matching static layer's checkbox id + toggleLayer() name.
-const GOES_ANIM_STATIC = {
-  geoColor: {checkbox: 'lyr-goescolor', toggleName: 'goescolor'},
-  ir:       {checkbox: 'lyr-sat',       toggleName: 'sat'},
-};
-// Real bug found live 2026-09-08, screenshot from the Hawaii event: with the
-// static "GOES IR Satellite" layer left on and Animate also running, the two
-// rendered stacked on top of each other -- static IEM imagery (its own
-// enhanced color palette, full coverage) underneath, animated GIBS frames
-// (a different palette, only wherever that satellite/timestamp has real
-// coverage) on top, producing a visible seam/color mismatch right where the
-// animation's coverage ends. zIndex layering was never going to fix this --
-// two different data sources with different palettes can't be blended, only
-// one should render at a time. Fixed by turning the static layer off for the
-// duration of that key's animation (restored on Stop), and, symmetrically,
-// stopping the animation if the user manually re-checks that static layer's
-// box while it's running -- same "always a real, working toggle" principle
-// FireView-MCP's GOES animation already had to apply for its own checkbox.
 function goesAnimStop() {
   if (!goesAnim) return;
   clearInterval(goesAnim.timer);
@@ -3816,17 +3841,19 @@ function goesAnimStop() {
   const btn = document.getElementById('goesanim-btn-'+goesAnim.key);
   const timeEl = document.getElementById('goesanim-time-'+goesAnim.key);
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[goesAnim.key]);
+  const hadStatic = goesAnim.hadStatic;
+  const key = goesAnim.key;
+  // Stop can interrupt an in-flight goesAnimToggle that's still priming
+  // (button left disabled, mid-loading text) -- e.g. the checkbox guards
+  // above call this from a checkbox change, which isn't gated by the
+  // button's disabled state the way a real click on the button itself is.
+  // Always leave the button clickable and correctly labeled either way.
+  if (btn) btn.disabled = false;
   if (btn) btn.textContent = '▶ Animate';
   if (timeEl) timeEl.textContent = 'static';
-  const hadStatic = goesAnim.hadStatic;
-  const staticInfo = GOES_ANIM_STATIC[goesAnim.key];
+  if (noteEl) noteEl.textContent = hadStatic ? (key === 'geoColor' ? 'live' : '~5 min delay') : 'off';
   goesAnim = null;
-  if (hadStatic) {
-    const cb = document.getElementById(staticInfo.checkbox);
-    if (cb && !cb.checked) { cb.checked = true; toggleLayer(staticInfo.toggleName, true); }
-  } else if (noteEl) {
-    noteEl.textContent = 'off';
-  }
+  if (hadStatic) goesAnimRestoreStatic(key);
 }
 function setGoesAnimSpeed(key, ms) {
   if (!goesAnim || goesAnim.key !== key) return;
@@ -3850,19 +3877,31 @@ async function goesAnimToggle(key) {
     Promise.all(stamps.map(t => goesAnimProbe('GOES-East', product, t))),
     Promise.all(stamps.map(t => goesAnimProbe('GOES-West', product, t))),
   ]);
-  btn.disabled = false;
   const good = stamps.filter((t,i) => eastOk[i] || westOk[i]).reverse(); // oldest -> newest
-  if (good.length < 2) { btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
+  if (good.length < 2) { btn.disabled = false; btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
+  const hadStatic = GOES_ANIM_STATIC[key].enabled();
+  const myAnim = goesAnim = {key, product, stamps: good, cache: {}, idx: -1, timer: null, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
+  timeEl.textContent = `priming ${good.length}f…`;
+  const pairs = good.map((t,idx) => {
+    const pair = {
+      east: L.tileLayer(goesAnimTileURL('GOES-East', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id}).addTo(map),
+      west: L.tileLayer(goesAnimTileURL('GOES-West', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id}).addTo(map),
+    };
+    myAnim.cache[idx] = pair;
+    return pair;
+  });
+  await Promise.all(pairs.flatMap(p => [goesAnimWaitLoaded(p.east), goesAnimWaitLoaded(p.west)]));
+  // Compare object identity, not just .key -- a Stop followed immediately by
+  // a fresh Animate on the SAME key during this priming window creates a
+  // second goesAnim with the same .key but a different cache; only the call
+  // that still owns the live goesAnim object may touch the UI or start
+  // playback, otherwise its stale tile layers (already cleaned up if Stop
+  // was clicked, or just orphaned if superseded) would fight the real one.
+  if (goesAnim !== myAnim) return;
+  btn.disabled = false;
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[key]);
   if (noteEl) noteEl.textContent = `animating (${good.length}f)`;
-  // Turn the static layer off for the duration -- see goesAnimStop for why
-  // (two different color palettes stacked on each other, not just a z-order
-  // question). Restored automatically when the animation stops.
-  const staticInfo = GOES_ANIM_STATIC[key];
-  const staticCb = document.getElementById(staticInfo.checkbox);
-  const hadStatic = !!(staticCb && staticCb.checked);
-  if (hadStatic) { staticCb.checked = false; toggleLayer(staticInfo.toggleName, false); }
-  goesAnim = {key, product, stamps: good, cache: {}, idx: -1, timer: null, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
+  if (hadStatic) goesAnimHideStatic(key);
   goesAnimShowFrame(0);
   goesAnim.timer = setInterval(goesAnimTick, goesAnim.speedMs);
   btn.textContent = '⏸ Stop';
@@ -4369,11 +4408,13 @@ async function toggleLayer(name, on) {
       document.getElementById('fema-note').textContent = 'off';
     }
   } else if (name === 'sat') {
-    // Checking this box while the IR animation is running would stack the
-    // static enhanced-color layer under the animated GIBS frames again (the
-    // exact bug fixed above) -- stop the animation first so this checkbox
-    // stays a real, working "show the static layer" action either way.
-    if (on && goesAnim && goesAnim.key === 'ir') goesAnimStop();
+    // Checking this box while an IR animation that started WITHOUT the
+    // static layer is running would stack the two again -- stop the
+    // animation first. Unchecking it while the IR animation IS the one
+    // showing this box's imagery (hadStatic) must also stop it -- otherwise
+    // the checkbox reads "off" while satellite imagery, still driven by the
+    // animation, keeps playing (the exact bug reported live 2026-09-08).
+    if (goesAnim && goesAnim.key === 'ir') goesAnimStop();
     satEnabled = on;
     document.getElementById('sat-opacity-row').style.display = on ? 'flex' : 'none';
     document.getElementById('sat-legend').style.display = on ? 'block' : 'none';
@@ -4389,7 +4430,7 @@ async function toggleLayer(name, on) {
       document.getElementById('sat-status-note').textContent = 'off';
     }
   } else if (name === 'goescolor') {
-    if (on && goesAnim && goesAnim.key === 'geoColor') goesAnimStop();
+    if (goesAnim && goesAnim.key === 'geoColor') goesAnimStop();
     goesColorEnabled = on;
     document.getElementById('goescolor-opacity-row').style.display = on ? 'flex' : 'none';
     if (on) {
