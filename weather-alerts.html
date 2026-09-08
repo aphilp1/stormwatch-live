@@ -3797,100 +3797,68 @@ function goesAnimRestoreStatic(key) {
   const opac = info.opacity();
   info.layers().forEach(l => { if (l) l.setOpacity(opac); });
 }
-// Second real problem reported live: "super glitchy", fixed once (priming
-// every frame before showing any of them) -- then, watched over a longer
-// session while panning around Hawaii, "one layer seems to freeze and it
-// attempts to cycle forward". Root cause of THAT: priming loaded every
-// frame's tiles for whatever view was active the moment Animate was
-// clicked, but all 28 tile layers (14 frames x 2 satellites) stay attached
-// to the map for the whole session -- Leaflet re-fetches tiles for ALL of
-// them on every pan/zoom, whether or not they're the one currently visible
-// (opacity 0 doesn't stop a GridLayer from tracking the map's viewport).
-// Nothing ever re-checked whether an off-screen-opacity frame's tiles still
-// matched the CURRENT view once it came back around in the loop -- so after
-// enough panning, a frame could still be showing tiles fetched for an OLD
-// map position (or a fetch that silently failed) while its label kept
-// ticking forward with everyone else, which is exactly "frozen but still
-// cycling".
+// Second real problem reported live: "super glitchy" -- fixed once by
+// priming every frame's tiles upfront and caching them, then again by
+// tracking a "view key" per cached frame and redrawing on mismatch, then
+// again by fixing a listener-attached-after-redraw race in that -- and it
+// STILL degraded over time ("frozen scene, stitched scene running").
+// Three attempts at keeping a 14-frame, 28-tile-layer cache correctly in
+// sync with a map the user is actively panning is three attempts too many:
+// the whole approach of long-lived layers that get revalidated is what kept
+// producing new ways to go stale.
 //
-// Fixed by making freshness a per-frame, per-view check instead of a
-// one-time upfront load: goesAnimPrepareFrame is now the ONE place any
-// frame's tiles get loaded -- whether that's the very first frame, a
-// background prefetch, or re-validating a frame the loop is about to show
-// again -- and it compares a "view key" (map center + zoom) against the one
-// that frame was last confirmed loaded for for, redrawing and re-awaiting
-// it if the view has moved on since. Only frame 0 blocks Animate's startup;
-// the rest prefetch in the background so the first loop is still smooth,
-// but every subsequent tick keeps re-validating against wherever the map
-// actually is now, so a frame can no longer go stale relative to the
-// current view without being caught and refreshed before it's shown again.
+// Rebuilt on a fundamentally simpler premise: nothing is cached across
+// frames. Every time a frame is shown, its tile layers are created fresh,
+// fetched fresh for whatever the map's current view actually is at that
+// exact moment, and the previous frame's layers are removed once (and only
+// once) the new ones are confirmed loaded -- so there is no persistent
+// state left to ever disagree with the map. When the camera isn't moving,
+// repeat requests for the same frame across loops hit the browser's own
+// HTTP cache and resolve near-instantly, so the common case (watching a
+// static view loop) stays smooth for free; only an actual pan/zoom costs a
+// real fetch, exactly when fetching something new is the correct thing to
+// do anyway.
 function goesAnimWaitLoaded(layer, timeoutMs=8000) {
   return new Promise(res => {
     let done = false;
     const finish = () => { if (!done) { done = true; res(); } };
-    layer.once('load', finish);
-    setTimeout(finish, timeoutMs);
+    layer.once('load', finish); // attached before the layer is added to the
+    layer.once('tileerror', finish); // map, so a synchronous/instant load or
+    setTimeout(finish, timeoutMs); // an all-tiles-404 case can't be missed.
   });
 }
-function goesAnimViewKey() {
-  const c = map.getCenter();
-  return c.lat.toFixed(2)+','+c.lng.toFixed(2)+','+map.getZoom();
-}
-async function goesAnimPrepareFrame(anim, idx) {
-  const t = anim.stamps[idx];
-  const viewKey = goesAnimViewKey();
-  let pair = anim.cache[idx];
-  if (pair && pair.viewKey === viewKey) return pair;
-  if (!pair) {
-    pair = {
-      east: L.tileLayer(goesAnimTileURL('GOES-East', anim.product, t), {opacity:0, maxNativeZoom:anim.product.mz, maxZoom:18, zIndex:anim.product.zE, attribution:'NASA GIBS / GOES-East '+anim.product.id}).addTo(map),
-      west: L.tileLayer(goesAnimTileURL('GOES-West', anim.product, t), {opacity:0, maxNativeZoom:anim.product.mz, maxZoom:18, zIndex:anim.product.zW, attribution:'NASA GIBS / GOES-West '+anim.product.id}).addTo(map),
-    };
-    anim.cache[idx] = pair;
-    await Promise.all([goesAnimWaitLoaded(pair.east), goesAnimWaitLoaded(pair.west)]);
-  } else {
-    // Real bug found live 2026-09-08: attaching the 'load' listener AFTER
-    // calling redraw() -- redraw() can fire 'load' synchronously when every
-    // needed tile is already served from the browser's own image/HTTP
-    // cache, so a listener attached afterward misses it entirely and always
-    // falls through to goesAnimWaitLoaded's 8s timeout. That's what "one
-    // layer seems to freeze, cycles forward anyway" actually was: not a
-    // literal hang, the animation was paying the full timeout on nearly
-    // every frame once panning made re-validation kick in, crawling to
-    // roughly one frame per 8-10s instead of the intended speed. Listeners
-    // must be attached BEFORE the call that might synchronously fire them.
-    const eastLoad = goesAnimWaitLoaded(pair.east);
-    const westLoad = goesAnimWaitLoaded(pair.west);
-    pair.east.redraw(); pair.west.redraw();
-    await Promise.all([eastLoad, westLoad]);
-  }
-  pair.viewKey = viewKey; // only stamped AFTER load settles, so a concurrent view change is still caught next time
-  return pair;
-}
 async function goesAnimShowFrame(anim, idx) {
-  const pair = await goesAnimPrepareFrame(anim, idx);
-  if (goesAnim !== anim) return; // stopped/replaced while preparing
+  const t = anim.stamps[idx];
+  const product = anim.product;
+  const east = L.tileLayer(goesAnimTileURL('GOES-East', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id});
+  const west = L.tileLayer(goesAnimTileURL('GOES-West', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id});
+  const eastLoad = goesAnimWaitLoaded(east);
+  const westLoad = goesAnimWaitLoaded(west);
+  east.addTo(map); west.addTo(map);
+  await Promise.all([eastLoad, westLoad]);
+  if (goesAnim !== anim) { map.removeLayer(east); map.removeLayer(west); return; } // stopped/replaced while loading
   const opac = anim.key === 'geoColor' ? goesColorOpacity : satOpacity;
-  const prev = anim.cache[anim.idx];
-  if (prev && prev !== pair) { prev.east.setOpacity(0); prev.west.setOpacity(0); }
+  east.setOpacity(opac); west.setOpacity(opac);
+  const prev = anim.current;
+  anim.current = {east, west};
   anim.idx = idx;
-  pair.east.setOpacity(opac); pair.west.setOpacity(opac);
-  const d = new Date(anim.stamps[idx]);
+  if (prev) { map.removeLayer(prev.east); map.removeLayer(prev.west); } // only removed AFTER the new pair is visible -- no blank gap
+  const d = new Date(t);
   const timeEl = document.getElementById('goesanim-time-'+anim.key);
   if (timeEl) timeEl.textContent = String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
 }
 function goesAnimTick() {
-  if (!goesAnim || goesAnim.busy) return; // don't let a slow re-validation overlap the next tick
+  if (!goesAnim || goesAnim.busy) return; // don't let a slow frame overlap the next tick
   const anim = goesAnim;
   anim.busy = true;
   goesAnimShowFrame(anim, (anim.idx+1) % anim.stamps.length).finally(() => { anim.busy = false; });
 }
 // Chrome throttles setInterval heavily in a backgrounded tab (confirmed live
 // 2026-09-08: a hidden tab's ticks slowed from 600ms to multiple seconds
-// apart) -- a real scenario, not just a testing artifact, any time the user
-// switches to another window/tab while this is playing. Rather than let it
-// crawl through however many frames were "missed" while hidden, force a
-// fresh, current-view-validated frame the moment the tab is visible again.
+// apart) -- a real scenario any time the user switches to another window
+// while this plays, not just a testing artifact. Force a fresh frame,
+// for wherever the map actually is right now, the moment the tab is visible
+// again, rather than waiting for the timer to catch up on its own.
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && goesAnim && !goesAnim.busy) {
     const anim = goesAnim;
@@ -3901,7 +3869,7 @@ document.addEventListener('visibilitychange', () => {
 function goesAnimStop() {
   if (!goesAnim) return;
   clearInterval(goesAnim.timer);
-  Object.values(goesAnim.cache).forEach(p => { map.removeLayer(p.east); map.removeLayer(p.west); });
+  if (goesAnim.current) { map.removeLayer(goesAnim.current.east); map.removeLayer(goesAnim.current.west); }
   const btn = document.getElementById('goesanim-btn-'+goesAnim.key);
   const timeEl = document.getElementById('goesanim-time-'+goesAnim.key);
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[goesAnim.key]);
@@ -3944,15 +3912,15 @@ async function goesAnimToggle(key) {
   const good = stamps.filter((t,i) => eastOk[i] || westOk[i]).reverse(); // oldest -> newest
   if (good.length < 2) { btn.disabled = false; btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
   const hadStatic = GOES_ANIM_STATIC[key].enabled();
-  const myAnim = goesAnim = {key, product, stamps: good, cache: {}, idx: -1, timer: null, busy: false, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
-  timeEl.textContent = 'priming…';
-  await goesAnimShowFrame(myAnim, 0); // startup only ever blocks on frame 0
+  const myAnim = goesAnim = {key, product, stamps: good, current: null, idx: -1, timer: null, busy: false, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
+  timeEl.textContent = 'loading…';
+  await goesAnimShowFrame(myAnim, 0); // startup only ever blocks on frame 0; every later frame loads just-in-time
   // Compare object identity, not just .key -- a Stop followed immediately by
-  // a fresh Animate on the SAME key during this priming window creates a
-  // second goesAnim with the same .key but a different cache; only the call
-  // that still owns the live goesAnim object may touch the UI or start
-  // playback, otherwise its stale tile layers (already cleaned up if Stop
-  // was clicked, or just orphaned if superseded) would fight the real one.
+  // a fresh Animate on the SAME key during this loading window creates a
+  // second goesAnim with the same .key; only the call that still owns the
+  // live goesAnim object may touch the UI or start playback, otherwise its
+  // own (already-cleaned-up-by-Stop, or simply orphaned) layers would fight
+  // the real one.
   if (goesAnim !== myAnim) return;
   btn.disabled = false;
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[key]);
@@ -3960,16 +3928,6 @@ async function goesAnimToggle(key) {
   if (hadStatic) goesAnimHideStatic(key);
   goesAnim.timer = setInterval(goesAnimTick, goesAnim.speedMs);
   btn.textContent = '⏸ Stop';
-  // Prefetch the rest of the loop in the background so playback rarely has
-  // to wait on a frame it hasn't reached yet -- safe even if the view
-  // changes mid-prefetch, since goesAnimPrepareFrame's own view-key check
-  // re-validates rather than trusting a stale load.
-  (async () => {
-    for (let i=1; i<good.length; i++) {
-      if (goesAnim !== myAnim) return;
-      await goesAnimPrepareFrame(myAnim, i);
-    }
-  })();
 }
 
 // ═══════════════════════════════════════════════════════════════════
