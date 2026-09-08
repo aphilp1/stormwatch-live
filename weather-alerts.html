@@ -3696,12 +3696,15 @@ let goesAnim = null; // {key, frames:[{t,east,west}], idx, timer, speedMs, tick}
 function goesAnimTileURL(sat, product, time) {
   return `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${sat}_${product.id}/default/${time}/${product.tms}/{z}/{y}/{x}.png`;
 }
-function goesAnimStamps(n) {
-  // Newest-first 10-min UTC stamps, skipping the ~20 min GIBS ingest lag.
+function goesAnimStampAt(d) {
+  const t = new Date(d);
+  t.setUTCMinutes(Math.floor(t.getUTCMinutes()/10)*10, 0, 0);
+  return t.toISOString().slice(0,16)+':00Z';
+}
+function goesAnimStampsBack(anchorMs, n) {
+  // Newest-first 10-min UTC stamps counting back from a known-good anchor time.
   const out = [];
-  const base = new Date(Date.now() - 20*60000);
-  base.setUTCMinutes(Math.floor(base.getUTCMinutes()/10)*10, 0, 0);
-  for (let i=0; i<n; i++) out.push(new Date(base.getTime()-i*600000).toISOString().slice(0,16)+':00Z');
+  for (let i=0; i<n; i++) out.push(goesAnimStampAt(anchorMs - i*600000));
   return out;
 }
 // Standard slippy-map lon/lat -> tile math, used only to build a fixed probe
@@ -3725,6 +3728,28 @@ function goesAnimProbe(sat, product, time) {
     im.onload = () => res(true); im.onerror = () => res(false);
     im.src = goesAnimTileURL(sat, product, time).replace('{z}/{y}/{x}', `4/${tile.y}/${tile.x}`);
   });
+}
+// Real bug found live 2026-09-08: GIBS's timestamped (time-dimension) archive
+// lags its own near-real-time 'default' mosaic by an amount that is NOT a
+// small fixed constant -- confirmed directly against GIBS that on this date
+// the lag was ~4 hours (11:10Z was the newest archived frame at 15:04Z
+// "now"), where the previous fixed 20-minute assumption always searched a
+// window that landed entirely inside the un-archived gap, so probing never
+// found a single frame ("no recent frames available" every time). Fixed by
+// stepping backward through widening offsets to find a real anchor frame
+// first, then building the actual N-frame list from there -- adapts whether
+// the lag is 20 minutes (fast path, first offset hits) or several hours.
+const GOES_ANIM_LAG_OFFSETS_MIN = [20, 40, 70, 130, 250, 490]; // up to ~8h10m back
+async function goesAnimFindAnchor(product) {
+  for (const mins of GOES_ANIM_LAG_OFFSETS_MIN) {
+    const stamp = goesAnimStampAt(Date.now() - mins*60000);
+    const [eastOk, westOk] = await Promise.all([
+      goesAnimProbe('GOES-East', product, stamp),
+      goesAnimProbe('GOES-West', product, stamp),
+    ]);
+    if (eastOk || westOk) return stamp;
+  }
+  return null;
 }
 const GOES_ANIM_STATUS_NOTE = {geoColor: 'goescolor-status-note', ir: 'sat-status-note'};
 // Real bug found live 2026-09-07 zoomed on the Hawaii event: creating every
@@ -3794,8 +3819,11 @@ async function goesAnimToggle(key) {
   const btn = document.getElementById('goesanim-btn-'+key);
   const timeEl = document.getElementById('goesanim-time-'+key);
   const speedSel = document.getElementById('goesanim-speed-'+key);
-  btn.disabled = true; btn.textContent = 'Loading…'; timeEl.textContent = 'probing recent frames…';
-  const stamps = goesAnimStamps(14);
+  btn.disabled = true; btn.textContent = 'Loading…'; timeEl.textContent = 'finding latest frame…';
+  const anchor = await goesAnimFindAnchor(product);
+  if (!anchor) { btn.disabled = false; btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
+  timeEl.textContent = 'probing recent frames…';
+  const stamps = goesAnimStampsBack(new Date(anchor).getTime(), 14);
   const [eastOk, westOk] = await Promise.all([
     Promise.all(stamps.map(t => goesAnimProbe('GOES-East', product, t))),
     Promise.all(stamps.map(t => goesAnimProbe('GOES-West', product, t))),
