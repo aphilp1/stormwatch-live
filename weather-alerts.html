@@ -3791,6 +3791,24 @@ function goesAnimTick() {
   if (!goesAnim) return;
   goesAnimShowFrame((goesAnim.idx+1) % goesAnim.stamps.length);
 }
+// key -> the matching static layer's checkbox id + toggleLayer() name.
+const GOES_ANIM_STATIC = {
+  geoColor: {checkbox: 'lyr-goescolor', toggleName: 'goescolor'},
+  ir:       {checkbox: 'lyr-sat',       toggleName: 'sat'},
+};
+// Real bug found live 2026-09-08, screenshot from the Hawaii event: with the
+// static "GOES IR Satellite" layer left on and Animate also running, the two
+// rendered stacked on top of each other -- static IEM imagery (its own
+// enhanced color palette, full coverage) underneath, animated GIBS frames
+// (a different palette, only wherever that satellite/timestamp has real
+// coverage) on top, producing a visible seam/color mismatch right where the
+// animation's coverage ends. zIndex layering was never going to fix this --
+// two different data sources with different palettes can't be blended, only
+// one should render at a time. Fixed by turning the static layer off for the
+// duration of that key's animation (restored on Stop), and, symmetrically,
+// stopping the animation if the user manually re-checks that static layer's
+// box while it's running -- same "always a real, working toggle" principle
+// FireView-MCP's GOES animation already had to apply for its own checkbox.
 function goesAnimStop() {
   if (!goesAnim) return;
   clearInterval(goesAnim.timer);
@@ -3800,11 +3818,15 @@ function goesAnimStop() {
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[goesAnim.key]);
   if (btn) btn.textContent = '▶ Animate';
   if (timeEl) timeEl.textContent = 'static';
-  // Restore whatever the static layer's own toggle said before the animation
-  // note ('live'/'off') overwrote it — the animation never touches that
-  // checkbox itself, only this text.
-  if (noteEl) noteEl.textContent = (goesAnim.key === 'geoColor' ? goesColorEnabled : satEnabled) ? 'live' : 'off';
+  const hadStatic = goesAnim.hadStatic;
+  const staticInfo = GOES_ANIM_STATIC[goesAnim.key];
   goesAnim = null;
+  if (hadStatic) {
+    const cb = document.getElementById(staticInfo.checkbox);
+    if (cb && !cb.checked) { cb.checked = true; toggleLayer(staticInfo.toggleName, true); }
+  } else if (noteEl) {
+    noteEl.textContent = 'off';
+  }
 }
 function setGoesAnimSpeed(key, ms) {
   if (!goesAnim || goesAnim.key !== key) return;
@@ -3833,7 +3855,14 @@ async function goesAnimToggle(key) {
   if (good.length < 2) { btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[key]);
   if (noteEl) noteEl.textContent = `animating (${good.length}f)`;
-  goesAnim = {key, product, stamps: good, cache: {}, idx: -1, timer: null, speedMs: parseInt(speedSel?.value||'600', 10)};
+  // Turn the static layer off for the duration -- see goesAnimStop for why
+  // (two different color palettes stacked on each other, not just a z-order
+  // question). Restored automatically when the animation stops.
+  const staticInfo = GOES_ANIM_STATIC[key];
+  const staticCb = document.getElementById(staticInfo.checkbox);
+  const hadStatic = !!(staticCb && staticCb.checked);
+  if (hadStatic) { staticCb.checked = false; toggleLayer(staticInfo.toggleName, false); }
+  goesAnim = {key, product, stamps: good, cache: {}, idx: -1, timer: null, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
   goesAnimShowFrame(0);
   goesAnim.timer = setInterval(goesAnimTick, goesAnim.speedMs);
   btn.textContent = '⏸ Stop';
@@ -4340,6 +4369,11 @@ async function toggleLayer(name, on) {
       document.getElementById('fema-note').textContent = 'off';
     }
   } else if (name === 'sat') {
+    // Checking this box while the IR animation is running would stack the
+    // static enhanced-color layer under the animated GIBS frames again (the
+    // exact bug fixed above) -- stop the animation first so this checkbox
+    // stays a real, working "show the static layer" action either way.
+    if (on && goesAnim && goesAnim.key === 'ir') goesAnimStop();
     satEnabled = on;
     document.getElementById('sat-opacity-row').style.display = on ? 'flex' : 'none';
     document.getElementById('sat-legend').style.display = on ? 'block' : 'none';
@@ -4355,6 +4389,7 @@ async function toggleLayer(name, on) {
       document.getElementById('sat-status-note').textContent = 'off';
     }
   } else if (name === 'goescolor') {
+    if (on && goesAnim && goesAnim.key === 'geoColor') goesAnimStop();
     goesColorEnabled = on;
     document.getElementById('goescolor-opacity-row').style.display = on ? 'flex' : 'none';
     if (on) {
