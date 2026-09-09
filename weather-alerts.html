@@ -3842,7 +3842,21 @@ async function goesAnimShowFrame(anim, idx) {
   const prev = anim.current;
   anim.current = {east, west};
   anim.idx = idx;
-  if (prev) { map.removeLayer(prev.east); map.removeLayer(prev.west); } // only removed AFTER the new pair is visible -- no blank gap
+  // Real bug reported live 2026-09-08: a white/basemap flicker between
+  // frames. setOpacity() and removeLayer() on the same tick don't guarantee
+  // the browser actually PAINTS the new layer before the old one's DOM node
+  // is gone -- if that paint hasn't happened yet, there's a real (if brief)
+  // moment with nothing opaque covering that pixel, and the light basemap
+  // underneath shows through as a white flash. Deferring the old layer's
+  // removal by one tick guarantees at least one paint where both are
+  // present before it disappears, closing that gap for good.
+  //
+  // Tried requestAnimationFrame for that defer first -- wrong tool: rAF
+  // callbacks are entirely SUSPENDED in a backgrounded tab (confirmed live:
+  // 16 old layers piled up, un-removed, after leaving this tab hidden for a
+  // few seconds), unlike a timer. setTimeout keeps firing (just throttled)
+  // regardless of tab visibility, so the cleanup can never be stranded.
+  if (prev) setTimeout(() => { map.removeLayer(prev.east); map.removeLayer(prev.west); }, 0);
   const d = new Date(t);
   const timeEl = document.getElementById('goesanim-time-'+anim.key);
   if (timeEl) timeEl.textContent = String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
@@ -3869,7 +3883,14 @@ document.addEventListener('visibilitychange', () => {
 function goesAnimStop() {
   if (!goesAnim) return;
   clearInterval(goesAnim.timer);
-  if (goesAnim.current) { map.removeLayer(goesAnim.current.east); map.removeLayer(goesAnim.current.west); }
+  const product = goesAnim.product;
+  // Sweep the map for ANY layer in this product's zIndex range, not just
+  // goesAnim.current -- a still-pending deferred removal (setTimeout above)
+  // for a superseded frame holds no reference goesAnimStop would otherwise
+  // see, so a naive "just remove .current" leaves it orphaned forever.
+  const stray = [];
+  map.eachLayer(l => { if (l instanceof L.TileLayer && (l.options.zIndex === product.zE || l.options.zIndex === product.zW)) stray.push(l); });
+  stray.forEach(l => map.removeLayer(l));
   const btn = document.getElementById('goesanim-btn-'+goesAnim.key);
   const timeEl = document.getElementById('goesanim-time-'+goesAnim.key);
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[goesAnim.key]);
