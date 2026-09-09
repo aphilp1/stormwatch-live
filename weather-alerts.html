@@ -3801,96 +3801,55 @@ function goesAnimRestoreStatic(key) {
 // priming every frame's tiles upfront and caching them, then again by
 // tracking a "view key" per cached frame and redrawing on mismatch, then
 // again by fixing a listener-attached-after-redraw race in that -- and it
-// STILL degraded over time ("frozen scene, stitched scene running").
-// Three attempts at keeping a 14-frame, 28-tile-layer cache correctly in
-// sync with a map the user is actively panning is three attempts too many:
-// the whole approach of long-lived layers that get revalidated is what kept
-// producing new ways to go stale.
+// STILL degraded over time ("frozen scene, stitched scene running"). That
+// led to a "nothing is cached, rebuild every frame from scratch" redesign,
+// which fixed the staleness but traded it for a new bug: creating a fresh
+// layer and destroying the old one on every single tick means there is
+// necessarily a moment with nothing opaque over that pixel, which is what
+// produced the white-flash-between-frames complaint that followed.
 //
-// Rebuilt on a fundamentally simpler premise: nothing is cached across
-// frames. Every time a frame is shown, its tile layers are created fresh,
-// fetched fresh for whatever the map's current view actually is at that
-// exact moment, and the previous frame's layers are removed once (and only
-// once) the new ones are confirmed loaded -- so there is no persistent
-// state left to ever disagree with the map. When the camera isn't moving,
-// repeat requests for the same frame across loops hit the browser's own
-// HTTP cache and resolve near-instantly, so the common case (watching a
-// static view loop) stays smooth for free; only an actual pan/zoom costs a
-// real fetch, exactly when fetching something new is the correct thing to
-// do anyway.
-function goesAnimWaitLoaded(layer, timeoutMs=8000) {
-  return new Promise(res => {
-    let done = false;
-    const finish = () => { if (!done) { done = true; res(); } };
-    layer.once('load', finish); // attached before the layer is added to the
-    layer.once('tileerror', finish); // map, so a synchronous/instant load or
-    setTimeout(finish, timeoutMs); // an all-tiles-404 case can't be missed.
-  });
-}
-async function goesAnimShowFrame(anim, idx) {
-  const t = anim.stamps[idx];
-  const product = anim.product;
-  const east = L.tileLayer(goesAnimTileURL('GOES-East', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id});
-  const west = L.tileLayer(goesAnimTileURL('GOES-West', product, t), {opacity:0, maxNativeZoom:product.mz, maxZoom:18, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id});
-  const eastLoad = goesAnimWaitLoaded(east);
-  const westLoad = goesAnimWaitLoaded(west);
+// Rebuilt again 2026-09-09 on RapidWatch's Live Event tab GOES loop as a
+// working reference (aphilp1.github.io/rapidwatch/rapidwatch-live-event.html,
+// user-directed comparison): it pre-builds every frame as its own tile
+// layer ONCE, adds all of them to the map up front (each hidden at
+// opacity 0), and its tick is nothing but an opacity flip across layers
+// that already exist -- no layer is ever created or destroyed during
+// playback, so there is no add/remove gap for a flash to occur in.
+//
+// That's the same "prime everything upfront" shape as the abandoned
+// 2026-09-08 attempt above, and re-tried here only after confirming
+// directly why THAT attempt actually broke on panning: it wasn't holding
+// long-lived layers, it was the hand-rolled "view key" revalidation
+// bolted on top of them. Verified live against RapidWatch's production
+// page itself (network log, panned the map with the loop running): every
+// one of its 12+ hidden frame layers re-requested tiles for the new
+// position on its own, with zero custom staleness-tracking code anywhere
+// in that page. That's plain Leaflet -- L.GridLayer refreshes its own
+// tile grid on every map moveend regardless of the layer's opacity or
+// which layer is "current"; a hidden frame is never stale because
+// Leaflet keeps it current for free. Nothing here needs to re-implement
+// that.
+function goesAnimBuildFrame(product, t) {
+  const opts = {opacity:0, maxNativeZoom:product.mz, maxZoom:18};
+  const east = L.tileLayer(goesAnimTileURL('GOES-East', product, t), {...opts, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id});
+  const west = L.tileLayer(goesAnimTileURL('GOES-West', product, t), {...opts, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id});
   east.addTo(map); west.addTo(map);
-  await Promise.all([eastLoad, westLoad]);
-  if (goesAnim !== anim) { map.removeLayer(east); map.removeLayer(west); return; } // stopped/replaced while loading
+  return {t, east, west};
+}
+function goesAnimTick() {
+  if (!goesAnim) return;
+  const anim = goesAnim;
+  anim.idx = (anim.idx+1) % anim.frames.length;
   const opac = anim.key === 'geoColor' ? goesColorOpacity : satOpacity;
-  east.setOpacity(opac); west.setOpacity(opac);
-  const prev = anim.current;
-  anim.current = {east, west};
-  anim.idx = idx;
-  // Real bug reported live 2026-09-08: a white/basemap flicker between
-  // frames. setOpacity() and removeLayer() on the same tick don't guarantee
-  // the browser actually PAINTS the new layer before the old one's DOM node
-  // is gone -- if that paint hasn't happened yet, there's a real (if brief)
-  // moment with nothing opaque covering that pixel, and the light basemap
-  // underneath shows through as a white flash. Deferring the old layer's
-  // removal by one tick guarantees at least one paint where both are
-  // present before it disappears, closing that gap for good.
-  //
-  // Tried requestAnimationFrame for that defer first -- wrong tool: rAF
-  // callbacks are entirely SUSPENDED in a backgrounded tab (confirmed live:
-  // 16 old layers piled up, un-removed, after leaving this tab hidden for a
-  // few seconds), unlike a timer. setTimeout keeps firing (just throttled)
-  // regardless of tab visibility, so the cleanup can never be stranded.
-  if (prev) setTimeout(() => { map.removeLayer(prev.east); map.removeLayer(prev.west); }, 0);
-  const d = new Date(t);
+  anim.frames.forEach((f,i) => { const o = i===anim.idx ? opac : 0; f.east.setOpacity(o); f.west.setOpacity(o); });
+  const d = new Date(anim.frames[anim.idx].t);
   const timeEl = document.getElementById('goesanim-time-'+anim.key);
   if (timeEl) timeEl.textContent = String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
 }
-function goesAnimTick() {
-  if (!goesAnim || goesAnim.busy) return; // don't let a slow frame overlap the next tick
-  const anim = goesAnim;
-  anim.busy = true;
-  goesAnimShowFrame(anim, (anim.idx+1) % anim.stamps.length).finally(() => { anim.busy = false; });
-}
-// Chrome throttles setInterval heavily in a backgrounded tab (confirmed live
-// 2026-09-08: a hidden tab's ticks slowed from 600ms to multiple seconds
-// apart) -- a real scenario any time the user switches to another window
-// while this plays, not just a testing artifact. Force a fresh frame,
-// for wherever the map actually is right now, the moment the tab is visible
-// again, rather than waiting for the timer to catch up on its own.
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && goesAnim && !goesAnim.busy) {
-    const anim = goesAnim;
-    anim.busy = true;
-    goesAnimShowFrame(anim, anim.idx).finally(() => { anim.busy = false; });
-  }
-});
 function goesAnimStop() {
   if (!goesAnim) return;
   clearInterval(goesAnim.timer);
-  const product = goesAnim.product;
-  // Sweep the map for ANY layer in this product's zIndex range, not just
-  // goesAnim.current -- a still-pending deferred removal (setTimeout above)
-  // for a superseded frame holds no reference goesAnimStop would otherwise
-  // see, so a naive "just remove .current" leaves it orphaned forever.
-  const stray = [];
-  map.eachLayer(l => { if (l instanceof L.TileLayer && (l.options.zIndex === product.zE || l.options.zIndex === product.zW)) stray.push(l); });
-  stray.forEach(l => map.removeLayer(l));
+  goesAnim.frames.forEach(f => { map.removeLayer(f.east); map.removeLayer(f.west); });
   const btn = document.getElementById('goesanim-btn-'+goesAnim.key);
   const timeEl = document.getElementById('goesanim-time-'+goesAnim.key);
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[goesAnim.key]);
@@ -3933,16 +3892,16 @@ async function goesAnimToggle(key) {
   const good = stamps.filter((t,i) => eastOk[i] || westOk[i]).reverse(); // oldest -> newest
   if (good.length < 2) { btn.disabled = false; btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
   const hadStatic = GOES_ANIM_STATIC[key].enabled();
-  const myAnim = goesAnim = {key, product, stamps: good, current: null, idx: -1, timer: null, busy: false, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
-  timeEl.textContent = 'loading…';
-  await goesAnimShowFrame(myAnim, 0); // startup only ever blocks on frame 0; every later frame loads just-in-time
-  // Compare object identity, not just .key -- a Stop followed immediately by
-  // a fresh Animate on the SAME key during this loading window creates a
-  // second goesAnim with the same .key; only the call that still owns the
-  // live goesAnim object may touch the UI or start playback, otherwise its
-  // own (already-cleaned-up-by-Stop, or simply orphaned) layers would fight
-  // the real one.
-  if (goesAnim !== myAnim) return;
+  timeEl.textContent = `loading ${good.length} frames…`;
+  // Build every frame's tile layer now, once, and leave all of them mounted
+  // on the map for the life of the animation -- see the block above for why
+  // (matches RapidWatch's Live Event GOES loop, which this was checked
+  // against directly). Only opacity changes after this; nothing is created
+  // or destroyed again until Stop.
+  const frames = good.map(t => goesAnimBuildFrame(product, t));
+  goesAnim = {key, product, frames, idx: 0, timer: null, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
+  const opac0 = key === 'geoColor' ? goesColorOpacity : satOpacity;
+  frames[0].east.setOpacity(opac0); frames[0].west.setOpacity(opac0);
   btn.disabled = false;
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[key]);
   if (noteEl) noteEl.textContent = `animating (${good.length}f)`;
