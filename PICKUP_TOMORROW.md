@@ -1,5 +1,36 @@
 # StormWatch — Resume Anchor
 
+## ▶ CURRENT STATE as of 2026-09-09 end of session — read this first
+
+**Local `master` is 2 commits ahead of `origin/master`. NOT PUSHED. Do not push without
+Alex explicitly saying to** — see `CLAUDE.md` (new this session) for the standing rule.
+
+- `908ea0f` — GOES IR static layer un-hiding itself every 5 minutes mid-animation (fix
+  detailed further down this file, full technical detail in the commit message).
+- `c97d4cc` — GOES IR blank-frame-at-startup fix (also detailed further down).
+
+**Honest session ledger, not just the fixes:** this GOES-animation bug took multiple
+"verified" rounds across today that did NOT hold up when Alex actually tested them
+himself — the flash fix, then the frame-loading fix, then the static-layer fix each
+looked clean in my own testing and then wasn't quite right in his hands, or wasn't
+tested by him yet when I called it done. Partway through the last fix, an editing
+mistake (a dropped closing brace) broke the page's entire script for a short window;
+Alex was independently re-testing the same local server at that moment and very
+plausibly hit it, which read as a much bigger regression than a one-line typo. Both
+`c97d4cc` and `908ea0f` are believed correct and were re-verified after landing, but
+given the track record today, **treat "believed correct" as exactly that until Alex has
+tested it himself** — don't upgrade it to "done" on this file's say-so alone.
+
+**Current ask, as of end of session:** Alex is going to test further and will explicitly
+say when to push (e.g. "update StormWatch git"). Until that message arrives, the correct
+action is to wait, not to re-verify further or push preemptively.
+
+**What changed in the repo this session, beyond the GOES fixes themselves:**
+- `CLAUDE.md` added (new file, project root) — two standing rules: never push without
+  Alex's explicit confirmation, and run a JS syntax check immediately after every edit
+  to `weather-alerts.html` (not deferred to session-end) since Alex often live-tests the
+  same local server while I'm mid-edit.
+
 ## ▶ 2026-09-09 — GOES IR residual flash fixed, HEAD `c97d4cc` — **NOT PUSHED, awaiting Alex's confirmation**
 
 Alex re-checked `640f362` (below): GOES True Color was flash-free, but GOES IR still had
