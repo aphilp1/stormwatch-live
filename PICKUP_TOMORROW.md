@@ -1,5 +1,43 @@
 # StormWatch — Resume Anchor
 
+## ▶ 2026-09-09 — GOES animation actually fixed (flash), HEAD `640f362`
+
+The white-flash fix pushed earlier today (below) turned out NOT to be enough — Alex
+reported it back live the same day: "the scenes simply are flashing... this is NOT
+workable... many days now." Directed a comparison against RapidWatch's Live Event tab
+GOES loop (aphilp1.github.io/rapidwatch/rapidwatch-live-event.html, running flash-free
+in production).
+
+**Root cause, finally found:** StormWatch's animation created a brand-new tile layer
+and destroyed the old one on every single tick (the earlier "fix" only patched the
+*timing* of that destroy). RapidWatch's loop builds every frame's tile layer ONCE up
+front, mounts all of them hidden (opacity 0), and its tick is nothing but an opacity
+flip — no layer is ever created or destroyed during playback, so there's no gap for a
+flash. StormWatch had already tried that exact "prime everything upfront" shape once
+(2026-09-08) and abandoned it after it broke on panning — before reusing it, checked
+directly why that attempt actually failed rather than assume the shape was the problem:
+opened RapidWatch's live page, started its loop, panned the map, watched the network
+log. Every hidden frame layer re-fetched tiles for the new position on its own — that's
+plain Leaflet (`L.GridLayer` refreshes on every `moveend` regardless of opacity), no
+custom code needed. The 2026-09-08 staleness bug was in the hand-rolled "view key"
+revalidation system bolted on top, not in keeping persistent layers.
+
+Rebuilt `goesAnimToggle`/`Tick`/`Stop` on that model. Net -41 lines. Verified locally
+before push (not on the previous session's say-so): both GOES True Color and IR built
+14 frames, ran multiple full loops with zero console errors; panned mid-animation and
+confirmed a fresh tile-request burst for the new extent; Stop tore down all 28 mounted
+layers to zero. Full detail in the commit message.
+
+**One known gap, not fixed (out of scope, flagged for later):** ~4% of the initial
+tile-request burst comes back 503 with no retry — true of every tile layer in this app,
+not just GOES animation, since nothing here wraps requests the way RapidWatch's
+`retryTiles()` does. Worth doing as its own pass if blank tile patches ever get
+reported.
+
+**Ask Alex to hard-refresh and re-check before trusting this is actually done** — this
+exact bug has now taken three "verified" rounds; don't mark it closed from this file
+alone.
+
 ## ▶ 2026-09-07/08 session — GOES animation built + debugged, pushed 2026-09-09
 
 Session ran 2026-09-07 evening through 2026-09-08 evening but was never logged here or
