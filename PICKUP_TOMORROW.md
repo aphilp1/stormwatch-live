@@ -1,5 +1,31 @@
 # StormWatch — Resume Anchor
 
+## ▶ 2026-09-09 — GOES IR residual flash fixed, HEAD `c97d4cc` — **NOT PUSHED, awaiting Alex's confirmation**
+
+Alex re-checked `640f362` (below): GOES True Color was flash-free, but GOES IR still had
+a mild flash. This time watched it happen instead of trusting the fix — rapid
+screenshots caught the map going nearly blank for several seconds early in playback.
+Real cause: all 14 frames × 2 satellites started loading at once (~800 tile requests);
+several later frames' tiles hadn't even started downloading by the time their turn came
+up in the loop, so an empty frame got shown — a startup gap, not the paint-race flash
+`640f362` fixed.
+
+Two wrong turns before landing it (full detail in the `c97d4cc` commit message): first
+tried blocking playback on every frame finishing, which took 70+ seconds to even start
+under real load; then found blocking on frame 0 alone still wasn't fast, because all 14
+frames were built simultaneously so frame 0's own tiles had no priority in the browser's
+queue. Final fix: build and await ONLY frame 0, built BEFORE the other 13 (not
+alongside), so it gets a real head start; goesAnimTick skips any frame not yet loaded
+instead of ever showing it blank; the other 13 frames build and load in the background
+after playback has already started, filling the loop in over a few seconds.
+
+**Committed locally (`c97d4cc`) but NOT pushed** — Alex corrected this session: confirm
+with him before any future push, don't push right after my own local verification, even
+when it looks clean. This bug in particular has now gone through several "verified"
+rounds that didn't hold in his hands. Local test server (`:8001`) already serves this
+fix; ask Alex to re-check GOES IR specifically (True Color was already confirmed good)
+before pushing.
+
 ## ▶ 2026-09-09 — GOES animation actually fixed (flash), HEAD `640f362`
 
 The white-flash fix pushed earlier today (below) turned out NOT to be enough — Alex
