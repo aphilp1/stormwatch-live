@@ -1,5 +1,40 @@
 # StormWatch — Resume Anchor
 
+## ▶ 2026-09-07/08 session — GOES animation built + debugged, pushed 2026-09-09
+
+Session ran 2026-09-07 evening through 2026-09-08 evening but was never logged here or
+pushed at the time — found and closed out on the next "resume stormwatch" (2026-09-09).
+8 commits, HEAD `5e09312` (rebased onto bot data commits, pushed clean):
+1. `cce5c36` — fixed dropped zone geometry for county-based watches; added High Surf map
+   colors; added **GOES True Color** animation (new feature, real NASA GIBS GOES-East/West
+   imagery, distinct from the existing static GOES True Color toggle and GOES IR layer).
+2. Five follow-on bug fixes to the new animation feature, each a real live bug Alex hit:
+   "no recent frames available" reporting, static+animated layers rendering stacked wrong,
+   a lying checkbox + glitchy playback (fixed by pre-loading frames), frame staleness after
+   panning + a listener-order race causing a layer to "freeze and cycle forward", and a
+   full rebuild dropping cross-frame tile caching entirely (root-caused staleness, not
+   patched).
+3. `06deb66` (last) — white-flash-between-frames bug: `setOpacity()`+`removeLayer()` on the
+   same tick didn't guarantee a paint of the new frame before the old one's DOM node was
+   gone, so the light basemap showed through. Fixed by deferring old-layer removal one
+   tick. First attempt used `requestAnimationFrame` for that defer — wrong tool, rAF is
+   fully suspended in a backgrounded tab, which piled up 16 stray unfreed layers after
+   ~10s hidden. Fixed with `setTimeout` instead (throttled but never suspended), plus
+   hardened `goesAnimStop()` to sweep by zIndex range instead of only removing
+   `goesAnim.current`, so no deferred removal can strand an orphan.
+4. **Re-verified 2026-09-09 before push** (session had gone unpushed a full day, so didn't
+   take the commit message's own claim on faith): started GOES True Color animation
+   locally, confirmed `document.hidden` true and polled the live layer count (by zIndex
+   162/163) every 3s for 15s — pinned at exactly 2 the whole time, `goesAnimStop()` left 0
+   layers behind, zero console errors, static IR + animated True Color together render
+   correctly (no stacking corruption). Fix holds.
+5. Checked RapidWatch's GOES animation for a reusable approach first — it's a pre-rendered
+   video overlay for one fixed historical storm/bbox, doesn't transfer to StormWatch's
+   live pan-anywhere requirement. Nothing borrowed from it.
+
+No open blocker from this session. Not yet covered: mobile/narrow-width check on the new
+animation UI, extended-session behavior beyond the ~15s hidden-tab test above.
+
 ## 🎯 PATH TO v2.0 (pinned 2026-09-06 — read this before anything else)
 
 We are v1.0 today. This is the full punch list to get to v2.0, compiled from every
