@@ -3693,6 +3693,8 @@ const GOES_ANIM_PRODUCTS = {
   ir:       {id:'ABI_Band13_Clean_Infrared',  tms:'GoogleMapsCompatible_Level6', mz:6, zE:156, zW:157},
 };
 let goesAnim = null; // {key, frames:[{t,east,west}], idx, timer, speedMs, tick}
+let goesAnimGen = 0; // bumped on every Stop/Toggle so an in-flight async call
+let goesAnimLoadingKey = null; // key currently finding-anchor/probing/priming, before goesAnim is assigned
 function goesAnimTileURL(sat, product, time) {
   return `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${sat}_${product.id}/default/${time}/${product.tms}/{z}/{y}/{x}.png`;
 }
@@ -3829,43 +3831,117 @@ function goesAnimRestoreStatic(key) {
 // which layer is "current"; a hidden frame is never stale because
 // Leaflet keeps it current for free. Nothing here needs to re-implement
 // that.
+//
+// SAME DAY, Alex caught a second real gap after that rebuild shipped: GOES
+// IR (not True Color) still had a mild flash -- direct diagnostic on the
+// live page (per-tile loaded/errored counts on every mounted frame) showed
+// tiles were fine once settled, which meant the gap was at STARTUP, not
+// per-tick: playback was advancing (and setting later frames' opacity to
+// visible) immediately, before this national, two-satellite, 14-frame
+// build (28 tile layers, ~800 tile requests) had actually finished
+// downloading -- an early frame's turn could come up while its own tiles
+// were still in flight, showing blank/basemap through it until they
+// arrived. IR shows this worse than True Color because its enhanced-color
+// palette on a dark background makes a gap far more visible than a
+// muted-tone photographic frame does.
+//
+// First fix tried: block playback on ALL 14 frames finishing (the
+// "priming" half of the abandoned 2026-09-08 attempt, brought back on the
+// idea that only its staleness-revalidation half, per the RapidWatch
+// comparison above, was ever the real bug). That was wrong on its own:
+// measured live, this national two-satellite build queues ~800 tile
+// requests at once, and under real congestion the wait for every last one
+// to settle ran past 70 SECONDS before playback even began -- correct in
+// principle (checked Leaflet's own 'load' event empirically before relying
+// on it: it fires only once every tile in a layer's update cycle has
+// settled, success or error alike, confirmed by tracking a real 28-tile
+// GOES-West frame where 'tileerror' fired at 27/28 settled and 'load'
+// only at 28/28 -- so 'load' alone, not 'load'-or-'tileerror', is the
+// correct complete signal), but blocking on the SLOWEST of 28 layers
+// before showing anything is just the wrong shape for a burst this size.
+//
+// Fixed by not blocking on the whole set at all: playback starts as soon
+// as frame 0 alone is ready (matches this file's original design, and
+// RapidWatch's -- neither ever waited for a full-build to finish either).
+// Every other frame keeps loading in the background and flips a private
+// `ready` flag via the same real 'load' signal once it actually finishes;
+// goesAnimTick advances to the next-in-sequence frame ONLY if it's ready,
+// otherwise holds the current frame and tries again next tick -- so a
+// still-loading frame is simply skipped rather than ever shown blank. The
+// loop starts thinner (repeating whatever's ready so far) and fills in to
+// the full N frames on its own as the background loads complete, with no
+// wait gating the start and no way for an unready frame to be displayed.
+function goesAnimWaitLoaded(layer, timeoutMs=45000) {
+  return new Promise(res => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; res(); } };
+    layer.once('load', finish); // attached before the layer is added to
+    setTimeout(finish, timeoutMs); // the map, so a synchronous/cached-hit
+  }); // load can't be missed.
+}
 function goesAnimBuildFrame(product, t) {
   const opts = {opacity:0, maxNativeZoom:product.mz, maxZoom:18};
   const east = L.tileLayer(goesAnimTileURL('GOES-East', product, t), {...opts, zIndex:product.zE, attribution:'NASA GIBS / GOES-East '+product.id});
   const west = L.tileLayer(goesAnimTileURL('GOES-West', product, t), {...opts, zIndex:product.zW, attribution:'NASA GIBS / GOES-West '+product.id});
+  const frame = {t, east, west, ready: false};
+  const loaded = Promise.all([goesAnimWaitLoaded(east), goesAnimWaitLoaded(west)]);
+  loaded.then(() => { frame.ready = true; });
+  frame.loaded = loaded; // only awaited directly for frame 0, at startup
   east.addTo(map); west.addTo(map);
-  return {t, east, west};
+  return frame;
 }
 function goesAnimTick() {
   if (!goesAnim) return;
   const anim = goesAnim;
-  anim.idx = (anim.idx+1) % anim.frames.length;
+  const n = anim.frames.length;
+  let next = anim.idx;
+  for (let i=1; i<=n; i++) {
+    const cand = (anim.idx + i) % n;
+    if (anim.frames[cand].ready) { next = cand; break; } // first ready frame going forward
+  } // if none are ready yet, `next` stays anim.idx -- hold, don't blank
+  if (next === anim.idx) return;
+  anim.idx = next;
   const opac = anim.key === 'geoColor' ? goesColorOpacity : satOpacity;
   anim.frames.forEach((f,i) => { const o = i===anim.idx ? opac : 0; f.east.setOpacity(o); f.west.setOpacity(o); });
   const d = new Date(anim.frames[anim.idx].t);
   const timeEl = document.getElementById('goesanim-time-'+anim.key);
   if (timeEl) timeEl.textContent = String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
 }
+// Awaiting every frame's load before playback starts reopens an async
+// window, between building frames and publishing them as `goesAnim`, that
+// the previous same-tick version didn't have -- a Stop (or a second
+// Toggle) during that window needs to invalidate the in-flight call so it
+// cleans up its own mounted-but-never-shown layers instead of publishing
+// them late. goesAnimGen is bumped on every Stop/Toggle; an in-flight
+// call compares its own captured generation after each await and bails
+// (cleaning up if it got as far as building frames) once it no longer
+// matches. goesAnimLoadingKey tracks which key is mid-flight (before
+// goesAnim exists) purely so Stop can still reset that key's button/time
+// text if it's interrupted at that stage -- nothing needs restoring in
+// that case since the static layer is only ever hidden AFTER a build
+// succeeds, right before playback actually starts.
 function goesAnimStop() {
-  if (!goesAnim) return;
-  clearInterval(goesAnim.timer);
-  goesAnim.frames.forEach(f => { map.removeLayer(f.east); map.removeLayer(f.west); });
-  const btn = document.getElementById('goesanim-btn-'+goesAnim.key);
-  const timeEl = document.getElementById('goesanim-time-'+goesAnim.key);
-  const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[goesAnim.key]);
-  const hadStatic = goesAnim.hadStatic;
-  const key = goesAnim.key;
-  // Stop can interrupt an in-flight goesAnimToggle that's still priming
-  // (button left disabled, mid-loading text) -- e.g. the checkbox guards
-  // above call this from a checkbox change, which isn't gated by the
-  // button's disabled state the way a real click on the button itself is.
-  // Always leave the button clickable and correctly labeled either way.
-  if (btn) btn.disabled = false;
-  if (btn) btn.textContent = '▶ Animate';
-  if (timeEl) timeEl.textContent = 'static';
-  if (noteEl) noteEl.textContent = hadStatic ? (key === 'geoColor' ? 'live' : '~5 min delay') : 'off';
-  goesAnim = null;
-  if (hadStatic) goesAnimRestoreStatic(key);
+  goesAnimGen++;
+  if (goesAnim) {
+    clearInterval(goesAnim.timer);
+    goesAnim.frames.forEach(f => { map.removeLayer(f.east); map.removeLayer(f.west); });
+    const key = goesAnim.key, hadStatic = goesAnim.hadStatic;
+    const btn = document.getElementById('goesanim-btn-'+key);
+    const timeEl = document.getElementById('goesanim-time-'+key);
+    const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[key]);
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Animate'; }
+    if (timeEl) timeEl.textContent = 'static';
+    if (noteEl) noteEl.textContent = hadStatic ? (key === 'geoColor' ? 'live' : '~5 min delay') : 'off';
+    goesAnim = null;
+    if (hadStatic) goesAnimRestoreStatic(key);
+  } else if (goesAnimLoadingKey) {
+    const key = goesAnimLoadingKey;
+    const btn = document.getElementById('goesanim-btn-'+key);
+    const timeEl = document.getElementById('goesanim-time-'+key);
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Animate'; }
+    if (timeEl) timeEl.textContent = 'static';
+    goesAnimLoadingKey = null;
+  }
 }
 function setGoesAnimSpeed(key, ms) {
   if (!goesAnim || goesAnim.key !== key) return;
@@ -3875,39 +3951,56 @@ function setGoesAnimSpeed(key, ms) {
 }
 async function goesAnimToggle(key) {
   if (goesAnim && goesAnim.key === key) { goesAnimStop(); return; }
-  if (goesAnim) goesAnimStop(); // one animation at a time
+  if (goesAnim || goesAnimLoadingKey) goesAnimStop(); // one animation (or one priming) at a time, any key
+  const myGen = ++goesAnimGen;
+  goesAnimLoadingKey = key;
   const product = GOES_ANIM_PRODUCTS[key];
   const btn = document.getElementById('goesanim-btn-'+key);
   const timeEl = document.getElementById('goesanim-time-'+key);
   const speedSel = document.getElementById('goesanim-speed-'+key);
   btn.disabled = true; btn.textContent = 'Loading…'; timeEl.textContent = 'finding latest frame…';
   const anchor = await goesAnimFindAnchor(product);
-  if (!anchor) { btn.disabled = false; btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
+  if (myGen !== goesAnimGen) return; // stopped/superseded while finding anchor
+  if (!anchor) { goesAnimLoadingKey = null; btn.disabled = false; btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
   timeEl.textContent = 'probing recent frames…';
   const stamps = goesAnimStampsBack(new Date(anchor).getTime(), 14);
   const [eastOk, westOk] = await Promise.all([
     Promise.all(stamps.map(t => goesAnimProbe('GOES-East', product, t))),
     Promise.all(stamps.map(t => goesAnimProbe('GOES-West', product, t))),
   ]);
+  if (myGen !== goesAnimGen) return; // stopped/superseded while probing
   const good = stamps.filter((t,i) => eastOk[i] || westOk[i]).reverse(); // oldest -> newest
-  if (good.length < 2) { btn.disabled = false; btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
+  if (good.length < 2) { goesAnimLoadingKey = null; btn.disabled = false; btn.textContent = '▶ Animate'; timeEl.textContent = 'no recent frames available'; return; }
   const hadStatic = GOES_ANIM_STATIC[key].enabled();
-  timeEl.textContent = `loading ${good.length} frames…`;
-  // Build every frame's tile layer now, once, and leave all of them mounted
-  // on the map for the life of the animation -- see the block above for why
-  // (matches RapidWatch's Live Event GOES loop, which this was checked
-  // against directly). Only opacity changes after this; nothing is created
-  // or destroyed again until Stop.
-  const frames = good.map(t => goesAnimBuildFrame(product, t));
-  goesAnim = {key, product, frames, idx: 0, timer: null, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
+  timeEl.textContent = `loading first frame…`;
+  // Build and await ONLY frame 0 first, alone -- building all 14 at once
+  // and awaiting just the first buried frame 0's own 2 tile requests
+  // behind the other 26 layers' ~750 requests with no priority, so
+  // "startup only blocks on frame 0" didn't actually make startup fast
+  // (measured live: still 30+ seconds). Giving frame 0 a real head start
+  // in the browser's request queue is what actually gets it on screen
+  // quickly; the other 13 frames are built and start loading only after
+  // frame 0 is confirmed loaded and playback has begun (see the block
+  // above for why goesAnimTick can play with fewer than N frames ready).
+  const frame0 = goesAnimBuildFrame(product, good[0]);
+  await frame0.loaded;
+  if (myGen !== goesAnimGen) { map.removeLayer(frame0.east); map.removeLayer(frame0.west); return; }
+  goesAnimLoadingKey = null;
+  goesAnim = {key, product, frames: [frame0], idx: 0, timer: null, speedMs: parseInt(speedSel?.value||'600', 10), hadStatic};
   const opac0 = key === 'geoColor' ? goesColorOpacity : satOpacity;
-  frames[0].east.setOpacity(opac0); frames[0].west.setOpacity(opac0);
+  frame0.east.setOpacity(opac0); frame0.west.setOpacity(opac0);
   btn.disabled = false;
   const noteEl = document.getElementById(GOES_ANIM_STATUS_NOTE[key]);
   if (noteEl) noteEl.textContent = `animating (${good.length}f)`;
   if (hadStatic) goesAnimHideStatic(key);
   goesAnim.timer = setInterval(goesAnimTick, goesAnim.speedMs);
   btn.textContent = '⏸ Stop';
+  // Runs synchronously (no await inside this line) right after goesAnim is
+  // published, so there's no window here for a Stop/Toggle to interleave
+  // and race it -- each remaining frame is built, mounted, and starts
+  // loading immediately; goesAnimTick picks each one up as its own `ready`
+  // flag flips true, in the background, while frame 0 keeps playing.
+  goesAnim.frames.push(...good.slice(1).map(t => goesAnimBuildFrame(product, t)));
 }
 
 // ═══════════════════════════════════════════════════════════════════
