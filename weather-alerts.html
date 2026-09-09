@@ -4145,9 +4145,30 @@ async function initSat() {
   // then never be removed or have its opacity changed. Every addTo(map) below
   // that follows an await is guarded so a superseded run becomes a no-op.
   const t = Math.floor(Date.now() / 300000); // changes every 5 min to bust cache
+  // Real bug found live 2026-09-09, after the frame-loading fix above:
+  // GOES IR "unstable again" a few minutes into a run that started clean.
+  // Root cause is here, not in the animation code -- this function reruns
+  // every 5 minutes via satRefreshTimer AND removes + recreates all three
+  // layers from scratch each time, with zero awareness that an IR
+  // animation might currently be hiding them (goesAnimHideStatic only
+  // ever runs once, when the animation starts, setting opacity 0 on
+  // whichever layer OBJECTS existed then -- a refresh that swaps in
+  // brand-new objects a few minutes later was never touched by that, so
+  // the old static IEM imagery popped back to full opacity and stayed
+  // there, stacked against the still-playing GIBS frames). Confirmed
+  // directly: called initSat() manually mid-animation and watched
+  // satLayer's opacity jump from 0 straight back to 0.8. GOES True Color
+  // has no equivalent bug -- initGoesColor() has no periodic refresh
+  // timer at all, which is exactly why only IR was reported as recurring.
+  // Fixed at the source, not with an after-the-fact re-hide: every layer
+  // this function creates is born already at the correct opacity for
+  // whatever's true RIGHT NOW, so there's no gap for even the CONUS tile
+  // (created synchronously, before Hi/Ak's async chroma-key fetch even
+  // starts) to flash visible before something else hides it again.
+  const irAnimHiding = () => !!(goesAnim && goesAnim.key === 'ir' && goesAnim.hadStatic);
   satLayer = L.tileLayer(
     `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/conus-goes-ir-4km/{z}/{x}/{y}.png?t=${t}`,
-    {opacity: satOpacity, zIndex: 150, attribution: 'NOAA GOES-East IR via IEM'}
+    {opacity: irAnimHiding() ? 0 : satOpacity, zIndex: 150, attribution: 'NOAA GOES-East IR via IEM'}
   ).addTo(map);
   try {
     const [hiDataUrl, akDataUrl] = await Promise.all([
@@ -4156,26 +4177,26 @@ async function initSat() {
     ]);
     if (myToken !== satInitToken) return; // superseded by a newer run
     satHiLayer = L.imageOverlay(hiDataUrl, SAT_HI_BOUNDS,
-      { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
+      { opacity: irAnimHiding() ? 0 : satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
     ).addTo(map);
     satAkLayer = L.imageOverlay(akDataUrl, SAT_AK_BOUNDS,
-      { opacity: satOpacity, zIndex: 152, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
+      { opacity: irAnimHiding() ? 0 : satOpacity, zIndex: 152, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
     ).addTo(map);
   } catch (e) {
     console.error('GOES-West chroma-key failed, falling back to raw images:', e);
     if (myToken !== satInitToken) return; // superseded by a newer run
     satHiLayer = L.imageOverlay(
       satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/west_ir.cgi', 'west_ir_4km', SAT_HI_BBOX, 1536),
-      SAT_HI_BOUNDS, { opacity: satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
+      SAT_HI_BOUNDS, { opacity: irAnimHiding() ? 0 : satOpacity, zIndex: 151, attribution: 'NOAA GOES-West IR via IEM' }
     ).addTo(map);
     satAkLayer = L.imageOverlay(
       satWmsImageUrl('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/alaska_ir.cgi', 'alaska_ir', SAT_AK_BBOX, 1200),
-      SAT_AK_BOUNDS, { opacity: satOpacity, zIndex: 152, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
+      SAT_AK_BOUNDS, { opacity: irAnimHiding() ? 0 : satOpacity, zIndex: 152, attribution: 'NOAA GOES-West Alaska Sector IR via IEM' }
     ).addTo(map);
   }
-  if (myToken === satInitToken) {
+  if (myToken === satInitToken && !irAnimHiding()) {
     document.getElementById('sat-status-note').textContent = '~5 min delay';
-  }
+  } // while an IR animation is hiding this, goesAnimToggle already owns this text ("animating (Nf)") -- don't stomp it
 }
 
 // ═══════════════════════════════════════════════════════════════════
