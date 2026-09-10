@@ -1,16 +1,27 @@
 # StormWatch — Rules for Claude Code
 
-## Never push without explicit confirmation
+## Do unapproved work on the `wip` branch, never on `master`
 
-Commit locally whenever it makes sense, but do **not** run `git push` on this repo
-until Alex explicitly says to (e.g. "update StormWatch git", "push it", "go ahead and
-push"). This applies even after I've verified a fix myself and it looks clean — my own
-local verification is not sufficient grounds to push on its own.
+All new work that Alex hasn't explicitly approved to go live happens on the local `wip`
+branch (`git checkout wip`, create it if it doesn't exist), never directly on `master`.
+Only merge `wip` into `master` and push when Alex explicitly says to (e.g. "update
+StormWatch git", "push it", "merge it in"). This applies even after I've verified a fix
+myself and it looks clean — my own local verification is not sufficient grounds to
+merge/push on its own.
 
-**Why:** 2026-09-09 — pushed a GOES-animation fix right after verifying it myself,
-before Alex had tested it. That specific bug went through three "verified" rounds that
-didn't hold up in his hands, on top of the push. He corrected it directly: "You pushed
-too early... don't push in the future, unless you confirm with me."
+**Why this is a branch rule, not just a "don't push" promise:** 2026-09-09 — first
+pushed a GOES-animation fix right after verifying it myself, before Alex had tested it;
+corrected directly ("You pushed too early... don't push in the future, unless you
+confirm with me"). Committed to never pushing without confirmation going forward — but
+later the same session, something else on this machine (a scheduled bot task's own
+commit+push cycle for Alert Monitor/Health-check-in snapshot files, most likely, though
+never conclusively identified — `Get-ScheduledTask` was blocked by sandbox permissions
+when checked) ran its own `git pull`/rebase/`push` in this same repo and swept my
+still-`master`-resident, not-yet-approved commits out to `origin/master` and the live
+public site along with its own commit. A verbal "I won't push" only constrains what I
+do; it does nothing about another process with push access to the same branch. Keeping
+unapproved work on a separate branch is an actual technical barrier: whatever that other
+process does to `master`, it has no reason to touch `wip`.
 
 ## Verify JS syntax immediately after every edit to weather-alerts.html
 
