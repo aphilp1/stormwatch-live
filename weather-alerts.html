@@ -1811,6 +1811,18 @@ canvas.velocity-overlay{pointer-events:none!important}
         <div class="mod-truth-row"><div class="mod-truth-swatch" style="background:#111;border:1px solid #555"></div><span><b>HRRR</b> — hi-res USA (to 2d)</span></div>
       </div>
 
+      <div class="mod-section" style="margin-top:10px">Why Models Disagree</div>
+      <div class="mod-about">Coarser global models (GFS/ECMWF/UKMO/GEM/ICON, ~9&ndash;15&nbsp;km grid) can't resolve individual storms or narrow valleys directly &mdash; they parameterize convection and smooth terrain. HRRR's 3&nbsp;km grid simulates both, which is why it (and GFS, blended with HRRR near-term) picks up valley wind events the others miss. Beyond resolution, models disagree because they use different schemes for boundary-layer mixing, land-surface processes, and cloud microphysics &mdash; that's the biggest source of day-to-day temperature/wind spread, more than the resolution gap alone. ECMWF's data assimilation has made it the most consistently skillful global model in independent verification for years; HRRR reassimilates radar hourly &mdash; sharp in the first 12&ndash;24h, unreliable much past its ~48h horizon.</div>
+
+      <div class="mod-section" style="margin-top:10px">Known Model Biases</div>
+      <div class="mod-about">
+        <b>GFS</b> &mdash; tends to over-mix the boundary layer in calm, clear conditions: a documented warm nighttime-low bias.<br>
+        <b>ECMWF</b> &mdash; smooths precipitation intensity (more drizzle, fewer sharp extremes); can underrepresent peak wind over complex terrain despite otherwise the strongest overall skill.<br>
+        <b>HRRR</b> &mdash; known tendency to overdo gustiness in convective and terrain-forced regimes.<br>
+        <b>UKMO / GEM / ICON</b> &mdash; strong performers generally; no confidently-documented bias specific to CONUS mountain-west terrain to report here yet.
+      </div>
+      <div class="mod-about" style="margin-top:6px;font-style:italic">Confidence varies by model &mdash; GFS/ECMWF/HRRR biases above are well established in NWP verification literature; UKMO/GEM/ICON terrain-specific biases are less documented and noted as such rather than guessed.</div>
+
       <div class="mod-section" style="margin-top:10px">Drag the bar</div>
       <div class="mod-about">Drag the resize bar above the chart to make the panel taller or shorter.</div>
     </div>
