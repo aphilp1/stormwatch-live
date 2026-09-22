@@ -1,9 +1,13 @@
 [
   {
     "site": "Camp Fire / Jarbo Gap, CA",
-    "lat": 39.76,
-    "lon": -121.37,
-    "generated_utc": "2026-09-21T18:35Z",
+    "error": "<urlopen error _ssl.c:1064: The handshake operation timed out>"
+  },
+  {
+    "site": "Tubbs / Mayacamas, CA",
+    "lat": 38.55,
+    "lon": -122.62,
+    "generated_utc": "2026-09-22T17:36Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
     "headline_mechanism": "SYNOPTIC_TERRAIN",
@@ -22,72 +26,30 @@
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-09-21T16:00",
-      "sustained_mph": 7.0,
-      "gust_mph": 9.6,
-      "dir_deg": 237,
-      "temp_c": 25.1,
-      "rh_pct": 33,
-      "min_rh_pct": 19
+      "time": "2026-09-22T01:00",
+      "sustained_mph": 8.8,
+      "gust_mph": 11.6,
+      "dir_deg": 246,
+      "temp_c": 12.3,
+      "rh_pct": 73,
+      "min_rh_pct": 37
     },
     "drivers": {
-      "w700_max_ms": 6.84,
-      "max_cape": 220.0,
-      "low_level_lapse_ckm": 7.77,
+      "w700_max_ms": 6.32,
+      "max_cape": 0.0,
+      "low_level_lapse_ckm": 7.45,
       "max_wind_shift_deg": null,
-      "max_gust_ratio": 1.38
+      "max_gust_ratio": 1.35
     },
     "reasons_for_headline": [
       "no active convection (clean terrain regime)"
     ]
   },
   {
-    "site": "Tubbs / Mayacamas, CA",
-    "lat": 38.55,
-    "lon": -122.62,
-    "generated_utc": "2026-09-21T18:35Z",
-    "window_hours": 24,
-    "threat_level": "BENIGN",
-    "headline_mechanism": "PBL_TRANSIENT",
-    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
-    "primary_bust_axis": "timing + direction (when the shift arrives, and the veer)",
-    "evidence_fraction": {
-      "synoptic_terrain": 0.65,
-      "pbl_transient": 0.46,
-      "convective_outflow": 0.21,
-      "fire_generated": 0.0
-    },
-    "scores": {
-      "synoptic_terrain": 0.23,
-      "pbl_transient": 0.33,
-      "convective_outflow": 0.0,
-      "fire_generated": 0.0
-    },
-    "peak_surface": {
-      "time": "2026-09-21T16:00",
-      "sustained_mph": 10.7,
-      "gust_mph": 13.4,
-      "dir_deg": 237,
-      "temp_c": 21.5,
-      "rh_pct": 51,
-      "min_rh_pct": 49
-    },
-    "drivers": {
-      "w700_max_ms": 8.94,
-      "max_cape": 40.0,
-      "low_level_lapse_ckm": 7.12,
-      "max_wind_shift_deg": 8.0,
-      "max_gust_ratio": 1.26
-    },
-    "reasons_for_headline": [
-      "shift not driven by convection"
-    ]
-  },
-  {
     "site": "Thomas / Santa Ynez, CA",
     "lat": 34.52,
     "lon": -119.3,
-    "generated_utc": "2026-09-21T18:35Z",
+    "generated_utc": "2026-09-22T17:36Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
     "headline_mechanism": "SYNOPTIC_TERRAIN",
@@ -100,29 +62,28 @@
       "fire_generated": 0.0
     },
     "scores": {
-      "synoptic_terrain": 0.46,
+      "synoptic_terrain": 0.23,
       "pbl_transient": 1.0,
-      "convective_outflow": 1.0,
+      "convective_outflow": 0.0,
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-09-21T16:00",
-      "sustained_mph": 8.3,
-      "gust_mph": 10.7,
-      "dir_deg": 178,
-      "temp_c": 17.1,
-      "rh_pct": 79,
-      "min_rh_pct": 56
+      "time": "2026-09-22T13:00",
+      "sustained_mph": 8.4,
+      "gust_mph": 12.1,
+      "dir_deg": 189,
+      "temp_c": 19.8,
+      "rh_pct": 64,
+      "min_rh_pct": 24
     },
     "drivers": {
-      "w700_max_ms": 7.76,
-      "max_cape": 540.0,
-      "low_level_lapse_ckm": 5.46,
+      "w700_max_ms": 9.68,
+      "max_cape": 120.0,
+      "low_level_lapse_ckm": 7.7,
       "max_wind_shift_deg": null,
-      "max_gust_ratio": 1.39
+      "max_gust_ratio": 1.64
     },
     "reasons_for_headline": [
-      "stable low-level layer (downslope/mountain-wave setup)",
       "no active convection (clean terrain regime)"
     ]
   },
@@ -130,92 +91,7 @@
     "site": "Woolsey / Santa Monica Mts",
     "lat": 34.1,
     "lon": -118.75,
-    "generated_utc": "2026-09-21T18:35Z",
-    "window_hours": 24,
-    "threat_level": "BENIGN",
-    "headline_mechanism": "SYNOPTIC_TERRAIN",
-    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
-    "primary_bust_axis": "speed (terrain amplification under-resolved by 3km input)",
-    "evidence_fraction": {
-      "synoptic_terrain": 0.65,
-      "pbl_transient": 0.46,
-      "convective_outflow": 0.21,
-      "fire_generated": 0.0
-    },
-    "scores": {
-      "synoptic_terrain": 0.46,
-      "pbl_transient": 0.33,
-      "convective_outflow": 0.0,
-      "fire_generated": 0.0
-    },
-    "peak_surface": {
-      "time": "2026-09-21T20:00",
-      "sustained_mph": 7.8,
-      "gust_mph": 13.6,
-      "dir_deg": 316,
-      "temp_c": 18.2,
-      "rh_pct": 84,
-      "min_rh_pct": 57
-    },
-    "drivers": {
-      "w700_max_ms": 8.87,
-      "max_cape": 90.0,
-      "low_level_lapse_ckm": 4.83,
-      "max_wind_shift_deg": 4.0,
-      "max_gust_ratio": 2.7
-    },
-    "reasons_for_headline": [
-      "stable low-level layer (downslope/mountain-wave setup)",
-      "no active convection (clean terrain regime)"
-    ]
-  },
-  {
-    "site": "Marshall / Boulder Co, CO",
-    "lat": 39.94,
-    "lon": -105.18,
-    "generated_utc": "2026-09-21T18:35Z",
-    "window_hours": 24,
-    "threat_level": "BENIGN",
-    "headline_mechanism": "SYNOPTIC_TERRAIN",
-    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
-    "primary_bust_axis": "speed (terrain amplification under-resolved by 3km input)",
-    "evidence_fraction": {
-      "synoptic_terrain": 0.65,
-      "pbl_transient": 0.15,
-      "convective_outflow": 0.21,
-      "fire_generated": 0.0
-    },
-    "scores": {
-      "synoptic_terrain": 0.23,
-      "pbl_transient": 1.0,
-      "convective_outflow": 0.0,
-      "fire_generated": 0.0
-    },
-    "peak_surface": {
-      "time": "2026-09-21T23:00",
-      "sustained_mph": 10.1,
-      "gust_mph": 16.6,
-      "dir_deg": 355,
-      "temp_c": 15.2,
-      "rh_pct": 41,
-      "min_rh_pct": 28
-    },
-    "drivers": {
-      "w700_max_ms": 4.24,
-      "max_cape": 110.0,
-      "low_level_lapse_ckm": 8.06,
-      "max_wind_shift_deg": null,
-      "max_gust_ratio": 2.19
-    },
-    "reasons_for_headline": [
-      "no active convection (clean terrain regime)"
-    ]
-  },
-  {
-    "site": "Yarnell Hill, AZ",
-    "lat": 34.22,
-    "lon": -112.75,
-    "generated_utc": "2026-09-21T18:35Z",
+    "generated_utc": "2026-09-22T17:36Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
     "headline_mechanism": "PBL_TRANSIENT",
@@ -234,30 +110,116 @@
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-09-21T14:00",
-      "sustained_mph": 16.8,
-      "gust_mph": 19.5,
-      "dir_deg": 176,
-      "temp_c": 27.5,
-      "rh_pct": 24,
-      "min_rh_pct": 22
+      "time": "2026-09-22T19:00",
+      "sustained_mph": 9.5,
+      "gust_mph": 15.7,
+      "dir_deg": 321,
+      "temp_c": 21.1,
+      "rh_pct": 70,
+      "min_rh_pct": 41
     },
     "drivers": {
-      "w700_max_ms": 13.58,
-      "max_cape": 390.0,
-      "low_level_lapse_ckm": 9.81,
-      "max_wind_shift_deg": 11.0,
-      "max_gust_ratio": 2.28
+      "w700_max_ms": 7.54,
+      "max_cape": 20.0,
+      "low_level_lapse_ckm": 7.34,
+      "max_wind_shift_deg": 10.0,
+      "max_gust_ratio": 1.86
     },
     "reasons_for_headline": [
       "shift not driven by convection"
     ]
   },
   {
+    "site": "Marshall / Boulder Co, CO",
+    "lat": 39.94,
+    "lon": -105.18,
+    "generated_utc": "2026-09-22T17:36Z",
+    "window_hours": 24,
+    "threat_level": "ELEVATED",
+    "headline_mechanism": "PBL_TRANSIENT",
+    "windninja_applicability": "PARTIAL - snapshot before & after the shift; cannot model the transition",
+    "primary_bust_axis": "timing + direction (when the shift arrives, and the veer)",
+    "evidence_fraction": {
+      "synoptic_terrain": 0.65,
+      "pbl_transient": 0.46,
+      "convective_outflow": 0.21,
+      "fire_generated": 0.0
+    },
+    "scores": {
+      "synoptic_terrain": 0.23,
+      "pbl_transient": 1.0,
+      "convective_outflow": 0.0,
+      "fire_generated": 0.0
+    },
+    "peak_surface": {
+      "time": "2026-09-22T15:00",
+      "sustained_mph": 22.7,
+      "gust_mph": 30.6,
+      "dir_deg": 193,
+      "temp_c": 24.5,
+      "rh_pct": 23,
+      "min_rh_pct": 20
+    },
+    "drivers": {
+      "w700_max_ms": 9.0,
+      "max_cape": 90.0,
+      "low_level_lapse_ckm": 6.52,
+      "max_wind_shift_deg": 89.0,
+      "max_gust_ratio": 2.14
+    },
+    "reasons_for_headline": [
+      "marked wind shift over a short window (transition)",
+      "shift not driven by convection"
+    ]
+  },
+  {
+    "site": "Yarnell Hill, AZ",
+    "lat": 34.22,
+    "lon": -112.75,
+    "generated_utc": "2026-09-22T17:36Z",
+    "window_hours": 24,
+    "threat_level": "BENIGN",
+    "headline_mechanism": "SYNOPTIC_TERRAIN",
+    "windninja_applicability": "HIGH  - core use case; downscale the sustained flow",
+    "primary_bust_axis": "speed (terrain amplification under-resolved by 3km input)",
+    "evidence_fraction": {
+      "synoptic_terrain": 0.65,
+      "pbl_transient": 0.46,
+      "convective_outflow": 0.21,
+      "fire_generated": 0.0
+    },
+    "scores": {
+      "synoptic_terrain": 0.54,
+      "pbl_transient": 0.33,
+      "convective_outflow": 0.0,
+      "fire_generated": 0.0
+    },
+    "peak_surface": {
+      "time": "2026-09-22T09:00",
+      "sustained_mph": 15.9,
+      "gust_mph": 23.7,
+      "dir_deg": 160,
+      "temp_c": 21.7,
+      "rh_pct": 44,
+      "min_rh_pct": 22
+    },
+    "drivers": {
+      "w700_max_ms": 17.55,
+      "max_cape": 0.0,
+      "low_level_lapse_ckm": 8.79,
+      "max_wind_shift_deg": 13.0,
+      "max_gust_ratio": 2.06
+    },
+    "reasons_for_headline": [
+      "strong 700hPa flow (driver present)",
+      "no active convection (clean terrain regime)"
+    ]
+  },
+  {
     "site": "Labor Day / W. Cascades OR",
     "lat": 44.2,
     "lon": -122.2,
-    "generated_utc": "2026-09-21T18:35Z",
+    "generated_utc": "2026-09-22T17:36Z",
     "window_hours": 24,
     "threat_level": "BENIGN",
     "headline_mechanism": "SYNOPTIC_TERRAIN",
@@ -270,28 +232,29 @@
       "fire_generated": 0.0
     },
     "scores": {
-      "synoptic_terrain": 0.23,
+      "synoptic_terrain": 0.46,
       "pbl_transient": 1.0,
       "convective_outflow": 0.0,
       "fire_generated": 0.0
     },
     "peak_surface": {
-      "time": "2026-09-21T15:00",
-      "sustained_mph": 8.7,
-      "gust_mph": 12.1,
-      "dir_deg": 244,
-      "temp_c": 20.6,
-      "rh_pct": 56,
-      "min_rh_pct": 51
+      "time": "2026-09-22T15:00",
+      "sustained_mph": 7.0,
+      "gust_mph": 8.9,
+      "dir_deg": 248,
+      "temp_c": 15.3,
+      "rh_pct": 64,
+      "min_rh_pct": 54
     },
     "drivers": {
-      "w700_max_ms": 7.34,
-      "max_cape": 350.0,
-      "low_level_lapse_ckm": 6.33,
+      "w700_max_ms": 7.15,
+      "max_cape": 10.0,
+      "low_level_lapse_ckm": 3.15,
       "max_wind_shift_deg": null,
-      "max_gust_ratio": 1.39
+      "max_gust_ratio": 1.31
     },
     "reasons_for_headline": [
+      "stable low-level layer (downslope/mountain-wave setup)",
       "no active convection (clean terrain regime)"
     ]
   }
