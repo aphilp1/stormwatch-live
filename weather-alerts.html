@@ -300,6 +300,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #radar-leg-title{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-weight:700;margin-bottom:2px}
 #radar-leg-sub{font-size:10px;color:#446;font-weight:600;margin-bottom:7px}
 #radar-leg-items{display:flex;flex-direction:column;gap:4px}
+#radar-leg-bar{height:12px;border-radius:3px;background:linear-gradient(90deg,#88ddee,#005b8e);border:1px solid rgba(0,0,0,0.15)}
+#radar-leg-bar-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-top:2px}
 #radar-leg-note{font-size:9px;color:var(--text3);margin-top:7px;font-style:italic;line-height:1.5}
 
 /* ── HYDROLOGY LEGENDS ──────────────────────────────────────────── */
@@ -2294,16 +2296,12 @@ canvas.velocity-overlay{pointer-events:none!important}
     <div id="radar-legend">
       <button id="radar-leg-toggle" onclick="toggleRadarLegend()">–</button>
       <div id="radar-leg-title">NEXRAD Radar</div>
-      <div id="radar-leg-sub">Reflectivity (dBZ)</div>
+      <div id="radar-leg-sub">Precipitation intensity</div>
       <div id="radar-leg-items">
-        <div class="leg"><div class="lsw" style="background:#01a0f6"></div>&lt;20 – Trace</div>
-        <div class="leg"><div class="lsw" style="background:#00c800"></div>20–35 – Light</div>
-        <div class="leg"><div class="lsw" style="background:#ffff00"></div>35–45 – Moderate</div>
-        <div class="leg"><div class="lsw" style="background:#ff9000"></div>45–50 – Heavy</div>
-        <div class="leg"><div class="lsw" style="background:#ff0000"></div>50–55 – Intense</div>
-        <div class="leg"><div class="lsw" style="background:#ff00ff"></div>55+ – Extreme</div>
+        <div id="radar-leg-bar"></div>
+        <div id="radar-leg-bar-labels"><span>Light</span><span>Heavy</span></div>
       </div>
-      <div id="radar-leg-note">RainViewer · NOAA Level-III colors</div>
+      <div id="radar-leg-note">RainViewer &middot; blue intensity scale (lighter = lighter precip, darker = heavier)</div>
     </div>
 
     <!-- SPC Fire Weather Outlook legend -->
