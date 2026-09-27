@@ -1072,8 +1072,8 @@ canvas.velocity-overlay{pointer-events:none!important}
             <span class="layer-note" id="radar-status-note">off</span>
           </div>
           <div class="opacity-row" id="radar-opacity-row" style="display:none">
-            <input type="range" min="10" max="100" value="70" oninput="setRadarOpacity(this.value)" id="radar-opacity-slider">
-            <span id="radar-opacity-val">70%</span>
+            <input type="range" min="10" max="100" value="90" oninput="setRadarOpacity(this.value)" id="radar-opacity-slider">
+            <span id="radar-opacity-val">90%</span>
           </div>
           <div id="radar-play-row" style="display:none">
             <div id="radar-play-controls">
@@ -2928,7 +2928,7 @@ let sidebarOpen = true, legendOpen = true;
 
 let radarFrames = [], radarLayerCache = {}, radarHost = 'https://tilecache.rainviewer.com', radarIdx = 0;
 let radarEnabled = false, radarPlaying = false, radarTimer = null;
-let radarOpacity = 0.70;
+let radarOpacity = 0.90;
 
 let hrrrEnabled = false, hrrrPlaying = false, hrrrTimer = null;
 let hrrrProduct = 'refd', hrrrIdx = 0, hrrrOpacity = 0.70;
