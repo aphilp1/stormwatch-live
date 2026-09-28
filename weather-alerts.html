@@ -1072,8 +1072,8 @@ canvas.velocity-overlay{pointer-events:none!important}
             <span class="layer-note" id="radar-status-note">off</span>
           </div>
           <div class="opacity-row" id="radar-opacity-row" style="display:none">
-            <input type="range" min="10" max="100" value="90" oninput="setRadarOpacity(this.value)" id="radar-opacity-slider">
-            <span id="radar-opacity-val">90%</span>
+            <input type="range" min="10" max="100" value="70" oninput="setRadarOpacity(this.value)" id="radar-opacity-slider">
+            <span id="radar-opacity-val">70%</span>
           </div>
           <div id="radar-play-row" style="display:none">
             <div id="radar-play-controls">
@@ -2303,7 +2303,7 @@ canvas.velocity-overlay{pointer-events:none!important}
         <div class="leg"><div class="lsw" style="background:#ff0000"></div>50–55 – Intense</div>
         <div class="leg"><div class="lsw" style="background:#ff00ff"></div>55+ – Extreme</div>
       </div>
-      <div id="radar-leg-note">IEM composite &middot; NOAA WSR-88D Level III colors</div>
+      <div id="radar-leg-note">RainViewer · NOAA Level-III colors</div>
     </div>
 
     <!-- SPC Fire Weather Outlook legend -->
@@ -2579,6 +2579,7 @@ canvas.velocity-overlay{pointer-events:none!important}
 // ═══════════════════════════════════════════════════════════════════
 
 const NWS_ALERTS  = 'https://api.weather.gov/alerts/active?status=actual';
+const RAINVIEWER  = 'https://api.rainviewer.com/public/weather-maps.json';
 const SPC_D1      = 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/1/query?where=1%3D1&outFields=*&f=geojson';
 const SPC_D2      = 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/9/query?where=1%3D1&outFields=*&f=geojson';
 const SPC_MCD     = 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/spc_mesoscale_discussion/MapServer/0/query?where=1%3D1&outFields=*&f=geojson';
@@ -2925,9 +2926,9 @@ let zoneCache = {}, geomCache = {};
 let activeFilter = 'all', selectedId = null;
 let sidebarOpen = true, legendOpen = true;
 
-let radarFrames = [], radarLayerCache = {}, radarIdx = 0;
+let radarFrames = [], radarLayerCache = {}, radarHost = 'https://tilecache.rainviewer.com', radarIdx = 0;
 let radarEnabled = false, radarPlaying = false, radarTimer = null;
-let radarOpacity = 0.90;
+let radarOpacity = 0.70;
 
 let hrrrEnabled = false, hrrrPlaying = false, hrrrTimer = null;
 let hrrrProduct = 'refd', hrrrIdx = 0, hrrrOpacity = 0.70;
@@ -3550,21 +3551,13 @@ function updateCounts() {
 // RADAR (RainViewer animated)
 // ═══════════════════════════════════════════════════════════════════
 
-// IEM's real CONUS composite of NWS WSR-88D Level III base reflectivity
-// (https://mesonet.agron.iastate.edu/ogc/, layer nexrad-n0r-900913), genuine
-// NWS colors (blue/green/yellow/orange/red/magenta by dBZ) -- verified by
-// sampling real tiles before switching to this, see commit message. Offers
-// 11 layers: now, and 5-min offsets back to 50 min (m05m..m50m).
-const IEM_RADAR_WMS = 'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi';
-const IEM_RADAR_OFFSETS = [50,45,40,35,30,25,20,15,10,5,0]; // oldest -> newest, minutes back
-
 function ensureRadarLayer(idx) {
   if (radarLayerCache[idx]) return radarLayerCache[idx];
   const frame = radarFrames[idx];
-  const lyr = L.tileLayer.wms(IEM_RADAR_WMS, {
-    layers: frame.layer, version:'1.1.1', format:'image/png', transparent:true,
-    tileSize:256, opacity:0, zIndex:200, attribution:'IEM NEXRAD Composite', maxNativeZoom:12
-  }).addTo(map);
+  const lyr = L.tileLayer(
+    `${radarHost}${frame.path}/512/{z}/{x}/{y}/5/1_1.png`,
+    {tileSize:512, zoomOffset:-1, opacity:0, zIndex:200, attribution:'RainViewer', minZoom:2, maxNativeZoom:13}
+  ).addTo(map);
   radarLayerCache[idx] = lyr;
   return lyr;
 }
@@ -3572,11 +3565,10 @@ function ensureRadarLayer(idx) {
 async function initRadar() {
   document.getElementById('radar-status-note').textContent='loading…';
   try {
-    const now = Date.now();
-    radarFrames = IEM_RADAR_OFFSETS.map(m => ({
-      time: Math.floor((now - m*60000) / 1000),
-      layer: m === 0 ? 'nexrad-n0r-900913' : `nexrad-n0r-900913-m${String(m).padStart(2,'0')}m`
-    }));
+    const data = await fetchJson(RAINVIEWER, 10000);
+    radarHost = data.host || 'https://tilecache.rainviewer.com';
+    radarFrames = [...(data.radar?.past||[]), ...(data.radar?.nowcast||[])];
+    if (!radarFrames.length) throw new Error('no frames');
 
     // Remove all previously cached layers
     Object.values(radarLayerCache).forEach(l => { try { l.remove(); } catch(_){} });
