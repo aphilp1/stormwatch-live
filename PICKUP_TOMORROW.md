@@ -1,5 +1,15 @@
 # StormWatch — Resume Anchor
 
+## ▶ CURRENT STATE as of 2026-10-01 — read this first
+
+**HEAD `9a7e712` on `master` == `origin/master`, pushed on Alex's "push it", live-verified. `wip` == `master`.**
+
+Follow-up to the 9/30 Stream Network fix: Alex reported it "working but very very slow". Cause, measured: Overpass itself (the primary took 13 s to return a 504, its lz4 sibling 12 s to answer) plus the serial mirror walk. Alternatives were tested, not assumed: USGS NHD/NHDPlus HR timed out on every query (even a count), Esri USA Rivers and Streams is fast but has 13 features where OSM has 241, Esri Hydro Reference Overlay cached tiles are 0.2-0.7 s and exist through z13.
+
+**Shipped (two-tier):** mirrors raced in parallel (2 s stagger, first answer wins, winner logged to console); Esri hydro reference tiles drawn after 5 s if nothing has answered ("reference tiles · loading detailed…") and kept up during a full outage ("stream servers down · retrying", retry every 15 s); detailed OSM lines replace the tiles whenever Overpass answers. Tiles in `tilePane` z350 with a CSS saturate/contrast boost; opacity slider and toggle-off cover them. Live timeline today: tiles at 7 s, 241 waterways at 9 s. Layer test knows the states: `degraded` = sitting on fallback tiles (reported, shown on diagnostics.html, not a failure).
+
+Alex also raised a layout complaint ("map and a long list below") then withdrew it: "StormWatch Live v1.0 is fine." No layout change made.
+
 ## ▶ CURRENT STATE as of 2026-09-30 end of session — read this first
 
 **HEAD `0002abd` on `master` == `origin/master`, pushed, live. `wip` == `master`.**
