@@ -50,6 +50,10 @@ and records what it said:
   instead of skipped.
 - `no-note` — the layer has no status note (a plain tile overlay); only the
   console-error check applies to it.
+- `degraded` — the layer is showing its fallback (Stream Network's Esri
+  reference tiles) because its detailed feed (Overpass) is down. Streams are
+  on screen, so this is reported but does not fail the run. A layer still
+  loading its detailed data behind fallback tiles gets the 120 s budget.
 - `skipped` — a local-only layer (AirNow, WindNinja: they need the on-device
   analysis server at localhost:3456). On the public site the note reads
   "local only" by design; on a CI runner serving the page from localhost the

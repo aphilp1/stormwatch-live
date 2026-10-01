@@ -122,7 +122,8 @@ async function main() {
       const elapsed = Date.now() - t0;
       // A layer walking through fallback mirrors (Stream Network: up to 4 x 25 s)
       // is legitimately still working — give it the full chain before calling it.
-      const budget = /mirror/i.test(note) ? MIRROR_SETTLE_MS : SETTLE_MS;
+      // Same for a layer already showing fallback tiles while its detailed data is pending.
+      const budget = /mirror|reference tiles/i.test(note) ? MIRROR_SETTLE_MS : SETTLE_MS;
       // "off" right after switching ON means the handler hasn't written a status
       // yet (or never does) — give it a moment, then treat it as "no status".
       const pending = NOTE_PENDING.test(note) || (note === 'off' && elapsed < OFF_GRACE_MS);
@@ -144,6 +145,7 @@ async function main() {
       let status;
       if (note === null || note === 'off') status = 'no-note';
       else if (NOTE_PENDING.test(note)) status = 'timeout';
+      else if (/reference tiles/i.test(note)) status = 'degraded';   // fallback tiles on screen, detailed feed down
       else if (/^local only$/i.test(note)) status = 'skipped';
       else if (LOCAL_ONLY_LAYERS.has(id) && !localUp && /unavailable/i.test(note)) status = 'skipped';
       else if (NOTE_FAIL.test(note)) status = 'fail';
@@ -190,6 +192,7 @@ async function main() {
     layers_no_note: rows.filter(r => r.status === 'no-note').length,
     layers_zoom_gated: rows.filter(r => r.status === 'zoom-gated').length,
     layers_skipped: rows.filter(r => r.status === 'skipped').length,
+    layers_degraded: rows.filter(r => r.status === 'degraded').map(r => ({ layer: r.layer, note: r.note })),
     local_server_up: localUp,
     data_failures: dataFails.map(r => ({ layer: r.layer, note: r.note, status: r.status })),
     code_errors: codeErrors,
@@ -202,7 +205,7 @@ async function main() {
 
   console.log(`\nLayer results (${rows.length} toggles, ${TABS.length} tabs):`);
   for (const r of rows) {
-    const mark = r.status === 'ok' ? '✓' : (r.status === 'fail' || r.status === 'timeout') ? '✗' : '·';
+    const mark = r.status === 'ok' ? '✓' : (r.status === 'fail' || r.status === 'timeout') ? '✗' : r.status === 'degraded' ? '~' : '·';
     console.log(`  ${mark} ${r.layer.padEnd(22)} ${r.status.padEnd(10)} ${(r.note ?? '(no status note)').slice(0, 60)}`);
   }
 

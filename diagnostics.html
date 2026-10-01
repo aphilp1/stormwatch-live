@@ -287,11 +287,13 @@ async function loadLayerStatus() {
     const age = Math.round((Date.now() - new Date(d.checked_utc).getTime()) / 3600000 * 10) / 10;
     const fails = (d.data_failures || []).map(x => `${x.layer.replace(/^lyr-/, '')} (${x.note})`);
     const code = (d.code_errors || []).length;
+    const degraded = (d.layers_degraded || []).map(x => `${x.layer.replace(/^lyr-/, '')} (${x.note})`);
     box.innerHTML = `<b>Last automated layer test:</b> ${new Date(d.checked_utc).toLocaleString()} (${age} h ago) — ` +
       (fails.length || code
         ? `<span style="color:var(--fail)">${fails.length} of ${d.layers_total} layers failed to load` +
           (fails.length ? `: ${fails.join(', ')}` : '') + (code ? ` · ${code} JS error(s)` : '') + '</span>'
         : `<span style="color:var(--ok)">${d.layers_ok} of ${d.layers_total} layers loaded data, zero JS errors ✓</span>`) +
+      (degraded.length ? ` <span style="color:var(--warn)">· on fallback: ${degraded.join(', ')}</span>` : '') +
       (age > 9 ? ' <span style="color:var(--warn)">· looks stale — the layer-test Action may be stuck</span>' : '');
   } catch {
     box.innerHTML = '<b>Last automated layer test:</b> none found yet — the layer-test Action writes ' +
