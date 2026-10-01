@@ -931,6 +931,8 @@ canvas.velocity-overlay{pointer-events:none!important}
 .anom-legend-live .an-x{color:#d23b2e}.anom-legend-live .an-s{color:#e8862b}.anom-legend-live .an-e{color:#b8902a}
 .anom-legend-foot{margin-top:7px;font-size:8.5px;color:#4d5468;line-height:1.35}
 
+  /* Esri hydro reference tiles (Stream Network fallback while Overpass is down): thin pale lines, boost so they read on the basemap */
+  .nhd-fallback-tiles { filter: saturate(1.8) contrast(1.35); }
 </style>
 </head>
 <body>
@@ -4945,6 +4947,8 @@ async function toggleLayer(name, on) {
     } else {
       nhdGroup.remove();
       nhdGroup.clearLayers();
+      hideNhdFallbackTiles();
+      clearTimeout(nhdRetryTimer);
       document.getElementById('nhd-note').textContent = 'off';
     }
   } else if (name === 'dry-ltg') {
@@ -4964,6 +4968,7 @@ function setNhdOpacity(v) {
   nhdOpacity = v / 100;
   document.getElementById('nhd-opacity-val').textContent = v + '%';
   nhdGroup.eachLayer(l => { if (l.setStyle) l.setStyle({ opacity: nhdOpacity }); });
+  if (nhdFallbackTiles) nhdFallbackTiles.setOpacity(nhdOpacity);
 }
 
 function _dryLtgStyle(kbdi) {
@@ -5054,24 +5059,35 @@ function showDryLtgCard(p) {
 }
 
 
-// Public Overpass servers, tried in order. The main instance drops requests
-// under load (429 / 504 / "runtime error" inside a 200 body / plain timeouts),
-// which used to surface as a dead "load error" note with no retry at all.
+// ── Stream Network: two-tier loader ──────────────────────────────────────────
+// Tier 1 (detailed, clickable): OpenStreetMap waterways via the public Overpass
+// API. Those servers are volunteer-run and drop into HTTP 504 in waves, so the
+// mirrors are RACED: the primary starts first, another mirror joins every
+// OVERPASS_STAGGER_MS until one answers, and a failure starts the next one at
+// once. First success wins and the rest are aborted.
+// Tier 2 (fallback, image tiles): if every mirror fails, Esri's cached Hydro
+// Reference Overlay is drawn immediately so streams are never blank, and the
+// Overpass request is retried every 15 s; the detailed lines replace the tiles
+// as soon as a mirror answers.
 const OVERPASS_MIRRORS = [
   'https://overpass-api.de/api/interpreter',
   'https://lz4.overpass-api.de/api/interpreter',
   'https://z.overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter'
 ];
+const OVERPASS_STAGGER_MS = 2000;    // start the next mirror if nothing has answered yet
+const NHD_EARLY_FALLBACK_MS = 5000;  // show reference tiles while a slow Overpass answer is still pending
+const OVERPASS_TIMEOUT_MS = 25000;   // per-mirror hard cap (query itself asks for 20 s)
+const NHD_FALLBACK_TILES = 'https://tiles.arcgis.com/tiles/P3ePLMYs2RVChkJx/arcgis/rest/services/Esri_Hydro_Reference_Overlay/MapServer/tile/{z}/{y}/{x}';
 let nhdRequestSeq = 0;          // stale-response guard: only the newest request may render
 let nhdRetryTimer = null;
+let nhdFallbackTiles = null;    // Esri tile layer, created on first use
+let nhdFallbackOn = false;
 
-// One attempt against one mirror with a hard timeout. Resolves to the parsed
-// JSON on success, throws on anything else (HTTP error, timeout, bad body,
-// Overpass "remark" error inside a 200 response).
-async function fetchOverpass(url, query, timeoutMs) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+// One attempt against one mirror. Resolves to parsed JSON on success, throws on
+// HTTP error, timeout, abort, bad body, or an Overpass "remark" error inside a 200.
+async function fetchOverpass(url, query, ctrl) {
+  const t = setTimeout(() => ctrl.abort(), OVERPASS_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -5089,12 +5105,64 @@ async function fetchOverpass(url, query, timeoutMs) {
   }
 }
 
+// Race the mirrors. onProgress(n) is called with the number of mirrors in flight.
+function raceOverpass(query, onProgress) {
+  return new Promise((resolve, reject) => {
+    const ctrls = [];
+    let next = 0, failures = 0, settled = false, inFlight = 0;
+    const startNext = () => {
+      if (settled || next >= OVERPASS_MIRRORS.length) return;
+      const i = next++;
+      const url = OVERPASS_MIRRORS[i];
+      const ctrl = new AbortController();
+      ctrls.push(ctrl);
+      inFlight++;
+      if (onProgress) onProgress(inFlight);
+      fetchOverpass(url, query, ctrl).then(data => {
+        if (settled) return;
+        settled = true;
+        ctrls.forEach(c => { if (c !== ctrl) c.abort(); });
+        resolve({ data, url });
+      }).catch(err => {
+        inFlight--;
+        if (settled) return;
+        failures++;
+        console.warn(`Stream Network: ${url} failed (${err.name === 'AbortError' ? 'timeout' : err.message})`);
+        if (failures >= OVERPASS_MIRRORS.length) { settled = true; reject(err); return; }
+        startNext();                         // a failure starts the next mirror at once
+      });
+      if (i + 1 < OVERPASS_MIRRORS.length) setTimeout(startNext, OVERPASS_STAGGER_MS);
+    };
+    startNext();
+  });
+}
+
+function showNhdFallbackTiles() {
+  if (!nhdFallbackTiles) {
+    nhdFallbackTiles = L.tileLayer(NHD_FALLBACK_TILES, {
+      pane: 'tilePane', zIndex: 350,      // above the basemap, below alert polygons (see pane-stacking note)
+      maxNativeZoom: 13, maxZoom: 19,     // Esri serves this overlay through z13; Leaflet upscales beyond
+      opacity: nhdOpacity,
+      attribution: 'Hydro reference: Esri',
+      className: 'nhd-fallback-tiles'
+    });
+  }
+  if (!map.hasLayer(nhdFallbackTiles)) nhdFallbackTiles.addTo(map);
+  nhdFallbackTiles.setOpacity(nhdOpacity);
+  nhdFallbackOn = true;
+}
+function hideNhdFallbackTiles() {
+  if (nhdFallbackTiles && map.hasLayer(nhdFallbackTiles)) nhdFallbackTiles.remove();
+  nhdFallbackOn = false;
+}
+
 async function loadNHDStreams() {
   if (!nhdEnabled) return;
   const z = map.getZoom();
   if (z < 9) {
     document.getElementById('nhd-note').textContent = 'zoom in (9+) to load';
     nhdGroup.clearLayers();
+    hideNhdFallbackTiles();
     return;
   }
   clearTimeout(nhdLoadTimer);
@@ -5111,35 +5179,45 @@ async function loadNHDStreams() {
       : z < 12 ? 'river|canal|stream'
       : 'river|canal|stream|drain|ditch';
     const note = document.getElementById('nhd-note');
-    note.textContent = 'loading…';
+    note.textContent = nhdFallbackOn ? 'reference tiles · retrying detailed…' : 'loading…';
     const query = `[out:json][timeout:20];(way["waterway"~"^(${wtypes})$"](${s},${w},${n},${e}););out geom tags;`;
 
-    let data = null, lastErr = null;
-    for (let i = 0; i < OVERPASS_MIRRORS.length; i++) {
-      if (seq !== nhdRequestSeq || !nhdEnabled) return;   // map moved on / layer turned off
-      if (i > 0) note.textContent = `loading… (mirror ${i + 1} of ${OVERPASS_MIRRORS.length})`;
-      try {
-        data = await fetchOverpass(OVERPASS_MIRRORS[i], query, 25000);
-        break;
-      } catch (err) {
-        lastErr = err;
-        console.warn(`Stream Network: ${OVERPASS_MIRRORS[i]} failed (${err.name === 'AbortError' ? 'timeout' : err.message})`);
-      }
-    }
-    if (seq !== nhdRequestSeq || !nhdEnabled) return;
-
-    if (!data) {
-      console.warn('Stream load error: every Overpass mirror failed (upstream outage, not a page bug) —', lastErr && (lastErr.name === 'AbortError' ? 'timeout' : lastErr.message));
-      note.textContent = 'stream servers busy — retrying in 15 s';
+    let data = null;
+    const t0 = Date.now();
+    // Overpass can take 10-15 s to answer when its queue is deep. Rather than
+    // leave the map blank, draw the reference tiles after a short wait and let
+    // the detailed lines replace them whenever the answer lands.
+    const earlyTimer = setTimeout(() => {
+      if (seq !== nhdRequestSeq || !nhdEnabled || data) return;
+      showNhdFallbackTiles();
+      note.textContent = 'reference tiles · loading detailed…';
+    }, NHD_EARLY_FALLBACK_MS);
+    try {
+      const r = await raceOverpass(query, inFlight => {
+        if (seq !== nhdRequestSeq || nhdFallbackOn) return;
+        if (inFlight > 1) note.textContent = `loading… (${inFlight} mirrors)`;
+      });
+      data = r.data;
+      clearTimeout(earlyTimer);
+      console.info(`Stream Network: ${r.url.replace('https://','').split('/')[0]} answered in ${Date.now() - t0} ms`);
+    } catch (err) {
+      clearTimeout(earlyTimer);
+      if (seq !== nhdRequestSeq || !nhdEnabled) return;
+      console.warn('Stream Network: every Overpass mirror failed (upstream outage, not a page bug) — showing reference tiles');
+      nhdGroup.clearLayers();
+      showNhdFallbackTiles();
+      note.textContent = 'reference tiles · stream servers down · retrying';
       nhdRetryTimer = setTimeout(() => {
         if (nhdEnabled && seq === nhdRequestSeq) { nhdRequestSeq++; loadNHDStreams(); }
       }, 15000);
       return;
     }
+    if (seq !== nhdRequestSeq || !nhdEnabled) return;
 
     try {
       const elements = data.elements.filter(el => el.geometry?.length >= 2);
       nhdGroup.clearLayers();
+      hideNhdFallbackTiles();
       if (elements.length === 0) { note.textContent = 'no waterways'; return; }
       const WT_W = { river: 4.5, canal: 2.5, stream: 1.8, drain: 1.2, ditch: 1 };
       L.geoJSON({
