@@ -60,6 +60,7 @@ a{color:#7ab8ff}
   <div id="banner"></div>
 
   <div id="cloudbox">Loading last automated check-in…</div>
+  <div id="cloudbox" style="margin-top:6px"><span id="layerbox">Loading last automated layer test…</span></div>
 
   <div class="controls">
     <button id="runbtn" onclick="runAll()">↻ Run all checks</button>
@@ -175,6 +176,8 @@ const GROUPS = [
 { name: 'Radar, Satellite & Models', checks: [
   { t: 'RainViewer radar index', d: 'api.rainviewer.com weather-maps',
     fn: jsonCheck('https://api.rainviewer.com/public/weather-maps.json', d => d.radar) },
+  { t: 'Overpass API (Stream Network)', d: 'overpass-api.de waterway query, Missoula test box',
+    fn: jsonCheck('https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A10%5D%3Bway%5B%22waterway%22%3D%22river%22%5D%2846.85%2C-114.05%2C46.90%2C-113.95%29%3Bout%20ids%201%3B', d => Array.isArray(d.elements)) },
   { t: 'HRRR model WMS', d: 'mesonet.agron.iastate.edu (IEM) refd',
     fn: reachCheck('https://mesonet.agron.iastate.edu/cgi-bin/wms/hrrr/refd.cgi?service=WMS&request=GetCapabilities') },
   { t: 'MRMS QPE WMS', d: 'mesonet.agron.iastate.edu mrms_nn',
@@ -272,6 +275,30 @@ function applyFilter() {
   rows.forEach(r => { r.el.style.display = (only && r.res === 'ok') ? 'none' : 'flex'; });
 }
 
+// Last automated live layer test (written by .github/workflows/layer-test.yml):
+// every layer toggle switched on in a headless browser against the live site,
+// each layer's own status note read back — "did the data arrive", not just "no crash".
+async function loadLayerStatus() {
+  const box = document.getElementById('layerbox');
+  try {
+    const r = await tfetch('data/layer_test.json?cb=' + Date.now());
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const age = Math.round((Date.now() - new Date(d.checked_utc).getTime()) / 3600000 * 10) / 10;
+    const fails = (d.data_failures || []).map(x => `${x.layer.replace(/^lyr-/, '')} (${x.note})`);
+    const code = (d.code_errors || []).length;
+    box.innerHTML = `<b>Last automated layer test:</b> ${new Date(d.checked_utc).toLocaleString()} (${age} h ago) — ` +
+      (fails.length || code
+        ? `<span style="color:var(--fail)">${fails.length} of ${d.layers_total} layers failed to load` +
+          (fails.length ? `: ${fails.join(', ')}` : '') + (code ? ` · ${code} JS error(s)` : '') + '</span>'
+        : `<span style="color:var(--ok)">${d.layers_ok} of ${d.layers_total} layers loaded data, zero JS errors ✓</span>`) +
+      (age > 9 ? ' <span style="color:var(--warn)">· looks stale — the layer-test Action may be stuck</span>' : '');
+  } catch {
+    box.innerHTML = '<b>Last automated layer test:</b> none found yet — the layer-test Action writes ' +
+      '<code>data/layer_test.json</code> every 6 hours once it has run.';
+  }
+}
+
 // Last automated cloud check-in (written by .github/workflows/health-monitor.yml).
 async function loadCloudStatus() {
   const box = document.getElementById('cloudbox');
@@ -293,7 +320,7 @@ async function loadCloudStatus() {
 }
 
 build();
-loadCloudStatus();
+loadCloudStatus(); loadLayerStatus();
 runAll();
 </script>
 </body>

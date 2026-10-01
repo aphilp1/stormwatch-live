@@ -1,0 +1,80 @@
+name: Live Layer Test
+
+# Every 6 hours: open the LIVE public site in a headless browser, switch every
+# layer toggle on, wait for each layer's status note to settle, and record
+# whether its data actually arrived (not just "no JS crash"). Zoom-gated layers
+# such as Stream Network are re-tested zoomed in to Missoula so their feeds are
+# really exercised. Writes data/layer_test.json (shown on diagnostics.html) and
+# pushes an ntfy notification when any layer fails. Same script as the on-push
+# smoke test (Storm_info/smoketest_layers.js), pointed at the live URL.
+on:
+  schedule:
+    - cron: "41 */6 * * *"    # offset from the alert monitor (:00/:15/:30/:45) and health monitor (:23)
+  workflow_dispatch:           # allow manual runs from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: layer-test
+  cancel-in-progress: false
+
+jobs:
+  layer-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright
+        working-directory: Storm_info
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run layer test against the live site
+        id: test
+        continue-on-error: true
+        run: |
+          node Storm_info/smoketest_layers.js \
+            "https://aphilp1.github.io/stormwatch-live/weather-alerts.html?ci=$(date -u +%s)" \
+            --out data/layer_test.json
+
+      - name: Commit result
+        run: |
+          git config user.name  "stormwatch-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/layer_test.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Layer test ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git pull --rebase
+            git push
+          fi
+
+      - name: Notify on failure
+        if: steps.test.outcome == 'failure' && env.NTFY_TOPIC != ''
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          if [ -f data/layer_test.json ]; then
+            BODY=$(node -e '
+              const r = require("./data/layer_test.json");
+              const d = r.data_failures.map(f => `${f.layer}: ${f.note}`);
+              const c = r.code_errors.map(e => `[${e.step}] ${e.text}`);
+              console.log([...d, ...c].slice(0, 12).join("\n") || "see Actions log");
+            ')
+          else
+            BODY="layer test crashed before writing results — see Actions log"
+          fi
+          curl -s -H "Title: StormWatch layer test FAILED" -H "Priority: high" -H "Tags: warning" \
+            -d "$BODY" "https://ntfy.sh/$NTFY_TOPIC" > /dev/null
+
+      - name: Fail the run if the test failed
+        if: steps.test.outcome == 'failure'
+        run: exit 1

@@ -5054,6 +5054,41 @@ function showDryLtgCard(p) {
 }
 
 
+// Public Overpass servers, tried in order. The main instance drops requests
+// under load (429 / 504 / "runtime error" inside a 200 body / plain timeouts),
+// which used to surface as a dead "load error" note with no retry at all.
+const OVERPASS_MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://lz4.overpass-api.de/api/interpreter',
+  'https://z.overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter'
+];
+let nhdRequestSeq = 0;          // stale-response guard: only the newest request may render
+let nhdRetryTimer = null;
+
+// One attempt against one mirror with a hard timeout. Resolves to the parsed
+// JSON on success, throws on anything else (HTTP error, timeout, bad body,
+// Overpass "remark" error inside a 200 response).
+async function fetchOverpass(url, query, timeoutMs) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: query,
+      signal: ctrl.signal
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!Array.isArray(data.elements)) throw new Error('bad body');
+    if (data.remark && /error|timed out/i.test(data.remark)) throw new Error(data.remark.slice(0, 80));
+    return data;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function loadNHDStreams() {
   if (!nhdEnabled) return;
   const z = map.getZoom();
@@ -5063,7 +5098,9 @@ async function loadNHDStreams() {
     return;
   }
   clearTimeout(nhdLoadTimer);
+  clearTimeout(nhdRetryTimer);
   nhdLoadTimer = setTimeout(async () => {
+    const seq = ++nhdRequestSeq;
     const b = map.getBounds();
     // Overpass bbox order: south,west,north,east
     const s = b.getSouth().toFixed(4), w = b.getWest().toFixed(4);
@@ -5073,20 +5110,37 @@ async function loadNHDStreams() {
       : z < 11 ? 'river|canal'
       : z < 12 ? 'river|canal|stream'
       : 'river|canal|stream|drain|ditch';
-    document.getElementById('nhd-note').textContent = 'loading…';
+    const note = document.getElementById('nhd-note');
+    note.textContent = 'loading…';
+    const query = `[out:json][timeout:20];(way["waterway"~"^(${wtypes})$"](${s},${w},${n},${e}););out geom tags;`;
+
+    let data = null, lastErr = null;
+    for (let i = 0; i < OVERPASS_MIRRORS.length; i++) {
+      if (seq !== nhdRequestSeq || !nhdEnabled) return;   // map moved on / layer turned off
+      if (i > 0) note.textContent = `loading… (mirror ${i + 1} of ${OVERPASS_MIRRORS.length})`;
+      try {
+        data = await fetchOverpass(OVERPASS_MIRRORS[i], query, 25000);
+        break;
+      } catch (err) {
+        lastErr = err;
+        console.warn(`Stream Network: ${OVERPASS_MIRRORS[i]} failed (${err.name === 'AbortError' ? 'timeout' : err.message})`);
+      }
+    }
+    if (seq !== nhdRequestSeq || !nhdEnabled) return;
+
+    if (!data) {
+      console.warn('Stream load error: every Overpass mirror failed (upstream outage, not a page bug) —', lastErr && (lastErr.name === 'AbortError' ? 'timeout' : lastErr.message));
+      note.textContent = 'stream servers busy — retrying in 15 s';
+      nhdRetryTimer = setTimeout(() => {
+        if (nhdEnabled && seq === nhdRequestSeq) { nhdRequestSeq++; loadNHDStreams(); }
+      }, 15000);
+      return;
+    }
+
     try {
-      const query = `[out:json][timeout:20];(way["waterway"~"^(${wtypes})$"](${s},${w},${n},${e}););out geom tags;`;
-      const res = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: query
-      });
-      if (res.status === 429) throw new Error('rate-limited');
-      if (!res.ok) throw new Error(`${res.status}`);
-      const data = await res.json();
-      const elements = (data.elements ?? []).filter(el => el.geometry?.length >= 2);
+      const elements = data.elements.filter(el => el.geometry?.length >= 2);
       nhdGroup.clearLayers();
-      if (elements.length === 0) { document.getElementById('nhd-note').textContent = 'no waterways'; return; }
+      if (elements.length === 0) { note.textContent = 'no waterways'; return; }
       const WT_W = { river: 4.5, canal: 2.5, stream: 1.8, drain: 1.2, ditch: 1 };
       L.geoJSON({
         type: 'FeatureCollection',
@@ -5114,11 +5168,10 @@ async function loadNHDStreams() {
           });
         }
       }).addTo(nhdGroup);
-      document.getElementById('nhd-note').textContent = `${elements.length} waterways`;
+      note.textContent = `${elements.length} waterways`;
     } catch (err) {
-      console.error('Stream load error:', err);
-      document.getElementById('nhd-note').textContent =
-        err.message === 'rate-limited' ? 'rate limit — retry' : 'load error';
+      console.error('Stream render error:', err);
+      note.textContent = 'load error';
     }
   }, 700);
 }

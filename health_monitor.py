@@ -45,6 +45,7 @@ CHECKS = [
     ("SPC fire weather", "https://mapservices.weather.noaa.gov/vector/rest/services/fire_weather/SPC_firewx/MapServer?f=json", "json:layers"),
     ("USGS fire danger raster", "https://dmsdata.cr.usgs.gov/geoserver/firedanger_wfpi-forecast-1_conus_day_data/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=wfpi-forecast-1_conus_day_data&QUERY_LAYERS=wfpi-forecast-1_conus_day_data&CRS=CRS:84&BBOX=-116.24,43.37,-116.22,43.39&WIDTH=101&HEIGHT=101&I=50&J=50&INFO_FORMAT=application%2Fjson", "json:features"),
     ("RainViewer radar", "https://api.rainviewer.com/public/weather-maps.json", "json:radar"),
+    ("Overpass (Stream Network)", "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A10%5D%3Bway%5B%22waterway%22%3D%22river%22%5D%2846.85%2C-114.05%2C46.90%2C-113.95%29%3Bout%20ids%201%3B", "json:elements"),
     ("IEM model WMS", "https://mesonet.agron.iastate.edu/cgi-bin/wms/hrrr/refd.cgi?service=WMS&request=GetCapabilities", "reach"),
     ("River gauges", "https://mapservices.weather.noaa.gov/eventdriven/rest/services/water/riv_gauges/MapServer/0/query" + ARC.replace("OBJECTID", "gaugelid"), "json:features"),
     ("USGS streamflow", "https://api.waterdata.usgs.gov/ogcapi/v0/collections/latest-continuous/items?f=json&parameter_code=00060&limit=1", "json:features"),
