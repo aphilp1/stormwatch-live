@@ -50,6 +50,11 @@ and records what it said:
   instead of skipped.
 - `no-note` — the layer has no status note (a plain tile overlay); only the
   console-error check applies to it.
+- `skipped` — a local-only layer (AirNow, WindNinja: they need the on-device
+  analysis server at localhost:3456). On the public site the note reads
+  "local only" by design; on a CI runner serving the page from localhost the
+  server isn't there and the note reads "unavailable". The script probes
+  `localhost:3456/health` first and reports these as skipped, not failed.
 
 Any real JS console error or uncaught exception during the run is a **code
 failure**; any `fail`/`timeout` layer is a **data failure**; either one fails

@@ -45,6 +45,24 @@ const NOTE_FAIL = /error|unavailable|\berr\b|fail|busy|rate limit|offline/i;
 const NOTE_PENDING = /loading|checking|fetching/i;
 // Note text that means the layer needs a closer zoom before it will load.
 const NOTE_ZOOM = /zoom/i;
+// Layers that only work with the on-device analysis server (localhost:3456):
+// on the public site they say "local only" by design; on a CI runner serving
+// the page from localhost there is no analysis server, so they say
+// "unavailable". Neither is a page bug — reported as "skipped", not "fail".
+// (Agents/WindNinja go through the same server; see MCP_LOCAL in the page.)
+const LOCAL_ONLY_LAYERS = new Set(['lyr-airnow', 'lyr-windninja']);
+const LOCAL_SERVER_PROBE = process.env.STORMWATCH_LOCAL_SERVER || 'http://localhost:3456/health';
+
+async function localServerUp() {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3000);
+    const r = await fetch(LOCAL_SERVER_PROBE, { method: 'HEAD', signal: ctrl.signal }).catch(() =>
+      fetch(LOCAL_SERVER_PROBE, { signal: ctrl.signal }));
+    clearTimeout(t);
+    return r.ok;
+  } catch { return false; }
+}
 
 async function main() {
   const browser = await chromium.launch();
@@ -67,6 +85,8 @@ async function main() {
   page.on('dialog', d => d.dismiss().catch(() => {}));
 
   const started = new Date();
+  const localUp = await localServerUp();
+  console.log(`local analysis server (${LOCAL_SERVER_PROBE}): ${localUp ? 'up' : 'not running — local-only layers will be reported as skipped'}`);
   await page.goto(URL, { waitUntil: 'load', timeout: 45000 });
   await page.waitForTimeout(2000);
 
@@ -124,6 +144,8 @@ async function main() {
       let status;
       if (note === null || note === 'off') status = 'no-note';
       else if (NOTE_PENDING.test(note)) status = 'timeout';
+      else if (/^local only$/i.test(note)) status = 'skipped';
+      else if (LOCAL_ONLY_LAYERS.has(id) && !localUp && /unavailable/i.test(note)) status = 'skipped';
       else if (NOTE_FAIL.test(note)) status = 'fail';
       else if (NOTE_ZOOM.test(note)) status = 'zoom-gated';
       else status = 'ok';
@@ -167,6 +189,8 @@ async function main() {
     layers_ok: okCount,
     layers_no_note: rows.filter(r => r.status === 'no-note').length,
     layers_zoom_gated: rows.filter(r => r.status === 'zoom-gated').length,
+    layers_skipped: rows.filter(r => r.status === 'skipped').length,
+    local_server_up: localUp,
     data_failures: dataFails.map(r => ({ layer: r.layer, note: r.note, status: r.status })),
     code_errors: codeErrors,
     layers: rows

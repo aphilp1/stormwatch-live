@@ -1,5 +1,41 @@
 # StormWatch — Resume Anchor
 
+## ▶ CURRENT STATE as of 2026-09-30 end of session — read this first
+
+**HEAD `0002abd` on `master` == `origin/master`, pushed, live. `wip` == `master`.**
+Pushed on Alex's explicit instruction in the same message as the bug report ("fix on
+development and then push to live").
+
+**What shipped:**
+1. Stream Network (`lyr-nhd`) no longer dies on an Overpass outage. It used to call one
+   public server once; a 504 (reproduced live on 2026-09-30, overpass-api.de and all its
+   siblings were down for several minutes) left the note stuck at "load error". Now it
+   walks four mirrors with a 25 s hard timeout each, treats Overpass error "remarks"
+   inside a 200 body as failures, ignores stale responses after the map moved, and on
+   total failure shows "stream servers busy — retrying in 15 s" and really retries.
+   Rendering unchanged: 241 waterways at Missoula z10 on both localhost and live.
+2. **Test system (Alex: "set up test systems... every function all the time"):**
+   - `Storm_info/smoketest_layers.js` is now a data-level test: switches every layer
+     on, waits for that layer's own status note, fails on error-state notes (data
+     failure) as well as JS exceptions (code failure). Zoom-gated layers get re-tested
+     zoomed to Missoula at the zoom their note asks for. `--out` writes JSON.
+   - `.github/workflows/layer-test.yml` runs it against the LIVE site every 6 h
+     (cron `41 */6`), commits `data/layer_test.json`, ntfy on failure. Also
+     `workflow_dispatch`.
+   - `health_monitor.py` + `diagnostics.html` gained an Overpass probe;
+     `diagnostics.html` shows "Last automated layer test" under the check-in box.
+   - Verified against the real outage: local run reported `lyr-nhd` as the only
+     failure while Overpass was 504ing; a re-run after it recovered passed 44/50
+     (the other 6 have no status note or are tile layers gated at zoom 14).
+   - Still NOT caught by any of this: silent wrong-output bugs (right note, wrong
+     drawing). Say so if asked "does this catch everything".
+
+**Open:** none queued from this session. Check the first scheduled Live Layer Test runs
+(Actions tab) actually commit `data/layer_test.json`; the first manual run was
+triggered right after the push.
+
+
+
 ## ▶ CURRENT STATE as of 2026-09-09 end of session — read this first
 
 **Local `master` is 2 commits ahead of `origin/master`. NOT PUSHED. Do not push without
