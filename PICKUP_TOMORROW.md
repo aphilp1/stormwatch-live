@@ -2,13 +2,13 @@
 
 ## ▶ CURRENT STATE as of 2026-10-25 — read this first
 
-**`wip` = `b8ae361` + this note, NOT pushed, awaiting Alex's say-so. `master` == `origin/master` == `6a92722` (bot data only; no human commits since 10/01).**
+**PUSHED on Alex's "push it" 2026-10-25: reword commit is `9a3df6b`; master == origin/master == `813c549`. Live-verified on the public site: note on one line at zoom 10, fallback tiles on, zero console errors.**
 
 One-line change on `wip`: Stream Network's outage note is now `reference tiles · no detailed lines · retrying` (was `reference tiles · stream servers down · retrying`). Why: the Live Layer Test (80 scheduled runs since 10/01, cron confirmed working, JSON committed and served live) showed the layer on Esri fallback tiles in 42 of 80 runs and nearly every run since 10/15; every Overpass mirror was timing out or returning 502 from this machine too. The old note read like StormWatch was broken when a usable stream map was on screen. Alex's pick: leave the data path alone, reword only. A longer wording ("detailed lines unavailable") was rejected because it wrapped the Stream Network label onto two lines. "reference tiles" prefix kept on purpose: `Storm_info/smoketest_layers.js` classifies `degraded` on it.
 
 Verified: syntax check OK; real click path on `localhost:8001?v=6` (Layers tab, Stream Network on, zoom 10 over western Montana, waited out the mirror race) showed the new note on one line, fallback tiles drawn, zero console errors; full local layer test passed 43/50 with `lyr-nhd` = `degraded`. Not checked: the live public site (unchanged), the CI run on the new string.
 
-**Rollback if Alex dislikes it after push:** `git revert b8ae361` on master, then push. Before push, simply don't merge `wip`.
+**Rollback:** `git revert 9a3df6b` on master, then push.
 
 Other 80-run observations, not patterns: Fire Perimeters timed out 4x, SPC Day 1 / Day 2 / Wind-RH Outlook "unavailable" once each, Dry Lightning Outlook hit a one-off NOAA CORS error in one local run (NOAA's CORS header was present on a re-probe, CI has been green on it).
 
