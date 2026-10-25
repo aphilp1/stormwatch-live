@@ -5206,7 +5206,7 @@ async function loadNHDStreams() {
       console.warn('Stream Network: every Overpass mirror failed (upstream outage, not a page bug) — showing reference tiles');
       nhdGroup.clearLayers();
       showNhdFallbackTiles();
-      note.textContent = 'reference tiles · stream servers down · retrying';
+      note.textContent = 'reference tiles · no detailed lines · retrying';
       nhdRetryTimer = setTimeout(() => {
         if (nhdEnabled && seq === nhdRequestSeq) { nhdRequestSeq++; loadNHDStreams(); }
       }, 15000);
