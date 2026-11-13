@@ -1,8 +1,8 @@
 {
-  "checked_utc": "2026-11-12T20:23:32.489Z",
-  "url": "https://aphilp1.github.io/stormwatch-live/weather-alerts.html?ci=1794515010",
+  "checked_utc": "2026-11-13T07:10:56.511Z",
+  "url": "https://aphilp1.github.io/stormwatch-live/weather-alerts.html?ci=1794553855",
   "layers_total": 50,
-  "layers_ok": 42,
+  "layers_ok": 40,
   "layers_no_note": 4,
   "layers_zoom_gated": 1,
   "layers_skipped": 2,
@@ -13,161 +13,181 @@
     }
   ],
   "local_server_up": false,
-  "data_failures": [],
-  "code_errors": [],
+  "data_failures": [
+    {
+      "layer": "lyr-mcd",
+      "note": "unavailable",
+      "status": "fail"
+    },
+    {
+      "layer": "lyr-montana",
+      "note": "error",
+      "status": "fail"
+    }
+  ],
+  "code_errors": [
+    {
+      "step": "national toggle ON: lyr-mcd",
+      "text": "Access to fetch at 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/spc_mesoscale_discussion/MapServer/0/query?where=1%3D1&outFields=*&f=geojson' from origin 'https://aphilp1.github.io' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requ"
+    },
+    {
+      "step": "national toggle ON: lyr-montana",
+      "text": "loadMontanaStations: AbortError: signal is aborted without reason\n    at https://aphilp1.github.io/stormwatch-live/weather-alerts.html?ci=1794553855:3115:35"
+    }
+  ],
   "layers": [
     {
       "layer": "lyr-alerts",
       "pass": "national",
       "status": "no-note",
       "note": null,
-      "ms": 712
+      "ms": 717
     },
     {
       "layer": "lyr-tor-warn",
       "pass": "national",
       "status": "ok",
       "note": "none active",
-      "ms": 800
+      "ms": 998
     },
     {
       "layer": "lyr-tor-watch",
       "pass": "national",
       "status": "ok",
-      "note": "2 active",
-      "ms": 713
+      "note": "none active",
+      "ms": 1171
     },
     {
       "layer": "lyr-svr-tstm",
       "pass": "national",
       "status": "ok",
-      "note": "3 active",
-      "ms": 704
+      "note": "none active",
+      "ms": 1446
     },
     {
       "layer": "lyr-flf-warn",
       "pass": "national",
       "status": "ok",
-      "note": "5 active",
-      "ms": 749
+      "note": "none active",
+      "ms": 1418
     },
     {
       "layer": "lyr-win-stm",
       "pass": "national",
       "status": "ok",
-      "note": "5 active",
-      "ms": 710
+      "note": "6 active",
+      "ms": 1362
     },
     {
       "layer": "lyr-blizz",
       "pass": "national",
       "status": "ok",
       "note": "2 active",
-      "ms": 705
+      "ms": 1312
     },
     {
       "layer": "lyr-red-flag-alrt",
       "pass": "national",
       "status": "ok",
       "note": "none active",
-      "ms": 932
+      "ms": 1558
     },
     {
       "layer": "lyr-other-alv",
       "pass": "national",
       "status": "ok",
-      "note": "303 active",
-      "ms": 1550
+      "note": "425 active",
+      "ms": 1063
     },
     {
       "layer": "lyr-radar",
       "pass": "national",
       "status": "ok",
       "note": "13 frames",
-      "ms": 707
+      "ms": 706
     },
     {
       "layer": "lyr-sat",
       "pass": "national",
       "status": "ok",
       "note": "~5 min delay",
-      "ms": 2376
+      "ms": 1346
     },
     {
       "layer": "lyr-goescolor",
       "pass": "national",
       "status": "ok",
       "note": "live",
-      "ms": 1229
+      "ms": 713
     },
     {
       "layer": "lyr-hrrr",
       "pass": "national",
       "status": "ok",
       "note": "3km · 18h fcst",
-      "ms": 1108
+      "ms": 721
     },
     {
       "layer": "lyr-spc1",
-      "pass": "national",
-      "status": "ok",
-      "note": "3 zones",
-      "ms": 1558
-    },
-    {
-      "layer": "lyr-spc2",
       "pass": "national",
       "status": "ok",
       "note": "1 zones",
       "ms": 703
     },
     {
-      "layer": "lyr-mcd",
+      "layer": "lyr-spc2",
       "pass": "national",
       "status": "ok",
-      "note": "1 active",
-      "ms": 707
+      "note": "1 zones",
+      "ms": 708
+    },
+    {
+      "layer": "lyr-mcd",
+      "pass": "national",
+      "status": "fail",
+      "note": "unavailable",
+      "ms": 10275
     },
     {
       "layer": "lyr-lsr",
       "pass": "national",
       "status": "ok",
-      "note": "30 reports",
-      "ms": 704
+      "note": "118 reports",
+      "ms": 705
     },
     {
       "layer": "lyr-fim",
       "pass": "national",
       "status": "ok",
       "note": "15 / 210 gauges",
-      "ms": 706
+      "ms": 704
     },
     {
       "layer": "lyr-usgs",
       "pass": "national",
       "status": "ok",
-      "note": "none found",
-      "ms": 704
+      "note": "5000 gauges",
+      "ms": 2217
     },
     {
       "layer": "lyr-usgsflow",
       "pass": "national",
       "status": "ok",
       "note": "9993 gauges",
-      "ms": 2049
+      "ms": 1713
     },
     {
       "layer": "lyr-mrms",
       "pass": "national",
       "status": "ok",
       "note": "24h accumulation",
-      "ms": 710
+      "ms": 709
     },
     {
       "layer": "lyr-ero",
       "pass": "national",
       "status": "ok",
-      "note": "1 zone",
+      "note": "none issued",
       "ms": 706
     },
     {
@@ -182,56 +202,56 @@
       "pass": "zoom10",
       "status": "degraded",
       "note": "reference tiles · no detailed lines · retrying",
-      "ms": 31867
+      "ms": 29849
     },
     {
       "layer": "lyr-winds",
       "pass": "zoom10",
       "status": "ok",
       "note": "12 stations",
-      "ms": 736
+      "ms": 747
     },
     {
       "layer": "lyr-windflow",
       "pass": "national",
       "status": "ok",
       "note": "live · from station obs",
-      "ms": 725
+      "ms": 727
     },
     {
       "layer": "lyr-fire-incidents",
       "pass": "national",
       "status": "ok",
-      "note": "163 fires · 12 major",
-      "ms": 706
+      "note": "131 fires · 12 major",
+      "ms": 705
     },
     {
       "layer": "lyr-fire-perimeters",
       "pass": "national",
       "status": "ok",
       "note": "632 active perimeters",
-      "ms": 4305
+      "ms": 4267
     },
     {
       "layer": "lyr-daily-perims",
       "pass": "national",
       "status": "ok",
-      "note": "128 fresh shapes",
-      "ms": 1715
+      "note": "111 fresh shapes",
+      "ms": 1712
     },
     {
       "layer": "lyr-smoke",
       "pass": "national",
       "status": "ok",
       "note": "1000 detections",
-      "ms": 710
+      "ms": 705
     },
     {
       "layer": "lyr-hms-smoke",
       "pass": "national",
       "status": "no-note",
       "note": null,
-      "ms": 705
+      "ms": 707
     },
     {
       "layer": "lyr-naqfc-smoke",
@@ -245,35 +265,35 @@
       "pass": "national",
       "status": "skipped",
       "note": "local only",
-      "ms": 708
+      "ms": 706
     },
     {
       "layer": "lyr-red-flag",
       "pass": "national",
       "status": "ok",
       "note": "none active",
-      "ms": 704
+      "ms": 708
     },
     {
       "layer": "lyr-fwx-watch",
       "pass": "national",
       "status": "ok",
       "note": "none active",
-      "ms": 713
+      "ms": 704
     },
     {
       "layer": "lyr-psp",
       "pass": "national",
       "status": "ok",
-      "note": "Day 1 · Nov 12 · 9 risk areas",
-      "ms": 9256
+      "note": "none issued",
+      "ms": 4256
     },
     {
       "layer": "lyr-watchlist",
       "pass": "national",
       "status": "ok",
-      "note": "8 active · 5 new · 0 watching · outdated",
-      "ms": 704
+      "note": "8 active · 5 new · 4 watching",
+      "ms": 705
     },
     {
       "layer": "lyr-fire-probe",
@@ -287,84 +307,84 @@
       "pass": "national",
       "status": "ok",
       "note": "1 zone",
-      "ms": 713
+      "ms": 706
     },
     {
       "layer": "lyr-fwx-d2",
       "pass": "national",
       "status": "ok",
       "note": "none issued",
-      "ms": 704
+      "ms": 1209
     },
     {
       "layer": "lyr-kbdi",
       "pass": "national",
       "status": "ok",
       "note": "daily · CONUS",
-      "ms": 712
+      "ms": 710
     },
     {
       "layer": "lyr-windninja",
       "pass": "national",
       "status": "skipped",
       "note": "local only",
-      "ms": 711
+      "ms": 703
     },
     {
       "layer": "lyr-lightning",
       "pass": "national",
       "status": "ok",
-      "note": "20:00Z–20:15Z",
-      "ms": 717
+      "note": "06:45Z–07:00Z",
+      "ms": 716
     },
     {
       "layer": "lyr-dry-ltg-outlook",
       "pass": "national",
       "status": "ok",
       "note": "none issued",
-      "ms": 727
+      "ms": 710
     },
     {
       "layer": "lyr-wind-rh-outlook",
       "pass": "national",
       "status": "ok",
       "note": "none issued",
-      "ms": 709
+      "ms": 705
     },
     {
       "layer": "lyr-nexrad",
       "pass": "national",
       "status": "no-note",
       "note": null,
-      "ms": 712
+      "ms": 708
     },
     {
       "layer": "lyr-raws",
       "pass": "national",
       "status": "ok",
       "note": "2000 stations",
-      "ms": 705
+      "ms": 706
     },
     {
       "layer": "lyr-metar",
       "pass": "national",
       "status": "ok",
-      "note": "4543 stations",
-      "ms": 719
+      "note": "4511 stations",
+      "ms": 781
     },
     {
       "layer": "lyr-montana",
       "pass": "national",
-      "status": "ok",
-      "note": "253 stations",
-      "ms": 1217
+      "status": "fail",
+      "note": "error",
+      "ms": 15289
     },
     {
       "layer": "lyr-dry-ltg",
       "pass": "national",
       "status": "ok",
       "note": "1,296 strikes",
-      "ms": 710
+      "ms": 704
     }
   ]
 }
