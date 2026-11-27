@@ -1,20 +1,19 @@
 {
-  "updated": "2026-11-27T05:23:25Z",
-  "total_active": 573,
-  "hazard_types": 28,
-  "history_rows": 1546,
+  "updated": "2026-11-27T15:28:42Z",
+  "total_active": 508,
+  "hazard_types": 23,
+  "history_rows": 1547,
   "model_built": "2026-06-28T23:50:49Z",
   "model_coverage": [
     "2008-01-01T00:00Z",
     "2026-06-30T23:00Z"
   ],
   "national_threat": {
-    "tier": "High",
-    "families_elevated": 3,
+    "tier": "Elevated",
+    "families_elevated": 2,
     "elevated": [
       "flood",
-      "wind",
-      "coastal"
+      "wind"
     ],
     "family_surprise": {
       "severe": 0,
@@ -22,24 +21,42 @@
       "wind": 3.51,
       "fire": 0,
       "heat": 0,
-      "winter": 1.3,
+      "winter": 0,
       "tropical": 0,
-      "coastal": 3.51
+      "coastal": 1.3
     },
-    "composite": 7.83
+    "composite": 5.32
   },
   "analogs": [
     {
-      "date": "2015-02-10",
-      "similarity": 1.0,
+      "date": "2014-12-10",
+      "similarity": 0.997,
       "peak": [
         [
           "Flood Warning",
-          8
+          19
+        ],
+        [
+          "Winter Storm Warning",
+          6
         ],
         [
           "High Wind Warning",
-          6
+          5
+        ],
+        [
+          "Wind Advisory",
+          5
+        ]
+      ]
+    },
+    {
+      "date": "2018-01-24",
+      "similarity": 0.996,
+      "peak": [
+        [
+          "Flood Warning",
+          14
         ],
         [
           "Wind Advisory",
@@ -47,116 +64,132 @@
         ],
         [
           "Winter Storm Warning",
+          5
+        ],
+        [
+          "High Wind Warning",
           4
         ]
       ]
     },
     {
-      "date": "2014-12-21",
+      "date": "2011-12-30",
       "similarity": 0.996,
       "peak": [
         [
           "Flood Warning",
-          19
+          17
         ],
         [
           "Wind Advisory",
-          10
+          7
         ],
         [
           "Winter Storm Warning",
-          8
+          7
         ],
         [
           "High Wind Warning",
-          7
-        ]
-      ]
-    },
-    {
-      "date": "2013-12-02",
-      "similarity": 0.994,
-      "peak": [
-        [
-          "Flood Warning",
-          10
-        ],
-        [
-          "Winter Storm Warning",
-          10
-        ],
-        [
-          "Wind Advisory",
-          8
-        ],
-        [
-          "High Wind Warning",
-          7
+          5
         ]
       ]
     }
   ],
   "briefing": null,
   "states": {
-    "TX": {
-      "count": 2,
-      "typical": 1,
-      "surprise": 0.36,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Freeze Warning",
-          1
-        ],
-        [
-          "High Wind Watch",
-          1
-        ]
-      ]
-    },
-    "LA": {
-      "count": 3,
+    "WY": {
+      "count": 11,
       "typical": 0,
-      "surprise": 0.72,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Freeze Warning",
-          2
-        ],
-        [
-          "Freeze Watch",
-          1
-        ]
-      ]
-    },
-    "MT": {
-      "count": 16,
-      "typical": 1,
       "surprise": 3.51,
       "tier": "Extraordinary",
       "record": true,
       "top": [
         [
-          "Winter Weather Advisory",
-          9
+          "High Wind Warning",
+          5
         ],
         [
-          "High Wind Warning",
+          "Winter Weather Advisory",
+          3
+        ],
+        [
+          "Winter Storm Warning",
+          2
+        ]
+      ]
+    },
+    "NC": {
+      "count": 11,
+      "typical": 1,
+      "surprise": 1.37,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Coastal Flood Advisory",
+          3
+        ],
+        [
+          "Flood Warning",
+          3
+        ],
+        [
+          "High Surf Advisory",
+          2
+        ]
+      ]
+    },
+    "MN": {
+      "count": 2,
+      "typical": 0,
+      "surprise": 0.77,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Special Weather Statement",
+          2
+        ]
+      ]
+    },
+    "ND": {
+      "count": 2,
+      "typical": 0,
+      "surprise": 1.0,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Special Weather Statement",
+          2
+        ]
+      ]
+    },
+    "VA": {
+      "count": 9,
+      "typical": 0,
+      "surprise": 1.58,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Coastal Flood Advisory",
           4
         ],
         [
-          "Lake Wind Advisory",
+          "Coastal Flood Warning",
+          2
+        ],
+        [
+          "Flood Warning",
           1
         ]
       ]
     },
     "CA": {
-      "count": 23,
-      "typical": 2,
-      "surprise": 2.11,
+      "count": 24,
+      "typical": 3,
+      "surprise": 2.44,
       "tier": "Significant",
       "record": false,
       "top": [
@@ -166,278 +199,66 @@
         ],
         [
           "Beach Hazards Statement",
-          4
-        ],
-        [
-          "High Surf Advisory",
-          3
-        ]
-      ]
-    },
-    "CO": {
-      "count": 5,
-      "typical": 0,
-      "surprise": 1.3,
-      "tier": "Elevated",
-      "record": false,
-      "top": [
-        [
-          "Winter Weather Advisory",
-          3
-        ],
-        [
-          "Winter Storm Warning",
-          2
-        ]
-      ]
-    },
-    "ID": {
-      "count": 1,
-      "typical": 0,
-      "surprise": 0.53,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Wind Advisory",
-          1
-        ]
-      ]
-    },
-    "KS": {
-      "count": 1,
-      "typical": 0,
-      "surprise": 1.0,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "High Wind Watch",
-          1
-        ]
-      ]
-    },
-    "TN": {
-      "count": 11,
-      "typical": 0,
-      "surprise": 2.45,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Winter Weather Advisory",
           6
         ],
         [
-          "Special Weather Statement",
+          "Dense Fog Advisory",
           3
+        ]
+      ]
+    },
+    "AK": {
+      "count": 13,
+      "typical": 2,
+      "surprise": 3.0,
+      "tier": "Extraordinary",
+      "record": true,
+      "top": [
+        [
+          "Special Weather Statement",
+          6
         ],
         [
-          "Wind Advisory",
-          1
-        ]
-      ]
-    },
-    "OK": {
-      "count": 1,
-      "typical": 0,
-      "surprise": 0.65,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "High Wind Watch",
-          1
-        ]
-      ]
-    },
-    "OH": {
-      "count": 2,
-      "typical": 0,
-      "surprise": 1.0,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Lakeshore Flood Warning",
-          1
+          "Winter Weather Advisory",
+          4
         ],
-        [
-          "Wind Advisory",
-          1
-        ]
-      ]
-    },
-    "NC": {
-      "count": 18,
-      "typical": 0,
-      "surprise": 1.75,
-      "tier": "Elevated",
-      "record": false,
-      "top": [
         [
           "High Surf Advisory",
-          5
-        ],
-        [
-          "Special Weather Statement",
-          4
-        ],
-        [
-          "Flood Warning",
-          4
-        ]
-      ]
-    },
-    "VA": {
-      "count": 18,
-      "typical": 0,
-      "surprise": 2.1,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Coastal Flood Warning",
-          8
-        ],
-        [
-          "Special Weather Statement",
-          2
-        ],
-        [
-          "Flood Warning",
-          2
+          1
         ]
       ]
     },
     "MD": {
-      "count": 17,
-      "typical": 0,
-      "surprise": 3.06,
-      "tier": "Extraordinary",
-      "record": false,
-      "top": [
-        [
-          "Coastal Flood Warning",
-          8
-        ],
-        [
-          "Coastal Flood Advisory",
-          5
-        ],
-        [
-          "Flood Warning",
-          2
-        ]
-      ]
-    },
-    "RI": {
-      "count": 5,
+      "count": 14,
       "typical": 0,
       "surprise": 3.51,
       "tier": "Extraordinary",
       "record": true,
       "top": [
         [
-          "Coastal Flood Advisory",
-          2
-        ],
-        [
-          "Flood Warning",
-          1
-        ],
-        [
-          "Wind Advisory",
-          1
-        ]
-      ]
-    },
-    "OR": {
-      "count": 4,
-      "typical": 1,
-      "surprise": 1.0,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
           "Coastal Flood Warning",
-          3
+          8
         ],
         [
           "Coastal Flood Advisory",
-          1
-        ]
-      ]
-    },
-    "NY": {
-      "count": 23,
-      "typical": 0,
-      "surprise": 2.5,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Coastal Flood Warning",
-          6
-        ],
-        [
-          "Coastal Flood Advisory",
-          6
-        ],
-        [
-          "Wind Advisory",
-          4
-        ]
-      ]
-    },
-    "FL": {
-      "count": 20,
-      "typical": 2,
-      "surprise": 1.84,
-      "tier": "Elevated",
-      "record": false,
-      "top": [
-        [
-          "Coastal Flood Statement",
           5
         ],
         [
-          "Flood Warning",
-          5
-        ],
-        [
-          "Rip Current Statement",
-          5
-        ]
-      ]
-    },
-    "GA": {
-      "count": 2,
-      "typical": 0,
-      "surprise": 0.65,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Special Weather Statement",
-          1
-        ],
-        [
-          "Lake Wind Advisory",
+          "Coastal Flood Watch",
           1
         ]
       ]
     },
     "ME": {
-      "count": 6,
+      "count": 3,
       "typical": 0,
-      "surprise": 2.29,
-      "tier": "Significant",
+      "surprise": 1.53,
+      "tier": "Elevated",
       "record": false,
       "top": [
         [
           "Winter Weather Advisory",
-          4
+          1
         ],
         [
           "Coastal Flood Advisory",
@@ -445,23 +266,6 @@
         ],
         [
           "Coastal Flood Statement",
-          1
-        ]
-      ]
-    },
-    "NH": {
-      "count": 3,
-      "typical": 0,
-      "surprise": 2.5,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Winter Weather Advisory",
-          2
-        ],
-        [
-          "Coastal Flood Advisory",
           1
         ]
       ]
@@ -479,33 +283,50 @@
         ]
       ]
     },
-    "MS": {
-      "count": 3,
+    "WV": {
+      "count": 4,
       "typical": 0,
-      "surprise": 1.08,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Freeze Warning",
-          2
-        ],
-        [
-          "Freeze Watch",
-          1
-        ]
-      ]
-    },
-    "WA": {
-      "count": 9,
-      "typical": 1,
       "surprise": 1.3,
       "tier": "Elevated",
       "record": false,
       "top": [
         [
+          "Winter Weather Advisory",
+          4
+        ]
+      ]
+    },
+    "FL": {
+      "count": 19,
+      "typical": 3,
+      "surprise": 1.79,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Flood Warning",
+          5
+        ],
+        [
+          "Coastal Flood Statement",
+          5
+        ],
+        [
+          "Rip Current Statement",
+          4
+        ]
+      ]
+    },
+    "NJ": {
+      "count": 8,
+      "typical": 0,
+      "surprise": 2.29,
+      "tier": "Significant",
+      "record": false,
+      "top": [
+        [
           "Coastal Flood Advisory",
-          3
+          5
         ],
         [
           "Coastal Flood Warning",
@@ -513,7 +334,20 @@
         ],
         [
           "Flood Warning",
-          2
+          1
+        ]
+      ]
+    },
+    "DC": {
+      "count": 1,
+      "typical": 0,
+      "surprise": 1.3,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Coastal Flood Warning",
+          1
         ]
       ]
     },
@@ -529,7 +363,79 @@
           1
         ],
         [
-          "High Wind Warning",
+          "Wind Advisory",
+          1
+        ]
+      ]
+    },
+    "GA": {
+      "count": 2,
+      "typical": 1,
+      "surprise": 0.48,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Lake Wind Advisory",
+          1
+        ],
+        [
+          "Special Weather Statement",
+          1
+        ]
+      ]
+    },
+    "WA": {
+      "count": 6,
+      "typical": 1,
+      "surprise": 1.0,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Coastal Flood Advisory",
+          3
+        ],
+        [
+          "Flood Warning",
+          2
+        ],
+        [
+          "Coastal Flood Warning",
+          1
+        ]
+      ]
+    },
+    "CO": {
+      "count": 6,
+      "typical": 0,
+      "surprise": 1.3,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Winter Weather Advisory",
+          3
+        ],
+        [
+          "Winter Storm Warning",
+          2
+        ],
+        [
+          "High Wind Watch",
+          1
+        ]
+      ]
+    },
+    "MI": {
+      "count": 1,
+      "typical": 0,
+      "surprise": 0.48,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Special Weather Statement",
           1
         ]
       ]
@@ -537,8 +443,8 @@
     "KY": {
       "count": 5,
       "typical": 0,
-      "surprise": 1.72,
-      "tier": "Elevated",
+      "surprise": 2.0,
+      "tier": "Significant",
       "record": false,
       "top": [
         [
@@ -547,92 +453,161 @@
         ]
       ]
     },
-    "NJ": {
-      "count": 12,
-      "typical": 0,
-      "surprise": 3.17,
+    "MT": {
+      "count": 11,
+      "typical": 1,
+      "surprise": 3.51,
       "tier": "Extraordinary",
-      "record": false,
+      "record": true,
       "top": [
         [
-          "Coastal Flood Warning",
-          8
+          "Winter Weather Advisory",
+          7
         ],
         [
-          "Wind Advisory",
+          "High Wind Warning",
           2
         ],
         [
+          "Winter Storm Warning",
+          1
+        ]
+      ]
+    },
+    "NH": {
+      "count": 1,
+      "typical": 0,
+      "surprise": 1.0,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
           "Coastal Flood Advisory",
           1
+        ]
+      ]
+    },
+    "TN": {
+      "count": 2,
+      "typical": 0,
+      "surprise": 1.0,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Winter Storm Warning",
+          1
+        ],
+        [
+          "Wind Advisory",
+          1
+        ]
+      ]
+    },
+    "OR": {
+      "count": 1,
+      "typical": 1,
+      "surprise": 0.0,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Coastal Flood Advisory",
+          1
+        ]
+      ]
+    },
+    "NY": {
+      "count": 6,
+      "typical": 0,
+      "surprise": 1.44,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Coastal Flood Advisory",
+          4
+        ],
+        [
+          "Flood Advisory",
+          1
+        ],
+        [
+          "Flood Warning",
+          1
+        ]
+      ]
+    },
+    "CT": {
+      "count": 3,
+      "typical": 0,
+      "surprise": 1.65,
+      "tier": "Elevated",
+      "record": false,
+      "top": [
+        [
+          "Coastal Flood Advisory",
+          3
+        ]
+      ]
+    },
+    "TX": {
+      "count": 2,
+      "typical": 2,
+      "surprise": 0.0,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "High Wind Watch",
+          2
+        ]
+      ]
+    },
+    "NM": {
+      "count": 3,
+      "typical": 0,
+      "surprise": 1.15,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "High Wind Watch",
+          3
+        ]
+      ]
+    },
+    "ID": {
+      "count": 2,
+      "typical": 0,
+      "surprise": 0.77,
+      "tier": "Normal",
+      "record": false,
+      "top": [
+        [
+          "Wind Advisory",
+          2
         ]
       ]
     },
     "DE": {
       "count": 3,
       "typical": 0,
-      "surprise": 2.33,
+      "surprise": 2.0,
       "tier": "Significant",
       "record": false,
       "top": [
         [
+          "Coastal Flood Advisory",
+          2
+        ],
+        [
           "Coastal Flood Warning",
-          3
+          1
         ]
       ]
     },
     "PA": {
-      "count": 1,
-      "typical": 0,
-      "surprise": 0.65,
-      "tier": "Normal",
-      "record": false,
-      "top": [
-        [
-          "Coastal Flood Warning",
-          1
-        ]
-      ]
-    },
-    "DC": {
-      "count": 2,
-      "typical": 0,
-      "surprise": 2.5,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Coastal Flood Warning",
-          1
-        ],
-        [
-          "Coastal Flood Watch",
-          1
-        ]
-      ]
-    },
-    "AK": {
-      "count": 10,
-      "typical": 2,
-      "surprise": 2.25,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Special Weather Statement",
-          4
-        ],
-        [
-          "Winter Weather Advisory",
-          3
-        ],
-        [
-          "Coastal Flood Advisory",
-          1
-        ]
-      ]
-    },
-    "MO": {
       "count": 1,
       "typical": 0,
       "surprise": 0.53,
@@ -640,54 +615,25 @@
       "record": false,
       "top": [
         [
-          "Special Weather Statement",
-          1
-        ]
-      ]
-    },
-    "CT": {
-      "count": 6,
-      "typical": 0,
-      "surprise": 2.5,
-      "tier": "Significant",
-      "record": false,
-      "top": [
-        [
-          "Wind Advisory",
-          3
-        ],
-        [
-          "Coastal Flood Advisory",
-          2
-        ],
-        [
           "Coastal Flood Warning",
           1
         ]
       ]
     },
-    "WY": {
-      "count": 10,
+    "KS": {
+      "count": 2,
       "typical": 0,
-      "surprise": 2.75,
-      "tier": "Significant",
+      "surprise": 0.77,
+      "tier": "Normal",
       "record": false,
       "top": [
         [
-          "Winter Weather Advisory",
-          3
-        ],
-        [
-          "High Wind Warning",
-          3
-        ],
-        [
-          "Winter Storm Warning",
+          "High Wind Watch",
           2
         ]
       ]
     },
-    "NM": {
+    "OK": {
       "count": 1,
       "typical": 0,
       "surprise": 0.65,
@@ -700,44 +646,32 @@
         ]
       ]
     },
-    "VT": {
-      "count": 7,
+    "RI": {
+      "count": 2,
       "typical": 0,
-      "surprise": 3.0,
-      "tier": "Extraordinary",
+      "surprise": 2.0,
+      "tier": "Significant",
       "record": false,
       "top": [
         [
-          "Wind Advisory",
-          3
+          "Flood Warning",
+          1
         ],
         [
-          "Winter Weather Advisory",
-          2
-        ],
-        [
-          "High Wind Warning",
-          2
+          "Coastal Flood Advisory",
+          1
         ]
       ]
     },
     "MA": {
-      "count": 8,
+      "count": 2,
       "typical": 0,
-      "surprise": 3.51,
-      "tier": "Extraordinary",
-      "record": true,
+      "surprise": 1.3,
+      "tier": "Elevated",
+      "record": false,
       "top": [
         [
           "Coastal Flood Advisory",
-          3
-        ],
-        [
-          "Wind Advisory",
-          3
-        ],
-        [
-          "High Wind Warning",
           2
         ]
       ]
@@ -758,64 +692,31 @@
   },
   "hazards": {
     "Small Craft Advisory": {
-      "count": 219,
-      "expected": 32.21,
-      "typical_high": 63,
+      "count": 235,
+      "expected": 32.85,
+      "typical_high": 62,
       "record": true,
       "surprise": 3.51,
       "tier": "Extraordinary",
-      "delta_1h": -10,
-      "delta_6h": -10,
+      "delta_1h": 16,
+      "delta_6h": 16,
       "material": true
     },
     "Gale Warning": {
-      "count": 89,
-      "expected": 14.73,
-      "typical_high": 37,
+      "count": 74,
+      "expected": 15.13,
+      "typical_high": 39,
       "record": true,
       "surprise": 3.51,
       "tier": "Extraordinary",
-      "delta_1h": -20,
-      "delta_6h": -20,
-      "material": true
-    },
-    "Coastal Flood Warning": {
-      "count": 42,
-      "expected": 0.11,
-      "typical_high": 4,
-      "record": true,
-      "surprise": 3.51,
-      "tier": "Extraordinary",
-      "delta_1h": -4,
-      "delta_6h": -4,
+      "delta_1h": -15,
+      "delta_6h": -15,
       "material": true
     },
     "Coastal Flood Advisory": {
-      "count": 38,
-      "expected": 0.6,
-      "typical_high": 14,
-      "record": true,
-      "surprise": 3.51,
-      "tier": "Extraordinary",
-      "delta_1h": -6,
-      "delta_6h": -6,
-      "material": true
-    },
-    "Winter Weather Advisory": {
-      "count": 29,
-      "expected": 7.99,
-      "typical_high": 29,
-      "record": true,
-      "surprise": 3.51,
-      "tier": "Extraordinary",
-      "delta_1h": -2,
-      "delta_6h": -2,
-      "material": true
-    },
-    "Heavy Freezing Spray Warning": {
-      "count": 27,
-      "expected": 4.67,
-      "typical_high": 15,
+      "count": 43,
+      "expected": 1.0,
+      "typical_high": 17,
       "record": true,
       "surprise": 3.51,
       "tier": "Extraordinary",
@@ -823,15 +724,48 @@
       "delta_6h": 5,
       "material": true
     },
-    "Flood Warning": {
-      "count": 19,
-      "expected": 19.51,
-      "typical_high": 143,
+    "Winter Weather Advisory": {
+      "count": 22,
+      "expected": 8.37,
+      "typical_high": 31,
       "record": false,
-      "surprise": 0.6,
+      "surprise": 1.83,
+      "tier": "Elevated",
+      "delta_1h": -7,
+      "delta_6h": -7,
+      "material": true
+    },
+    "Heavy Freezing Spray Warning": {
+      "count": 20,
+      "expected": 4.81,
+      "typical_high": 15,
+      "record": true,
+      "surprise": 3.51,
+      "tier": "Extraordinary",
+      "delta_1h": -7,
+      "delta_6h": -7,
+      "material": true
+    },
+    "Coastal Flood Warning": {
+      "count": 19,
+      "expected": 0.16,
+      "typical_high": 5,
+      "record": true,
+      "surprise": 3.51,
+      "tier": "Extraordinary",
+      "delta_1h": -23,
+      "delta_6h": -23,
+      "material": true
+    },
+    "Flood Warning": {
+      "count": 16,
+      "expected": 19.9,
+      "typical_high": 138,
+      "record": false,
+      "surprise": 0.54,
       "tier": "Normal",
-      "delta_1h": -5,
-      "delta_6h": -5,
+      "delta_1h": -3,
+      "delta_6h": -3,
       "material": false
     },
     "Special Weather Statement": {
@@ -841,57 +775,57 @@
       "record": false,
       "surprise": null,
       "tier": "Unmodeled",
+      "delta_1h": 0,
+      "delta_6h": 0,
+      "material": false
+    },
+    "High Wind Watch": {
+      "count": 8,
+      "expected": 0.03,
+      "typical_high": 2,
+      "record": true,
+      "surprise": 3.51,
+      "tier": "Extraordinary",
+      "delta_1h": 3,
+      "delta_6h": 3,
+      "material": true
+    },
+    "High Wind Warning": {
+      "count": 7,
+      "expected": 1.97,
+      "typical_high": 21,
+      "record": false,
+      "surprise": 1.44,
+      "tier": "Elevated",
+      "delta_1h": -6,
+      "delta_6h": -6,
+      "material": true
+    },
+    "Winter Storm Warning": {
+      "count": 7,
+      "expected": 3.64,
+      "typical_high": 27,
+      "record": false,
+      "surprise": 1.0,
+      "tier": "Normal",
+      "delta_1h": -2,
+      "delta_6h": -2,
+      "material": false
+    },
+    "Beach Hazards Statement": {
+      "count": 6,
+      "expected": null,
+      "typical_high": null,
+      "record": false,
+      "surprise": null,
+      "tier": "Unmodeled",
       "delta_1h": 2,
       "delta_6h": 2,
       "material": false
     },
-    "High Wind Warning": {
-      "count": 13,
-      "expected": 1.65,
-      "typical_high": 18,
-      "record": false,
-      "surprise": 2.67,
-      "tier": "Significant",
-      "delta_1h": -14,
-      "delta_6h": -14,
-      "material": true
-    },
-    "High Surf Advisory": {
-      "count": 12,
-      "expected": 1.73,
-      "typical_high": 8,
-      "record": true,
-      "surprise": 3.51,
-      "tier": "Extraordinary",
-      "delta_1h": -5,
-      "delta_6h": -5,
-      "material": true
-    },
-    "Wind Advisory": {
-      "count": 12,
-      "expected": 3.46,
-      "typical_high": 29,
-      "record": false,
-      "surprise": 1.4,
-      "tier": "Elevated",
-      "delta_1h": -9,
-      "delta_6h": -9,
-      "material": true
-    },
-    "Winter Storm Warning": {
-      "count": 9,
-      "expected": 3.56,
-      "typical_high": 23,
-      "record": false,
-      "surprise": 1.3,
-      "tier": "Elevated",
-      "delta_1h": 2,
-      "delta_6h": 2,
-      "material": true
-    },
     "Coastal Flood Statement": {
       "count": 6,
-      "expected": 0.36,
+      "expected": 0.5,
       "typical_high": 6,
       "record": true,
       "surprise": 3.0,
@@ -900,92 +834,70 @@
       "delta_6h": 0,
       "material": true
     },
-    "Rip Current Statement": {
-      "count": 6,
-      "expected": 1.55,
-      "typical_high": 10,
+    "High Surf Advisory": {
+      "count": 5,
+      "expected": 1.83,
+      "typical_high": 9,
       "record": false,
       "surprise": 1.3,
       "tier": "Elevated",
-      "delta_1h": -4,
-      "delta_6h": -4,
-      "material": true
-    },
-    "High Wind Watch": {
-      "count": 5,
-      "expected": 0.02,
-      "typical_high": 2,
-      "record": true,
-      "surprise": 3.51,
-      "tier": "Extraordinary",
-      "delta_1h": 2,
-      "delta_6h": 2,
-      "material": true
-    },
-    "Storm Warning": {
-      "count": 5,
-      "expected": 2.34,
-      "typical_high": 15,
-      "record": false,
-      "surprise": 0.83,
-      "tier": "Normal",
       "delta_1h": -7,
       "delta_6h": -7,
       "material": true
     },
-    "Beach Hazards Statement": {
-      "count": 4,
-      "expected": null,
-      "typical_high": null,
+    "Wind Advisory": {
+      "count": 5,
+      "expected": 4.42,
+      "typical_high": 30,
       "record": false,
-      "surprise": null,
-      "tier": "Unmodeled",
+      "surprise": 0.53,
+      "tier": "Normal",
+      "delta_1h": -7,
+      "delta_6h": -7,
+      "material": false
+    },
+    "Rip Current Statement": {
+      "count": 5,
+      "expected": 1.92,
+      "typical_high": 10,
+      "record": false,
+      "surprise": 1.0,
+      "tier": "Normal",
+      "delta_1h": -1,
+      "delta_6h": -1,
+      "material": true
+    },
+    "Dense Fog Advisory": {
+      "count": 4,
+      "expected": 4.06,
+      "typical_high": 31,
+      "record": false,
+      "surprise": 0.53,
+      "tier": "Normal",
+      "delta_1h": 1,
+      "delta_6h": 1,
+      "material": false
+    },
+    "Lake Wind Advisory": {
+      "count": 3,
+      "expected": 0.58,
+      "typical_high": 9,
+      "record": false,
+      "surprise": 1.53,
+      "tier": "Elevated",
       "delta_1h": 0,
       "delta_6h": 0,
       "material": false
     },
     "Brisk Wind Advisory": {
-      "count": 4,
-      "expected": 1.29,
-      "typical_high": 8,
+      "count": 3,
+      "expected": 1.33,
+      "typical_high": 9,
       "record": false,
-      "surprise": 1.65,
+      "surprise": 1.3,
       "tier": "Elevated",
       "delta_1h": -1,
       "delta_6h": -1,
-      "material": false
-    },
-    "Freeze Warning": {
-      "count": 3,
-      "expected": 0.69,
-      "typical_high": 15,
-      "record": false,
-      "surprise": 1.44,
-      "tier": "Elevated",
-      "delta_1h": -1,
-      "delta_6h": -1,
-      "material": false
-    },
-    "Lake Wind Advisory": {
-      "count": 3,
-      "expected": 0.32,
-      "typical_high": 5,
-      "record": false,
-      "surprise": 2.0,
-      "tier": "Significant",
-      "delta_1h": 0,
-      "delta_6h": 0,
-      "material": false
-    },
-    "Dense Fog Advisory": {
-      "count": 3,
-      "expected": 2.3,
-      "typical_high": 18,
-      "record": false,
-      "surprise": 1.0,
-      "tier": "Normal",
-      "delta_1h": 1,
-      "delta_6h": 1,
       "material": false
     },
     "Low Water Advisory": {
@@ -999,42 +911,9 @@
       "delta_6h": 0,
       "material": false
     },
-    "Hazardous Seas Warning": {
-      "count": 2,
-      "expected": 0.38,
-      "typical_high": 4,
-      "record": false,
-      "surprise": 1.3,
-      "tier": "Elevated",
-      "delta_1h": 0,
-      "delta_6h": 0,
-      "material": false
-    },
-    "Coastal Flood Watch": {
-      "count": 2,
-      "expected": 0.01,
-      "typical_high": 2,
-      "record": true,
-      "surprise": 3.0,
-      "tier": "Extraordinary",
-      "delta_1h": -4,
-      "delta_6h": -4,
-      "material": false
-    },
-    "Lakeshore Flood Warning": {
-      "count": 1,
-      "expected": 0.07,
-      "typical_high": 8,
-      "record": false,
-      "surprise": 1.65,
-      "tier": "Elevated",
-      "delta_1h": 0,
-      "delta_6h": 0,
-      "material": false
-    },
     "High Surf Warning": {
       "count": 1,
-      "expected": 0.17,
+      "expected": 0.18,
       "typical_high": 3,
       "record": false,
       "surprise": 1.3,
@@ -1045,8 +924,8 @@
     },
     "Flood Advisory": {
       "count": 1,
-      "expected": 2.85,
-      "typical_high": 36,
+      "expected": 2.74,
+      "typical_high": 34,
       "record": false,
       "surprise": 0.0,
       "tier": "Normal",
@@ -1054,15 +933,15 @@
       "delta_6h": 0,
       "material": false
     },
-    "Freeze Watch": {
+    "Coastal Flood Watch": {
       "count": 1,
-      "expected": 0.0,
-      "typical_high": 1,
-      "record": true,
-      "surprise": 3.51,
-      "tier": "Extraordinary",
-      "delta_1h": 0,
-      "delta_6h": 0,
+      "expected": 0.02,
+      "typical_high": 3,
+      "record": false,
+      "surprise": 2.0,
+      "tier": "Significant",
+      "delta_1h": -1,
+      "delta_6h": -1,
       "material": false
     }
   }
